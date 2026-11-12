@@ -100,6 +100,18 @@ in Settings › About & updates, where automatic checks can also be turned off.
 3. `.github/workflows/release.yml` fetches the pinned agent-desktop, runs the checks and tests, builds the installer on
    Windows, and uploads it with `latest.yml` to a **draft** release `v0.2.1`.
 4. Review the draft, add notes, and publish it. Installed copies only see published releases.
+5. Check that `https://github.com/donlapidos/desktop-buddy/releases/latest/download/latest.yml` names the new version.
+   Installed copies check about a minute after they start, download in the background, and install when Buddy quits
+   or the user picks **Restart to update** in the tray.
+
+Updating was checked end to end for 0.2.0 → 0.2.1: an installed 0.2.0 found 0.2.1 a minute after starting,
+downloaded it and verified its checksum; that installer, run silently as the updater runs it, updated the install in
+place, and the updated copy checked the new repository. To repeat it without touching an everyday copy, start the
+installed `Desktop Buddy.exe` with `--user-data-dir=<empty folder>` and watch that folder's `timing.log` for
+`update-ready`.
+
+Copies of 0.2.0 installed from the old home (`donlapidos/agent-desktop`) look for updates there. That repository
+carries the same 0.2.1 release so they move over once; after that they update from here.
 
 `npm run dist` builds the same installer locally into `dist/`; `npm run dist:dir` builds just the unpacked app, which
 can't update itself.
