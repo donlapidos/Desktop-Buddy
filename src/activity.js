@@ -1,6 +1,7 @@
 // What Buddy changed on the user's PC, in plain words, and undoing it. Every file Buddy makes, replaces or edits, every
-// document, every PowerShell run and every web page read is listed (Settings › Activity) for a week. Files can be put
-// back with one click: a file Buddy made goes to the Recycle Bin, a replaced or edited one gets its old version back.
+// document, every PowerShell run, every web page read and every click, keypress and bit of typing Buddy did in an app
+// is listed (Settings › Activity) for a week. Files can be put back with one click: a file Buddy made goes to the
+// Recycle Bin, a replaced or edited one gets its old version back. What Buddy did in an app is undone in that app.
 // Undo checks the file is still as Buddy left it; if the user has changed it since, undo asks before losing that.
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -42,7 +43,7 @@ export function keepCopy(/** @type {string} */ file, /** @type {string} */ undoD
 /**
  * One change. `file` is what changed; `copy` its earlier version (replaced, edited); `after` the fingerprint Buddy
  * left it with, so undo can tell whether the user changed it since. `from` is who did it: "Buddy", a task, a routine.
- * @typedef {{ id: string, at: string, from: string, kind: "created" | "replaced" | "edited" | "document" | "ran" | "read", summary: string, file?: string, copy?: string, after?: string | null, undone?: string }} Change
+ * @typedef {{ id: string, at: string, from: string, kind: "created" | "replaced" | "edited" | "document" | "ran" | "read" | "acted", summary: string, file?: string, copy?: string, after?: string | null, undone?: string }} Change
  */
 
 /** What can be undone, by kind. */

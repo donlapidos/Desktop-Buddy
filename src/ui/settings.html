@@ -294,7 +294,7 @@
 
     <section id="page-activity" hidden>
       <h2>Activity</h2>
-      <p class="lede">What Buddy changed on your PC this past week: files it made or changed, documents, commands it ran and pages it read. A file can be put back with Undo: one Buddy made goes to the Recycle Bin, one it changed gets its old version back.</p>
+      <p class="lede">What Buddy did on your PC this past week: files it made or changed, documents, commands it ran, pages it read, and what it clicked, pressed or typed in your apps. A file can be put back with Undo: one Buddy made goes to the Recycle Bin, one it changed gets its old version back. What Buddy did in an app is undone in that app.</p>
       <div class="group">
         <div id="activity"></div>
         <p class="problem" id="activity-problem"></p>
@@ -1058,7 +1058,7 @@
   function renderActivity() {
     const list = S.activity ?? [];
     if (!list.length) {
-      $("activity").replaceChildren(el("p", { className: "empty", textContent: "Nothing yet. When Buddy makes or changes a file, runs a command or reads a page for you, it shows up here." }));
+      $("activity").replaceChildren(el("p", { className: "empty", textContent: "Nothing yet. When Buddy makes or changes a file, runs a command, reads a page, or clicks or types in an app for you, it shows up here." }));
       return;
     }
     const rows = [];
@@ -1082,8 +1082,8 @@
           render(res.state);
         });
         row.append(btn);
-      } else if (!e.undone && (e.kind === "ran" || e.kind === "read")) {
-        row.append(el("span", { className: "status-text", textContent: e.kind === "ran" ? "Can't be undone automatically" : "" }));
+      } else if (!e.undone && (e.kind === "ran" || e.kind === "read" || e.kind === "acted")) {
+        row.append(el("span", { className: "status-text", textContent: e.kind === "ran" ? "Can't be undone automatically" : e.kind === "acted" ? "Undo it in the app" : "" }));
       }
       rows.push(row);
     }

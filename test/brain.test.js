@@ -208,3 +208,44 @@ test("pointing at a control that's gone tells the model to look again", async ()
   const { b } = pointer("gone");
   assert.match(await b.runTool("point_at", { ref: "@s1:e1" }), /isn't there any more.*Look again/);
 });
+
+// A Brain that says yes to everything, whose actions "run" with result `ran`, and whose Activity is `listed`.
+function doer(ran = { ok: true, data: {} }) {
+  const listed = [];
+  const b = new Brain({ apiKey: "sk-test", status() {}, point: async () => {}, confirm: async () => "allow", record: (c) => void listed.push(c) });
+  b.labels.set("@s1:e1", '"Search" (textfield)');
+  b.labels.set("@s1:e2", '"Password" (textfield)');
+  b.refApps.set("@s1:e1", "notepad.exe");
+  b.performSlip = async () => ran;
+  return { b, listed };
+}
+
+test("clicks, keypresses and typing Buddy did in an app are listed in Activity, in the past tense", async () => {
+  const { b, listed } = doer();
+  await b.act({ action: "type", ref: "@s1:e1", text: "hello", summary: "Search" });
+  await b.act({ action: "click", ref: "@s1:e1", summary: "Click it" });
+  await b.act({ action: "press", keys: "ctrl+s", app: "EXCEL.EXE", summary: "Save" });
+  assert.deepEqual(listed.map((c) => [c.kind, c.summary, c.from]), [
+    ["acted", 'Typed "hello" into "Search" (textfield) in notepad', "Buddy"],
+    ["acted", 'Clicked "Search" (textfield) in notepad', "Buddy"],
+    ["acted", "Pressed ctrl+s in EXCEL", "Buddy"],
+  ]);
+});
+
+test("Activity keeps typed passwords and key-shaped text to itself", async () => {
+  const { b, listed } = doer();
+  await b.act({ action: "type", ref: "@s1:e2", text: "hunter2", summary: "Sign in" });
+  await b.act({ action: "set_value", ref: "@s1:e1", text: "sk-ant-api03-abcdefghijklmnopqrstuvwxyz0123456789", summary: "Paste" });
+  assert.equal(listed[0].summary, 'Typed into "Password" (textfield)');
+  assert.doesNotMatch(listed.map((c) => c.summary).join(" "), /hunter2|abcdefghijklmnop/);
+});
+
+test("an action that failed or was declined isn't listed in Activity", async () => {
+  const failed = doer({ ok: false, error: { code: "STALE_REF" } });
+  await failed.b.act({ action: "click", ref: "@s1:e1", summary: "Click it" });
+  assert.equal(failed.listed.length, 0);
+  const { b, listed } = doer();
+  b.ui.confirm = async () => "deny";
+  await b.act({ action: "click", ref: "@s1:e1", summary: "Click it" });
+  assert.equal(listed.length, 0);
+});

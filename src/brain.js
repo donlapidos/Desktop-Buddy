@@ -5,7 +5,7 @@ import { decide } from "./policy.js";
 import { findControl, nearestNames, observe, perform, renderReading, renderTree, snapshotResilient, waitForProgress } from "./desktop.js";
 import { writeDocx } from "./documents.js";
 import { PROVIDERS, ProviderError, capsOf, chatTurn } from "./providers.js";
-import { BEYOND_SCREEN, PC_TOOLS, PC_TOOL_NAMES, placesHere, runPcTool } from "./pc-tools.js";
+import { BEYOND_SCREEN, PC_TOOLS, PC_TOOL_NAMES, hideSecrets, placesHere, runPcTool } from "./pc-tools.js";
 import { fingerprint } from "./activity.js";
 import path from "node:path";
 
@@ -477,6 +477,14 @@ const VERBS = {
   click: "Click", double_click: "Double-click", right_click: "Right-click", clear: "Clear", check: "Check",
   uncheck: "Uncheck", toggle: "Toggle", expand: "Expand", collapse: "Collapse", scroll_to: "Scroll to",
 };
+// The same, done: how an action reads in Activity.
+const DONE = {
+  click: "Clicked", double_click: "Double-clicked", right_click: "Right-clicked", clear: "Cleared", check: "Checked",
+  uncheck: "Unchecked", toggle: "Toggled", expand: "Expanded", collapse: "Collapsed", scroll_to: "Scrolled to",
+};
+// A field whose text Activity keeps to itself (it's saved on disk for a week).
+const PRIVATE_FIELD = /password|passcode|passphrase|\bpin\b|secret|security code|cvv|cvc/i;
+
 const quote = (s, n = 160) => {
   const t = String(s).replace(/\s+/g, " ").trim();
   return JSON.stringify(t.length > n ? `${t.slice(0, n - 1)}…` : t);
@@ -834,6 +842,11 @@ export class Brain {
       .finalMessage();
   }
 
+  /** Runs an approved action in this Brain's agent-desktop session. @param {any} slip */
+  performSlip(slip) {
+    return perform(slip, { session: this.session });
+  }
+
   /**
    * Where a control is now (physical pixels), "gone" if its window no longer has it, or null if that couldn't be told
    * (then the saved position stands).
@@ -874,6 +887,22 @@ export class Brain {
   }
 
   /**
+   * What an action that ran reads as in Activity: "Typed "hello" into "Search" (textfield) in notepad". Text typed into
+   * a password-like field is left out, and anything shaped like a key is hidden.
+   * @param {any} input @param {string | undefined} app
+   */
+  describeDone(input, app) {
+    const where = app ? ` in ${String(app).replace(/\.exe$/i, "")}` : "";
+    if (input.action === "press") return `Pressed ${input.keys}${where}`;
+    const el = this.labels.get(input.ref) ?? "a control";
+    const text = input.text == null || PRIVATE_FIELD.test(el) ? null : hideSecrets(quote(input.text, 80)).text;
+    if (input.action === "set_value") return `${text ? `Set ${el} to ${text}` : `Filled in ${el}`}${where}`;
+    if (input.action === "type") return `${text ? `Typed ${text} into ${el}` : `Typed into ${el}`}${where}`;
+    if (input.action === "select") return `Chose ${text ?? "an option"} in ${el}${where}`;
+    return `${DONE[input.action] ?? "Used"} ${el}${where}`;
+  }
+
+  /**
    * @param {{ ref?: string | null, note?: string }} [how]
    * @returns {import("./approvals.js").Ask}
    */
@@ -886,9 +915,9 @@ export class Brain {
   // the action (approvals.js, desktop.perform). Actions take turns with other tasks (takeTurn).
   /**
    * @param {import("./approvals.js").InputAction} action
-   * @param {{ ref?: string | null, note?: string, status?: string }} [how]
+   * @param {{ ref?: string | null, note?: string, status?: string, done?: string }} [how] `done`: how it reads in Activity once it ran
    */
-  async operate(action, { ref = null, note, status } = {}) {
+  async operate(action, { ref = null, note, status, done } = {}) {
     const verdict = agentPolicy ? decide(agentPolicy, action) : "ask";
     if (verdict === "block") {
       this.ui.trace?.({ kind: "policy-blocked", app: action.app, action: action.kind });
@@ -902,7 +931,10 @@ export class Brain {
     }
     return takeTurn(async () => {
       this.ui.status(status ?? action.summary);
-      return trimEnvelope(await perform(slip, { session: this.session }));
+      const res = await this.performSlip(slip);
+      // Only what actually ran is listed in Activity.
+      if (res.ok && done) this.ui.record?.({ kind: "acted", summary: done, from: this.ui.source ?? "Buddy" });
+      return trimEnvelope(res);
     });
   }
 
@@ -1134,13 +1166,14 @@ export class Brain {
       if (this.ui.isOwnWindow?.(win)) return "Buddy's own window is in front. Say which app the keys are for: press with app (and window_id) from list_windows.";
       const args = ["press", input.keys, "--app", win.app_name, ...(win.id ? ["--window-id", String(win.id)] : [])];
       const where = String(win.app_name).replace(/\.exe$/i, "");
-      return this.operate({ kind: "press", app: win.app_name, args, headed: true, summary: `${this.describeAction(input)} in ${where}` }, how);
+      return this.operate({ kind: "press", app: win.app_name, args, headed: true, summary: `${this.describeAction(input)} in ${where}` }, { ...how, done: this.describeDone(input, win.app_name) });
     }
     const spec = ACTION_ARGS[input.action];
     if (!spec) return `Unknown action ${input.action}.`;
     if (!input.ref) return `${input.action} needs a ref.`;
     if (spec.text && input.text == null) return `${input.action} needs text.`;
     const args = [spec.cmd, input.ref, ...(spec.text ? [input.text] : [])];
-    return this.operate({ kind: input.action, app: this.refApps.get(input.ref) ?? this.target?.app_name, args, headed: !!spec.headed, summary: this.describeAction(input) }, { ...how, ref: input.ref });
+    const app = this.refApps.get(input.ref) ?? this.target?.app_name;
+    return this.operate({ kind: input.action, app, args, headed: !!spec.headed, summary: this.describeAction(input) }, { ...how, ref: input.ref, done: this.describeDone(input, app) });
   }
 }
