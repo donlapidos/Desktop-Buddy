@@ -94,6 +94,12 @@
   #welcome .btn { padding: 6px 11px; font-size: 13px; }
   #welcome .problem { color: var(--danger); font-size: 13px; }
   #welcome .problem:empty { display: none; }
+  /* The tour's tip: a quiet strip above the field, in Buddy's colour. */
+  #tip { display: flex; align-items: center; gap: 8px; padding: 7px 8px 7px 10px; border-radius: 10px; background: color-mix(in srgb, var(--buddy) 14%, var(--field)); font-size: 12.5px; line-height: 1.35; }
+  #tip[hidden] { display: none; }
+  #tip span { flex: 1; }
+  #tip button { flex: none; border: 0; border-radius: 8px; padding: 5px 9px; background: color-mix(in srgb, var(--buddy) 28%, var(--field)); color: var(--fg); font: inherit; font-weight: 600; cursor: pointer; }
+  #tip button:hover { background: color-mix(in srgb, var(--buddy) 40%, var(--field)); }
   #welcome::-webkit-scrollbar { width: 8px; }
   #welcome::-webkit-scrollbar-thumb { background: #2a2d34; border-radius: 4px; }
 </style>
@@ -120,6 +126,7 @@
       <button class="btn deny" data-d="deny">Don't</button>
     </div>
   </div>
+  <div id="tip" hidden><span id="tip-text"></span><button id="tip-do" type="button"></button></div>
   <form id="form">
     <input id="input" autocomplete="off" spellcheck="false" placeholder="How do I…?  or  Do it for me">
     <button class="btn ghost" id="mic" type="button" title="Say it (Ctrl+Alt+T). Pause when you're done."><svg viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg></button>
@@ -142,8 +149,21 @@
     $("reply").classList.toggle("status", status);
   }
 
-  window.buddy.onSummon(({ target, needsKey: nk }) => {
+  // The tour's tip, or none (null).
+  let tip = null;
+  function showTip(t) {
+    tip = t;
+    $("tip").hidden = !t || needsKey;
+    if (!t) return;
+    $("tip-text").textContent = t.text;
+    $("tip-do").textContent = t.action;
+  }
+  $("tip-do").addEventListener("click", () => tip && window.buddy.tour(tip.event));
+  window.buddy.onTour((t) => showTip(t));
+
+  window.buddy.onSummon(({ target, needsKey: nk, tip: t }) => {
     needsKey = nk;
+    showTip(t);
     $("marks").classList.remove("on");
     $("where").textContent = nk ? "Welcome to Buddy" : target ? `Looking at ${target}` : "Buddy";
     if (nk) welcome("doors");
@@ -169,6 +189,7 @@
     $("form").hidden = false;
     $("input").type = "text";
     $("input").placeholder = "How do I…?  or  Do it for me";
+    showTip(tip); // a tour tip that came while setting up
   }
 
   // page: "doors" (the three choices), "apps", "local" or "key".

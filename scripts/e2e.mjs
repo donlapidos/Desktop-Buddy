@@ -184,6 +184,10 @@ const CHECKS = {
         !/Ollama is running/.test(r.localText ?? "") && `Free, on this PC said ${JSON.stringify(r.localText)}`,
         (!r.localReady?.brain || r.localReady.provider !== "ollama") && `the model on this PC wasn't set up: ${JSON.stringify(r.localReady)}`,
         r.localReply !== "Hello from a model on this PC." && `the model on this PC answered ${JSON.stringify(r.localReply)}`,
+        !/^Try it: ask me how to do something in .*Skip tour$/s.test(r.tipAfterSetup ?? "") && `after setup, the tour said ${JSON.stringify(r.tipAfterSetup)}`,
+        !/press Ctrl\+Alt\+M, then draw around.*Got it$/s.test(r.tipAfterAnswer ?? "") && `after the first answer, the tour said ${JSON.stringify(r.tipAfterAnswer)}`,
+        (r.tipAfterGotIt !== null || r.tourStep !== "done") && `"Got it" didn't end the tour (${r.tourStep}: ${JSON.stringify(r.tipAfterGotIt)})`,
+        r.tipAfterSecondSetup !== null && `setting up again brought the tour back: ${JSON.stringify(r.tipAfterSecondSetup)}`,
         !r.doorsAgain && "without an AI again, the doors didn't come back",
         (!r.keyReady?.brain || r.keyReady.provider !== "anthropic") && `the key wasn't taken: ${JSON.stringify(r.keyReady)}`,
       ].filter(Boolean);

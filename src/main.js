@@ -33,7 +33,7 @@ import { createUpdates } from "./updates.js";
 import { describe as describeSchedule, nextRun, verdict as routineVerdict } from "./routines.js";
 import os from "node:os";
 import { createVoice } from "./voice.js";
-import { findLocal, localDoor } from "./welcome.js";
+import { appWords, findLocal, localDoor, tourNext, tourTip } from "./welcome.js";
 
 /** @typedef {import("./geometry.js").DipPoint} DipPoint */
 /** @typedef {import("./geometry.js").DipRect} DipRect */
@@ -656,6 +656,7 @@ async function summon() {
   bubble.webContents.send("summon", {
     target: win ? `${win.app_name} — ${win.title}` : null,
     needsKey: !brain,
+    tip: tourTipNow(),
   });
   showBubble();
 }
@@ -750,6 +751,7 @@ async function startMarking() {
   if (!brain) return summon();
   clearMarks();
   enter("marking");
+  tourEvent("marked");
   hideBubble({ now: true });
   progress("Getting the screen ready…");
   markDisplay = screen.getDisplayNearestPoint(cursor());
@@ -1011,6 +1013,7 @@ handleFrom(fromBubble, "ask", async (_e, text, opts = {}) => {
     releaseLater("bubble");
   }
   notice(oneLine(reply));
+  tourEvent("answered");
   // After the mode is back to idle, so the island shows Buddy speaking (and a click stops it).
   if (talksBack(turn.spoken)) speak(reply);
   return { reply };
@@ -1051,7 +1054,26 @@ async function setAddress(/** @type {string} */ url) {
 
 handleFrom(fromBubble, "set-key", async (_e, key) => {
   const error = await setApiKey(String(key ?? ""));
+  if (!error && brain) tourEvent("setup");
   return { ok: !error && !!brain, error };
+});
+
+// ---------- The thirty-second tour after setup (welcome.js): ask about the window in front, then Mark once ----------
+
+/** The tip for where the tour is, in the user's own shortcuts and the app they're in. */
+const tourTipNow = () => tourTip(/** @type {import("./welcome.js").TourStep} */ (settings.tour), { ask: keyLabel(hotkey("ask")), mark: keyLabel(hotkey("mark")), app: appWords(about.window) });
+
+/** Moves the tour on, and shows the bubble the new tip (or none). */
+function tourEvent(/** @type {import("./welcome.js").TourEvent} */ event) {
+  const next = tourNext(/** @type {import("./welcome.js").TourStep} */ (settings.tour), event);
+  if (next === settings.tour) return;
+  changeSettings({ tour: next });
+  trace({ kind: "tour", step: next, event });
+  bubble?.webContents.send("tour", tourTipNow());
+}
+
+onFrom(fromBubble, "tour", (_e, event) => {
+  if (event === "skip" || event === "gotit") tourEvent(event);
 });
 
 // ---------- First-run setup in the bubble (welcome.js): an AI app, a model on this PC, or a key ----------
@@ -1084,6 +1106,7 @@ handleFrom(fromBubble, "welcome-local", async () => {
   const error = await refreshModels(local.use.id);
   // The brain made when the provider changed came before the model was picked; the first question needs this one.
   startBrain();
+  if (brain && !error) tourEvent("setup");
   trace({ kind: "welcome-local", provider: local.use.id, ok: !!brain, error });
   return { ok: !!brain && !error, error, label: local.use.label };
 });
@@ -2331,8 +2354,18 @@ app.whenReady().then(() => {
       await click("#welcome button", "Use Ollama");
       await until(`document.getElementById("welcome").hidden`, 20_000);
       r.localReady = { brain: !!brain, provider: settings.provider, shown: await js(`document.getElementById("reply").textContent`) };
-      r.localReply = (await js(`window.buddy.ask("Say hello.", {})`)).reply;
+      // The tour: a tip to ask about the window in front, then, once answered, one for Mark; "Got it" ends it.
+      const tipNow = () => js(`document.getElementById("tip").hidden ? null : document.getElementById("tip").innerText`);
+      r.tipAfterSetup = await tipNow();
       await shot("local-ready");
+      r.localReply = (await js(`window.buddy.ask("Say hello.", {})`)).reply;
+      await until(`/draw around/.test(document.getElementById("tip").innerText) && !document.getElementById("tip").hidden`, 3_000);
+      r.tipAfterAnswer = await tipNow();
+      await shot("tour-mark");
+      await js(`document.getElementById("tip-do").click()`);
+      await until(`document.getElementById("tip").hidden`, 3_000);
+      r.tipAfterGotIt = await tipNow();
+      r.tourStep = settings.tour;
 
       changeSettings({ provider: "anthropic" });
       await openDoors();
@@ -2341,6 +2374,7 @@ app.whenReady().then(() => {
       await js(`document.getElementById("input").value = "sk-ant-api03-${"e2e".repeat(30)}"; document.getElementById("form").requestSubmit()`);
       await until(`document.getElementById("welcome").hidden`);
       r.keyReady = { brain: !!brain, provider: settings.provider, shown: await js(`document.getElementById("reply").textContent`) };
+      r.tipAfterSecondSetup = await tipNow();
       await shot("key-ready");
       console.log("WELCOME_TEST", JSON.stringify(r));
       console.log("WELCOME_TEST_DONE");

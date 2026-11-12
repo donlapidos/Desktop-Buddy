@@ -65,3 +65,51 @@ export function localDoor(servers, totalBytes) {
     use: null,
   };
 }
+
+// ---------- The thirty-second tour, right after setup ----------
+// Two tips in the bubble. First: ask about the window in front, and Buddy points the way (a real step, in a real app).
+// Then, once that's answered: Mark, shown once. Either can be skipped; the step is saved, so it's never shown twice.
+
+/** @typedef {"none" | "ask" | "mark" | "done"} TourStep */
+/** @typedef {"setup" | "answered" | "marked" | "skip" | "gotit"} TourEvent */
+
+/**
+ * The tour's next step. Only setting Buddy up starts it; nothing brings it back once done.
+ * @param {TourStep} step @param {TourEvent} event @returns {TourStep}
+ */
+export function tourNext(step, event) {
+  if (step === "none") return event === "setup" ? "ask" : "none";
+  if (step === "done") return "done";
+  if (event === "skip") return "done";
+  if (step === "ask" && event === "answered") return "mark";
+  if (step === "mark" && (event === "marked" || event === "gotit")) return "done";
+  return step;
+}
+
+/**
+ * An app's name as people say it: "Excel" from a window titled "Book1 - Excel", else the program's name.
+ * @param {{ app_name?: string, title?: string } | null | undefined} win
+ */
+export function appWords(win) {
+  // Edge puts an invisible space inside its own name ("Microsoft​ Edge").
+  const title = String(win?.title ?? "").replace(/[​-‍﻿]/g, "");
+  const fromTitle = title.split(/ [-–—] /).at(-1)?.trim();
+  if (fromTitle && fromTitle.length <= 40 && fromTitle !== title) return fromTitle;
+  // Program names run words together: "WindowsTerminal" is said "Windows Terminal".
+  const name = String(win?.app_name ?? "").replace(/\.exe$/i, "").replace(/([a-z])([A-Z])/g, "$1 $2").trim();
+  return name || null;
+}
+
+/**
+ * The tip the bubble shows for a step, or null when there's none.
+ * @param {TourStep} step @param {{ ask: string, mark: string, app: string | null }} words
+ * @returns {{ text: string, action: string, event: "skip" | "gotit" } | null}
+ */
+export function tourTip(step, { ask, mark, app }) {
+  if (step === "ask") {
+    const where = app ? `in ${app}` : "in the app you were using";
+    return { text: `Try it: ask me how to do something ${where}, like "How do I…?", and I'll point the way. Later, press ${ask} from any app.`, action: "Skip tour", event: "skip" };
+  }
+  if (step === "mark") return { text: `One more: press ${mark}, then draw around anything on your screen, and I'll explain what you circled.`, action: "Got it", event: "gotit" };
+  return null;
+}

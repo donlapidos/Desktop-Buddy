@@ -48,3 +48,36 @@ test("the memory a local model needs is said against this PC's", () => {
   assert.match(memoryWords(16 * GB), /16 GB.*enough, with other apps closed/);
   assert.match(memoryWords(8 * GB), /8 GB.*likely too little/);
 });
+
+import { appWords, tourNext, tourTip } from "../src/welcome.js";
+
+test("the tour starts only at setup, goes ask then Mark, and never comes back once done or skipped", () => {
+  assert.equal(tourNext("none", "answered"), "none", "a Buddy set up before the tour existed never sees it");
+  assert.equal(tourNext("none", "setup"), "ask");
+  assert.equal(tourNext("ask", "marked"), "ask", "Mark before asking doesn't skip the first step");
+  assert.equal(tourNext("ask", "answered"), "mark");
+  assert.equal(tourNext("mark", "answered"), "mark");
+  assert.equal(tourNext("mark", "marked"), "done");
+  assert.equal(tourNext("mark", "gotit"), "done");
+  assert.equal(tourNext("ask", "skip"), "done");
+  assert.equal(tourNext("done", "setup"), "done", "setting up again (a new key) doesn't restart it");
+});
+
+test("the tour's tips name the app in front and the user's own shortcuts", () => {
+  const words = { ask: "Ctrl+Shift+Space", mark: "Ctrl+Alt+K", app: appWords({ app_name: "EXCEL.EXE", title: "Budget 2026 - Excel" }) };
+  assert.match(tourTip("ask", words)?.text ?? "", /in Excel,.*Ctrl\+Shift\+Space/);
+  assert.equal(tourTip("ask", words)?.event, "skip");
+  assert.match(tourTip("mark", words)?.text ?? "", /Ctrl\+Alt\+K/);
+  assert.equal(tourTip("mark", words)?.event, "gotit");
+  assert.equal(tourTip("none", words), null);
+  assert.equal(tourTip("done", words), null);
+  assert.match(tourTip("ask", { ...words, app: null })?.text ?? "", /in the app you were using/);
+});
+
+test("an app is named as people say it", () => {
+  assert.equal(appWords({ app_name: "EXCEL.EXE", title: "Budget 2026 - Excel" }), "Excel");
+  assert.equal(appWords({ app_name: "msedge.exe", title: "Weather — Microsoft​ Edge" }), "Microsoft Edge");
+  assert.equal(appWords({ app_name: "Notepad.exe", title: "Notepad" }), "Notepad");
+  assert.equal(appWords({ app_name: "WindowsTerminal.exe", title: "Windows PowerShell" }), "Windows Terminal");
+  assert.equal(appWords(null), null);
+});

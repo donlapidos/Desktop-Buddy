@@ -42,6 +42,8 @@ export const HOTKEY_NAMES = /** @type {readonly HotkeyName[]} */ (Object.freeze(
 export const DICTATE_STOP = Object.freeze(["pause", "press"]);
 // Listening language: English (Moonshine, fastest) or detected automatically (multilingual Whisper, ~99 languages).
 export const LANGUAGES = Object.freeze(["en", "auto"]);
+// The first-run tour (welcome.js): not started, the ask step, the Mark step, finished or skipped.
+export const TOUR_STEPS = Object.freeze(["none", "ask", "mark", "done"]);
 // How much agents may do without asking (see policy.js): ask every time, allow safe moves, or allow everything in
 // trusted apps.
 export const ROPES = Object.freeze(["ask", "safe", "trusted"]);
@@ -71,6 +73,7 @@ export const DEFAULTS = Object.freeze({
   routines: Object.freeze([]),
   autoUpdate: true,
   launchSetupDone: false,
+  tour: "none",
 });
 
 /**
@@ -80,7 +83,7 @@ export const DEFAULTS = Object.freeze({
  *   voice: number, speed: number, talkBack: string, accent: string, appearance: string,
  *   hotkeys: Record<HotkeyName, string>, provider: string, model: string, providerModels: Record<string, string>, providerURLs: Record<string, string>, effort: string, dictateStop: string, language: string,
  *   rope: string, trustedApps: string[], blockedApps: string[], routines: Routine[], autoUpdate: boolean,
- *   launchSetupDone: boolean,
+ *   launchSetupDone: boolean, tour: string,
  * }} Settings
  */
 
@@ -212,6 +215,7 @@ export function normalize(raw) {
     routines: routineList(r.routines),
     autoUpdate: r.autoUpdate !== false,
     launchSetupDone: r.launchSetupDone === true,
+    tour: pick(r.tour, TOUR_STEPS, DEFAULTS.tour),
   };
 }
 
