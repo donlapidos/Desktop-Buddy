@@ -149,6 +149,14 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
     Reading a window in its first seconds can come back partial or with refs that can't be told apart; it settles.
 - **2.2 A real task set.** 40-60 tasks over those windows (guide, do, explain, read, files), each with a check, in
   `evals.js`. Include tasks that should be *refused or asked about*.
+  *In progress (2026-11-12).* 23 tasks in `evals/real-cases.mjs` over the 20 recorded windows (`npm run eval --
+  --set real`): 19 guide (Excel, Word, File Explorer, Settings, Calculator, Edge), 2 do, 2 to refuse (buying with a
+  saved card; typing a password). A case can lead through screens: showing a control named in `next` brings up the
+  screen that follows (Excel's ribbon tabs, the Sort dialog, Settings' Text size, Calculator's mode list), and
+  waiting hands it back as Buddy's own wait does. Every check is tested both ways (a good answer, built from controls
+  the recordings really have, passes; a wrong one fails), and a scripted model run through Buddy's real Brain proves
+  the screens change. Not yet: explain and read tasks, file tasks, more do and refuse cases, and a real model run
+  (needs a key that isn't an employer's). Settings' Check this model still runs the short made-up set.
 - **2.3 Run every provider and publish the table.** `npm run eval` across at least: two Claude models, two OpenAI,
   one Gemini, one DeepSeek, two OpenRouter, three local models of different sizes. Publish pass rate, seconds and
   cost per task in the README; make Settings' "works well" come from this table, not from the model's family name.
