@@ -1,0 +1,558 @@
+{
+ "name": "excel-sort-dialog",
+ "app": "EXCEL.EXE",
+ "title": "Sort",
+ "note": "Excel's Sort dialog, over the sample budget",
+ "recordedAt": "2026-11-12",
+ "agentDesktop": "1.2.0",
+ "refCount": 28,
+ "complete": true,
+ "replaced": {},
+ "tree": {
+  "available_actions": [
+   "SetFocus"
+  ],
+  "bounds": {
+   "height": 344,
+   "width": 750,
+   "x": 938,
+   "y": 674
+  },
+  "children": [
+   {
+    "bounds": {
+     "height": 297,
+     "width": 732,
+     "x": 947,
+     "y": 712
+    },
+    "children": [
+     {
+      "available_actions": [
+       "Click",
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 32,
+       "width": 103,
+       "x": 954,
+       "y": 721
+      },
+      "name": "Add Level",
+      "ref_id": "@s1yinz9jwcqbva:e1",
+      "role": "button",
+      "role_description": "Button"
+     },
+     {
+      "available_actions": [
+       "Click",
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 32,
+       "width": 116,
+       "x": 1059,
+       "y": 721
+      },
+      "name": "Delete Level",
+      "ref_id": "@s1yinz9jwcqbva:e2",
+      "role": "button",
+      "role_description": "Button"
+     },
+     {
+      "available_actions": [
+       "Click",
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 32,
+       "width": 109,
+       "x": 1177,
+       "y": 721
+      },
+      "name": "Copy Level",
+      "ref_id": "@s1yinz9jwcqbva:e3",
+      "role": "button",
+      "role_description": "Button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 32,
+       "width": 32,
+       "x": 1290,
+       "y": 721
+      },
+      "description": "Move Up (Ctrl+Up Arrow)",
+      "name": "Move Up",
+      "ref_id": "@s1yinz9jwcqbva:e4",
+      "role": "button",
+      "role_description": "Button",
+      "states": [
+       "disabled"
+      ]
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 32,
+       "width": 32,
+       "x": 1324,
+       "y": 721
+      },
+      "description": "Move Down (Ctrl+Down Arrow)",
+      "name": "Move Down",
+      "ref_id": "@s1yinz9jwcqbva:e5",
+      "role": "button",
+      "role_description": "Button",
+      "states": [
+       "disabled"
+      ]
+     },
+     {
+      "available_actions": [
+       "Click",
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 32,
+       "width": 79,
+       "x": 1358,
+       "y": 721
+      },
+      "name": "Options...",
+      "ref_id": "@s1yinz9jwcqbva:e6",
+      "role": "button",
+      "role_description": "Button"
+     },
+     {
+      "available_actions": [
+       "Toggle",
+       "Click",
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 21,
+       "width": 150,
+       "x": 1522,
+       "y": 726
+      },
+      "name": "My data has headers",
+      "ref_id": "@s1yinz9jwcqbva:e7",
+      "role": "checkbox",
+      "role_description": "CheckBox",
+      "states": [
+       "checked"
+      ]
+     },
+     {
+      "available_actions": [
+       "Scroll"
+      ],
+      "bounds": {
+       "height": 209,
+       "width": 718,
+       "x": 954,
+       "y": 757
+      },
+      "children": [
+       {
+        "bounds": {
+         "height": 26,
+         "width": 714,
+         "x": 956,
+         "y": 759
+        },
+        "children": [
+         {
+          "available_actions": [
+           "Click",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 26,
+           "width": 242,
+           "x": 956,
+           "y": 759
+          },
+          "name": "Column",
+          "ref_id": "@s1yinz9jwcqbva:e9",
+          "role": "column",
+          "role_description": "Header Item"
+         },
+         {
+          "available_actions": [
+           "Click",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 26,
+           "width": 242,
+           "x": 1198,
+           "y": 759
+          },
+          "name": "Sort On",
+          "ref_id": "@s1yinz9jwcqbva:e10",
+          "role": "column",
+          "role_description": "Header Item"
+         },
+         {
+          "available_actions": [
+           "Click",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 26,
+           "width": 230,
+           "x": 1440,
+           "y": 759
+          },
+          "name": "Order",
+          "ref_id": "@s1yinz9jwcqbva:e11",
+          "role": "column",
+          "role_description": "Header Item"
+         }
+        ],
+        "role": "group",
+        "role_description": "Header"
+       },
+       {
+        "available_actions": [
+         "Select",
+         "ScrollTo",
+         "Click",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 27,
+         "width": 714,
+         "x": 956,
+         "y": 785
+        },
+        "children": [
+         {
+          "available_actions": [
+           "ScrollTo",
+           "Click"
+          ],
+          "bounds": {
+           "height": 27,
+           "width": 231,
+           "x": 956,
+           "y": 785
+          },
+          "children": [
+           {
+            "available_actions": [
+             "Expand",
+             "Collapse",
+             "SetValue",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 25,
+             "width": 170,
+             "x": 1016,
+             "y": 786
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click"
+              ],
+              "bounds": {
+               "height": 21,
+               "width": 21,
+               "x": 1163,
+               "y": 788
+              },
+              "name": "Open",
+              "ref_id": "@s1yinz9jwcqbva:e15",
+              "role": "button",
+              "role_description": "button"
+             }
+            ],
+            "name": "Sort by",
+            "ref_id": "@s1yinz9jwcqbva:e14",
+            "role": "combobox",
+            "role_description": "ComboBox"
+           }
+          ],
+          "name": "Sort by",
+          "ref_id": "@s1yinz9jwcqbva:e13",
+          "role": "cell",
+          "role_description": "Data Item"
+         },
+         {
+          "available_actions": [
+           "ScrollTo",
+           "Click"
+          ],
+          "bounds": {
+           "height": 27,
+           "width": 231,
+           "x": 1198,
+           "y": 785
+          },
+          "children": [
+           {
+            "available_actions": [
+             "Expand",
+             "Collapse",
+             "SetValue",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 25,
+             "width": 229,
+             "x": 1199,
+             "y": 786
+            },
+            "children": [
+             {
+              "available_actions": [
+               "SetValue",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 19,
+               "width": 207,
+               "x": 1199,
+               "y": 787
+              },
+              "name": "Sort On",
+              "ref_id": "@s1yinz9jwcqbva:e18",
+              "role": "statictext",
+              "role_description": "text",
+              "value": "Cell Values"
+             },
+             {
+              "available_actions": [
+               "Click"
+              ],
+              "bounds": {
+               "height": 21,
+               "width": 21,
+               "x": 1405,
+               "y": 788
+              },
+              "name": "Open",
+              "ref_id": "@s1yinz9jwcqbva:e19",
+              "role": "button",
+              "role_description": "button"
+             }
+            ],
+            "name": "Sort On",
+            "ref_id": "@s1yinz9jwcqbva:e17",
+            "role": "combobox",
+            "role_description": "ComboBox",
+            "value": "Cell Values"
+           }
+          ],
+          "name": "Sort On",
+          "ref_id": "@s1yinz9jwcqbva:e16",
+          "role": "cell",
+          "role_description": "Data Item"
+         },
+         {
+          "available_actions": [
+           "ScrollTo",
+           "Click"
+          ],
+          "bounds": {
+           "height": 27,
+           "width": 230,
+           "x": 1440,
+           "y": 785
+          },
+          "children": [
+           {
+            "available_actions": [
+             "Expand",
+             "Collapse",
+             "SetValue",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 25,
+             "width": 228,
+             "x": 1441,
+             "y": 786
+            },
+            "children": [
+             {
+              "available_actions": [
+               "SetValue",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 19,
+               "width": 206,
+               "x": 1441,
+               "y": 787
+              },
+              "name": "Order",
+              "ref_id": "@s1yinz9jwcqbva:e22",
+              "role": "statictext",
+              "role_description": "text",
+              "value": "A to Z"
+             },
+             {
+              "available_actions": [
+               "Click"
+              ],
+              "bounds": {
+               "height": 21,
+               "width": 21,
+               "x": 1646,
+               "y": 788
+              },
+              "name": "Open",
+              "ref_id": "@s1yinz9jwcqbva:e23",
+              "role": "button",
+              "role_description": "button"
+             }
+            ],
+            "name": "Order",
+            "ref_id": "@s1yinz9jwcqbva:e21",
+            "role": "combobox",
+            "role_description": "ComboBox",
+            "value": "A to Z"
+           }
+          ],
+          "name": "Order",
+          "ref_id": "@s1yinz9jwcqbva:e20",
+          "role": "cell",
+          "role_description": "Data Item"
+         }
+        ],
+        "name": "Sort Field",
+        "ref_id": "@s1yinz9jwcqbva:e12",
+        "role": "option",
+        "role_description": "List Item",
+        "states": [
+         "selected"
+        ]
+       }
+      ],
+      "ref_id": "@s1yinz9jwcqbva:e8",
+      "role": "grid",
+      "role_description": "Data Grid"
+     },
+     {
+      "available_actions": [
+       "Click",
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 30,
+       "width": 88,
+       "x": 1485,
+       "y": 970
+      },
+      "name": "OK",
+      "ref_id": "@s1yinz9jwcqbva:e24",
+      "role": "button",
+      "role_description": "Button",
+      "states": [
+       "focused"
+      ]
+     },
+     {
+      "available_actions": [
+       "Click",
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 30,
+       "width": 88,
+       "x": 1584,
+       "y": 970
+      },
+      "name": "Cancel",
+      "ref_id": "@s1yinz9jwcqbva:e25",
+      "role": "button",
+      "role_description": "Button"
+     }
+    ],
+    "name": "Sort",
+    "role": "window",
+    "role_description": "Window"
+   },
+   {
+    "available_actions": [
+     "SetValue",
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 35,
+     "width": 732,
+     "x": 947,
+     "y": 677
+    },
+    "children": [
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 37,
+       "width": 60,
+       "x": 1560,
+       "y": 675
+      },
+      "name": "Context help",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Help"
+      },
+      "ref_id": "@s1yinz9jwcqbva:e27",
+      "role": "button",
+      "role_description": "button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 37,
+       "width": 60,
+       "x": 1620,
+       "y": 675
+      },
+      "name": "Close",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Close"
+      },
+      "ref_id": "@s1yinz9jwcqbva:e28",
+      "role": "button",
+      "role_description": "button"
+     }
+    ],
+    "native_id": {
+     "kind": "automation_id",
+     "value": "TitleBar"
+    },
+    "ref_id": "@s1yinz9jwcqbva:e26",
+    "role": "group",
+    "role_description": "title bar",
+    "value": "Sort"
+   }
+  ],
+  "name": "Sort",
+  "role": "window",
+  "role_description": "window",
+  "states": [
+   "focused",
+   "modal"
+  ]
+ }
+}

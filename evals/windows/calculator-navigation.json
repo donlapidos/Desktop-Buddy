@@ -1,0 +1,1634 @@
+{
+ "name": "calculator-navigation",
+ "app": "CalculatorApp.exe",
+ "title": "Calculator",
+ "note": "Calculator with its mode list open",
+ "recordedAt": "2026-11-12",
+ "agentDesktop": "1.2.0",
+ "refCount": 62,
+ "complete": true,
+ "replaced": {},
+ "tree": {
+  "available_actions": [
+   "SetFocus"
+  ],
+  "bounds": {
+   "height": 675,
+   "width": 418,
+   "x": 50,
+   "y": 40
+  },
+  "children": [
+   {
+    "bounds": {
+     "height": 40,
+     "width": 233,
+     "x": 226,
+     "y": 41
+    },
+    "children": [
+     {
+      "available_actions": [
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 0,
+       "width": 0,
+       "x": 0,
+       "y": 0
+      },
+      "children": [
+       {
+        "available_actions": [
+         "Expand",
+         "Collapse",
+         "Click",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 0,
+         "width": 0,
+         "x": 0,
+         "y": 0
+        },
+        "name": "System",
+        "ref_id": "@svsgg918cpx9r:e1",
+        "role": "menuitem",
+        "role_description": "menu item",
+        "states": [
+         "haspopup"
+        ]
+       }
+      ],
+      "name": "System",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "SystemMenuBar"
+      },
+      "role": "menu",
+      "role_description": "menu bar"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 40,
+       "width": 57,
+       "x": 288,
+       "y": 41
+      },
+      "name": "Minimize Calculator",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Minimize"
+      },
+      "ref_id": "@svsgg918cpx9r:e2",
+      "role": "button",
+      "role_description": "button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 40,
+       "width": 57,
+       "x": 345,
+       "y": 41
+      },
+      "name": "Maximize Calculator",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Maximize"
+      },
+      "ref_id": "@svsgg918cpx9r:e3",
+      "role": "button",
+      "role_description": "button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 40,
+       "width": 57,
+       "x": 402,
+       "y": 41
+      },
+      "name": "Close Calculator",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Close"
+      },
+      "ref_id": "@svsgg918cpx9r:e4",
+      "role": "button",
+      "role_description": "button"
+     }
+    ],
+    "name": "Calculator",
+    "native_id": {
+     "kind": "automation_id",
+     "value": "TitleBar"
+    },
+    "role": "window",
+    "states": [
+     "readonly"
+    ],
+    "value": "Calculator"
+   },
+   {
+    "bounds": {
+     "height": 665,
+     "width": 400,
+     "x": 59,
+     "y": 41
+    },
+    "children": [
+     {
+      "available_actions": [
+       "ScrollTo"
+      ],
+      "bounds": {
+       "height": 625,
+       "width": 400,
+       "x": 59,
+       "y": 81
+      },
+      "children": [
+       {
+        "available_actions": [
+         "Click",
+         "ScrollTo",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 45,
+         "width": 50,
+         "x": 64,
+         "y": 89
+        },
+        "name": "Close Navigation",
+        "native_id": {
+         "kind": "automation_id",
+         "value": "TogglePaneButton"
+        },
+        "ref_id": "@svsgg918cpx9r:e5",
+        "role": "button",
+        "role_description": "button"
+       },
+       {
+        "available_actions": [
+         "ScrollTo"
+        ],
+        "bounds": {
+         "height": 625,
+         "width": 320,
+         "x": 59,
+         "y": 81
+        },
+        "children": [
+         {
+          "available_actions": [
+           "Scroll",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 497,
+           "width": 320,
+           "x": 59,
+           "y": 136
+          },
+          "children": [
+           {
+            "available_actions": [
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 484,
+             "width": 315,
+             "x": 59,
+             "y": 149
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 50,
+               "width": 315,
+               "x": 59,
+               "y": 186
+              },
+              "name": "Standard Calculator",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Standard"
+              },
+              "ref_id": "@svsgg918cpx9r:e7",
+              "role": "option",
+              "role_description": "list item",
+              "states": [
+               "focused",
+               "selected"
+              ]
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 310,
+               "x": 64,
+               "y": 239
+              },
+              "name": "Scientific Calculator",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Scientific"
+              },
+              "ref_id": "@svsgg918cpx9r:e8",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 310,
+               "x": 64,
+               "y": 289
+              },
+              "name": "Graphing Calculator",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Graphing"
+              },
+              "ref_id": "@svsgg918cpx9r:e9",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 310,
+               "x": 64,
+               "y": 339
+              },
+              "name": "Programmer Calculator",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Programmer"
+              },
+              "ref_id": "@svsgg918cpx9r:e10",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 310,
+               "x": 64,
+               "y": 389
+              },
+              "name": "Date calculation Calculator",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Date"
+              },
+              "ref_id": "@svsgg918cpx9r:e11",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 310,
+               "x": 64,
+               "y": 489
+              },
+              "name": "Currency Converter",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Currency"
+              },
+              "ref_id": "@svsgg918cpx9r:e12",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 310,
+               "x": 64,
+               "y": 539
+              },
+              "name": "Volume Converter",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Volume"
+              },
+              "ref_id": "@svsgg918cpx9r:e13",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 44,
+               "width": 310,
+               "x": 64,
+               "y": 589
+              },
+              "name": "Length Converter",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Length"
+              },
+              "ref_id": "@svsgg918cpx9r:e14",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "Weight and mass Converter",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Weight"
+              },
+              "ref_id": "@svsgg918cpx9r:e15",
+              "role": "option",
+              "role_description": "list item",
+              "states": [
+               "offscreen"
+              ]
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "Temperature Converter",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Temperature"
+              },
+              "ref_id": "@svsgg918cpx9r:e16",
+              "role": "option",
+              "role_description": "list item",
+              "states": [
+               "offscreen"
+              ]
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "Energy Converter",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Energy"
+              },
+              "ref_id": "@svsgg918cpx9r:e17",
+              "role": "option",
+              "role_description": "list item",
+              "states": [
+               "offscreen"
+              ]
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "Area Converter",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Area"
+              },
+              "ref_id": "@svsgg918cpx9r:e18",
+              "role": "option",
+              "role_description": "list item",
+              "states": [
+               "offscreen"
+              ]
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "Speed Converter",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Speed"
+              },
+              "ref_id": "@svsgg918cpx9r:e19",
+              "role": "option",
+              "role_description": "list item",
+              "states": [
+               "offscreen"
+              ]
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "Time Converter",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Time"
+              },
+              "ref_id": "@svsgg918cpx9r:e20",
+              "role": "option",
+              "role_description": "list item",
+              "states": [
+               "offscreen"
+              ]
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "Power Converter",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Power"
+              },
+              "ref_id": "@svsgg918cpx9r:e21",
+              "role": "option",
+              "role_description": "list item",
+              "states": [
+               "offscreen"
+              ]
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "Data Converter",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Data"
+              },
+              "ref_id": "@svsgg918cpx9r:e22",
+              "role": "option",
+              "role_description": "list item",
+              "states": [
+               "offscreen"
+              ]
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "Pressure Converter",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Pressure"
+              },
+              "ref_id": "@svsgg918cpx9r:e23",
+              "role": "option",
+              "role_description": "list item",
+              "states": [
+               "offscreen"
+              ]
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "Angle Converter",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "Angle"
+              },
+              "ref_id": "@svsgg918cpx9r:e24",
+              "role": "option",
+              "role_description": "list item",
+              "states": [
+               "offscreen"
+              ]
+             }
+            ],
+            "native_id": {
+             "kind": "automation_id",
+             "value": "MenuItemsHost"
+            },
+            "role": "group",
+            "role_description": "group"
+           },
+           {
+            "available_actions": [
+             "SetValue",
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 0,
+             "width": 0,
+             "x": 0,
+             "y": 0
+            },
+            "name": "Vertical",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "VerticalScrollBar"
+            },
+            "ref_id": "@svsgg918cpx9r:e25",
+            "role": "scrollbar",
+            "role_description": "scroll bar",
+            "states": [
+             "offscreen"
+            ]
+           }
+          ],
+          "native_id": {
+           "kind": "automation_id",
+           "value": "MenuItemsScrollViewer"
+          },
+          "ref_id": "@svsgg918cpx9r:e6",
+          "role": "group",
+          "role_description": "pane"
+         },
+         {
+          "available_actions": [
+           "Scroll",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 50,
+           "width": 320,
+           "x": 59,
+           "y": 651
+          },
+          "children": [
+           {
+            "available_actions": [
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 45,
+             "width": 310,
+             "x": 64,
+             "y": 654
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 310,
+               "x": 64,
+               "y": 654
+              },
+              "name": "Settings",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "SettingsItem"
+              },
+              "ref_id": "@svsgg918cpx9r:e27",
+              "role": "option",
+              "role_description": "list item"
+             }
+            ],
+            "native_id": {
+             "kind": "automation_id",
+             "value": "FooterMenuItemsHost"
+            },
+            "role": "group",
+            "role_description": "group"
+           }
+          ],
+          "native_id": {
+           "kind": "automation_id",
+           "value": "FooterItemsScrollViewer"
+          },
+          "ref_id": "@svsgg918cpx9r:e26",
+          "role": "group",
+          "role_description": "pane"
+         }
+        ],
+        "native_id": {
+         "kind": "automation_id",
+         "value": "PaneRoot"
+        },
+        "role": "window",
+        "role_description": "window",
+        "states": [
+         "modal"
+        ]
+       },
+       {
+        "available_actions": [
+         "ScrollTo"
+        ],
+        "bounds": {
+         "height": 610,
+         "width": 400,
+         "x": 59,
+         "y": 91
+        },
+        "children": [
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 94,
+           "width": 400,
+           "x": 59,
+           "y": 170
+          },
+          "children": [
+           {
+            "available_actions": [
+             "Scroll",
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 94,
+             "width": 370,
+             "x": 74,
+             "y": 170
+            },
+            "name": "0",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "TextContainer"
+            },
+            "ref_id": "@svsgg918cpx9r:e29",
+            "role": "group",
+            "role_description": "pane"
+           }
+          ],
+          "name": "Display is 0",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "CalculatorResults"
+          },
+          "ref_id": "@svsgg918cpx9r:e28",
+          "role": "statictext",
+          "role_description": "text"
+         },
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 40,
+           "width": 40,
+           "x": 409,
+           "y": 91
+          },
+          "name": "Open history flyout",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "HistoryButton"
+          },
+          "ref_id": "@svsgg918cpx9r:e30",
+          "role": "button",
+          "role_description": "button"
+         },
+         {
+          "available_actions": [
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 38,
+           "width": 391,
+           "x": 64,
+           "y": 265
+          },
+          "children": [
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 38,
+             "width": 63,
+             "x": 64,
+             "y": 265
+            },
+            "name": "Clear all memory",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "ClearMemoryButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e31",
+            "role": "button",
+            "role_description": "button",
+            "states": [
+             "disabled"
+            ]
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 38,
+             "width": 63,
+             "x": 129,
+             "y": 265
+            },
+            "name": "Memory recall",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "MemRecall"
+            },
+            "ref_id": "@svsgg918cpx9r:e32",
+            "role": "button",
+            "role_description": "button",
+            "states": [
+             "disabled"
+            ]
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 38,
+             "width": 63,
+             "x": 194,
+             "y": 265
+            },
+            "name": "Memory add",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "MemPlus"
+            },
+            "ref_id": "@svsgg918cpx9r:e33",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 38,
+             "width": 63,
+             "x": 260,
+             "y": 265
+            },
+            "name": "Memory subtract",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "MemMinus"
+            },
+            "ref_id": "@svsgg918cpx9r:e34",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 38,
+             "width": 63,
+             "x": 326,
+             "y": 265
+            },
+            "name": "Memory store",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "memButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e35",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 38,
+             "width": 63,
+             "x": 392,
+             "y": 265
+            },
+            "name": "Open memory flyout",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "MemoryButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e36",
+            "role": "button",
+            "role_description": "button",
+            "states": [
+             "disabled"
+            ]
+           }
+          ],
+          "name": "Memory controls",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "MemoryPanel"
+          },
+          "role": "group",
+          "role_description": "group"
+         },
+         {
+          "available_actions": [
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 63,
+           "width": 390,
+           "x": 64,
+           "y": 306
+          },
+          "children": [
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 64,
+             "y": 306
+            },
+            "name": "Percent",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "percentButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e37",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 161,
+             "y": 306
+            },
+            "name": "Clear entry",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "clearEntryButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e38",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 260,
+             "y": 306
+            },
+            "name": "Clear",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "clearButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e39",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 358,
+             "y": 306
+            },
+            "name": "Backspace",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "backSpaceButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e40",
+            "role": "button",
+            "role_description": "button"
+           }
+          ],
+          "name": "Display controls",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "DisplayControls"
+          },
+          "role": "group",
+          "role_description": "group"
+         },
+         {
+          "available_actions": [
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 63,
+           "width": 292,
+           "x": 64,
+           "y": 372
+          },
+          "children": [
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 64,
+             "y": 372
+            },
+            "name": "Reciprocal",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "invertButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e41",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 161,
+             "y": 372
+            },
+            "name": "Square",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "xpower2Button"
+            },
+            "ref_id": "@svsgg918cpx9r:e42",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 260,
+             "y": 372
+            },
+            "name": "Square root",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "squareRootButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e43",
+            "role": "button",
+            "role_description": "button"
+           }
+          ],
+          "name": "Standard functions",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "StandardFunctions"
+          },
+          "role": "group",
+          "role_description": "group"
+         },
+         {
+          "available_actions": [
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 328,
+           "width": 96,
+           "x": 358,
+           "y": 372
+          },
+          "children": [
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 358,
+             "y": 372
+            },
+            "name": "Divide by",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "divideButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e44",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 358,
+             "y": 439
+            },
+            "name": "Multiply by",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "multiplyButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e45",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 358,
+             "y": 504
+            },
+            "name": "Minus",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "minusButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e46",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 358,
+             "y": 570
+            },
+            "name": "Plus",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "plusButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e47",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 64,
+             "width": 96,
+             "x": 358,
+             "y": 636
+            },
+            "name": "Equals",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "equalButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e48",
+            "role": "button",
+            "role_description": "button"
+           }
+          ],
+          "name": "Standard operators",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "StandardOperators"
+          },
+          "role": "group",
+          "role_description": "group"
+         },
+         {
+          "available_actions": [
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 262,
+           "width": 292,
+           "x": 64,
+           "y": 438
+          },
+          "children": [
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 161,
+             "y": 637
+            },
+            "name": "Zero",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "num0Button"
+            },
+            "ref_id": "@svsgg918cpx9r:e49",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 64,
+             "width": 96,
+             "x": 64,
+             "y": 570
+            },
+            "name": "One",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "num1Button"
+            },
+            "ref_id": "@svsgg918cpx9r:e50",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 64,
+             "width": 96,
+             "x": 161,
+             "y": 570
+            },
+            "name": "Two",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "num2Button"
+            },
+            "ref_id": "@svsgg918cpx9r:e51",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 64,
+             "width": 96,
+             "x": 260,
+             "y": 570
+            },
+            "name": "Three",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "num3Button"
+            },
+            "ref_id": "@svsgg918cpx9r:e52",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 64,
+             "y": 505
+            },
+            "name": "Four",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "num4Button"
+            },
+            "ref_id": "@svsgg918cpx9r:e53",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 161,
+             "y": 505
+            },
+            "name": "Five",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "num5Button"
+            },
+            "ref_id": "@svsgg918cpx9r:e54",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 260,
+             "y": 505
+            },
+            "name": "Six",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "num6Button"
+            },
+            "ref_id": "@svsgg918cpx9r:e55",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 64,
+             "y": 438
+            },
+            "name": "Seven",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "num7Button"
+            },
+            "ref_id": "@svsgg918cpx9r:e56",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 161,
+             "y": 438
+            },
+            "name": "Eight",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "num8Button"
+            },
+            "ref_id": "@svsgg918cpx9r:e57",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 260,
+             "y": 438
+            },
+            "name": "Nine",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "num9Button"
+            },
+            "ref_id": "@svsgg918cpx9r:e58",
+            "role": "button",
+            "role_description": "button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 63,
+             "width": 96,
+             "x": 260,
+             "y": 637
+            },
+            "name": "Decimal separator",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "decimalSeparatorButton"
+            },
+            "ref_id": "@svsgg918cpx9r:e59",
+            "role": "button",
+            "role_description": "button"
+           }
+          ],
+          "name": "Number pad",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "NumberPad"
+          },
+          "role": "group",
+          "role_description": "group"
+         },
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 63,
+           "width": 96,
+           "x": 64,
+           "y": 638
+          },
+          "name": "Positive negative",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "negateButton"
+          },
+          "ref_id": "@svsgg918cpx9r:e60",
+          "role": "button",
+          "role_description": "button"
+         }
+        ],
+        "role": "group",
+        "role_description": "group"
+       },
+       {
+        "available_actions": [
+         "Click",
+         "ScrollTo",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 40,
+         "width": 40,
+         "x": 234,
+         "y": 91
+        },
+        "name": "Keep on top",
+        "native_id": {
+         "kind": "automation_id",
+         "value": "NormalAlwaysOnTopButton"
+        },
+        "ref_id": "@svsgg918cpx9r:e61",
+        "role": "button",
+        "role_description": "button"
+       },
+       {
+        "available_actions": [
+         "Click",
+         "ScrollTo"
+        ],
+        "bounds": {
+         "height": 625,
+         "width": 400,
+         "x": 59,
+         "y": 81
+        },
+        "name": "Close",
+        "native_id": {
+         "kind": "automation_id",
+         "value": "LightDismiss"
+        },
+        "ref_id": "@svsgg918cpx9r:e62",
+        "role": "button",
+        "role_description": "button"
+       }
+      ],
+      "native_id": {
+       "kind": "automation_id",
+       "value": "NavView"
+      },
+      "role": "unknown",
+      "role_description": "customised"
+     }
+    ],
+    "name": "Calculator",
+    "role": "window",
+    "role_description": "window",
+    "states": [
+     "focused"
+    ]
+   }
+  ],
+  "name": "Calculator",
+  "role": "window",
+  "role_description": "window"
+ }
+}

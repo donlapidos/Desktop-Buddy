@@ -1,0 +1,2544 @@
+{
+ "name": "explorer-photos-folder",
+ "app": "explorer.exe",
+ "title": "Holiday photos - File Explorer",
+ "note": "File Explorer inside a made-up photos folder (three images)",
+ "recordedAt": "2026-11-12",
+ "agentDesktop": "1.2.0",
+ "refCount": 101,
+ "complete": true,
+ "replaced": {
+  "name": 9,
+  "pc": 1
+ },
+ "tree": {
+  "available_actions": [
+   "SetFocus"
+  ],
+  "bounds": {
+   "height": 750,
+   "width": 1424,
+   "x": 194,
+   "y": 390
+  },
+  "children": [
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 571,
+     "width": 1406,
+     "x": 203,
+     "y": 560
+    },
+    "children": [
+     {
+      "available_actions": [
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 571,
+       "width": 1406,
+       "x": 203,
+       "y": 560
+      },
+      "children": [
+       {
+        "bounds": {
+         "height": 571,
+         "width": 1406,
+         "x": 203,
+         "y": 560
+        },
+        "children": [
+         {
+          "available_actions": [
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 540,
+           "width": 374,
+           "x": 1235,
+           "y": 560
+          },
+          "children": [
+           {
+            "available_actions": [
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 540,
+             "width": 374,
+             "x": 1235,
+             "y": 560
+            },
+            "children": [
+             {
+              "available_actions": [
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 540,
+               "width": 374,
+               "x": 1235,
+               "y": 560
+              },
+              "children": [
+               {
+                "bounds": {
+                 "height": 540,
+                 "width": 374,
+                 "x": 1235,
+                 "y": 560
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "ScrollTo"
+                  ],
+                  "bounds": {
+                   "height": 540,
+                   "width": 374,
+                   "x": 1235,
+                   "y": 560
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Scroll",
+                     "ScrollTo"
+                    ],
+                    "bounds": {
+                     "height": 540,
+                     "width": 374,
+                     "x": 1235,
+                     "y": 560
+                    },
+                    "ref_id": "@s1cs72hah4pbav:e1",
+                    "role": "group",
+                    "role_description": "pane"
+                   }
+                  ],
+                  "name": "Holiday photos (3 items)",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "DetailsViewControlRootGrid"
+                  },
+                  "role": "group",
+                  "role_description": "group"
+                 }
+                ],
+                "role": "group",
+                "role_description": "pane",
+                "states": [
+                 "focused"
+                ]
+               }
+              ],
+              "role": "group",
+              "role_description": "pane"
+             }
+            ],
+            "name": "Details Pane",
+            "role": "group",
+            "role_description": "pane"
+           }
+          ],
+          "role": "group",
+          "role_description": "pane"
+         },
+         {
+          "bounds": {
+           "height": 571,
+           "width": 1406,
+           "x": 203,
+           "y": 560
+          },
+          "children": [
+           {
+            "bounds": {
+             "height": 31,
+             "width": 1406,
+             "x": 203,
+             "y": 1100
+            },
+            "children": [
+             {
+              "bounds": {
+               "height": 31,
+               "width": 62,
+               "x": 1542,
+               "y": 1100
+              },
+              "children": [
+               {
+                "available_actions": [
+                 "Select",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 31,
+                 "width": 31,
+                 "x": 1542,
+                 "y": 1100
+                },
+                "description": "Displays information about each item in the window.  (Ctrl+Shift+6)",
+                "name": "Details",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "ViewMode_Details"
+                },
+                "ref_id": "@s1cs72hah4pbav:e2",
+                "role": "radiobutton",
+                "role_description": "radio button",
+                "states": [
+                 "readonly"
+                ]
+               },
+               {
+                "available_actions": [
+                 "Select",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 31,
+                 "width": 31,
+                 "x": 1573,
+                 "y": 1100
+                },
+                "description": "Displays items by using large thumbnails.  (Ctrl+Shift+2)",
+                "name": "Large Icons",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "ViewMode_LargeIcons"
+                },
+                "ref_id": "@s1cs72hah4pbav:e3",
+                "role": "radiobutton",
+                "role_description": "radio button",
+                "states": [
+                 "selected",
+                 "readonly"
+                ]
+               }
+              ],
+              "name": "View Modes",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "ViewButtonsGroup"
+              },
+              "role": "group",
+              "role_description": "group",
+              "states": [
+               "readonly"
+              ]
+             }
+            ],
+            "name": "Status bar",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "StatusBarModuleInner"
+            },
+            "role": "status",
+            "role_description": "status bar",
+            "states": [
+             "readonly"
+            ]
+           },
+           {
+            "available_actions": [
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 540,
+             "width": 192,
+             "x": 206,
+             "y": 560
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Scroll",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 540,
+               "width": 192,
+               "x": 206,
+               "y": 560
+              },
+              "children": [
+               {
+                "available_actions": [
+                 "SetValue"
+                ],
+                "bounds": {
+                 "height": 540,
+                 "width": 21,
+                 "x": 377,
+                 "y": 560
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Click"
+                  ],
+                  "bounds": {
+                   "height": 21,
+                   "width": 21,
+                   "x": 377,
+                   "y": 560
+                  },
+                  "name": "Line up",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "UpButton"
+                  },
+                  "ref_id": "@s1cs72hah4pbav:e6",
+                  "role": "button",
+                  "role_description": "button"
+                 },
+                 {
+                  "available_actions": [
+                   "Click"
+                  ],
+                  "bounds": {
+                   "height": 146,
+                   "width": 21,
+                   "x": 377,
+                   "y": 581
+                  },
+                  "name": "Page up",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "UpPageButton"
+                  },
+                  "ref_id": "@s1cs72hah4pbav:e7",
+                  "role": "button",
+                  "role_description": "button"
+                 },
+                 {
+                  "available_actions": [
+                   "Click"
+                  ],
+                  "bounds": {
+                   "height": 21,
+                   "width": 21,
+                   "x": 377,
+                   "y": 1079
+                  },
+                  "name": "Line down",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "DownButton"
+                  },
+                  "ref_id": "@s1cs72hah4pbav:e8",
+                  "role": "button",
+                  "role_description": "button"
+                 }
+                ],
+                "name": "Vertical",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "NonClientVerticalScrollBar"
+                },
+                "ref_id": "@s1cs72hah4pbav:e5",
+                "role": "scrollbar",
+                "role_description": "scroll bar"
+               },
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Select",
+                 "SetValue",
+                 "ScrollTo",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 0,
+                 "width": 0,
+                 "x": 0,
+                 "y": 0
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Select",
+                   "SetValue",
+                   "ScrollTo",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 0,
+                   "width": 0,
+                   "x": 0,
+                   "y": 0
+                  },
+                  "name": "Home",
+                  "ref_id": "@s1cs72hah4pbav:e10",
+                  "role": "treeitem",
+                  "role_description": "tree item",
+                  "states": [
+                   "offscreen"
+                  ],
+                  "value": "Home"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Select",
+                   "SetValue",
+                   "ScrollTo",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 0,
+                   "width": 0,
+                   "x": 0,
+                   "y": 0
+                  },
+                  "name": "Gallery",
+                  "ref_id": "@s1cs72hah4pbav:e11",
+                  "role": "treeitem",
+                  "role_description": "tree item",
+                  "states": [
+                   "offscreen"
+                  ],
+                  "value": "Gallery"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Select",
+                   "SetValue",
+                   "ScrollTo",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 0,
+                   "width": 0,
+                   "x": 0,
+                   "y": 0
+                  },
+                  "name": "<name> - <name> (OneDrive)",
+                  "ref_id": "@s1cs72hah4pbav:e12",
+                  "role": "treeitem",
+                  "role_description": "tree item",
+                  "states": [
+                   "offscreen"
+                  ],
+                  "value": "<name> - <name> (OneDrive)"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Select",
+                   "SetValue",
+                   "ScrollTo",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 0,
+                   "width": 0,
+                   "x": 0,
+                   "y": 0
+                  },
+                  "name": "Start of Quick Access - Desktop (pinned)",
+                  "ref_id": "@s1cs72hah4pbav:e13",
+                  "role": "treeitem",
+                  "role_description": "tree item",
+                  "states": [
+                   "offscreen"
+                  ],
+                  "value": "Start of Quick Access - Desktop (pinned)"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Select",
+                   "SetValue",
+                   "ScrollTo",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 40,
+                   "width": 79,
+                   "x": 269,
+                   "y": 560
+                  },
+                  "name": "Downloads (pinned)",
+                  "ref_id": "@s1cs72hah4pbav:e14",
+                  "role": "treeitem",
+                  "role_description": "tree item",
+                  "value": "Downloads (pinned)"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Select",
+                   "SetValue",
+                   "ScrollTo",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 40,
+                   "width": 79,
+                   "x": 269,
+                   "y": 600
+                  },
+                  "name": "Documents (pinned)",
+                  "ref_id": "@s1cs72hah4pbav:e15",
+                  "role": "treeitem",
+                  "role_description": "tree item",
+                  "value": "Documents (pinned)"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Select",
+                   "SetValue",
+                   "ScrollTo",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 40,
+                   "width": 55,
+                   "x": 269,
+                   "y": 640
+                  },
+                  "name": "Pictures (pinned)",
+                  "ref_id": "@s1cs72hah4pbav:e16",
+                  "role": "treeitem",
+                  "role_description": "tree item",
+                  "value": "Pictures (pinned)"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Select",
+                   "SetValue",
+                   "ScrollTo",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 40,
+                   "width": 42,
+                   "x": 269,
+                   "y": 680
+                  },
+                  "name": "Music (pinned)",
+                  "ref_id": "@s1cs72hah4pbav:e17",
+                  "role": "treeitem",
+                  "role_description": "tree item",
+                  "value": "Music (pinned)"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Select",
+                   "SetValue",
+                   "ScrollTo",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 40,
+                   "width": 49,
+                   "x": 269,
+                   "y": 720
+                  },
+                  "name": "Videos (pinned)",
+                  "ref_id": "@s1cs72hah4pbav:e18",
+                  "role": "treeitem",
+                  "role_description": "tree item",
+                  "value": "Videos (pinned)"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Select",
+                   "SetValue",
+                   "ScrollTo",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 40,
+                   "width": 82,
+                   "x": 269,
+                   "y": 760
+                  },
+                  "name": "End of Quick Access - Screenshots",
+                  "ref_id": "@s1cs72hah4pbav:e19",
+                  "role": "treeitem",
+                  "role_description": "tree item",
+                  "value": "End of Quick Access - Screenshots"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Select",
+                   "SetValue",
+                   "ScrollTo",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 40,
+                   "width": 66,
+                   "x": 269,
+                   "y": 840
+                  },
+                  "name": "OneDrive",
+                  "ref_id": "@s1cs72hah4pbav:e20",
+                  "role": "treeitem",
+                  "role_description": "tree item",
+                  "value": "OneDrive"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Select",
+                   "SetValue",
+                   "ScrollTo",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 40,
+                   "width": 108,
+                   "x": 269,
+                   "y": 880
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Expand",
+                     "Collapse",
+                     "Select",
+                     "SetValue",
+                     "ScrollTo",
+                     "Click",
+                     "SetFocus"
+                    ],
+                    "bounds": {
+                     "height": 40,
+                     "width": 98,
+                     "x": 279,
+                     "y": 920
+                    },
+                    "name": "<name> (OneDrive)",
+                    "ref_id": "@s1cs72hah4pbav:e22",
+                    "role": "treeitem",
+                    "role_description": "tree item",
+                    "value": "<name> (OneDrive)"
+                   }
+                  ],
+                  "name": "<name>",
+                  "ref_id": "@s1cs72hah4pbav:e21",
+                  "role": "treeitem",
+                  "role_description": "tree item",
+                  "states": [
+                   "expanded"
+                  ],
+                  "value": "<name>"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Select",
+                   "SetValue",
+                   "ScrollTo",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 40,
+                   "width": 51,
+                   "x": 269,
+                   "y": 960
+                  },
+                  "name": "This PC",
+                  "ref_id": "@s1cs72hah4pbav:e23",
+                  "role": "treeitem",
+                  "role_description": "tree item",
+                  "states": [
+                   "selected"
+                  ],
+                  "value": "This PC"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Select",
+                   "SetValue",
+                   "ScrollTo",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 40,
+                   "width": 60,
+                   "x": 269,
+                   "y": 1000
+                  },
+                  "name": "Network",
+                  "ref_id": "@s1cs72hah4pbav:e24",
+                  "role": "treeitem",
+                  "role_description": "tree item",
+                  "value": "Network"
+                 }
+                ],
+                "name": "Desktop (OneDrive)",
+                "ref_id": "@s1cs72hah4pbav:e9",
+                "role": "treeitem",
+                "role_description": "tree item",
+                "states": [
+                 "expanded"
+                ],
+                "value": "Desktop (OneDrive)"
+               }
+              ],
+              "name": "Navigation Pane",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "100"
+              },
+              "ref_id": "@s1cs72hah4pbav:e4",
+              "role": "outline",
+              "role_description": "tree"
+             }
+            ],
+            "name": "Control Host",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "ProperTreeHost"
+            },
+            "role": "group",
+            "role_description": "pane"
+           },
+           {
+            "available_actions": [
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 540,
+             "width": 828,
+             "x": 403,
+             "y": 560
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Scroll"
+              ],
+              "bounds": {
+               "height": 540,
+               "width": 828,
+               "x": 403,
+               "y": 560
+              },
+              "children": [
+               {
+                "available_actions": [
+                 "Click",
+                 "Select",
+                 "SetValue",
+                 "ScrollTo",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 147,
+                 "width": 131,
+                 "x": 421,
+                 "y": 568
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "SetValue"
+                  ],
+                  "bounds": {
+                   "height": 21,
+                   "width": 58,
+                   "x": 458,
+                   "y": 691
+                  },
+                  "name": "Name",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "System.ItemNameDisplay"
+                  },
+                  "ref_id": "@s1cs72hah4pbav:e27",
+                  "role": "textfield",
+                  "role_description": "edit",
+                  "value": "beach-1"
+                 }
+                ],
+                "name": "beach-1",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "0"
+                },
+                "ref_id": "@s1cs72hah4pbav:e26",
+                "role": "option",
+                "role_description": "list item",
+                "states": [
+                 "focused"
+                ],
+                "value": "beach-1"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "Select",
+                 "SetValue",
+                 "ScrollTo",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 147,
+                 "width": 131,
+                 "x": 556,
+                 "y": 568
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "SetValue"
+                  ],
+                  "bounds": {
+                   "height": 21,
+                   "width": 58,
+                   "x": 593,
+                   "y": 691
+                  },
+                  "name": "Name",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "System.ItemNameDisplay"
+                  },
+                  "ref_id": "@s1cs72hah4pbav:e29",
+                  "role": "textfield",
+                  "role_description": "edit",
+                  "value": "beach-2"
+                 }
+                ],
+                "name": "beach-2",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "1"
+                },
+                "ref_id": "@s1cs72hah4pbav:e28",
+                "role": "option",
+                "role_description": "list item",
+                "value": "beach-2"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "Select",
+                 "SetValue",
+                 "ScrollTo",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 147,
+                 "width": 131,
+                 "x": 691,
+                 "y": 568
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "SetValue"
+                  ],
+                  "bounds": {
+                   "height": 21,
+                   "width": 58,
+                   "x": 728,
+                   "y": 691
+                  },
+                  "name": "Name",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "System.ItemNameDisplay"
+                  },
+                  "ref_id": "@s1cs72hah4pbav:e31",
+                  "role": "textfield",
+                  "role_description": "edit",
+                  "value": "beach-3"
+                 }
+                ],
+                "name": "beach-3",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "2"
+                },
+                "ref_id": "@s1cs72hah4pbav:e30",
+                "role": "option",
+                "role_description": "list item",
+                "value": "beach-3"
+               }
+              ],
+              "name": "Items View",
+              "ref_id": "@s1cs72hah4pbav:e25",
+              "role": "listbox",
+              "role_description": "list",
+              "states": [
+               "readonly",
+               "multiselectable"
+              ]
+             }
+            ],
+            "name": "Shell Folder View",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "listview"
+            },
+            "role": "group",
+            "role_description": "pane"
+           }
+          ],
+          "name": "Folder Layout Pane",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "FolderLayoutContainer"
+          },
+          "role": "group",
+          "role_description": "pane",
+          "states": [
+           "readonly"
+          ]
+         }
+        ],
+        "name": "Explorer Pane",
+        "native_id": {
+         "kind": "automation_id",
+         "value": "main"
+        },
+        "role": "group",
+        "role_description": "pane",
+        "states": [
+         "readonly"
+        ]
+       }
+      ],
+      "role": "group",
+      "role_description": "pane"
+     }
+    ],
+    "name": "Holiday photos",
+    "role": "group",
+    "role_description": "pane"
+   },
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 167,
+     "width": 1406,
+     "x": 203,
+     "y": 393
+    },
+    "children": [
+     {
+      "bounds": {
+       "height": 167,
+       "width": 1406,
+       "x": 203,
+       "y": 393
+      },
+      "children": [
+       {
+        "available_actions": [
+         "ScrollTo"
+        ],
+        "bounds": {
+         "height": 48,
+         "width": 1406,
+         "x": 203,
+         "y": 393
+        },
+        "children": [
+         {
+          "available_actions": [
+           "Scroll",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 48,
+           "width": 313,
+           "x": 206,
+           "y": 393
+          },
+          "children": [
+           {
+            "available_actions": [
+             "Select",
+             "ScrollTo",
+             "Click",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 40,
+             "width": 310,
+             "x": 209,
+             "y": 401
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 30,
+               "width": 40,
+               "x": 469,
+               "y": 406
+              },
+              "name": "Close Tab",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "CloseButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e34",
+              "role": "button",
+              "role_description": "button"
+             }
+            ],
+            "name": "Holiday photos",
+            "ref_id": "@s1cs72hah4pbav:e33",
+            "role": "tab",
+            "role_description": "tab item",
+            "states": [
+             "selected"
+            ]
+           }
+          ],
+          "native_id": {
+           "kind": "automation_id",
+           "value": "TabListView"
+          },
+          "ref_id": "@s1cs72hah4pbav:e32",
+          "role": "listbox",
+          "role_description": "list"
+         },
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 30,
+           "width": 40,
+           "x": 523,
+           "y": 407
+          },
+          "name": "Add New Tab",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "AddButton"
+          },
+          "ref_id": "@s1cs72hah4pbav:e35",
+          "role": "button",
+          "role_description": "button"
+         }
+        ],
+        "native_id": {
+         "kind": "automation_id",
+         "value": "TabView"
+        },
+        "role": "tablist",
+        "role_description": "tab"
+       },
+       {
+        "available_actions": [
+         "Toggle",
+         "Expand",
+         "Collapse",
+         "ScrollTo",
+         "Click"
+        ],
+        "bounds": {
+         "height": 60,
+         "width": 247,
+         "x": 207,
+         "y": 441
+        },
+        "children": [
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 40,
+           "width": 40,
+           "x": 217,
+           "y": 451
+          },
+          "description": "Back to buddy-samples",
+          "name": "Back",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "backButton"
+          },
+          "ref_id": "@s1cs72hah4pbav:e37",
+          "role": "button",
+          "role_description": "app bar button"
+         },
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 40,
+           "width": 40,
+           "x": 277,
+           "y": 451
+          },
+          "description": "Forward",
+          "name": "Forward",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "forwardButton"
+          },
+          "ref_id": "@s1cs72hah4pbav:e38",
+          "role": "button",
+          "role_description": "app bar button",
+          "states": [
+           "disabled"
+          ]
+         },
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 40,
+           "width": 40,
+           "x": 337,
+           "y": 451
+          },
+          "description": "Up to \"buddy-samples\" (Alt + Up Arrow)",
+          "name": "Up to \"buddy-samples\" (Alt + Up Arrow)",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "upButton"
+          },
+          "ref_id": "@s1cs72hah4pbav:e39",
+          "role": "button",
+          "role_description": "app bar button"
+         },
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 40,
+           "width": 40,
+           "x": 397,
+           "y": 451
+          },
+          "description": "Refresh \"Holiday photos\" (F5)",
+          "name": "Refresh \"Holiday photos\" (F5)",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "refreshButton"
+          },
+          "ref_id": "@s1cs72hah4pbav:e40",
+          "role": "button",
+          "role_description": "app bar button"
+         }
+        ],
+        "native_id": {
+         "kind": "automation_id",
+         "value": "NavigationCommands"
+        },
+        "ref_id": "@s1cs72hah4pbav:e36",
+        "role": "toolbar",
+        "role_description": "app bar"
+       },
+       {
+        "available_actions": [
+         "Click",
+         "ScrollTo"
+        ],
+        "bounds": {
+         "height": 40,
+         "width": 805,
+         "x": 455,
+         "y": 451
+        },
+        "children": [
+         {
+          "available_actions": [
+           "SetValue",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 40,
+           "width": 805,
+           "x": 455,
+           "y": 451
+          },
+          "children": [
+           {
+            "available_actions": [
+             "SetValue"
+            ],
+            "bounds": {
+             "height": 40,
+             "width": 805,
+             "x": 455,
+             "y": 451
+            },
+            "name": "Address Bar",
+            "ref_id": "@s1cs72hah4pbav:e43",
+            "role": "textfield",
+            "role_description": "edit"
+           },
+           {
+            "available_actions": [
+             "Scroll",
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 37,
+             "width": 797,
+             "x": 456,
+             "y": 452
+            },
+            "native_id": {
+             "kind": "automation_id",
+             "value": "ContentElement"
+            },
+            "ref_id": "@s1cs72hah4pbav:e44",
+            "role": "group",
+            "role_description": "pane"
+           }
+          ],
+          "name": "Address Bar",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "TextBox"
+          },
+          "ref_id": "@s1cs72hah4pbav:e42",
+          "role": "textfield",
+          "role_description": "edit"
+         }
+        ],
+        "native_id": {
+         "kind": "automation_id",
+         "value": "PART_AutoSuggestBox"
+        },
+        "ref_id": "@s1cs72hah4pbav:e41",
+        "role": "group",
+        "role_description": "group"
+       },
+       {
+        "available_actions": [
+         "Click",
+         "Expand",
+         "Collapse",
+         "ScrollTo",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 30,
+         "width": 64,
+         "x": 472,
+         "y": 456
+        },
+        "children": [
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 20,
+           "width": 20,
+           "x": 472,
+           "y": 461
+          },
+          "native_id": {
+           "kind": "automation_id",
+           "value": "PART_BreadCrumbBarIcon"
+          },
+          "ref_id": "@s1cs72hah4pbav:e46",
+          "role": "button",
+          "role_description": "button"
+         },
+         {
+          "available_actions": [
+           "Toggle",
+           "ScrollTo",
+           "Click"
+          ],
+          "bounds": {
+           "height": 30,
+           "width": 32,
+           "x": 504,
+           "y": 456
+          },
+          "native_id": {
+           "kind": "automation_id",
+           "value": "PART_RootChevronButton"
+          },
+          "ref_id": "@s1cs72hah4pbav:e47",
+          "role": "switch",
+          "role_description": "button"
+         }
+        ],
+        "name": "This PC",
+        "native_id": {
+         "kind": "automation_id",
+         "value": "FirstCrumbStackPanel"
+        },
+        "ref_id": "@s1cs72hah4pbav:e45",
+        "role": "menubutton",
+        "role_description": "split button"
+       },
+       {
+        "available_actions": [
+         "ScrollTo"
+        ],
+        "bounds": {
+         "height": 30,
+         "width": 690,
+         "x": 536,
+         "y": 456
+        },
+        "children": [
+         {
+          "available_actions": [
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 30,
+           "width": 635,
+           "x": 536,
+           "y": 456
+          },
+          "children": [
+           {
+            "available_actions": [
+             "Click",
+             "Expand",
+             "Collapse",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 30,
+             "width": 38,
+             "x": 536,
+             "y": 456
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 30,
+               "width": 38,
+               "x": 536,
+               "y": 456
+              },
+              "name": "BreadcrumbBarItemButton",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ItemButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e49",
+              "role": "button",
+              "role_description": "button"
+             }
+            ],
+            "name": "More",
+            "ref_id": "@s1cs72hah4pbav:e48",
+            "role": "menubutton",
+            "role_description": "split button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Expand",
+             "Collapse",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 0,
+             "width": 0,
+             "x": 0,
+             "y": 0
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "BreadcrumbBarItemButton",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ItemButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e51",
+              "role": "button",
+              "role_description": "button",
+              "states": [
+               "offscreen"
+              ]
+             },
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ChevronButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e52",
+              "role": "button",
+              "role_description": "button",
+              "states": [
+               "offscreen"
+              ]
+             }
+            ],
+            "name": "This PC",
+            "ref_id": "@s1cs72hah4pbav:e50",
+            "role": "menubutton",
+            "role_description": "split button",
+            "states": [
+             "offscreen"
+            ]
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Expand",
+             "Collapse",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 0,
+             "width": 0,
+             "x": 0,
+             "y": 0
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "BreadcrumbBarItemButton",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ItemButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e54",
+              "role": "button",
+              "role_description": "button",
+              "states": [
+               "offscreen"
+              ]
+             },
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ChevronButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e55",
+              "role": "button",
+              "role_description": "button",
+              "states": [
+               "offscreen"
+              ]
+             }
+            ],
+            "name": "OS (C:)",
+            "ref_id": "@s1cs72hah4pbav:e53",
+            "role": "menubutton",
+            "role_description": "split button",
+            "states": [
+             "offscreen"
+            ]
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Expand",
+             "Collapse",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 0,
+             "width": 0,
+             "x": 0,
+             "y": 0
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "BreadcrumbBarItemButton",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ItemButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e57",
+              "role": "button",
+              "role_description": "button",
+              "states": [
+               "offscreen"
+              ]
+             },
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ChevronButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e58",
+              "role": "button",
+              "role_description": "button",
+              "states": [
+               "offscreen"
+              ]
+             }
+            ],
+            "name": "Users",
+            "ref_id": "@s1cs72hah4pbav:e56",
+            "role": "menubutton",
+            "role_description": "split button",
+            "states": [
+             "offscreen"
+            ]
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Expand",
+             "Collapse",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 0,
+             "width": 0,
+             "x": 0,
+             "y": 0
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "BreadcrumbBarItemButton",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ItemButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e60",
+              "role": "button",
+              "role_description": "button",
+              "states": [
+               "offscreen"
+              ]
+             },
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ChevronButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e61",
+              "role": "button",
+              "role_description": "button",
+              "states": [
+               "offscreen"
+              ]
+             }
+            ],
+            "name": "<name>.<pc>",
+            "ref_id": "@s1cs72hah4pbav:e59",
+            "role": "menubutton",
+            "role_description": "split button",
+            "states": [
+             "offscreen"
+            ]
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Expand",
+             "Collapse",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 0,
+             "width": 0,
+             "x": 0,
+             "y": 0
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "BreadcrumbBarItemButton",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ItemButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e63",
+              "role": "button",
+              "role_description": "button",
+              "states": [
+               "offscreen"
+              ]
+             },
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ChevronButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e64",
+              "role": "button",
+              "role_description": "button",
+              "states": [
+               "offscreen"
+              ]
+             }
+            ],
+            "name": "AppData",
+            "ref_id": "@s1cs72hah4pbav:e62",
+            "role": "menubutton",
+            "role_description": "split button",
+            "states": [
+             "offscreen"
+            ]
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Expand",
+             "Collapse",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 30,
+             "width": 91,
+             "x": 575,
+             "y": 456
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 30,
+               "width": 61,
+               "x": 575,
+               "y": 456
+              },
+              "name": "BreadcrumbBarItemButton",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ItemButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e66",
+              "role": "button",
+              "role_description": "button"
+             },
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 30,
+               "width": 30,
+               "x": 636,
+               "y": 456
+              },
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ChevronButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e67",
+              "role": "button",
+              "role_description": "button"
+             }
+            ],
+            "name": "Local",
+            "ref_id": "@s1cs72hah4pbav:e65",
+            "role": "menubutton",
+            "role_description": "split button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Expand",
+             "Collapse",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 30,
+             "width": 92,
+             "x": 666,
+             "y": 456
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 30,
+               "width": 62,
+               "x": 666,
+               "y": 456
+              },
+              "name": "BreadcrumbBarItemButton",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ItemButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e69",
+              "role": "button",
+              "role_description": "button"
+             },
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 30,
+               "width": 30,
+               "x": 729,
+               "y": 456
+              },
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ChevronButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e70",
+              "role": "button",
+              "role_description": "button"
+             }
+            ],
+            "name": "Temp",
+            "ref_id": "@s1cs72hah4pbav:e68",
+            "role": "menubutton",
+            "role_description": "split button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Expand",
+             "Collapse",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 30,
+             "width": 102,
+             "x": 759,
+             "y": 456
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 30,
+               "width": 72,
+               "x": 759,
+               "y": 456
+              },
+              "name": "BreadcrumbBarItemButton",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ItemButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e72",
+              "role": "button",
+              "role_description": "button"
+             },
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 30,
+               "width": 30,
+               "x": 831,
+               "y": 456
+              },
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ChevronButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e73",
+              "role": "button",
+              "role_description": "button"
+             }
+            ],
+            "name": "claude",
+            "ref_id": "@s1cs72hah4pbav:e71",
+            "role": "menubutton",
+            "role_description": "split button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Expand",
+             "Collapse",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 30,
+             "width": 170,
+             "x": 861,
+             "y": 456
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 30,
+               "width": 140,
+               "x": 861,
+               "y": 456
+              },
+              "name": "BreadcrumbBarItemButton",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ItemButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e75",
+              "role": "button",
+              "role_description": "button"
+             },
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 30,
+               "width": 30,
+               "x": 1001,
+               "y": 456
+              },
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ChevronButton"
+              },
+              "ref_id": "@s1cs72hah4pbav:e76",
+              "role": "button",
+              "role_description": "button"
+             }
+            ],
+            "name": "buddy-samples",
+            "ref_id": "@s1cs72hah4pbav:e74",
+            "role": "menubutton",
+            "role_description": "split button"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Expand",
+             "Collapse",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 30,
+             "width": 140,
+             "x": 1031,
+             "y": 456
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 30,
+               "width": 140,
+               "x": 1031,
+               "y": 456
+              },
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_LastItemContentPresenter"
+              },
+              "ref_id": "@s1cs72hah4pbav:e78",
+              "role": "button",
+              "role_description": "button"
+             }
+            ],
+            "name": "Holiday photos",
+            "ref_id": "@s1cs72hah4pbav:e77",
+            "role": "menubutton",
+            "role_description": "split button"
+           }
+          ],
+          "native_id": {
+           "kind": "automation_id",
+           "value": "PART_ItemsRepeater"
+          },
+          "role": "group",
+          "role_description": "group"
+         }
+        ],
+        "native_id": {
+         "kind": "automation_id",
+         "value": "PART_BreadcrumbBar"
+        },
+        "role": "group",
+        "role_description": "group"
+       },
+       {
+        "available_actions": [
+         "Click",
+         "ScrollTo"
+        ],
+        "bounds": {
+         "height": 41,
+         "width": 325,
+         "x": 1270,
+         "y": 451
+        },
+        "children": [
+         {
+          "available_actions": [
+           "SetValue",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 41,
+           "width": 325,
+           "x": 1270,
+           "y": 451
+          },
+          "children": [
+           {
+            "available_actions": [
+             "SetValue"
+            ],
+            "bounds": {
+             "height": 41,
+             "width": 325,
+             "x": 1270,
+             "y": 451
+            },
+            "name": " Search Holiday photos",
+            "ref_id": "@s1cs72hah4pbav:e81",
+            "role": "textfield",
+            "role_description": "edit"
+           },
+           {
+            "available_actions": [
+             "Scroll",
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 38,
+             "width": 275,
+             "x": 1271,
+             "y": 452
+            },
+            "native_id": {
+             "kind": "automation_id",
+             "value": "ContentElement"
+            },
+            "ref_id": "@s1cs72hah4pbav:e82",
+            "role": "group",
+            "role_description": "pane"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 27,
+             "width": 37,
+             "x": 1551,
+             "y": 458
+            },
+            "name": "Search",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "QueryButton"
+            },
+            "ref_id": "@s1cs72hah4pbav:e83",
+            "role": "button",
+            "role_description": "button"
+           }
+          ],
+          "name": " Search Holiday photos",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "TextBox"
+          },
+          "ref_id": "@s1cs72hah4pbav:e80",
+          "role": "textfield",
+          "role_description": "edit"
+         }
+        ],
+        "native_id": {
+         "kind": "automation_id",
+         "value": "FileExplorerSearchBox"
+        },
+        "ref_id": "@s1cs72hah4pbav:e79",
+        "role": "group",
+        "role_description": "group"
+       },
+       {
+        "available_actions": [
+         "Toggle",
+         "Expand",
+         "Collapse",
+         "ScrollTo",
+         "Click"
+        ],
+        "bounds": {
+         "height": 54,
+         "width": 778,
+         "x": 203,
+         "y": 502
+        },
+        "children": [
+         {
+          "available_actions": [
+           "Click",
+           "Expand",
+           "Collapse",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 54,
+           "width": 107,
+           "x": 211,
+           "y": 502
+          },
+          "name": "New",
+          "ref_id": "@s1cs72hah4pbav:e85",
+          "role": "menubutton",
+          "role_description": "app bar button"
+         },
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 54,
+           "width": 50,
+           "x": 331,
+           "y": 502
+          },
+          "description": "Move the selected items to the Clipboard.",
+          "name": "Cut",
+          "ref_id": "@s1cs72hah4pbav:e86",
+          "role": "button",
+          "role_description": "app bar button",
+          "states": [
+           "disabled"
+          ]
+         },
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 54,
+           "width": 50,
+           "x": 391,
+           "y": 502
+          },
+          "description": "Copy the selected items to the Clipboard.",
+          "name": "Copy",
+          "ref_id": "@s1cs72hah4pbav:e87",
+          "role": "button",
+          "role_description": "app bar button",
+          "states": [
+           "disabled"
+          ]
+         },
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 54,
+           "width": 50,
+           "x": 451,
+           "y": 502
+          },
+          "description": "Paste the contents of the Clipboard to the current location.",
+          "name": "Paste",
+          "ref_id": "@s1cs72hah4pbav:e88",
+          "role": "button",
+          "role_description": "app bar button",
+          "states": [
+           "disabled"
+          ]
+         },
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 54,
+           "width": 50,
+           "x": 511,
+           "y": 502
+          },
+          "description": "Rename the selected item.",
+          "name": "Rename",
+          "ref_id": "@s1cs72hah4pbav:e89",
+          "role": "button",
+          "role_description": "app bar button",
+          "states": [
+           "disabled"
+          ]
+         },
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 54,
+           "width": 50,
+           "x": 571,
+           "y": 502
+          },
+          "name": "Share",
+          "ref_id": "@s1cs72hah4pbav:e90",
+          "role": "button",
+          "role_description": "app bar button",
+          "states": [
+           "disabled"
+          ]
+         },
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 54,
+           "width": 50,
+           "x": 631,
+           "y": 502
+          },
+          "description": "Move the selected items to the Recycle Bin or permanently delete them.",
+          "name": "Delete",
+          "ref_id": "@s1cs72hah4pbav:e91",
+          "role": "button",
+          "role_description": "app bar button",
+          "states": [
+           "disabled"
+          ]
+         },
+         {
+          "available_actions": [
+           "Click",
+           "Expand",
+           "Collapse",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 54,
+           "width": 104,
+           "x": 695,
+           "y": 502
+          },
+          "name": "Sort",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "SortAndGroupButton"
+          },
+          "ref_id": "@s1cs72hah4pbav:e92",
+          "role": "menubutton",
+          "role_description": "app bar button"
+         },
+         {
+          "available_actions": [
+           "Click",
+           "Expand",
+           "Collapse",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 54,
+           "width": 109,
+           "x": 803,
+           "y": 502
+          },
+          "name": "View",
+          "ref_id": "@s1cs72hah4pbav:e93",
+          "role": "menubutton",
+          "role_description": "app bar button"
+         },
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 54,
+           "width": 60,
+           "x": 921,
+           "y": 502
+          },
+          "name": "More options",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "MoreButton"
+          },
+          "ref_id": "@s1cs72hah4pbav:e94",
+          "role": "button",
+          "role_description": "button"
+         }
+        ],
+        "native_id": {
+         "kind": "automation_id",
+         "value": "FileExplorerCommandBar"
+        },
+        "ref_id": "@s1cs72hah4pbav:e84",
+        "role": "toolbar",
+        "role_description": "app bar"
+       },
+       {
+        "available_actions": [
+         "Toggle",
+         "Expand",
+         "Collapse",
+         "ScrollTo",
+         "Click"
+        ],
+        "bounds": {
+         "height": 54,
+         "width": 128,
+         "x": 1480,
+         "y": 502
+        },
+        "children": [
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 54,
+           "width": 106,
+           "x": 1490,
+           "y": 502
+          },
+          "description": "Show or hide the details pane.",
+          "name": "Details",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "DetailsPaneToggleButton"
+          },
+          "ref_id": "@s1cs72hah4pbav:e96",
+          "role": "button",
+          "role_description": "app bar button"
+         }
+        ],
+        "native_id": {
+         "kind": "automation_id",
+         "value": "FileExplorerSecondaryCommandBar"
+        },
+        "ref_id": "@s1cs72hah4pbav:e95",
+        "role": "toolbar",
+        "role_description": "app bar"
+       }
+      ],
+      "role": "group",
+      "role_description": "pane",
+      "states": [
+       "focused"
+      ]
+     }
+    ],
+    "role": "group",
+    "role_description": "pane"
+   },
+   {
+    "available_actions": [
+     "SetValue",
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 0,
+     "width": 0,
+     "x": 0,
+     "y": 0
+    },
+    "children": [
+     {
+      "available_actions": [
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 28,
+       "width": 28,
+       "x": 203,
+       "y": 399
+      },
+      "children": [
+       {
+        "available_actions": [
+         "Click",
+         "Expand",
+         "Collapse",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 28,
+         "width": 28,
+         "x": 203,
+         "y": 399
+        },
+        "name": "System",
+        "ref_id": "@s1cs72hah4pbav:e98",
+        "role": "menuitem",
+        "role_description": "menu item",
+        "states": [
+         "haspopup"
+        ]
+       }
+      ],
+      "name": "System",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "SystemMenuBar"
+      },
+      "role": "menu",
+      "role_description": "menu bar"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 37,
+       "width": 60,
+       "x": 1431,
+       "y": 391
+      },
+      "name": "Minimize",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Minimize-Restore"
+      },
+      "ref_id": "@s1cs72hah4pbav:e99",
+      "role": "button",
+      "role_description": "button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 37,
+       "width": 59,
+       "x": 1491,
+       "y": 391
+      },
+      "name": "Maximize",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Maximize-Restore"
+      },
+      "ref_id": "@s1cs72hah4pbav:e100",
+      "role": "button",
+      "role_description": "button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 37,
+       "width": 60,
+       "x": 1550,
+       "y": 391
+      },
+      "name": "Close",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Close"
+      },
+      "ref_id": "@s1cs72hah4pbav:e101",
+      "role": "button",
+      "role_description": "button"
+     }
+    ],
+    "native_id": {
+     "kind": "automation_id",
+     "value": "TitleBar"
+    },
+    "ref_id": "@s1cs72hah4pbav:e97",
+    "role": "group",
+    "role_description": "title bar",
+    "states": [
+     "offscreen"
+    ],
+    "value": "Holiday photos - File Explorer"
+   }
+  ],
+  "name": "Holiday photos - File Explorer",
+  "role": "window",
+  "role_description": "window"
+ }
+}

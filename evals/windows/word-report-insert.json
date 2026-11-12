@@ -1,0 +1,2491 @@
+{
+ "name": "word-report-insert",
+ "app": "WINWORD.EXE",
+ "title": "Quarterly report - Word",
+ "note": "Sample report in Word, Insert tab",
+ "recordedAt": "2026-11-12",
+ "agentDesktop": "1.2.0",
+ "refCount": 96,
+ "complete": true,
+ "replaced": {
+  "email": 1,
+  "name": 4
+ },
+ "tree": {
+  "available_actions": [
+   "SetFocus"
+  ],
+  "bounds": {
+   "height": 830,
+   "width": 1440,
+   "x": 256,
+   "y": 256
+  },
+  "children": [
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 221,
+     "width": 1422,
+     "x": 265,
+     "y": 257
+    },
+    "children": [
+     {
+      "bounds": {
+       "height": 221,
+       "width": 1422,
+       "x": 265,
+       "y": 257
+      },
+      "children": [
+       {
+        "available_actions": [
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 221,
+         "width": 1422,
+         "x": 265,
+         "y": 257
+        },
+        "children": [
+         {
+          "bounds": {
+           "height": 221,
+           "width": 1422,
+           "x": 265,
+           "y": 257
+          },
+          "children": [
+           {
+            "bounds": {
+             "height": 221,
+             "width": 1422,
+             "x": 265,
+             "y": 257
+            },
+            "children": [
+             {
+              "bounds": {
+               "height": 221,
+               "width": 1422,
+               "x": 265,
+               "y": 257
+              },
+              "children": [
+               {
+                "bounds": {
+                 "height": 60,
+                 "width": 290,
+                 "x": 318,
+                 "y": 257
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Toggle",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 36,
+                   "width": 137,
+                   "x": 318,
+                   "y": 269
+                  },
+                  "description": "Turn on AutoSave to save changes as they happen.",
+                  "name": "AutoSave",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "AutoSaveSwitch"
+                  },
+                  "ref_id": "@shf0t86na26rj:e1",
+                  "role": "switch",
+                  "role_description": "Toggle Switch"
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 35,
+                   "width": 34,
+                   "x": 456,
+                   "y": 269
+                  },
+                  "description": "Save (Ctrl+S)",
+                  "name": "Save",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "FileSave"
+                  },
+                  "ref_id": "@shf0t86na26rj:e2",
+                  "role": "button",
+                  "role_description": "Button"
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "Expand",
+                   "Collapse",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 35,
+                   "width": 47,
+                   "x": 491,
+                   "y": 269
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click"
+                    ],
+                    "bounds": {
+                     "height": 35,
+                     "width": 31,
+                     "x": 491,
+                     "y": 269
+                    },
+                    "description": "Can't Undo (Ctrl+Z)",
+                    "name": "Can't Undo",
+                    "ref_id": "@shf0t86na26rj:e4",
+                    "role": "button",
+                    "role_description": "Button",
+                    "states": [
+                     "disabled"
+                    ]
+                   },
+                   {
+                    "available_actions": [
+                     "Expand",
+                     "Collapse",
+                     "Click"
+                    ],
+                    "bounds": {
+                     "height": 35,
+                     "width": 16,
+                     "x": 522,
+                     "y": 269
+                    },
+                    "description": "Can't Undo (Ctrl+Z)",
+                    "name": "More Options",
+                    "native_id": {
+                     "kind": "automation_id",
+                     "value": "Undo_Dropdown"
+                    },
+                    "ref_id": "@shf0t86na26rj:e5",
+                    "role": "menuitem",
+                    "role_description": "Menu Item",
+                    "states": [
+                     "disabled",
+                     "haspopup"
+                    ]
+                   }
+                  ],
+                  "description": "Can't Undo (Ctrl+Z)",
+                  "name": "Can't Undo",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "Undo"
+                  },
+                  "ref_id": "@shf0t86na26rj:e3",
+                  "role": "menubutton",
+                  "role_description": "SplitButton",
+                  "states": [
+                   "disabled",
+                   "readonly"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 35,
+                   "width": 34,
+                   "x": 539,
+                   "y": 269
+                  },
+                  "description": "Can't Repeat (Ctrl+Y)",
+                  "name": "Can't Repeat",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "RedoOrRepeat"
+                  },
+                  "ref_id": "@shf0t86na26rj:e6",
+                  "role": "button",
+                  "role_description": "Button",
+                  "states": [
+                   "disabled"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 34,
+                   "x": 574,
+                   "y": 268
+                  },
+                  "name": "Customize Quick Access Toolbar",
+                  "ref_id": "@shf0t86na26rj:e7",
+                  "role": "menuitem",
+                  "role_description": "Menu Item",
+                  "states": [
+                   "haspopup"
+                  ]
+                 }
+                ],
+                "name": "Quick Access Toolbar",
+                "role": "toolbar",
+                "role_description": "ToolBar"
+               },
+               {
+                "bounds": {
+                 "height": 60,
+                 "width": 291,
+                 "x": 609,
+                 "y": 257
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 60,
+                   "width": 214,
+                   "x": 609,
+                   "y": 257
+                  },
+                  "description": "Saved to this PC",
+                  "name": "‪Quarterly report‬  -  Saved to this PC",
+                  "ref_id": "@shf0t86na26rj:e8",
+                  "role": "menuitem",
+                  "role_description": "Menu Item",
+                  "states": [
+                   "haspopup"
+                  ]
+                 }
+                ],
+                "description": "Quarterly report",
+                "name": "‪Quarterly report‬  -  Saved to this PC",
+                "role": "group",
+                "role_description": "Title Bar"
+               },
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 40,
+                 "width": 383,
+                 "x": 900,
+                 "y": 267
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "SetValue",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 22,
+                   "width": 316,
+                   "x": 951,
+                   "y": 277
+                  },
+                  "description": "Just start typing here to bring features to your fingertips and get help.",
+                  "name": "Microsoft search",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TellMeTextBoxAutomationId"
+                  },
+                  "ref_id": "@shf0t86na26rj:e10",
+                  "role": "textfield",
+                  "role_description": "Edit Box",
+                  "value": "Search"
+                 }
+                ],
+                "description": "Just start typing here to bring features to your fingertips and get help.",
+                "name": "Type to search and use the up and down arrow keys to navigate",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "TellMeControlAnchor"
+                },
+                "ref_id": "@shf0t86na26rj:e9",
+                "role": "menuitem",
+                "role_description": "Menu Item",
+                "states": [
+                 "haspopup"
+                ]
+               },
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 60,
+                 "width": 63,
+                 "x": 1444,
+                 "y": 257
+                },
+                "description": "<name> <name> (<email>) is signed in. Open and see more details about the signed in user.",
+                "name": "<name> <name>",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "MeControlWidget"
+                },
+                "ref_id": "@shf0t86na26rj:e11",
+                "role": "menuitem",
+                "role_description": "Menu Item",
+                "states": [
+                 "haspopup"
+                ]
+               },
+               {
+                "available_actions": [
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 60,
+                 "width": 60,
+                 "x": 1507,
+                 "y": 257
+                },
+                "description": "Moves the window out of the way",
+                "name": "Minimize",
+                "ref_id": "@shf0t86na26rj:e12",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 60,
+                 "width": 60,
+                 "x": 1567,
+                 "y": 257
+                },
+                "description": "Makes the window full screen",
+                "name": "Maximize",
+                "ref_id": "@shf0t86na26rj:e13",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 60,
+                 "width": 60,
+                 "x": 1627,
+                 "y": 257
+                },
+                "description": "Closes the window",
+                "name": "Close",
+                "ref_id": "@shf0t86na26rj:e14",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 38,
+                 "width": 68,
+                 "x": 270,
+                 "y": 317
+                },
+                "name": "File Tab",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "FileTabButton"
+                },
+                "ref_id": "@shf0t86na26rj:e15",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Scroll",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 38,
+                 "width": 1334,
+                 "x": 338,
+                 "y": 317
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 67,
+                   "x": 338,
+                   "y": 317
+                  },
+                  "name": "Home",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabHome"
+                  },
+                  "ref_id": "@shf0t86na26rj:e17",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 63,
+                   "x": 406,
+                   "y": 317
+                  },
+                  "name": "Insert",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabInsert"
+                  },
+                  "ref_id": "@shf0t86na26rj:e18",
+                  "role": "tab",
+                  "role_description": "Tab Item",
+                  "states": [
+                   "selected"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 72,
+                   "x": 470,
+                   "y": 317
+                  },
+                  "name": "Design",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabWordDesign"
+                  },
+                  "ref_id": "@shf0t86na26rj:e19",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 72,
+                   "x": 543,
+                   "y": 317
+                  },
+                  "name": "Layout",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabPageLayoutWord"
+                  },
+                  "ref_id": "@shf0t86na26rj:e20",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 104,
+                   "x": 616,
+                   "y": 317
+                  },
+                  "name": "References",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabReferences"
+                  },
+                  "ref_id": "@shf0t86na26rj:e21",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 84,
+                   "x": 721,
+                   "y": 317
+                  },
+                  "name": "Mailings",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabMailings"
+                  },
+                  "ref_id": "@shf0t86na26rj:e22",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 75,
+                   "x": 806,
+                   "y": 317
+                  },
+                  "name": "Review",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabReviewWord"
+                  },
+                  "ref_id": "@shf0t86na26rj:e23",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 57,
+                   "x": 882,
+                   "y": 317
+                  },
+                  "name": "View",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabView"
+                  },
+                  "ref_id": "@shf0t86na26rj:e24",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 56,
+                   "x": 940,
+                   "y": 317
+                  },
+                  "name": "Help",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "HelpTab"
+                  },
+                  "ref_id": "@shf0t86na26rj:e25",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 80,
+                   "x": 997,
+                   "y": 317
+                  },
+                  "name": "Acrobat",
+                  "ref_id": "@shf0t86na26rj:e26",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Toggle",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 30,
+                   "width": 115,
+                   "x": 1348,
+                   "y": 321
+                  },
+                  "description": "See and respond to comments in this document.",
+                  "name": "Comments",
+                  "ref_id": "@shf0t86na26rj:e27",
+                  "role": "switch",
+                  "role_description": "Button"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "SetValue",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 30,
+                   "width": 102,
+                   "x": 1473,
+                   "y": 321
+                  },
+                  "name": "Editing",
+                  "ref_id": "@shf0t86na26rj:e28",
+                  "role": "combobox",
+                  "role_description": "ComboBox",
+                  "value": "Editing"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 87,
+                   "x": 1585,
+                   "y": 317
+                  },
+                  "description": "Share this document, and see who it's shared with.",
+                  "name": "Share",
+                  "ref_id": "@shf0t86na26rj:e29",
+                  "role": "menuitem",
+                  "role_description": "Menu Item",
+                  "states": [
+                   "haspopup"
+                  ]
+                 }
+                ],
+                "name": "Ribbon Tabs",
+                "ref_id": "@shf0t86na26rj:e16",
+                "role": "tablist",
+                "role_description": "Pane",
+                "states": [
+                 "expanded"
+                ]
+               },
+               {
+                "available_actions": [
+                 "Scroll"
+                ],
+                "bounds": {
+                 "height": 123,
+                 "width": 1367,
+                 "x": 275,
+                 "y": 355
+                },
+                "children": [
+                 {
+                  "bounds": {
+                   "height": 123,
+                   "width": 1362,
+                   "x": 280,
+                   "y": 355
+                  },
+                  "children": [
+                   {
+                    "bounds": {
+                     "height": 119,
+                     "width": 69,
+                     "x": 280,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 119,
+                       "width": 69,
+                       "x": 280,
+                       "y": 357
+                      },
+                      "name": "Pages",
+                      "ref_id": "@shf0t86na26rj:e31",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     }
+                    ],
+                    "name": "Pages",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 119,
+                     "width": 72,
+                     "x": 349,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 52,
+                       "x": 359,
+                       "y": 359
+                      },
+                      "description": "A table is a great way to organize information within your document.",
+                      "name": "Table",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "TableInsertGallery"
+                      },
+                      "ref_id": "@shf0t86na26rj:e32",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     }
+                    ],
+                    "name": "Tables",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 119,
+                     "width": 347,
+                     "x": 421,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 55,
+                       "x": 431,
+                       "y": 359
+                      },
+                      "description": "Insert pictures from your computer, stock image library or online sources.",
+                      "name": "Pictures",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "FlyoutAnchorInsertPictures"
+                      },
+                      "ref_id": "@shf0t86na26rj:e33",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 101,
+                       "x": 488,
+                       "y": 359
+                      },
+                      "description": "Insert ready-made shapes, such as circles, squares, and arrows.",
+                      "name": "Shapes",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "ShapesInsertGallery"
+                      },
+                      "ref_id": "@shf0t86na26rj:e34",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 74,
+                       "x": 488,
+                       "y": 391
+                      },
+                      "description": "Insert an icon to visually communicate using symbols.",
+                      "name": "Icons",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "IconInsertFromFile"
+                      },
+                      "ref_id": "@shf0t86na26rj:e35",
+                      "role": "button",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 142,
+                       "x": 488,
+                       "y": 423
+                      },
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 112,
+                         "x": 488,
+                         "y": 423
+                        },
+                        "description": "Insert a 3D model so you can rotate it and see all angles.",
+                        "name": "3D Models",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "Insert3DModelDefault"
+                        },
+                        "ref_id": "@shf0t86na26rj:e37",
+                        "role": "button",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 600,
+                         "y": 423
+                        },
+                        "description": "Insert a 3D model so you can rotate it and see all angles.",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "Insert3DModelDropdown_Dropdown"
+                        },
+                        "ref_id": "@shf0t86na26rj:e38",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
+                      "description": "Insert a 3D model so you can rotate it and see all angles.",
+                      "name": "3D Models",
+                      "ref_id": "@shf0t86na26rj:e36",
+                      "role": "menubutton",
+                      "role_description": "SplitButton"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 99,
+                       "x": 632,
+                       "y": 359
+                      },
+                      "description": "Insert a SmartArt graphic to visually communicate information.\n\nSmartArt graphics range from graphical lists and process diagrams to more complex graphics, such as Venn diagrams and organization charts.",
+                      "name": "SmartArt...",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "SmartArtInsert"
+                      },
+                      "ref_id": "@shf0t86na26rj:e39",
+                      "role": "button",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 75,
+                       "x": 632,
+                       "y": 391
+                      },
+                      "description": "Make it easy to spot patterns and trends in your data by inserting a bar, area, or line chart.",
+                      "name": "Chart...",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "ChartInsert"
+                      },
+                      "ref_id": "@shf0t86na26rj:e40",
+                      "role": "button",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 126,
+                       "x": 632,
+                       "y": 423
+                      },
+                      "description": "Quickly add a snapshot of any window that's open on your desktop to your document.",
+                      "name": "Screenshot",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "ScreenshotInsertGallery"
+                      },
+                      "ref_id": "@shf0t86na26rj:e41",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     }
+                    ],
+                    "name": "Illustrations",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 119,
+                     "width": 72,
+                     "x": 768,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 52,
+                       "x": 778,
+                       "y": 359
+                      },
+                      "description": "Find and insert videos from a variety of online sources.",
+                      "name": "Online Videos...",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "MovieFromClipOrganizerInsert"
+                      },
+                      "ref_id": "@shf0t86na26rj:e42",
+                      "role": "button",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "Media",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 119,
+                     "width": 69,
+                     "x": 840,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 119,
+                       "width": 69,
+                       "x": 840,
+                       "y": 357
+                      },
+                      "name": "Links",
+                      "ref_id": "@shf0t86na26rj:e43",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     }
+                    ],
+                    "name": "Links",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 119,
+                     "width": 89,
+                     "x": 909,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 69,
+                       "x": 919,
+                       "y": 359
+                      },
+                      "description": "Add a note about this part of the document.",
+                      "name": "Comment",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "InsertNewComment"
+                      },
+                      "ref_id": "@shf0t86na26rj:e44",
+                      "role": "button",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "Comments",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 119,
+                     "width": 164,
+                     "x": 998,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 103,
+                       "x": 1008,
+                       "y": 359
+                      },
+                      "description": "Headers help you to repeat content at the top of every page.\n\nThey're useful for showcasing information, like title, author, and page number.",
+                      "name": "Header",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "HeaderInsertGallery"
+                      },
+                      "ref_id": "@shf0t86na26rj:e45",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 97,
+                       "x": 1008,
+                       "y": 391
+                      },
+                      "description": "Footers help you repeat content at the bottom of every page.\n\nThey're useful for showcasing information, like title, author, and page number.",
+                      "name": "Footer",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "FooterInsertGallery"
+                      },
+                      "ref_id": "@shf0t86na26rj:e46",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 144,
+                       "x": 1008,
+                       "y": 423
+                      },
+                      "description": "Number the pages in your document.\n\nYou can choose from a variety of pre-defined looks or select your own format.",
+                      "name": "Page Number",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "HeaderFooterPageNumberInsert"
+                      },
+                      "ref_id": "@shf0t86na26rj:e47",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     }
+                    ],
+                    "name": "Header & Footer",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 119,
+                     "width": 186,
+                     "x": 1162,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 52,
+                       "x": 1172,
+                       "y": 359
+                      },
+                      "description": "Got must-see content? Put it in a text box.\n\nA text box brings focus to the content it contains and is great for showcasing important text, such as headings or quotes.",
+                      "name": "Text Box",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "TextBoxInsertGallery"
+                      },
+                      "ref_id": "@shf0t86na26rj:e48",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 50,
+                       "x": 1226,
+                       "y": 359
+                      },
+                      "description": "Insert preformatted text, auto-text, document properties, and fields anywhere in the document.\n\nTo reuse content in your document, select it and save it to the Quick Part Gallery.",
+                      "name": "Quick Parts",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "QuickPartsInsertGallery"
+                      },
+                      "ref_id": "@shf0t86na26rj:e49",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 50,
+                       "x": 1226,
+                       "y": 391
+                      },
+                      "description": "Add some artistic flair to your document using a WordArt text box.",
+                      "name": "WordArt",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "WordArtInsertGallery"
+                      },
+                      "ref_id": "@shf0t86na26rj:e50",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 50,
+                       "x": 1226,
+                       "y": 423
+                      },
+                      "description": "Create a large capital letter at the beginning of a paragraph.",
+                      "name": "Drop Cap",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "DropCapInsertGallery"
+                      },
+                      "ref_id": "@shf0t86na26rj:e51",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 60,
+                       "x": 1278,
+                       "y": 359
+                      },
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 1278,
+                         "y": 359
+                        },
+                        "description": "Insert a signature line that specifies the individual who must sign.\n\nInserting a digital signature requires that you obtain a digital ID, such as one from a certified Microsoft partner.",
+                        "name": "Signature Line",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "SignatureLineInsert"
+                        },
+                        "ref_id": "@shf0t86na26rj:e53",
+                        "role": "button",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 1308,
+                         "y": 359
+                        },
+                        "description": "Insert a signature line that specifies the individual who must sign.\n\nInserting a digital signature requires that you obtain a digital ID, such as one from a certified Microsoft partner.",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "SignatureLineInsertMenu_Dropdown"
+                        },
+                        "ref_id": "@shf0t86na26rj:e54",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
+                      "description": "Insert a signature line that specifies the individual who must sign.\n\nInserting a digital signature requires that you obtain a digital ID, such as one from a certified Microsoft partner.",
+                      "name": "Signature Line",
+                      "ref_id": "@shf0t86na26rj:e52",
+                      "role": "menubutton",
+                      "role_description": "SplitButton"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 1278,
+                       "y": 391
+                      },
+                      "description": "Quickly add the current date or time.",
+                      "name": "Date & Time...",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "DateAndTimeInsert"
+                      },
+                      "ref_id": "@shf0t86na26rj:e55",
+                      "role": "button",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 60,
+                       "x": 1278,
+                       "y": 423
+                      },
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 1278,
+                         "y": 423
+                        },
+                        "description": "Embedded objects are documents or other files you have inserted into this document. Instead of having separate files, sometimes it's easier to keep them all embedded in a document.",
+                        "name": "Object...",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "OleObjectctInsert"
+                        },
+                        "ref_id": "@shf0t86na26rj:e57",
+                        "role": "button",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 1308,
+                         "y": 423
+                        },
+                        "description": "Insert an embedded object or text from another file into your document.",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "OleObjectInsertMenu_Dropdown"
+                        },
+                        "ref_id": "@shf0t86na26rj:e58",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
+                      "description": "Insert an embedded object or text from another file into your document.",
+                      "name": "Object...",
+                      "ref_id": "@shf0t86na26rj:e56",
+                      "role": "menubutton",
+                      "role_description": "SplitButton"
+                     }
+                    ],
+                    "name": "Text",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 119,
+                     "width": 149,
+                     "x": 1348,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 129,
+                       "x": 1358,
+                       "y": 359
+                      },
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 99,
+                         "x": 1358,
+                         "y": 359
+                        },
+                        "description": "Add common mathematical equations to your document, such as the area of a circle or the quadratic formula.\n\nYou can also build your own equations using the library of math symbols and structures.",
+                        "name": "Equation",
+                        "ref_id": "@shf0t86na26rj:e60",
+                        "role": "button",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 1457,
+                         "y": 359
+                        },
+                        "description": "Add common mathematical equations to your document, such as the area of a circle or the quadratic formula.\n\nYou can also build your own equations using the library of math symbols and structures.",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "EquationInsertGallery_Dropdown"
+                        },
+                        "ref_id": "@shf0t86na26rj:e61",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
+                      "description": "Add common mathematical equations to your document, such as the area of a circle or the quadratic formula.\n\nYou can also build your own equations using the library of math symbols and structures.",
+                      "name": "Equation",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "EquationInsertGallery"
+                      },
+                      "ref_id": "@shf0t86na26rj:e59",
+                      "role": "menubutton",
+                      "role_description": "SplitButton"
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 104,
+                       "x": 1358,
+                       "y": 391
+                      },
+                      "description": "Add symbols that are not on your keyboard.\n\nChoose from a variety of options including mathematical, currency, and copyright symbols.",
+                      "name": "Symbol",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "SymbolInsertGallery"
+                      },
+                      "ref_id": "@shf0t86na26rj:e62",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     }
+                    ],
+                    "name": "Symbols",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 119,
+                     "width": 95,
+                     "x": 1497,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 75,
+                       "x": 1507,
+                       "y": 359
+                      },
+                      "description": "Request electronic signatures on this document.",
+                      "name": "eSignature fields",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "SyntexEsign"
+                      },
+                      "ref_id": "@shf0t86na26rj:e63",
+                      "role": "button",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "eSignature",
+                    "role": "group",
+                    "role_description": "Group"
+                   }
+                  ],
+                  "name": "Insert",
+                  "role": "group",
+                  "role_description": "Group"
+                 }
+                ],
+                "name": "Lower Ribbon",
+                "ref_id": "@shf0t86na26rj:e30",
+                "role": "group",
+                "role_description": "Pane"
+               },
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 25,
+                 "width": 25,
+                 "x": 1647,
+                 "y": 448
+                },
+                "name": "Ribbon Display Options",
+                "ref_id": "@shf0t86na26rj:e64",
+                "role": "menuitem",
+                "role_description": "Menu Item",
+                "states": [
+                 "haspopup"
+                ]
+               }
+              ],
+              "name": "Ribbon",
+              "role": "group",
+              "role_description": "Pane"
+             }
+            ],
+            "role": "dialog",
+            "role_description": "Pane"
+           }
+          ],
+          "role": "group",
+          "role_description": "pane"
+         }
+        ],
+        "name": "Ribbon",
+        "role": "group",
+        "role_description": "pane"
+       }
+      ],
+      "name": "Ribbon toolbar",
+      "role": "toolbar",
+      "role_description": "tool bar"
+     }
+    ],
+    "name": "MsoDockTop",
+    "role": "group",
+    "role_description": "pane"
+   },
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 572,
+     "width": 1422,
+     "x": 265,
+     "y": 478
+    },
+    "children": [
+     {
+      "available_actions": [
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 572,
+       "width": 1422,
+       "x": 265,
+       "y": 478
+      },
+      "children": [
+       {
+        "available_actions": [
+         "Scroll",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 572,
+         "width": 1401,
+         "x": 265,
+         "y": 478
+        },
+        "children": [
+         {
+          "available_actions": [
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 551,
+           "width": 992,
+           "x": 469,
+           "y": 499
+          },
+          "children": [
+           {
+            "available_actions": [
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 451,
+             "width": 992,
+             "x": 469,
+             "y": 599
+            },
+            "children": [
+             {
+              "available_actions": [
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 74,
+               "width": 218,
+               "x": 585,
+               "y": 760
+              },
+              "children": [
+               {
+                "available_actions": [
+                 "ScrollTo",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 22,
+                 "width": 202,
+                 "x": 585,
+                 "y": 760
+                },
+                "name": "•",
+                "ref_id": "@shf0t86na26rj:e67",
+                "role": "option",
+                "role_description": "list item"
+               },
+               {
+                "available_actions": [
+                 "ScrollTo",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 22,
+                 "width": 218,
+                 "x": 585,
+                 "y": 786
+                },
+                "name": "•",
+                "ref_id": "@shf0t86na26rj:e68",
+                "role": "option",
+                "role_description": "list item"
+               },
+               {
+                "available_actions": [
+                 "ScrollTo",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 22,
+                 "width": 190,
+                 "x": 585,
+                 "y": 812
+                },
+                "name": "•",
+                "ref_id": "@shf0t86na26rj:e69",
+                "role": "option",
+                "role_description": "list item"
+               }
+              ],
+              "role": "list",
+              "role_description": "list"
+             }
+            ],
+            "name": "Page 1 content",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "Body"
+            },
+            "ref_id": "@shf0t86na26rj:e66",
+            "role": "textfield",
+            "role_description": "edit"
+           }
+          ],
+          "name": "Page 1",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "UIA_AutomationId_Word_Page_1"
+          },
+          "role": "unknown",
+          "role_description": "page"
+         }
+        ],
+        "name": "Quarterly report  -  Last saved by user",
+        "ref_id": "@shf0t86na26rj:e65",
+        "role": "document",
+        "role_description": "document",
+        "states": [
+         "focused"
+        ]
+       },
+       {
+        "bounds": {
+         "height": 572,
+         "width": 21,
+         "x": 1666,
+         "y": 478
+        },
+        "children": [
+         {
+          "bounds": {
+           "height": 572,
+           "width": 21,
+           "x": 1666,
+           "y": 478
+          },
+          "children": [
+           {
+            "available_actions": [
+             "SetValue"
+            ],
+            "bounds": {
+             "height": 572,
+             "width": 21,
+             "x": 1666,
+             "y": 478
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click"
+              ],
+              "bounds": {
+               "height": 21,
+               "width": 21,
+               "x": 1666,
+               "y": 478
+              },
+              "description": "Moves the vertical position up one line",
+              "name": "Line up",
+              "ref_id": "@shf0t86na26rj:e71",
+              "role": "button",
+              "role_description": "Button",
+              "states": [
+               "readonly"
+              ]
+             },
+             {
+              "available_actions": [
+               "Click"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "description": "Moves the vertical position up a couple of lines",
+              "name": "Page up",
+              "ref_id": "@shf0t86na26rj:e72",
+              "role": "button",
+              "role_description": "Button",
+              "states": [
+               "offscreen",
+               "readonly"
+              ]
+             },
+             {
+              "available_actions": [
+               "Click"
+              ],
+              "bounds": {
+               "height": 321,
+               "width": 21,
+               "x": 1666,
+               "y": 708
+              },
+              "description": "Moves the vertical position down a couple of lines",
+              "name": "Page down",
+              "ref_id": "@shf0t86na26rj:e73",
+              "role": "button",
+              "role_description": "Button",
+              "states": [
+               "readonly"
+              ]
+             },
+             {
+              "available_actions": [
+               "Click"
+              ],
+              "bounds": {
+               "height": 21,
+               "width": 21,
+               "x": 1666,
+               "y": 1029
+              },
+              "description": "Moves the vertical position down one line",
+              "name": "Line down",
+              "ref_id": "@shf0t86na26rj:e74",
+              "role": "button",
+              "role_description": "Button",
+              "states": [
+               "readonly"
+              ]
+             }
+            ],
+            "name": "Used to change the vertical viewing area",
+            "ref_id": "@shf0t86na26rj:e70",
+            "role": "scrollbar",
+            "role_description": "ScrollBar"
+           }
+          ],
+          "role": "dialog",
+          "role_description": "Pane"
+         }
+        ],
+        "name": "Vertical",
+        "role": "group",
+        "role_description": "pane"
+       }
+      ],
+      "name": "Quarterly report",
+      "role": "group",
+      "role_description": "pane"
+     }
+    ],
+    "role": "group",
+    "role_description": "pane"
+   },
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 27,
+     "width": 1422,
+     "x": 265,
+     "y": 1050
+    },
+    "children": [
+     {
+      "bounds": {
+       "height": 27,
+       "width": 1422,
+       "x": 265,
+       "y": 1050
+      },
+      "children": [
+       {
+        "available_actions": [
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 27,
+         "width": 1422,
+         "x": 265,
+         "y": 1050
+        },
+        "children": [
+         {
+          "bounds": {
+           "height": 27,
+           "width": 1422,
+           "x": 265,
+           "y": 1050
+          },
+          "children": [
+           {
+            "bounds": {
+             "height": 27,
+             "width": 1422,
+             "x": 265,
+             "y": 1050
+            },
+            "children": [
+             {
+              "bounds": {
+               "height": 27,
+               "width": 1422,
+               "x": 265,
+               "y": 1050
+              },
+              "children": [
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 85,
+                 "x": 270,
+                 "y": 1051
+                },
+                "description": "The current page number in the document. Click or tap to open the Navigation Pane.",
+                "name": "Page Number Page 1 of 1",
+                "ref_id": "@shf0t86na26rj:e75",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 75,
+                 "x": 359,
+                 "y": 1051
+                },
+                "description": "The number of words in the document. Click or tap to open the Word Count dialog box.",
+                "name": "Word Count 38 words",
+                "ref_id": "@shf0t86na26rj:e76",
+                "role": "statictext",
+                "role_description": "Text"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 40,
+                 "x": 438,
+                 "y": 1051
+                },
+                "description": "Coauthoring in compatibility mode.",
+                "name": "Coauthoring Mode ",
+                "ref_id": "@shf0t86na26rj:e77",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 40,
+                 "x": 482,
+                 "y": 1051
+                },
+                "description": "No proofing errors",
+                "name": "Spelling and Grammar Check No Errors",
+                "ref_id": "@shf0t86na26rj:e78",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 125,
+                 "x": 522,
+                 "y": 1051
+                },
+                "description": "Language",
+                "name": "Language English (Malaysia)",
+                "ref_id": "@shf0t86na26rj:e79",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 134,
+                 "x": 651,
+                 "y": 1051
+                },
+                "description": "Switch text predictions on or off. Click or tap here to open settings for text predictions.",
+                "name": "Text Predictions Text Predictions: Off",
+                "ref_id": "@shf0t86na26rj:e80",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 185,
+                 "x": 789,
+                 "y": 1051
+                },
+                "description": "Accessibility check complete. Click here to learn more.",
+                "name": "Accessibility Checker Accessibility: Good to go",
+                "ref_id": "@shf0t86na26rj:e81",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 73,
+                 "x": 1223,
+                 "y": 1051
+                },
+                "description": "Focus Mode",
+                "name": "Focus ",
+                "ref_id": "@shf0t86na26rj:e82",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Toggle",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 50,
+                 "x": 1300,
+                 "y": 1051
+                },
+                "name": "Read Mode",
+                "ref_id": "@shf0t86na26rj:e83",
+                "role": "switch",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Toggle",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 50,
+                 "x": 1350,
+                 "y": 1051
+                },
+                "name": "Print Layout",
+                "ref_id": "@shf0t86na26rj:e84",
+                "role": "switch",
+                "role_description": "Button",
+                "states": [
+                 "checked"
+                ]
+               },
+               {
+                "available_actions": [
+                 "Toggle",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 50,
+                 "x": 1400,
+                 "y": 1051
+                },
+                "name": "Web Layout",
+                "ref_id": "@shf0t86na26rj:e85",
+                "role": "switch",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 22,
+                 "x": 1451,
+                 "y": 1051
+                },
+                "name": "Zoom Out (Ctrl -)",
+                "ref_id": "@shf0t86na26rj:e86",
+                "role": "button",
+                "role_description": "Button",
+                "states": [
+                 "readonly"
+                ],
+                "value": "100"
+               },
+               {
+                "available_actions": [
+                 "SetValue"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 125,
+                 "x": 1473,
+                 "y": 1051
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Click"
+                  ],
+                  "bounds": {
+                   "height": 26,
+                   "width": 60,
+                   "x": 1473,
+                   "y": 1051
+                  },
+                  "description": "Moves the horizontal position left a couple of columns",
+                  "name": "Zoom Out",
+                  "ref_id": "@shf0t86na26rj:e88",
+                  "role": "button",
+                  "role_description": "Button",
+                  "states": [
+                   "readonly"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Click"
+                  ],
+                  "bounds": {
+                   "height": 26,
+                   "width": 59,
+                   "x": 1539,
+                   "y": 1051
+                  },
+                  "description": "Moves the horizontal position right a couple of columns",
+                  "name": "Zoom In",
+                  "ref_id": "@shf0t86na26rj:e89",
+                  "role": "button",
+                  "role_description": "Button",
+                  "states": [
+                   "readonly"
+                  ]
+                 }
+                ],
+                "name": "Zoom",
+                "ref_id": "@shf0t86na26rj:e87",
+                "role": "slider",
+                "role_description": "Slider",
+                "value": "100"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 22,
+                 "x": 1598,
+                 "y": 1051
+                },
+                "name": "Zoom In (Ctrl +)",
+                "ref_id": "@shf0t86na26rj:e90",
+                "role": "button",
+                "role_description": "Button",
+                "states": [
+                 "readonly"
+                ],
+                "value": "100"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 53,
+                 "x": 1620,
+                 "y": 1051
+                },
+                "description": "Zoom level. Click to open the Zoom dialog box.",
+                "name": "Zoom 100%",
+                "ref_id": "@shf0t86na26rj:e91",
+                "role": "button",
+                "role_description": "Button"
+               }
+              ],
+              "name": "Status Bar",
+              "role": "status",
+              "role_description": "Status Bar"
+             }
+            ],
+            "role": "dialog",
+            "role_description": "Pane"
+           }
+          ],
+          "role": "group",
+          "role_description": "pane"
+         }
+        ],
+        "name": "Status Bar",
+        "role": "group",
+        "role_description": "pane"
+       }
+      ],
+      "name": "Status Bar toolbar",
+      "role": "toolbar",
+      "role_description": "tool bar"
+     }
+    ],
+    "name": "MsoDockBottom",
+    "role": "group",
+    "role_description": "pane"
+   },
+   {
+    "available_actions": [
+     "SetValue",
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 0,
+     "width": 0,
+     "x": 0,
+     "y": 0
+    },
+    "children": [
+     {
+      "available_actions": [
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 28,
+       "width": 28,
+       "x": 265,
+       "y": 265
+      },
+      "children": [
+       {
+        "available_actions": [
+         "Click",
+         "Expand",
+         "Collapse",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 28,
+         "width": 28,
+         "x": 265,
+         "y": 265
+        },
+        "name": "System",
+        "ref_id": "@shf0t86na26rj:e93",
+        "role": "menuitem",
+        "role_description": "menu item",
+        "states": [
+         "haspopup"
+        ]
+       }
+      ],
+      "name": "System",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "SystemMenuBar"
+      },
+      "role": "menu",
+      "role_description": "menu bar"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 30,
+       "width": 60,
+       "x": 1509,
+       "y": 228
+      },
+      "name": "Minimize",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Minimize-Restore"
+      },
+      "ref_id": "@shf0t86na26rj:e94",
+      "role": "button",
+      "role_description": "button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 30,
+       "width": 59,
+       "x": 1569,
+       "y": 228
+      },
+      "name": "Maximize",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Maximize-Restore"
+      },
+      "ref_id": "@shf0t86na26rj:e95",
+      "role": "button",
+      "role_description": "button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 30,
+       "width": 60,
+       "x": 1628,
+       "y": 228
+      },
+      "name": "Close",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Close"
+      },
+      "ref_id": "@shf0t86na26rj:e96",
+      "role": "button",
+      "role_description": "button"
+     }
+    ],
+    "native_id": {
+     "kind": "automation_id",
+     "value": "TitleBar"
+    },
+    "ref_id": "@shf0t86na26rj:e92",
+    "role": "group",
+    "role_description": "title bar",
+    "states": [
+     "offscreen"
+    ],
+    "value": "Quarterly report - Word"
+   }
+  ],
+  "name": "Quarterly report - Word",
+  "role": "window",
+  "role_description": "window"
+ }
+}

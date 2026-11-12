@@ -20,17 +20,22 @@ const LONG_NUMBER = /\b\d{9,}\b/g;
 const TEXT_FIELDS = ["name", "value", "description", "help", "title", "placeholder", "role_description"];
 
 /**
- * Names to hide for this user: their account name and its parts ("LionelLapidos" also hides "Lionel" and
- * "Lapidos"), and any others given. Parts shorter than three letters are left, since they'd match ordinary words.
- * @param {string[]} names
+ * Names to hide: people's names and their parts ("JaneDoe" also hides "Jane" and "Doe"), and other names (an
+ * organisation, a shared folder) whole, since their parts are ordinary words ("PowerBI Hub" must not hide "Power" in
+ * Calculator's "Power Converter"). Parts shorter than three letters are left, since they'd match ordinary words.
+ * @param {string[]} people @param {string[]} [whole]
  */
-export function namesToHide(names) {
+export function namesToHide(people, whole = []) {
   const out = new Set();
-  for (const raw of names) {
+  for (const raw of people) {
     const name = String(raw ?? "").trim();
     if (name.length < 3) continue;
     out.add(name);
     for (const part of name.replace(/([a-z])([A-Z])/g, "$1 $2").split(/[\s._-]+/)) if (part.length >= 3) out.add(part);
+  }
+  for (const raw of whole) {
+    const name = String(raw ?? "").trim();
+    if (name.length >= 3) out.add(name);
   }
   // Longest first, so "Lionel Lapidos" goes whole before "Lionel" alone.
   return [...out].sort((a, b) => b.length - a.length);

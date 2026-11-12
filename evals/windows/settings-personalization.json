@@ -1,0 +1,1091 @@
+{
+ "name": "settings-personalization",
+ "app": "SystemSettings.exe",
+ "title": "Settings",
+ "note": "Windows Settings, Personalization",
+ "recordedAt": "2026-11-12",
+ "agentDesktop": "1.2.0",
+ "refCount": 46,
+ "complete": true,
+ "replaced": {
+  "name": 1
+ },
+ "tree": {
+  "available_actions": [
+   "SetFocus"
+  ],
+  "bounds": {
+   "height": 1010,
+   "width": 1298,
+   "x": 258,
+   "y": 122
+  },
+  "children": [
+   {
+    "bounds": {
+     "height": 40,
+     "width": 233,
+     "x": 1314,
+     "y": 123
+    },
+    "children": [
+     {
+      "available_actions": [
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 0,
+       "width": 0,
+       "x": 0,
+       "y": 0
+      },
+      "children": [
+       {
+        "available_actions": [
+         "Expand",
+         "Collapse",
+         "Click",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 0,
+         "width": 0,
+         "x": 0,
+         "y": 0
+        },
+        "name": "System",
+        "ref_id": "@s1qzkqsuu4r8l5:e1",
+        "role": "menuitem",
+        "role_description": "menu item",
+        "states": [
+         "haspopup"
+        ]
+       }
+      ],
+      "name": "System",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "SystemMenuBar"
+      },
+      "role": "menu",
+      "role_description": "menu bar"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 40,
+       "width": 57,
+       "x": 1376,
+       "y": 123
+      },
+      "name": "Minimize Settings",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Minimize"
+      },
+      "ref_id": "@s1qzkqsuu4r8l5:e2",
+      "role": "button",
+      "role_description": "button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 40,
+       "width": 57,
+       "x": 1433,
+       "y": 123
+      },
+      "name": "Maximize Settings",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Maximize"
+      },
+      "ref_id": "@s1qzkqsuu4r8l5:e3",
+      "role": "button",
+      "role_description": "button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 40,
+       "width": 57,
+       "x": 1490,
+       "y": 123
+      },
+      "name": "Close Settings",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Close"
+      },
+      "ref_id": "@s1qzkqsuu4r8l5:e4",
+      "role": "button",
+      "role_description": "button"
+     }
+    ],
+    "name": "Settings",
+    "native_id": {
+     "kind": "automation_id",
+     "value": "TitleBar"
+    },
+    "role": "window",
+    "states": [
+     "readonly"
+    ],
+    "value": "Settings"
+   },
+   {
+    "bounds": {
+     "height": 1000,
+     "width": 1280,
+     "x": 267,
+     "y": 123
+    },
+    "children": [
+     {
+      "available_actions": [
+       "ScrollTo"
+      ],
+      "bounds": {
+       "height": 41,
+       "width": 645,
+       "x": 585,
+       "y": 133
+      },
+      "children": [
+       {
+        "available_actions": [
+         "SetValue",
+         "ScrollTo",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 41,
+         "width": 645,
+         "x": 585,
+         "y": 133
+        },
+        "children": [
+         {
+          "available_actions": [
+           "SetValue"
+          ],
+          "bounds": {
+           "height": 41,
+           "width": 645,
+           "x": 585,
+           "y": 133
+          },
+          "name": "Search box, Find a setting",
+          "ref_id": "@s1qzkqsuu4r8l5:e6",
+          "role": "textfield",
+          "role_description": "edit"
+         },
+         {
+          "available_actions": [
+           "Scroll",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 37,
+           "width": 604,
+           "x": 624,
+           "y": 134
+          },
+          "native_id": {
+           "kind": "automation_id",
+           "value": "ContentElement"
+          },
+          "ref_id": "@s1qzkqsuu4r8l5:e7",
+          "role": "group",
+          "role_description": "pane"
+         },
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 30,
+           "width": 30,
+           "x": 593,
+           "y": 139
+          },
+          "native_id": {
+           "kind": "automation_id",
+           "value": "QueryButton"
+          },
+          "ref_id": "@s1qzkqsuu4r8l5:e8",
+          "role": "button",
+          "role_description": "button"
+         }
+        ],
+        "name": "Search box, Find a setting",
+        "native_id": {
+         "kind": "automation_id",
+         "value": "CommandSearchTextBox"
+        },
+        "ref_id": "@s1qzkqsuu4r8l5:e5",
+        "role": "textfield",
+        "role_description": "edit",
+        "states": [
+         "focused"
+        ]
+       }
+      ],
+      "native_id": {
+       "kind": "automation_id",
+       "value": "SettingsCommandSearchBox"
+      },
+      "role": "list",
+      "role_description": "list"
+     },
+     {
+      "available_actions": [
+       "ScrollTo"
+      ],
+      "bounds": {
+       "height": 1000,
+       "width": 1280,
+       "x": 267,
+       "y": 123
+      },
+      "children": [
+       {
+        "available_actions": [
+         "Click",
+         "ScrollTo"
+        ],
+        "bounds": {
+         "height": 45,
+         "width": 50,
+         "x": 272,
+         "y": 131
+        },
+        "name": "Back",
+        "native_id": {
+         "kind": "automation_id",
+         "value": "NavigationViewBackButton"
+        },
+        "ref_id": "@s1qzkqsuu4r8l5:e9",
+        "role": "button",
+        "role_description": "button",
+        "states": [
+         "disabled"
+        ]
+       },
+       {
+        "available_actions": [
+         "ScrollTo"
+        ],
+        "bounds": {
+         "height": 1000,
+         "width": 375,
+         "x": 267,
+         "y": 123
+        },
+        "children": [
+         {
+          "available_actions": [
+           "Click",
+           "ScrollTo",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 94,
+           "width": 360,
+           "x": 273,
+           "y": 184
+          },
+          "name": "<name> Local Account",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "UserProfileControlButton"
+          },
+          "ref_id": "@s1qzkqsuu4r8l5:e10",
+          "role": "button",
+          "role_description": "button"
+         },
+         {
+          "available_actions": [
+           "Scroll",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 813,
+           "width": 374,
+           "x": 267,
+           "y": 300
+          },
+          "children": [
+           {
+            "available_actions": [
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 595,
+             "width": 349,
+             "x": 287,
+             "y": 303
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 349,
+               "x": 287,
+               "y": 303
+              },
+              "name": "Home",
+              "ref_id": "@s1qzkqsuu4r8l5:e12",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 349,
+               "x": 287,
+               "y": 353
+              },
+              "name": "System",
+              "ref_id": "@s1qzkqsuu4r8l5:e13",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 349,
+               "x": 287,
+               "y": 403
+              },
+              "name": "Bluetooth & devices",
+              "ref_id": "@s1qzkqsuu4r8l5:e14",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 349,
+               "x": 287,
+               "y": 453
+              },
+              "name": "Network & internet",
+              "ref_id": "@s1qzkqsuu4r8l5:e15",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 349,
+               "x": 287,
+               "y": 503
+              },
+              "name": "Personalization",
+              "ref_id": "@s1qzkqsuu4r8l5:e16",
+              "role": "option",
+              "role_description": "list item",
+              "states": [
+               "selected"
+              ]
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 349,
+               "x": 287,
+               "y": 553
+              },
+              "name": "Apps",
+              "ref_id": "@s1qzkqsuu4r8l5:e17",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 349,
+               "x": 287,
+               "y": 603
+              },
+              "name": "Accounts",
+              "ref_id": "@s1qzkqsuu4r8l5:e18",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 349,
+               "x": 287,
+               "y": 653
+              },
+              "name": "Time & language",
+              "ref_id": "@s1qzkqsuu4r8l5:e19",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 349,
+               "x": 287,
+               "y": 703
+              },
+              "name": "Gaming",
+              "ref_id": "@s1qzkqsuu4r8l5:e20",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 349,
+               "x": 287,
+               "y": 753
+              },
+              "name": "Accessibility",
+              "ref_id": "@s1qzkqsuu4r8l5:e21",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 349,
+               "x": 287,
+               "y": 803
+              },
+              "name": "Privacy & security",
+              "ref_id": "@s1qzkqsuu4r8l5:e22",
+              "role": "option",
+              "role_description": "list item"
+             },
+             {
+              "available_actions": [
+               "Select",
+               "ScrollTo",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 45,
+               "width": 349,
+               "x": 287,
+               "y": 853
+              },
+              "name": "Windows Update",
+              "ref_id": "@s1qzkqsuu4r8l5:e23",
+              "role": "option",
+              "role_description": "list item"
+             }
+            ],
+            "native_id": {
+             "kind": "automation_id",
+             "value": "MenuItemsHost"
+            },
+            "role": "group",
+            "role_description": "group"
+           }
+          ],
+          "native_id": {
+           "kind": "automation_id",
+           "value": "MenuItemsScrollViewer"
+          },
+          "ref_id": "@s1qzkqsuu4r8l5:e11",
+          "role": "group",
+          "role_description": "pane"
+         },
+         {
+          "available_actions": [
+           "Scroll",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 0,
+           "width": 0,
+           "x": 0,
+           "y": 0
+          },
+          "native_id": {
+           "kind": "automation_id",
+           "value": "FooterItemsScrollViewer"
+          },
+          "ref_id": "@s1qzkqsuu4r8l5:e24",
+          "role": "group",
+          "role_description": "pane",
+          "states": [
+           "offscreen"
+          ]
+         }
+        ],
+        "native_id": {
+         "kind": "automation_id",
+         "value": "PaneRoot"
+        },
+        "role": "window",
+        "role_description": "window"
+       },
+       {
+        "available_actions": [
+         "ScrollTo"
+        ],
+        "bounds": {
+         "height": 47,
+         "width": 241,
+         "x": 673,
+         "y": 191
+        },
+        "children": [
+         {
+          "available_actions": [
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 47,
+           "width": 241,
+           "x": 673,
+           "y": 191
+          },
+          "children": [
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 0,
+             "width": 0,
+             "x": 0,
+             "y": 0
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Click",
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 0,
+               "width": 0,
+               "x": 0,
+               "y": 0
+              },
+              "name": "BreadcrumbBarItemButton",
+              "native_id": {
+               "kind": "automation_id",
+               "value": "PART_ItemButton"
+              },
+              "ref_id": "@s1qzkqsuu4r8l5:e26",
+              "role": "button",
+              "role_description": "button",
+              "states": [
+               "offscreen"
+              ]
+             }
+            ],
+            "name": "More",
+            "ref_id": "@s1qzkqsuu4r8l5:e25",
+            "role": "button",
+            "role_description": "breadcrumb bar item",
+            "states": [
+             "offscreen"
+            ]
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 47,
+             "width": 241,
+             "x": 673,
+             "y": 191
+            },
+            "name": "Personalization",
+            "ref_id": "@s1qzkqsuu4r8l5:e27",
+            "role": "button",
+            "role_description": "breadcrumb bar item"
+           }
+          ],
+          "native_id": {
+           "kind": "automation_id",
+           "value": "PART_ItemsRepeater"
+          },
+          "role": "group",
+          "role_description": "group"
+         }
+        ],
+        "native_id": {
+         "kind": "automation_id",
+         "value": "PermanentNavigationViewBreadcrumbBar"
+        },
+        "role": "group",
+        "role_description": "group"
+       },
+       {
+        "available_actions": [
+         "Scroll",
+         "ScrollTo"
+        ],
+        "bounds": {
+         "height": 868,
+         "width": 905,
+         "x": 642,
+         "y": 255
+        },
+        "children": [
+         {
+          "available_actions": [
+           "Scroll",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 259,
+           "width": 450,
+           "x": 1045,
+           "y": 300
+          },
+          "children": [
+           {
+            "available_actions": [
+             "Click",
+             "Select",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 118,
+             "width": 145,
+             "x": 1045,
+             "y": 300
+            },
+            "name": "Windows (light), 1 images",
+            "ref_id": "@s1qzkqsuu4r8l5:e30",
+            "role": "option",
+            "role_description": "list item"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Select",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 118,
+             "width": 145,
+             "x": 1195,
+             "y": 300
+            },
+            "name": "Windows (dark), 1 images",
+            "ref_id": "@s1qzkqsuu4r8l5:e31",
+            "role": "option",
+            "role_description": "list item"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Select",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 118,
+             "width": 145,
+             "x": 1345,
+             "y": 300
+            },
+            "name": "Windows spotlight, dynamic images",
+            "ref_id": "@s1qzkqsuu4r8l5:e32",
+            "role": "option",
+            "role_description": "list item"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Select",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 118,
+             "width": 145,
+             "x": 1045,
+             "y": 423
+            },
+            "name": "Glow, 4 images",
+            "ref_id": "@s1qzkqsuu4r8l5:e33",
+            "role": "option",
+            "role_description": "list item"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Select",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 118,
+             "width": 145,
+             "x": 1195,
+             "y": 423
+            },
+            "name": "Captured Motion, 4 images",
+            "ref_id": "@s1qzkqsuu4r8l5:e34",
+            "role": "option",
+            "role_description": "list item"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "Select",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 118,
+             "width": 145,
+             "x": 1345,
+             "y": 423
+            },
+            "name": "Sunrise, 4 images",
+            "ref_id": "@s1qzkqsuu4r8l5:e35",
+            "role": "option",
+            "role_description": "list item"
+           }
+          ],
+          "name": "Select a theme to apply",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "SystemSettings_Personalize_Theme_Gallery_CapAtSix_GridView"
+          },
+          "ref_id": "@s1qzkqsuu4r8l5:e29",
+          "role": "listbox",
+          "role_description": "list"
+         },
+         {
+          "available_actions": [
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 559,
+           "width": 852,
+           "x": 668,
+           "y": 564
+          },
+          "children": [
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 88,
+             "width": 852,
+             "x": 668,
+             "y": 564
+            },
+            "name": "Background",
+            "ref_id": "@s1qzkqsuu4r8l5:e36",
+            "role": "option",
+            "role_description": "list item"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 88,
+             "width": 852,
+             "x": 668,
+             "y": 654
+            },
+            "name": "Colors",
+            "ref_id": "@s1qzkqsuu4r8l5:e37",
+            "role": "option",
+            "role_description": "list item"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 88,
+             "width": 852,
+             "x": 668,
+             "y": 744
+            },
+            "name": "Themes",
+            "ref_id": "@s1qzkqsuu4r8l5:e38",
+            "role": "option",
+            "role_description": "list item"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 87,
+             "width": 852,
+             "x": 668,
+             "y": 834
+            },
+            "name": "Dynamic Lighting",
+            "ref_id": "@s1qzkqsuu4r8l5:e39",
+            "role": "option",
+            "role_description": "list item"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 87,
+             "width": 852,
+             "x": 668,
+             "y": 924
+            },
+            "name": "Lock screen",
+            "ref_id": "@s1qzkqsuu4r8l5:e40",
+            "role": "option",
+            "role_description": "list item"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 87,
+             "width": 852,
+             "x": 668,
+             "y": 1014
+            },
+            "name": "Text input",
+            "ref_id": "@s1qzkqsuu4r8l5:e41",
+            "role": "option",
+            "role_description": "list item"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 19,
+             "width": 852,
+             "x": 668,
+             "y": 1104
+            },
+            "name": "Start",
+            "ref_id": "@s1qzkqsuu4r8l5:e42",
+            "role": "option",
+            "role_description": "list item"
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 0,
+             "width": 0,
+             "x": 0,
+             "y": 0
+            },
+            "name": "Taskbar",
+            "ref_id": "@s1qzkqsuu4r8l5:e43",
+            "role": "option",
+            "role_description": "list item",
+            "states": [
+             "offscreen"
+            ]
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 0,
+             "width": 0,
+             "x": 0,
+             "y": 0
+            },
+            "name": "Fonts",
+            "ref_id": "@s1qzkqsuu4r8l5:e44",
+            "role": "option",
+            "role_description": "list item",
+            "states": [
+             "offscreen"
+            ]
+           },
+           {
+            "available_actions": [
+             "Click",
+             "ScrollTo",
+             "SetFocus"
+            ],
+            "bounds": {
+             "height": 0,
+             "width": 0,
+             "x": 0,
+             "y": 0
+            },
+            "name": "Device usage",
+            "ref_id": "@s1qzkqsuu4r8l5:e45",
+            "role": "option",
+            "role_description": "list item",
+            "states": [
+             "offscreen"
+            ]
+           }
+          ],
+          "native_id": {
+           "kind": "automation_id",
+           "value": "settingPagesList"
+          },
+          "role": "list",
+          "role_description": "list"
+         },
+         {
+          "available_actions": [
+           "SetValue",
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 0,
+           "width": 0,
+           "x": 0,
+           "y": 0
+          },
+          "name": "Vertical",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "VerticalScrollBar"
+          },
+          "ref_id": "@s1qzkqsuu4r8l5:e46",
+          "role": "scrollbar",
+          "role_description": "scroll bar",
+          "states": [
+           "offscreen"
+          ]
+         }
+        ],
+        "ref_id": "@s1qzkqsuu4r8l5:e28",
+        "role": "group",
+        "role_description": "pane"
+       }
+      ],
+      "native_id": {
+       "kind": "automation_id",
+       "value": "PermanentNavigationView"
+      },
+      "role": "unknown",
+      "role_description": "custom"
+     }
+    ],
+    "name": "Settings",
+    "role": "window",
+    "role_description": "window",
+    "states": [
+     "focused"
+    ]
+   }
+  ],
+  "name": "Settings",
+  "role": "window",
+  "role_description": "window"
+ }
+}

@@ -1,0 +1,2247 @@
+{
+ "name": "word-report-review",
+ "app": "WINWORD.EXE",
+ "title": "Quarterly report - Word",
+ "note": "Sample report in Word, Review tab",
+ "recordedAt": "2026-11-12",
+ "agentDesktop": "1.2.0",
+ "refCount": 86,
+ "complete": true,
+ "replaced": {
+  "email": 1,
+  "name": 4
+ },
+ "tree": {
+  "available_actions": [
+   "SetFocus"
+  ],
+  "bounds": {
+   "height": 830,
+   "width": 1440,
+   "x": 256,
+   "y": 256
+  },
+  "children": [
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 222,
+     "width": 1422,
+     "x": 265,
+     "y": 257
+    },
+    "children": [
+     {
+      "bounds": {
+       "height": 222,
+       "width": 1422,
+       "x": 265,
+       "y": 257
+      },
+      "children": [
+       {
+        "available_actions": [
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 222,
+         "width": 1422,
+         "x": 265,
+         "y": 257
+        },
+        "children": [
+         {
+          "bounds": {
+           "height": 222,
+           "width": 1422,
+           "x": 265,
+           "y": 257
+          },
+          "children": [
+           {
+            "bounds": {
+             "height": 222,
+             "width": 1422,
+             "x": 265,
+             "y": 257
+            },
+            "children": [
+             {
+              "bounds": {
+               "height": 222,
+               "width": 1422,
+               "x": 265,
+               "y": 257
+              },
+              "children": [
+               {
+                "bounds": {
+                 "height": 60,
+                 "width": 290,
+                 "x": 318,
+                 "y": 257
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Toggle",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 36,
+                   "width": 137,
+                   "x": 318,
+                   "y": 269
+                  },
+                  "description": "Turn on AutoSave to save changes as they happen.",
+                  "name": "AutoSave",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "AutoSaveSwitch"
+                  },
+                  "ref_id": "@sx54tyv9z40lg:e1",
+                  "role": "switch",
+                  "role_description": "Toggle Switch"
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 35,
+                   "width": 34,
+                   "x": 456,
+                   "y": 269
+                  },
+                  "description": "Save (Ctrl+S)",
+                  "name": "Save",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "FileSave"
+                  },
+                  "ref_id": "@sx54tyv9z40lg:e2",
+                  "role": "button",
+                  "role_description": "Button"
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "Expand",
+                   "Collapse",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 35,
+                   "width": 47,
+                   "x": 491,
+                   "y": 269
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click"
+                    ],
+                    "bounds": {
+                     "height": 35,
+                     "width": 31,
+                     "x": 491,
+                     "y": 269
+                    },
+                    "description": "Can't Undo (Ctrl+Z)",
+                    "name": "Can't Undo",
+                    "ref_id": "@sx54tyv9z40lg:e4",
+                    "role": "button",
+                    "role_description": "Button",
+                    "states": [
+                     "disabled"
+                    ]
+                   },
+                   {
+                    "available_actions": [
+                     "Expand",
+                     "Collapse",
+                     "Click"
+                    ],
+                    "bounds": {
+                     "height": 35,
+                     "width": 16,
+                     "x": 522,
+                     "y": 269
+                    },
+                    "description": "Can't Undo (Ctrl+Z)",
+                    "name": "More Options",
+                    "native_id": {
+                     "kind": "automation_id",
+                     "value": "Undo_Dropdown"
+                    },
+                    "ref_id": "@sx54tyv9z40lg:e5",
+                    "role": "menuitem",
+                    "role_description": "Menu Item",
+                    "states": [
+                     "disabled",
+                     "haspopup"
+                    ]
+                   }
+                  ],
+                  "description": "Can't Undo (Ctrl+Z)",
+                  "name": "Can't Undo",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "Undo"
+                  },
+                  "ref_id": "@sx54tyv9z40lg:e3",
+                  "role": "menubutton",
+                  "role_description": "SplitButton",
+                  "states": [
+                   "disabled",
+                   "readonly"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 35,
+                   "width": 34,
+                   "x": 539,
+                   "y": 269
+                  },
+                  "description": "Can't Repeat (Ctrl+Y)",
+                  "name": "Can't Repeat",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "RedoOrRepeat"
+                  },
+                  "ref_id": "@sx54tyv9z40lg:e6",
+                  "role": "button",
+                  "role_description": "Button",
+                  "states": [
+                   "disabled"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 34,
+                   "x": 574,
+                   "y": 268
+                  },
+                  "name": "Customize Quick Access Toolbar",
+                  "ref_id": "@sx54tyv9z40lg:e7",
+                  "role": "menuitem",
+                  "role_description": "Menu Item",
+                  "states": [
+                   "haspopup"
+                  ]
+                 }
+                ],
+                "name": "Quick Access Toolbar",
+                "role": "toolbar",
+                "role_description": "ToolBar"
+               },
+               {
+                "bounds": {
+                 "height": 60,
+                 "width": 291,
+                 "x": 609,
+                 "y": 257
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 60,
+                   "width": 214,
+                   "x": 609,
+                   "y": 257
+                  },
+                  "description": "Saved to this PC",
+                  "name": "‪Quarterly report‬  -  Saved to this PC",
+                  "ref_id": "@sx54tyv9z40lg:e8",
+                  "role": "menuitem",
+                  "role_description": "Menu Item",
+                  "states": [
+                   "haspopup"
+                  ]
+                 }
+                ],
+                "description": "Quarterly report",
+                "name": "‪Quarterly report‬  -  Saved to this PC",
+                "role": "group",
+                "role_description": "Title Bar"
+               },
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 40,
+                 "width": 383,
+                 "x": 900,
+                 "y": 267
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "SetValue",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 22,
+                   "width": 316,
+                   "x": 951,
+                   "y": 277
+                  },
+                  "description": "Just start typing here to bring features to your fingertips and get help.",
+                  "name": "Microsoft search",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TellMeTextBoxAutomationId"
+                  },
+                  "ref_id": "@sx54tyv9z40lg:e10",
+                  "role": "textfield",
+                  "role_description": "Edit Box",
+                  "value": "Search"
+                 }
+                ],
+                "description": "Just start typing here to bring features to your fingertips and get help.",
+                "name": "Type to search and use the up and down arrow keys to navigate",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "TellMeControlAnchor"
+                },
+                "ref_id": "@sx54tyv9z40lg:e9",
+                "role": "menuitem",
+                "role_description": "Menu Item",
+                "states": [
+                 "haspopup"
+                ]
+               },
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 60,
+                 "width": 63,
+                 "x": 1444,
+                 "y": 257
+                },
+                "description": "<name> <name> (<email>) is signed in. Open and see more details about the signed in user.",
+                "name": "<name> <name>",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "MeControlWidget"
+                },
+                "ref_id": "@sx54tyv9z40lg:e11",
+                "role": "menuitem",
+                "role_description": "Menu Item",
+                "states": [
+                 "haspopup"
+                ]
+               },
+               {
+                "available_actions": [
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 60,
+                 "width": 60,
+                 "x": 1507,
+                 "y": 257
+                },
+                "description": "Moves the window out of the way",
+                "name": "Minimize",
+                "ref_id": "@sx54tyv9z40lg:e12",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 60,
+                 "width": 60,
+                 "x": 1567,
+                 "y": 257
+                },
+                "description": "Makes the window full screen",
+                "name": "Maximize",
+                "ref_id": "@sx54tyv9z40lg:e13",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 60,
+                 "width": 60,
+                 "x": 1627,
+                 "y": 257
+                },
+                "description": "Closes the window",
+                "name": "Close",
+                "ref_id": "@sx54tyv9z40lg:e14",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 38,
+                 "width": 68,
+                 "x": 270,
+                 "y": 317
+                },
+                "name": "File Tab",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "FileTabButton"
+                },
+                "ref_id": "@sx54tyv9z40lg:e15",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Scroll",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 38,
+                 "width": 1334,
+                 "x": 338,
+                 "y": 317
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 67,
+                   "x": 338,
+                   "y": 317
+                  },
+                  "name": "Home",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabHome"
+                  },
+                  "ref_id": "@sx54tyv9z40lg:e17",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 63,
+                   "x": 406,
+                   "y": 317
+                  },
+                  "name": "Insert",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabInsert"
+                  },
+                  "ref_id": "@sx54tyv9z40lg:e18",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 72,
+                   "x": 470,
+                   "y": 317
+                  },
+                  "name": "Design",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabWordDesign"
+                  },
+                  "ref_id": "@sx54tyv9z40lg:e19",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 72,
+                   "x": 543,
+                   "y": 317
+                  },
+                  "name": "Layout",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabPageLayoutWord"
+                  },
+                  "ref_id": "@sx54tyv9z40lg:e20",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 104,
+                   "x": 616,
+                   "y": 317
+                  },
+                  "name": "References",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabReferences"
+                  },
+                  "ref_id": "@sx54tyv9z40lg:e21",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 84,
+                   "x": 721,
+                   "y": 317
+                  },
+                  "name": "Mailings",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabMailings"
+                  },
+                  "ref_id": "@sx54tyv9z40lg:e22",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 75,
+                   "x": 806,
+                   "y": 317
+                  },
+                  "name": "Review",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabReviewWord"
+                  },
+                  "ref_id": "@sx54tyv9z40lg:e23",
+                  "role": "tab",
+                  "role_description": "Tab Item",
+                  "states": [
+                   "selected"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 57,
+                   "x": 882,
+                   "y": 317
+                  },
+                  "name": "View",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabView"
+                  },
+                  "ref_id": "@sx54tyv9z40lg:e24",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 56,
+                   "x": 940,
+                   "y": 317
+                  },
+                  "name": "Help",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "HelpTab"
+                  },
+                  "ref_id": "@sx54tyv9z40lg:e25",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 80,
+                   "x": 997,
+                   "y": 317
+                  },
+                  "name": "Acrobat",
+                  "ref_id": "@sx54tyv9z40lg:e26",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Toggle",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 30,
+                   "width": 115,
+                   "x": 1348,
+                   "y": 321
+                  },
+                  "description": "See and respond to comments in this document.",
+                  "name": "Comments",
+                  "ref_id": "@sx54tyv9z40lg:e27",
+                  "role": "switch",
+                  "role_description": "Button"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "SetValue",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 30,
+                   "width": 102,
+                   "x": 1473,
+                   "y": 321
+                  },
+                  "name": "Editing",
+                  "ref_id": "@sx54tyv9z40lg:e28",
+                  "role": "combobox",
+                  "role_description": "ComboBox",
+                  "value": "Editing"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 87,
+                   "x": 1585,
+                   "y": 317
+                  },
+                  "description": "Share this document, and see who it's shared with.",
+                  "name": "Share",
+                  "ref_id": "@sx54tyv9z40lg:e29",
+                  "role": "menuitem",
+                  "role_description": "Menu Item",
+                  "states": [
+                   "haspopup"
+                  ]
+                 }
+                ],
+                "name": "Ribbon Tabs",
+                "ref_id": "@sx54tyv9z40lg:e16",
+                "role": "tablist",
+                "role_description": "Pane",
+                "states": [
+                 "expanded"
+                ]
+               },
+               {
+                "available_actions": [
+                 "Scroll"
+                ],
+                "bounds": {
+                 "height": 124,
+                 "width": 1367,
+                 "x": 275,
+                 "y": 355
+                },
+                "children": [
+                 {
+                  "bounds": {
+                   "height": 124,
+                   "width": 1362,
+                   "x": 280,
+                   "y": 355
+                  },
+                  "children": [
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 293,
+                     "x": 280,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 97,
+                       "width": 52,
+                       "x": 290,
+                       "y": 359
+                      },
+                      "description": "Check for Spelling, Grammar and Writing Suggestions",
+                      "name": "Editor",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "WritingAssistanceCheckDocument"
+                      },
+                      "ref_id": "@sx54tyv9z40lg:e31",
+                      "role": "button",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 219,
+                       "x": 344,
+                       "y": 359
+                      },
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 189,
+                         "x": 344,
+                         "y": 359
+                        },
+                        "name": "Spelling and Grammar",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "QuickCheck"
+                        },
+                        "ref_id": "@sx54tyv9z40lg:e33",
+                        "role": "button",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 533,
+                         "y": 359
+                        },
+                        "description": "Spelling and Grammar",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "SplitButtonQuickCheck_Dropdown"
+                        },
+                        "ref_id": "@sx54tyv9z40lg:e34",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
+                      "name": "Spelling and Grammar",
+                      "ref_id": "@sx54tyv9z40lg:e32",
+                      "role": "menubutton",
+                      "role_description": "SplitButton"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 105,
+                       "x": 344,
+                       "y": 391
+                      },
+                      "description": "At a loss for words? Let us suggest another way to say what you mean.",
+                      "name": "Thesaurus...",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "Thesaurus"
+                      },
+                      "ref_id": "@sx54tyv9z40lg:e35",
+                      "role": "button",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 119,
+                       "x": 344,
+                       "y": 423
+                      },
+                      "description": "Words, characters, lines...\nWe count them so you don't have to.\n\nFYI: To see the word count at a glance, check out the status bar.",
+                      "name": "Word Count",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "WordCount"
+                      },
+                      "ref_id": "@sx54tyv9z40lg:e36",
+                      "role": "button",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "Proofing",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 72,
+                     "x": 573,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 52,
+                       "x": 583,
+                       "y": 359
+                      },
+                      "description": "Read text out loud and highlight each word as it's read.",
+                      "name": "Read Aloud",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "ReadAloud"
+                      },
+                      "ref_id": "@sx54tyv9z40lg:e37",
+                      "role": "button",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "Speech",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 119,
+                     "x": 645,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 99,
+                       "x": 655,
+                       "y": 359
+                      },
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 48,
+                         "width": 99,
+                         "x": 655,
+                         "y": 359
+                        },
+                        "description": "Keep it inclusive.\n\nLet us make sure that your file follows accessibility best practices. We'll help you fix issues quickly with easy-to-follow directions or recommendations.",
+                        "name": "Check Accessibility",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "AccessibilityChecker"
+                        },
+                        "ref_id": "@sx54tyv9z40lg:e39",
+                        "role": "button",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 48,
+                         "width": 99,
+                         "x": 655,
+                         "y": 407
+                        },
+                        "description": "More accessibility tools.",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "MenuAccessibility_Dropdown"
+                        },
+                        "ref_id": "@sx54tyv9z40lg:e40",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
+                      "description": "More accessibility tools.",
+                      "name": "Check Accessibility",
+                      "ref_id": "@sx54tyv9z40lg:e38",
+                      "role": "menubutton",
+                      "role_description": "SplitButton"
+                     }
+                    ],
+                    "name": "Accessibility",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 86,
+                     "x": 764,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 120,
+                       "width": 86,
+                       "x": 764,
+                       "y": 357
+                      },
+                      "name": "Language",
+                      "ref_id": "@sx54tyv9z40lg:e41",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     }
+                    ],
+                    "name": "Language",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 92,
+                     "x": 850,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 120,
+                       "width": 92,
+                       "x": 850,
+                       "y": 357
+                      },
+                      "name": "Comments",
+                      "ref_id": "@sx54tyv9z40lg:e42",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     }
+                    ],
+                    "name": "Comments",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 269,
+                     "x": 942,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 68,
+                       "x": 952,
+                       "y": 359
+                      },
+                      "name": "Filter All Markup",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "ContentFilterButton"
+                      },
+                      "ref_id": "@sx54tyv9z40lg:e43",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 151,
+                       "x": 1050,
+                       "y": 359
+                      },
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 28,
+                         "width": 16,
+                         "x": 1184,
+                         "y": 360
+                        },
+                        "description": "Choose how you'd like to see changes in this document.",
+                        "name": "Open",
+                        "ref_id": "@sx54tyv9z40lg:e45",
+                        "role": "button",
+                        "role_description": "Button"
+                       }
+                      ],
+                      "description": "Choose how you'd like to see changes in this document.",
+                      "name": "Display for Review",
+                      "ref_id": "@sx54tyv9z40lg:e44",
+                      "role": "combobox",
+                      "role_description": "ComboBox",
+                      "value": "All Markup"
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 144,
+                       "x": 1022,
+                       "y": 391
+                      },
+                      "description": "Choose what types of markup to show in your document.\n\nFor example, you can hide comments or formatting changes.",
+                      "name": "Show Markup",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "ReviewShowMarkupMenu"
+                      },
+                      "ref_id": "@sx54tyv9z40lg:e46",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Toggle",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 173,
+                       "x": 1022,
+                       "y": 423
+                      },
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Toggle",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 143,
+                         "x": 1022,
+                         "y": 423
+                        },
+                        "description": "Show all the changes to your document in a list.\n\nClick the arrow to choose whether they show below or next to your document.",
+                        "name": "Reviewing Pane",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "ReviewReviewingPane"
+                        },
+                        "ref_id": "@sx54tyv9z40lg:e48",
+                        "role": "switch",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 1165,
+                         "y": 423
+                        },
+                        "description": "Show all the changes to your document in a list.\n\nClick here to choose whether they show below or next to your document.",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "ReviewReviewingPaneMenu_Dropdown"
+                        },
+                        "ref_id": "@sx54tyv9z40lg:e49",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
+                      "description": "Show all the changes to your document in a list.\n\nClick here to choose whether they show below or next to your document.",
+                      "name": "Reviewing Pane",
+                      "ref_id": "@sx54tyv9z40lg:e47",
+                      "role": "menubutton",
+                      "role_description": "SplitButton"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 20,
+                       "width": 20,
+                       "x": 1191,
+                       "y": 457
+                      },
+                      "name": "Change Tracking Options...",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "ReviewChangeTrackingOptions"
+                      },
+                      "ref_id": "@sx54tyv9z40lg:e50",
+                      "role": "button",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "Markup",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 76,
+                     "x": 1211,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 120,
+                       "width": 76,
+                       "x": 1211,
+                       "y": 357
+                      },
+                      "name": "Tracking",
+                      "ref_id": "@sx54tyv9z40lg:e51",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     }
+                    ],
+                    "name": "Tracking",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 85,
+                     "x": 1287,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 65,
+                       "x": 1297,
+                       "y": 359
+                      },
+                      "description": "Compare two documents to see the differences between them.\n\nYou can also combine revisions from different people into a single document.",
+                      "name": "Compare",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "ReviewCompareMenu"
+                      },
+                      "ref_id": "@sx54tyv9z40lg:e52",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     }
+                    ],
+                    "name": "Compare",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 69,
+                     "x": 1372,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 120,
+                       "width": 69,
+                       "x": 1372,
+                       "y": 357
+                      },
+                      "name": "Protect",
+                      "ref_id": "@sx54tyv9z40lg:e53",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     }
+                    ],
+                    "name": "Protect",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 72,
+                     "x": 1441,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Toggle",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 52,
+                       "x": 1451,
+                       "y": 359
+                      },
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Toggle",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 48,
+                         "width": 52,
+                         "x": 1451,
+                         "y": 359
+                        },
+                        "description": "This will not delete your ink. Clicking the button again will make ink visible.",
+                        "name": "Hide Ink",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "HideInk"
+                        },
+                        "ref_id": "@sx54tyv9z40lg:e55",
+                        "role": "switch",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 48,
+                         "width": 52,
+                         "x": 1451,
+                         "y": 407
+                        },
+                        "description": "Hide All of the Ink in Your Document",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "HideInkSplitButton_Dropdown"
+                        },
+                        "ref_id": "@sx54tyv9z40lg:e56",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
+                      "description": "Hide All of the Ink in Your Document",
+                      "name": "Hide Ink",
+                      "ref_id": "@sx54tyv9z40lg:e54",
+                      "role": "menubutton",
+                      "role_description": "SplitButton"
+                     }
+                    ],
+                    "name": "Ink",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 72,
+                     "x": 1513,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 52,
+                       "x": 1523,
+                       "y": 359
+                      },
+                      "description": "OneNote will keep links back to this document for each line of notes. You can open the OneNote notes by clicking this button again.",
+                      "name": "Linked Notes",
+                      "ref_id": "@sx54tyv9z40lg:e57",
+                      "role": "button",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "OneNote",
+                    "role": "group",
+                    "role_description": "Group"
+                   }
+                  ],
+                  "name": "Review",
+                  "role": "group",
+                  "role_description": "Group"
+                 }
+                ],
+                "name": "Lower Ribbon",
+                "ref_id": "@sx54tyv9z40lg:e30",
+                "role": "group",
+                "role_description": "Pane"
+               },
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 25,
+                 "width": 25,
+                 "x": 1647,
+                 "y": 449
+                },
+                "name": "Ribbon Display Options",
+                "ref_id": "@sx54tyv9z40lg:e58",
+                "role": "menuitem",
+                "role_description": "Menu Item",
+                "states": [
+                 "haspopup"
+                ]
+               }
+              ],
+              "name": "Ribbon",
+              "role": "group",
+              "role_description": "Pane"
+             }
+            ],
+            "role": "dialog",
+            "role_description": "Pane"
+           }
+          ],
+          "role": "group",
+          "role_description": "pane"
+         }
+        ],
+        "name": "Ribbon",
+        "role": "group",
+        "role_description": "pane"
+       }
+      ],
+      "name": "Ribbon toolbar",
+      "role": "toolbar",
+      "role_description": "tool bar"
+     }
+    ],
+    "name": "MsoDockTop",
+    "role": "group",
+    "role_description": "pane"
+   },
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 571,
+     "width": 1422,
+     "x": 265,
+     "y": 479
+    },
+    "children": [
+     {
+      "available_actions": [
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 571,
+       "width": 1422,
+       "x": 265,
+       "y": 479
+      },
+      "children": [
+       {
+        "available_actions": [
+         "Scroll",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 571,
+         "width": 1401,
+         "x": 265,
+         "y": 479
+        },
+        "children": [
+         {
+          "available_actions": [
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 550,
+           "width": 992,
+           "x": 469,
+           "y": 500
+          },
+          "children": [
+           {
+            "available_actions": [
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 450,
+             "width": 992,
+             "x": 469,
+             "y": 600
+            },
+            "children": [
+             {
+              "available_actions": [
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 74,
+               "width": 218,
+               "x": 585,
+               "y": 761
+              },
+              "children": [
+               {
+                "available_actions": [
+                 "ScrollTo",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 22,
+                 "width": 202,
+                 "x": 585,
+                 "y": 761
+                },
+                "name": "•",
+                "ref_id": "@sx54tyv9z40lg:e61",
+                "role": "option",
+                "role_description": "list item"
+               },
+               {
+                "available_actions": [
+                 "ScrollTo",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 22,
+                 "width": 218,
+                 "x": 585,
+                 "y": 787
+                },
+                "name": "•",
+                "ref_id": "@sx54tyv9z40lg:e62",
+                "role": "option",
+                "role_description": "list item"
+               },
+               {
+                "available_actions": [
+                 "ScrollTo",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 22,
+                 "width": 190,
+                 "x": 585,
+                 "y": 813
+                },
+                "name": "•",
+                "ref_id": "@sx54tyv9z40lg:e63",
+                "role": "option",
+                "role_description": "list item"
+               }
+              ],
+              "role": "list",
+              "role_description": "list"
+             }
+            ],
+            "name": "Page 1 content",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "Body"
+            },
+            "ref_id": "@sx54tyv9z40lg:e60",
+            "role": "textfield",
+            "role_description": "edit"
+           }
+          ],
+          "name": "Page 1",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "UIA_AutomationId_Word_Page_1"
+          },
+          "role": "unknown",
+          "role_description": "page"
+         }
+        ],
+        "name": "Quarterly report  -  Last saved by user",
+        "ref_id": "@sx54tyv9z40lg:e59",
+        "role": "document",
+        "role_description": "document",
+        "states": [
+         "focused"
+        ]
+       },
+       {
+        "bounds": {
+         "height": 571,
+         "width": 21,
+         "x": 1666,
+         "y": 479
+        },
+        "children": [
+         {
+          "bounds": {
+           "height": 571,
+           "width": 21,
+           "x": 1666,
+           "y": 479
+          },
+          "children": [
+           {
+            "available_actions": [
+             "SetValue"
+            ],
+            "bounds": {
+             "height": 571,
+             "width": 21,
+             "x": 1666,
+             "y": 479
+            },
+            "name": "Used to change the vertical viewing area",
+            "ref_id": "@sx54tyv9z40lg:e64",
+            "role": "scrollbar",
+            "role_description": "ScrollBar"
+           }
+          ],
+          "role": "dialog",
+          "role_description": "Pane"
+         }
+        ],
+        "name": "Vertical",
+        "role": "group",
+        "role_description": "pane"
+       }
+      ],
+      "name": "Quarterly report",
+      "role": "group",
+      "role_description": "pane"
+     }
+    ],
+    "role": "group",
+    "role_description": "pane"
+   },
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 27,
+     "width": 1422,
+     "x": 265,
+     "y": 1050
+    },
+    "children": [
+     {
+      "bounds": {
+       "height": 27,
+       "width": 1422,
+       "x": 265,
+       "y": 1050
+      },
+      "children": [
+       {
+        "available_actions": [
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 27,
+         "width": 1422,
+         "x": 265,
+         "y": 1050
+        },
+        "children": [
+         {
+          "bounds": {
+           "height": 27,
+           "width": 1422,
+           "x": 265,
+           "y": 1050
+          },
+          "children": [
+           {
+            "bounds": {
+             "height": 27,
+             "width": 1422,
+             "x": 265,
+             "y": 1050
+            },
+            "children": [
+             {
+              "bounds": {
+               "height": 27,
+               "width": 1422,
+               "x": 265,
+               "y": 1050
+              },
+              "children": [
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 85,
+                 "x": 270,
+                 "y": 1051
+                },
+                "description": "The current page number in the document. Click or tap to open the Navigation Pane.",
+                "name": "Page Number Page 1 of 1",
+                "ref_id": "@sx54tyv9z40lg:e65",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 75,
+                 "x": 359,
+                 "y": 1051
+                },
+                "description": "The number of words in the document. Click or tap to open the Word Count dialog box.",
+                "name": "Word Count 38 words",
+                "ref_id": "@sx54tyv9z40lg:e66",
+                "role": "statictext",
+                "role_description": "Text"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 40,
+                 "x": 438,
+                 "y": 1051
+                },
+                "description": "Coauthoring in compatibility mode.",
+                "name": "Coauthoring Mode ",
+                "ref_id": "@sx54tyv9z40lg:e67",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 40,
+                 "x": 482,
+                 "y": 1051
+                },
+                "description": "No proofing errors",
+                "name": "Spelling and Grammar Check No Errors",
+                "ref_id": "@sx54tyv9z40lg:e68",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 125,
+                 "x": 522,
+                 "y": 1051
+                },
+                "description": "Language",
+                "name": "Language English (Malaysia)",
+                "ref_id": "@sx54tyv9z40lg:e69",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 134,
+                 "x": 651,
+                 "y": 1051
+                },
+                "description": "Switch text predictions on or off. Click or tap here to open settings for text predictions.",
+                "name": "Text Predictions Text Predictions: Off",
+                "ref_id": "@sx54tyv9z40lg:e70",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 185,
+                 "x": 789,
+                 "y": 1051
+                },
+                "description": "Accessibility check complete. Click here to learn more.",
+                "name": "Accessibility Checker Accessibility: Good to go",
+                "ref_id": "@sx54tyv9z40lg:e71",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 73,
+                 "x": 1223,
+                 "y": 1051
+                },
+                "description": "Focus Mode",
+                "name": "Focus ",
+                "ref_id": "@sx54tyv9z40lg:e72",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Toggle",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 50,
+                 "x": 1300,
+                 "y": 1051
+                },
+                "name": "Read Mode",
+                "ref_id": "@sx54tyv9z40lg:e73",
+                "role": "switch",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Toggle",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 50,
+                 "x": 1350,
+                 "y": 1051
+                },
+                "name": "Print Layout",
+                "ref_id": "@sx54tyv9z40lg:e74",
+                "role": "switch",
+                "role_description": "Button",
+                "states": [
+                 "checked"
+                ]
+               },
+               {
+                "available_actions": [
+                 "Toggle",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 50,
+                 "x": 1400,
+                 "y": 1051
+                },
+                "name": "Web Layout",
+                "ref_id": "@sx54tyv9z40lg:e75",
+                "role": "switch",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 22,
+                 "x": 1451,
+                 "y": 1051
+                },
+                "name": "Zoom Out (Ctrl -)",
+                "ref_id": "@sx54tyv9z40lg:e76",
+                "role": "button",
+                "role_description": "Button",
+                "states": [
+                 "readonly"
+                ],
+                "value": "100"
+               },
+               {
+                "available_actions": [
+                 "SetValue"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 125,
+                 "x": 1473,
+                 "y": 1051
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Click"
+                  ],
+                  "bounds": {
+                   "height": 26,
+                   "width": 60,
+                   "x": 1473,
+                   "y": 1051
+                  },
+                  "description": "Moves the horizontal position left a couple of columns",
+                  "name": "Zoom Out",
+                  "ref_id": "@sx54tyv9z40lg:e78",
+                  "role": "button",
+                  "role_description": "Button",
+                  "states": [
+                   "readonly"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Click"
+                  ],
+                  "bounds": {
+                   "height": 26,
+                   "width": 59,
+                   "x": 1539,
+                   "y": 1051
+                  },
+                  "description": "Moves the horizontal position right a couple of columns",
+                  "name": "Zoom In",
+                  "ref_id": "@sx54tyv9z40lg:e79",
+                  "role": "button",
+                  "role_description": "Button",
+                  "states": [
+                   "readonly"
+                  ]
+                 }
+                ],
+                "name": "Zoom",
+                "ref_id": "@sx54tyv9z40lg:e77",
+                "role": "slider",
+                "role_description": "Slider",
+                "value": "100"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 22,
+                 "x": 1598,
+                 "y": 1051
+                },
+                "name": "Zoom In (Ctrl +)",
+                "ref_id": "@sx54tyv9z40lg:e80",
+                "role": "button",
+                "role_description": "Button",
+                "states": [
+                 "readonly"
+                ],
+                "value": "100"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 53,
+                 "x": 1620,
+                 "y": 1051
+                },
+                "description": "Zoom level. Click to open the Zoom dialog box.",
+                "name": "Zoom 100%",
+                "ref_id": "@sx54tyv9z40lg:e81",
+                "role": "button",
+                "role_description": "Button"
+               }
+              ],
+              "name": "Status Bar",
+              "role": "status",
+              "role_description": "Status Bar"
+             }
+            ],
+            "role": "dialog",
+            "role_description": "Pane"
+           }
+          ],
+          "role": "group",
+          "role_description": "pane"
+         }
+        ],
+        "name": "Status Bar",
+        "role": "group",
+        "role_description": "pane"
+       }
+      ],
+      "name": "Status Bar toolbar",
+      "role": "toolbar",
+      "role_description": "tool bar"
+     }
+    ],
+    "name": "MsoDockBottom",
+    "role": "group",
+    "role_description": "pane"
+   },
+   {
+    "available_actions": [
+     "SetValue",
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 0,
+     "width": 0,
+     "x": 0,
+     "y": 0
+    },
+    "children": [
+     {
+      "available_actions": [
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 28,
+       "width": 28,
+       "x": 265,
+       "y": 265
+      },
+      "children": [
+       {
+        "available_actions": [
+         "Click",
+         "Expand",
+         "Collapse",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 28,
+         "width": 28,
+         "x": 265,
+         "y": 265
+        },
+        "name": "System",
+        "ref_id": "@sx54tyv9z40lg:e83",
+        "role": "menuitem",
+        "role_description": "menu item",
+        "states": [
+         "haspopup"
+        ]
+       }
+      ],
+      "name": "System",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "SystemMenuBar"
+      },
+      "role": "menu",
+      "role_description": "menu bar"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 30,
+       "width": 60,
+       "x": 1509,
+       "y": 228
+      },
+      "name": "Minimize",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Minimize-Restore"
+      },
+      "ref_id": "@sx54tyv9z40lg:e84",
+      "role": "button",
+      "role_description": "button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 30,
+       "width": 59,
+       "x": 1569,
+       "y": 228
+      },
+      "name": "Maximize",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Maximize-Restore"
+      },
+      "ref_id": "@sx54tyv9z40lg:e85",
+      "role": "button",
+      "role_description": "button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 30,
+       "width": 60,
+       "x": 1628,
+       "y": 228
+      },
+      "name": "Close",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Close"
+      },
+      "ref_id": "@sx54tyv9z40lg:e86",
+      "role": "button",
+      "role_description": "button"
+     }
+    ],
+    "native_id": {
+     "kind": "automation_id",
+     "value": "TitleBar"
+    },
+    "ref_id": "@sx54tyv9z40lg:e82",
+    "role": "group",
+    "role_description": "title bar",
+    "states": [
+     "offscreen"
+    ],
+    "value": "Quarterly report - Word"
+   }
+  ],
+  "name": "Quarterly report - Word",
+  "role": "window",
+  "role_description": "window"
+ }
+}

@@ -5,15 +5,12 @@
 //   npm run record -- --app EXCEL.EXE --window-id <id from --list> --name excel-blank --note "A new blank workbook"
 //   --names "Jane Doe,Acme"   more names to hide (the account name and its parts always are)
 // Saves evals/windows/<name>.json. Reads only; nothing on the desktop is touched.
-import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { LOOK_ARGS, listWindows, renderTree, snapshotResilient } from "../src/desktop.js";
-import { namesToHide, scrubText, scrubTree } from "../src/scrub.js";
+import { listWindows } from "../src/desktop.js";
+import { scrubText } from "../src/scrub.js";
+import { recordWindow, whoToHide } from "./record-lib.mjs";
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const { values: o } = parseArgs({
   options: {
     list: { type: "boolean" },
@@ -24,11 +21,7 @@ const { values: o } = parseArgs({
     names: { type: "string", default: "" },
   },
 });
-
-const who = {
-  names: namesToHide([os.userInfo().username, process.env.USERNAME ?? "", ...o.names.split(",")]),
-  pc: os.hostname(),
-};
+const who = whoToHide(o.names.split(","));
 
 if (o.list) {
   for (const w of await listWindows()) console.log(`${String(w.id).padEnd(10)} ${String(w.app_name).padEnd(28)} ${scrubText(w.title ?? "", who)}`);
@@ -45,39 +38,12 @@ if (!win || String(win.app_name).toLowerCase() !== o.app.toLowerCase()) {
   process.exit(1);
 }
 
-// The same read as Buddy's look tool (brain.js look): interactive controls, compact, with positions.
-const res = await snapshotResilient(["--app", o.app, "--window-id", o["window-id"]], [...LOOK_ARGS], { timeoutMs: 30_000 });
-if (!res.ok) {
-  console.error(`Couldn't read the window: ${JSON.stringify(res.error)}`);
+try {
+  const { record, text } = await recordWindow({ app: o.app, windowId: o["window-id"], name: o.name, note: o.note, who });
+  console.log(`Saved ${path.join("evals", "windows", `${o.name}.json`)}: "${record.title}", ${record.refCount} refs${record.complete ? "" : " (partial)"}`);
+  console.log(`Replaced: ${Object.keys(record.replaced).length ? Object.entries(record.replaced).map(([k, n]) => `${n} ${k}`).join(", ") : "nothing"}`);
+  console.log(`\nWhat Buddy sees (first 25 lines), to look over before keeping it:\n${text.split("\n").slice(0, 25).join("\n")}`);
+} catch (err) {
+  console.error(err.message);
   process.exit(1);
 }
-const tree = scrubTree(res.data.tree, who);
-const before = JSON.stringify(res.data.tree);
-const after = JSON.stringify(tree);
-const replaced = Object.fromEntries(["email", "number", "name", "user", "pc", "path"].map((k) => [k, (after.match(new RegExp(`<${k}>`, "g")) ?? []).length - (before.match(new RegExp(`<${k}>`, "g")) ?? []).length]).filter(([, n]) => n > 0));
-
-let version = null;
-try {
-  version = JSON.parse(fs.readFileSync(path.join(root, "bin", "agent-desktop.json"), "utf8")).version;
-} catch {}
-const record = {
-  name: o.name,
-  app: o.app,
-  title: scrubText(res.data.window?.title ?? "", who),
-  note: o.note,
-  recordedAt: new Date().toISOString().slice(0, 10),
-  agentDesktop: version,
-  refCount: res.data.ref_count ?? null,
-  complete: res.data.complete !== false,
-  replaced,
-  tree,
-};
-const dir = path.join(root, "evals", "windows");
-fs.mkdirSync(dir, { recursive: true });
-const file = path.join(dir, `${o.name}.json`);
-fs.writeFileSync(file, `${JSON.stringify(record, null, 1)}\n`);
-
-const { text } = renderTree(tree);
-console.log(`Saved ${path.relative(root, file)}: "${record.title}", ${record.refCount} refs${record.complete ? "" : " (partial)"}`);
-console.log(`Replaced: ${Object.keys(replaced).length ? Object.entries(replaced).map(([k, n]) => `${n} ${k}`).join(", ") : "nothing"}`);
-console.log(`\nWhat Buddy sees (first 25 lines), to look over before keeping it:\n${text.split("\n").slice(0, 25).join("\n")}`);

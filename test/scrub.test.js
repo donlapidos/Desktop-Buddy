@@ -32,6 +32,14 @@ test("the user's folder, their names and the PC's name are hidden", () => {
   assert.equal(scrubText("Doe, Jane", who), "<name>, <name>");
 });
 
+test("an organisation or shared folder is hidden whole, not word by word", () => {
+  const hide = namesToHide(["JaneDoe"], ["PowerBI Hub - HubSpot", "Acme Companies"]);
+  assert.equal(scrubText("PowerBI Hub - HubSpot (OneDrive)", { names: hide }), "<name> (OneDrive)");
+  assert.equal(scrubText("Power Converter", { names: hide }), "Power Converter");
+  assert.equal(scrubText("Insert Companies list", { names: hide }), "Insert Companies list");
+  assert.equal(scrubText("Jane", { names: hide }), "<name>", "a person's name still goes by its parts");
+});
+
 test("a name's short parts and ordinary words aren't hidden", () => {
   const hide = namesToHide(["AlDo"]);
   assert.deepEqual(hide, ["AlDo"]);

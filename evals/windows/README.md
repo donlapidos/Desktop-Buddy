@@ -12,6 +12,9 @@ phone or account numbers, the user's folder, the PC's name and web address paths
 was read through before it was kept.
 
 ```bash
+# More screens of the sample apps, stepped through and closed again (scripts/record-tour.mjs)
+npm run record:tour -- --samples <folder with the sample files> --names "Org name,Shared library"
+# One window that's open now
 npm run record -- --list
 npm run record -- --app EXCEL.EXE --window-id <id from --list> --name excel-blank --note "A new blank workbook" --names "Org name"
 ```
