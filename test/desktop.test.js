@@ -147,13 +147,24 @@ test("a spreadsheet grid is told by its filled cells; empty ones and headers bec
       cell("A2"),
       cell("B2", { value: "" }),
       cell("C2", { value: "0" }),
+      ...Array.from({ length: 20 }, (_, i) => cell(`D${i + 1}`)),
     ],
   };
   const bounds = new Map();
   const { text } = renderTree({ role: "window", name: "Book1 - Excel", children: [grid] }, bounds);
-  assert.match(text, /\(columns A-C, rows 1-2 on screen; 9 empty cells and headers left out: .*Name Box\)/);
+  assert.match(text, /\(columns A-C, rows 1-2 on screen; 29 empty cells and headers left out: .*Name Box\)/);
   assert.match(text, /cell "A1" value="Rent" \[focused,selected\]/);
   assert.match(text, /cell "C2" value="0"/, "a zero is a value, not an empty cell");
   assert.doesNotMatch(text, /cell "C1"|cell "A2"|Row Header|"Select All"/);
   assert.equal(bounds.size, n, "every cell can still be pointed at");
+});
+
+test("a dialog's grid of controls is told in full, not summed up like a spreadsheet", async () => {
+  const fs = await import("node:fs");
+  const { renderTree } = await import("../src/desktop.js");
+  const rec = JSON.parse(fs.readFileSync(new URL("../evals/windows/excel-sort-dialog.json", import.meta.url), "utf8"));
+  const { text } = renderTree(rec.tree);
+  assert.match(text, /combobox "Sort by"/, "the Sort by dropdown is there to point at");
+  assert.match(text, /combobox "Order" value="A to Z"/);
+  assert.doesNotMatch(text, /Name Box/, "no spreadsheet advice in a dialog");
 });
