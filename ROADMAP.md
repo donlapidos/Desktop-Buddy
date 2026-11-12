@@ -138,7 +138,15 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
     owner's option 1 (recording their own windows) or a separate Windows account with sample data.
   - The scrubber can't know an organisation or a shared library is private (File Explorer's side panel showed both);
     `--names` covers them, and every recording is read through before it's kept.
-  - More states per app (other ribbon tabs, dialogs, menus) need clicks, which the recorder doesn't do; next.
+  - More screens per app: `npm run record:tour` (scripts/record-tour.mjs) opens the samples in fresh copies, clicks
+    through set steps (exact names only, only in windows it opened), records each screen and closes what it opened.
+    20 windows now: Excel (Home, Insert, Formulas, Data, Review, the Sort dialog), Word (Home, Insert, Layout,
+    Review, References), File Explorer (sample folder, photos folder), Settings (Display, Personalization,
+    Accessibility, Text size), Calculator (Standard, mode list), Edge (Wikipedia).
+  - Things Buddy itself should know (for 2.2 and 3.x): in File Explorer the accessibility press action on a file or
+    folder *opens* it, so Buddy's "Click "Quarterly report"" card opens the file: the card should say "Open". In
+    Calculator the mode list answers neither press nor select, so switching modes can only be guided, not done.
+    Reading a window in its first seconds can come back partial or with refs that can't be told apart; it settles.
 - **2.2 A real task set.** 40-60 tasks over those windows (guide, do, explain, read, files), each with a check, in
   `evals.js`. Include tasks that should be *refused or asked about*.
 - **2.3 Run every provider and publish the table.** `npm run eval` across at least: two Claude models, two OpenAI,
