@@ -270,3 +270,29 @@ test("each model call's usage is reported, and the spending limit stops an answe
     setBrainDefaults({ model: "claude-opus-5-5", effort: "medium" });
   }
 });
+
+test("a file or folder in a file list is opened by a click, and its card and Activity say Open", async () => {
+  const fs = await import("node:fs");
+  const { renderTree } = await import("../src/desktop.js");
+  const rec = JSON.parse(fs.readFileSync(new URL("../evals/windows/explorer-sample-folder.json", import.meta.url), "utf8"));
+  const { b, listed } = doer();
+  renderTree(rec.tree, b.bounds, undefined, b.labels);
+  b.noteApp(rec.tree, "explorer.exe");
+  const find = (want) => {
+    let ref = null;
+    const walk = (n) => {
+      if (want(n)) ref ??= n.ref_id;
+      (n.children ?? []).forEach(walk);
+    };
+    walk(rec.tree);
+    return ref;
+  };
+  const file = find((n) => n.role === "option" && n.name === "Quarterly report");
+  const button = find((n) => n.role === "button" && n.name === "Copy");
+  assert.ok(file && button);
+  assert.equal(b.describeAction({ action: "click", ref: file }), 'Open "Quarterly report" (option)');
+  assert.equal(b.describeAction({ action: "double_click", ref: file }), 'Open "Quarterly report" (option)');
+  assert.equal(b.describeAction({ action: "click", ref: button }), 'Click "Copy" (button)', "other controls are still clicked");
+  await b.act({ action: "click", ref: file, summary: "Open the report" });
+  assert.equal(listed.at(-1).summary, 'Opened "Quarterly report" (option) in explorer');
+});

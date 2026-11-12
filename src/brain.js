@@ -588,6 +588,7 @@ export class Brain {
     this.bounds = new Map();
     this.labels = new Map(); // ref -> plain element name, for approval cards
     this.refApps = new Map(); // ref -> the app its window belongs to, for the Agents policy
+    this.opens = new Set(); // refs a click opens rather than selects (files and folders in a file list)
     this.provider = this.ui.provider ?? "anthropic";
     this.model = this.provider === "anthropic" ? startWith.model : (process.env.BUDDY_MODEL ?? startWith.models[this.provider] ?? "");
     this.effort = startWith.effort;
@@ -890,7 +891,13 @@ export class Brain {
     if (input.action === "set_value") return `Set ${el} to ${quote(input.text)}`;
     if (input.action === "type") return `Type ${quote(input.text)} into ${el}`;
     if (input.action === "select") return `Choose ${quote(input.text)} in ${el}`;
+    if (this.opensIt(input)) return `Open ${el}`;
     return `${VERBS[input.action]} ${el}`;
+  }
+
+  // A click or double-click on a file or folder in a file list opens it; the card and Activity say so.
+  opensIt(/** @type {any} */ input) {
+    return (input.action === "click" || input.action === "double_click") && this.opens.has(input.ref);
   }
 
   /**
@@ -906,6 +913,7 @@ export class Brain {
     if (input.action === "set_value") return `${text ? `Set ${el} to ${text}` : `Filled in ${el}`}${where}`;
     if (input.action === "type") return `${text ? `Typed ${text} into ${el}` : `Typed into ${el}`}${where}`;
     if (input.action === "select") return `Chose ${text ?? "an option"} in ${el}${where}`;
+    if (this.opensIt(input)) return `Opened ${el}${where}`;
     return `${DONE[input.action] ?? "Used"} ${el}${where}`;
   }
 
@@ -946,14 +954,17 @@ export class Brain {
   }
 
   // Remembers which app each element in a snapshot belongs to, so the Agents policy judges the app an action lands in.
+  // Also notes the files and folders in a file list (File Explorer, and Open and Save dialogs, call it "Items View"):
+  // clicking one opens it, so its approval card says Open, not Click.
   noteApp(tree, app) {
-    if (!app) return;
-    const walk = (n) => {
+    const walk = (n, inFileList) => {
       if (!n) return;
-      if (n.ref_id) this.refApps.set(n.ref_id, app);
-      for (const c of n.children ?? []) walk(c);
+      if (n.ref_id && app) this.refApps.set(n.ref_id, app);
+      if (n.ref_id && inFileList && /option|list ?item/i.test(`${n.role} ${n.role_description ?? ""}`)) this.opens.add(n.ref_id);
+      const fileList = inFileList || (/list/i.test(n.role ?? "") && n.name === "Items View");
+      for (const c of n.children ?? []) walk(c, fileList);
     };
-    walk(tree);
+    walk(tree, false);
   }
 
   async runTool(name, input) {
