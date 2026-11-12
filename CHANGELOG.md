@@ -1,5 +1,11 @@
 # Desktop Buddy changelog
 
+## Unreleased
+
+* A new Buddy offers three ways in instead of asking for an API key: use the AI app you already have (Buddy adds
+  itself in one click, no key needed), a free model on this PC (Ollama or LM Studio, found if running, with what it
+  needs in memory if not), or an API key. A key that matches no provider now says what keys look like.
+
 ## 0.2.1
 
 * Buddy has its own repository, [donlapidos/desktop-buddy](https://github.com/donlapidos/desktop-buddy), and its own

@@ -77,6 +77,11 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   API key"** (paste; provider is recognised). Check each provider's current free tier before promising one.
   *Done when:* an e2e check walks each door with a scripted server, and a fresh profile never shows a bare
   "paste a key" prompt.
+  **Done (2026-11-12).** `src/welcome.js` finds the AI apps and local servers; the bubble shows the three ways in and
+  a page for each. The `welcome` e2e check walks all three (a made-up home with Gemini CLI, a scripted Ollama that
+  answers, a bad key then a good one) and fails if the key field shows first. No free tier is promised anywhere.
+  Not covered by the check: adding Buddy through the Claude Code and Codex command lines (the check uses a settings-file
+  app so it never touches the user's own); those paths are the same ones Settings has used since 0.2.0.
 - **1.2 A thirty-second tour.** After setup, Buddy guides the user through one real step in whatever window is in
   front ("press Ctrl+Alt+B and ask me how to…"), then shows Mark once. Skippable.
 - **1.3 Show it.** README and release page: one short screen recording of a guided task, three screenshots (pointer
