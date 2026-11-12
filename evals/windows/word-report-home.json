@@ -1,0 +1,2633 @@
+{
+ "name": "word-report-home",
+ "app": "WINWORD.EXE",
+ "title": "Quarterly report - Word",
+ "note": "Sample two-page report open in Word, Home tab",
+ "recordedAt": "2026-11-12",
+ "agentDesktop": "1.2.0",
+ "refCount": 102,
+ "complete": true,
+ "replaced": {
+  "email": 1,
+  "name": 4
+ },
+ "tree": {
+  "available_actions": [
+   "SetFocus"
+  ],
+  "bounds": {
+   "height": 830,
+   "width": 1440,
+   "x": 256,
+   "y": 256
+  },
+  "children": [
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 222,
+     "width": 1422,
+     "x": 265,
+     "y": 257
+    },
+    "children": [
+     {
+      "bounds": {
+       "height": 222,
+       "width": 1422,
+       "x": 265,
+       "y": 257
+      },
+      "children": [
+       {
+        "available_actions": [
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 222,
+         "width": 1422,
+         "x": 265,
+         "y": 257
+        },
+        "children": [
+         {
+          "bounds": {
+           "height": 222,
+           "width": 1422,
+           "x": 265,
+           "y": 257
+          },
+          "children": [
+           {
+            "bounds": {
+             "height": 222,
+             "width": 1422,
+             "x": 265,
+             "y": 257
+            },
+            "children": [
+             {
+              "bounds": {
+               "height": 222,
+               "width": 1422,
+               "x": 265,
+               "y": 257
+              },
+              "children": [
+               {
+                "bounds": {
+                 "height": 60,
+                 "width": 290,
+                 "x": 318,
+                 "y": 257
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Toggle",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 36,
+                   "width": 137,
+                   "x": 318,
+                   "y": 269
+                  },
+                  "description": "Turn on AutoSave to save changes as they happen.",
+                  "name": "AutoSave",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "AutoSaveSwitch"
+                  },
+                  "ref_id": "@s2mz1xanu7ui0a:e1",
+                  "role": "switch",
+                  "role_description": "Toggle Switch"
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 35,
+                   "width": 34,
+                   "x": 456,
+                   "y": 269
+                  },
+                  "description": "Save (Ctrl+S)",
+                  "name": "Save",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "FileSave"
+                  },
+                  "ref_id": "@s2mz1xanu7ui0a:e2",
+                  "role": "button",
+                  "role_description": "Button"
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "Expand",
+                   "Collapse",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 35,
+                   "width": 47,
+                   "x": 491,
+                   "y": 269
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click"
+                    ],
+                    "bounds": {
+                     "height": 35,
+                     "width": 31,
+                     "x": 491,
+                     "y": 269
+                    },
+                    "description": "Can't Undo (Ctrl+Z)",
+                    "name": "Can't Undo",
+                    "ref_id": "@s2mz1xanu7ui0a:e4",
+                    "role": "button",
+                    "role_description": "Button",
+                    "states": [
+                     "disabled"
+                    ]
+                   },
+                   {
+                    "available_actions": [
+                     "Expand",
+                     "Collapse",
+                     "Click"
+                    ],
+                    "bounds": {
+                     "height": 35,
+                     "width": 16,
+                     "x": 522,
+                     "y": 269
+                    },
+                    "description": "Can't Undo (Ctrl+Z)",
+                    "name": "More Options",
+                    "native_id": {
+                     "kind": "automation_id",
+                     "value": "Undo_Dropdown"
+                    },
+                    "ref_id": "@s2mz1xanu7ui0a:e5",
+                    "role": "menuitem",
+                    "role_description": "Menu Item",
+                    "states": [
+                     "disabled",
+                     "haspopup"
+                    ]
+                   }
+                  ],
+                  "description": "Can't Undo (Ctrl+Z)",
+                  "name": "Can't Undo",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "Undo"
+                  },
+                  "ref_id": "@s2mz1xanu7ui0a:e3",
+                  "role": "menubutton",
+                  "role_description": "SplitButton",
+                  "states": [
+                   "disabled",
+                   "readonly"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 35,
+                   "width": 34,
+                   "x": 539,
+                   "y": 269
+                  },
+                  "description": "Can't Repeat (Ctrl+Y)",
+                  "name": "Can't Repeat",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "RedoOrRepeat"
+                  },
+                  "ref_id": "@s2mz1xanu7ui0a:e6",
+                  "role": "button",
+                  "role_description": "Button",
+                  "states": [
+                   "disabled"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 34,
+                   "x": 574,
+                   "y": 268
+                  },
+                  "name": "Customize Quick Access Toolbar",
+                  "ref_id": "@s2mz1xanu7ui0a:e7",
+                  "role": "menuitem",
+                  "role_description": "Menu Item",
+                  "states": [
+                   "haspopup"
+                  ]
+                 }
+                ],
+                "name": "Quick Access Toolbar",
+                "role": "toolbar",
+                "role_description": "ToolBar"
+               },
+               {
+                "bounds": {
+                 "height": 60,
+                 "width": 291,
+                 "x": 609,
+                 "y": 257
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 60,
+                   "width": 214,
+                   "x": 609,
+                   "y": 257
+                  },
+                  "description": "Saved to this PC",
+                  "name": "‪Quarterly report‬  -  Saved to this PC",
+                  "ref_id": "@s2mz1xanu7ui0a:e8",
+                  "role": "menuitem",
+                  "role_description": "Menu Item",
+                  "states": [
+                   "disabled",
+                   "haspopup"
+                  ]
+                 }
+                ],
+                "description": "Quarterly report",
+                "name": "‪Quarterly report‬  -  Saved to this PC",
+                "role": "group",
+                "role_description": "Title Bar"
+               },
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 40,
+                 "width": 383,
+                 "x": 900,
+                 "y": 267
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "SetValue",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 22,
+                   "width": 316,
+                   "x": 951,
+                   "y": 277
+                  },
+                  "description": "Just start typing here to bring features to your fingertips and get help.",
+                  "name": "Microsoft search",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TellMeTextBoxAutomationId"
+                  },
+                  "ref_id": "@s2mz1xanu7ui0a:e10",
+                  "role": "textfield",
+                  "role_description": "Edit Box",
+                  "value": "Search"
+                 }
+                ],
+                "description": "Just start typing here to bring features to your fingertips and get help.",
+                "name": "Type to search and use the up and down arrow keys to navigate",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "TellMeControlAnchor"
+                },
+                "ref_id": "@s2mz1xanu7ui0a:e9",
+                "role": "menuitem",
+                "role_description": "Menu Item",
+                "states": [
+                 "haspopup"
+                ]
+               },
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 60,
+                 "width": 63,
+                 "x": 1444,
+                 "y": 257
+                },
+                "description": "<name> <name> (<email>) is signed in. Open and see more details about the signed in user.",
+                "name": "<name> <name>",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "MeControlWidget"
+                },
+                "ref_id": "@s2mz1xanu7ui0a:e11",
+                "role": "menuitem",
+                "role_description": "Menu Item",
+                "states": [
+                 "haspopup"
+                ]
+               },
+               {
+                "available_actions": [
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 60,
+                 "width": 60,
+                 "x": 1507,
+                 "y": 257
+                },
+                "description": "Moves the window out of the way",
+                "name": "Minimize",
+                "ref_id": "@s2mz1xanu7ui0a:e12",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 60,
+                 "width": 60,
+                 "x": 1567,
+                 "y": 257
+                },
+                "description": "Makes the window full screen",
+                "name": "Maximize",
+                "ref_id": "@s2mz1xanu7ui0a:e13",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 60,
+                 "width": 60,
+                 "x": 1627,
+                 "y": 257
+                },
+                "description": "Closes the window",
+                "name": "Close",
+                "ref_id": "@s2mz1xanu7ui0a:e14",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 38,
+                 "width": 68,
+                 "x": 270,
+                 "y": 317
+                },
+                "name": "File Tab",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "FileTabButton"
+                },
+                "ref_id": "@s2mz1xanu7ui0a:e15",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Scroll",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 38,
+                 "width": 1334,
+                 "x": 338,
+                 "y": 317
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 67,
+                   "x": 338,
+                   "y": 317
+                  },
+                  "name": "Home",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabHome"
+                  },
+                  "ref_id": "@s2mz1xanu7ui0a:e17",
+                  "role": "tab",
+                  "role_description": "Tab Item",
+                  "states": [
+                   "selected"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 63,
+                   "x": 406,
+                   "y": 317
+                  },
+                  "name": "Insert",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabInsert"
+                  },
+                  "ref_id": "@s2mz1xanu7ui0a:e18",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 72,
+                   "x": 470,
+                   "y": 317
+                  },
+                  "name": "Design",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabWordDesign"
+                  },
+                  "ref_id": "@s2mz1xanu7ui0a:e19",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 72,
+                   "x": 543,
+                   "y": 317
+                  },
+                  "name": "Layout",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabPageLayoutWord"
+                  },
+                  "ref_id": "@s2mz1xanu7ui0a:e20",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 104,
+                   "x": 616,
+                   "y": 317
+                  },
+                  "name": "References",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabReferences"
+                  },
+                  "ref_id": "@s2mz1xanu7ui0a:e21",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 84,
+                   "x": 721,
+                   "y": 317
+                  },
+                  "name": "Mailings",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabMailings"
+                  },
+                  "ref_id": "@s2mz1xanu7ui0a:e22",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 75,
+                   "x": 806,
+                   "y": 317
+                  },
+                  "name": "Review",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabReviewWord"
+                  },
+                  "ref_id": "@s2mz1xanu7ui0a:e23",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 57,
+                   "x": 882,
+                   "y": 317
+                  },
+                  "name": "View",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "TabView"
+                  },
+                  "ref_id": "@s2mz1xanu7ui0a:e24",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 56,
+                   "x": 940,
+                   "y": 317
+                  },
+                  "name": "Help",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "HelpTab"
+                  },
+                  "ref_id": "@s2mz1xanu7ui0a:e25",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Select",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 80,
+                   "x": 997,
+                   "y": 317
+                  },
+                  "name": "Acrobat",
+                  "ref_id": "@s2mz1xanu7ui0a:e26",
+                  "role": "tab",
+                  "role_description": "Tab Item"
+                 },
+                 {
+                  "available_actions": [
+                   "Toggle",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 30,
+                   "width": 115,
+                   "x": 1348,
+                   "y": 321
+                  },
+                  "description": "See and respond to comments in this document.",
+                  "name": "Comments",
+                  "ref_id": "@s2mz1xanu7ui0a:e27",
+                  "role": "switch",
+                  "role_description": "Button"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "SetValue",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 30,
+                   "width": 102,
+                   "x": 1473,
+                   "y": 321
+                  },
+                  "name": "Editing",
+                  "ref_id": "@s2mz1xanu7ui0a:e28",
+                  "role": "combobox",
+                  "role_description": "ComboBox",
+                  "value": "Editing"
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 87,
+                   "x": 1585,
+                   "y": 317
+                  },
+                  "description": "Share this document, and see who it's shared with.",
+                  "name": "Share",
+                  "ref_id": "@s2mz1xanu7ui0a:e29",
+                  "role": "menuitem",
+                  "role_description": "Menu Item",
+                  "states": [
+                   "haspopup"
+                  ]
+                 }
+                ],
+                "name": "Ribbon Tabs",
+                "ref_id": "@s2mz1xanu7ui0a:e16",
+                "role": "tablist",
+                "role_description": "Pane",
+                "states": [
+                 "expanded"
+                ]
+               },
+               {
+                "available_actions": [
+                 "Scroll"
+                ],
+                "bounds": {
+                 "height": 124,
+                 "width": 1367,
+                 "x": 275,
+                 "y": 355
+                },
+                "children": [
+                 {
+                  "bounds": {
+                   "height": 124,
+                   "width": 1362,
+                   "x": 280,
+                   "y": 355
+                  },
+                  "children": [
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 104,
+                     "x": 280,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 52,
+                       "x": 290,
+                       "y": 359
+                      },
+                      "children_count": 2,
+                      "description": "Pick a paste option, such as keeping formatting or pasting only content.",
+                      "name": "Paste",
+                      "ref_id": "@s2mz1xanu7ui0a:e31",
+                      "role": "menubutton",
+                      "role_description": "SplitButton"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 344,
+                       "y": 359
+                      },
+                      "description": "Remove the selection and put it on the Clipboard so you can paste it somewhere else.",
+                      "name": "Cut",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "Cut"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e32",
+                      "role": "button",
+                      "role_description": "Button",
+                      "states": [
+                       "disabled"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 344,
+                       "y": 391
+                      },
+                      "description": "Put a copy of the selection on the Clipboard so you can paste it somewhere else.",
+                      "name": "Copy",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "Copy"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e33",
+                      "role": "button",
+                      "role_description": "Button",
+                      "states": [
+                       "disabled"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 344,
+                       "y": 423
+                      },
+                      "description": "Like the look of a particular selection? You can apply that look to other content in the document.\n\nTo get started: \n1. Select content with the formatting you like\n2. Click Format Painter\n3. Select something else to automatically apply the formatting\n\nFYI: To apply the formatting in multiple places, double-click Format Painter.",
+                      "name": "Format Painter",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "FormatPainter"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e34",
+                      "role": "switch",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 20,
+                       "width": 20,
+                       "x": 364,
+                       "y": 457
+                      },
+                      "description": "See all the items you've copied to the Clipboard.",
+                      "name": "Office Clipboard...",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "ShowClipboard"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e35",
+                      "role": "button",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "Clipboard",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 291,
+                     "x": 384,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "Click"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 214,
+                       "x": 394,
+                       "y": 359
+                      },
+                      "children_count": 2,
+                      "description": "Pick a new font for your text.",
+                      "name": "Font",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "Font"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e36",
+                      "role": "combobox",
+                      "role_description": "ComboBox",
+                      "value": "Aptos"
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "Click"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 55,
+                       "x": 610,
+                       "y": 359
+                      },
+                      "children_count": 2,
+                      "description": "Change the size of your text.",
+                      "name": "Font Size",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "FontSize"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e37",
+                      "role": "combobox",
+                      "role_description": "ComboBox",
+                      "value": "24"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 603,
+                       "y": 423
+                      },
+                      "description": "Make your text a bit bigger.",
+                      "name": "Grow Font",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "FontSizeIncreaseWord"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e38",
+                      "role": "button",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 635,
+                       "y": 423
+                      },
+                      "description": "Make your text a bit smaller.",
+                      "name": "Shrink Font",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "FontSizeDecreaseWord"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e39",
+                      "role": "button",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 50,
+                       "x": 548,
+                       "y": 423
+                      },
+                      "description": "Change the selected text to uppercase, lowercase or other common capitalizations.",
+                      "name": "Change Case",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "ChangeCaseGallery"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e40",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 608,
+                       "y": 391
+                      },
+                      "description": "Remove all formatting from the selection, leaving only the normal, unformatted text.",
+                      "name": "Clear Formatting",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "ClearFormatting"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e41",
+                      "role": "button",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 394,
+                       "y": 391
+                      },
+                      "description": "Make your text bold.",
+                      "name": "Bold",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "Bold"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e42",
+                      "role": "switch",
+                      "role_description": "Button",
+                      "states": [
+                       "checked"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 426,
+                       "y": 391
+                      },
+                      "description": "Italicize your text.",
+                      "name": "Italic",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "Italic"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e43",
+                      "role": "switch",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Toggle",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 49,
+                       "x": 458,
+                       "y": 391
+                      },
+                      "children_count": 2,
+                      "description": "Underline your text.",
+                      "name": "Underline",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "UnderlineGallery"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e44",
+                      "role": "menubutton",
+                      "role_description": "SplitButton"
+                     },
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 509,
+                       "y": 391
+                      },
+                      "description": "Cross something out by drawing a line through it.",
+                      "name": "Strikethrough",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "Strikethrough"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e45",
+                      "role": "switch",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 541,
+                       "y": 391
+                      },
+                      "description": "Type very small letters just below the line of text.",
+                      "name": "Subscript",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "Subscript"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e46",
+                      "role": "switch",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 573,
+                       "y": 391
+                      },
+                      "description": "Type very small letters just above the line of text.",
+                      "name": "Superscript",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "Superscript"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e47",
+                      "role": "switch",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 50,
+                       "x": 394,
+                       "y": 423
+                      },
+                      "description": "Add some flair to your text by applying a text effect, such as a shadow or glow.\n\nYou can also change the typography settings to enable ligatures or choose a stylistic set.",
+                      "name": "Text Effects and Typography",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "TextEffectsGallery"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e48",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Toggle",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 49,
+                       "x": 446,
+                       "y": 423
+                      },
+                      "children_count": 2,
+                      "description": "Make your text pop by highlighting it in a bright color.",
+                      "name": "Text Highlight Color",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "TextHighlightColorPicker"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e49",
+                      "role": "menubutton",
+                      "role_description": "SplitButton",
+                      "value": "Yellow"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 49,
+                       "x": 497,
+                       "y": 423
+                      },
+                      "children_count": 2,
+                      "description": "Change the color of your text.",
+                      "name": "Font Color",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "FontColorPicker"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e50",
+                      "role": "menubutton",
+                      "role_description": "SplitButton",
+                      "value": "Red"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 20,
+                       "width": 20,
+                       "x": 655,
+                       "y": 457
+                      },
+                      "description": "Customize your text using advanced font and character options to give it the exact look you want.\n\nYou can add a variety of styles and colors to your text, as well as visual effects, like strikethrough, superscript, and all caps.",
+                      "name": "Font...",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "FontDialog"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e51",
+                      "role": "button",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "Font",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 239,
+                     "x": 675,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Toggle",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 49,
+                       "x": 685,
+                       "y": 359
+                      },
+                      "children_count": 2,
+                      "description": "Create a bulleted list.\n\nClick the arrow to change the look of the bullet.",
+                      "name": "Bullets",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "BulletsGalleryWord"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e52",
+                      "role": "menubutton",
+                      "role_description": "SplitButton"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Toggle",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 49,
+                       "x": 736,
+                       "y": 359
+                      },
+                      "children_count": 2,
+                      "description": "Create a numbered list.\n\nClick the arrow for more numbering formats.",
+                      "name": "Numbering",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "NumberingGalleryWord"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e53",
+                      "role": "menubutton",
+                      "role_description": "SplitButton"
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 50,
+                       "x": 787,
+                       "y": 359
+                      },
+                      "description": "Create a multilevel list to organize items or create an outline.\n\nYou can also change the look of individual levels in your list or add numbering to headings in your document.",
+                      "name": "Multilevel List",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "MultilevelListGallery"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e54",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 842,
+                       "y": 359
+                      },
+                      "description": "Move your paragraph closer to the margin.",
+                      "name": "Decrease Indent",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "IndentDecreaseWord"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e55",
+                      "role": "button",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 874,
+                       "y": 359
+                      },
+                      "description": "Move your paragraph farther away from the margin.",
+                      "name": "Increase Indent",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "IndentIncreaseWord"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e56",
+                      "role": "button",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 790,
+                       "y": 423
+                      },
+                      "description": "Arrange the current selection in alphabetical or numerical order.\n\nThis is especially useful if you're trying to organize data in a table.",
+                      "name": "Sort...",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "SortDialogClassic"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e57",
+                      "role": "button",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 825,
+                       "y": 423
+                      },
+                      "description": "Show paragraph marks and other hidden formatting symbols.\n\nThis is especially useful for advanced layout tasks.",
+                      "name": "Show All",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "ParagraphMarks"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e58",
+                      "role": "switch",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 685,
+                       "y": 391
+                      },
+                      "description": "Align your content to the left.",
+                      "name": "Align Left",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "AlignLeft"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e59",
+                      "role": "switch",
+                      "role_description": "Button",
+                      "states": [
+                       "checked"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 717,
+                       "y": 391
+                      },
+                      "description": "Center your content.",
+                      "name": "Center",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "AlignCenter"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e60",
+                      "role": "switch",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 749,
+                       "y": 391
+                      },
+                      "description": "Align your content to the right.",
+                      "name": "Align Right",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "AlignRight"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e61",
+                      "role": "switch",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 30,
+                       "x": 781,
+                       "y": 391
+                      },
+                      "description": "Distribute your text evenly between the margins.\n\nJustified text gives your document clean, crisp edges so it looks more polished.",
+                      "name": "Justify",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "AlignJustify"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e62",
+                      "role": "switch",
+                      "role_description": "Button"
+                     },
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 50,
+                       "x": 816,
+                       "y": 391
+                      },
+                      "description": "Choose how much space appears between lines of text or between paragraphs.\n\nTo apply the same spacing to your whole document, use the Paragraph Spacing options on the Design tab.",
+                      "name": "Line and Paragraph Spacing",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "LineSpacingGallery"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e63",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 49,
+                       "x": 685,
+                       "y": 423
+                      },
+                      "children_count": 2,
+                      "description": "Change the color behind the selected text, paragraph or table cell.\n\nThis is especially useful when you want information to jump off the page.",
+                      "name": "Shading",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "ShadingColorPicker"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e64",
+                      "role": "menubutton",
+                      "role_description": "SplitButton",
+                      "value": "RGB(0, 0, 0)"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Toggle",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 30,
+                       "width": 49,
+                       "x": 736,
+                       "y": 423
+                      },
+                      "children_count": 2,
+                      "description": "Add or remove borders from your selection.\n\nTo change the look of the borders, check out the options on the Table Tools Design tab or use the Borders and Shading dialog box.",
+                      "name": "Borders",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "BordersSelectionGallery"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e65",
+                      "role": "menubutton",
+                      "role_description": "SplitButton"
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 20,
+                       "width": 20,
+                       "x": 894,
+                       "y": 457
+                      },
+                      "description": "Fine-tune the layout of the current paragraph, including spacing, indentation, and more.",
+                      "name": "Paragraph...",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "ParagraphDialog"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e66",
+                      "role": "button",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "Paragraph",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 72,
+                     "x": 914,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 86,
+                       "width": 52,
+                       "x": 924,
+                       "y": 359
+                      },
+                      "description": "Styles give your document a consistent, polished look.\n\nThey also allow you to use the Navigation Pane and add a table of contents.\n\nIf you don't like the look of these styles, check out the Design tab for more options.",
+                      "name": "Styles",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "QuickStylesGallery"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e67",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     },
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 20,
+                       "width": 20,
+                       "x": 966,
+                       "y": 457
+                      },
+                      "description": "Preview, manage and customize the text styles in Word.\n\nUse the window to see and edit formatting details for each style, create new styles, and quickly preview styles in your document.\n\nYou can also update styles to match selected text.",
+                      "name": "Styles...",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "StylesPane"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e68",
+                      "role": "button",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "Styles",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 69,
+                     "x": 986,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Expand",
+                       "Collapse",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 120,
+                       "width": 69,
+                       "x": 986,
+                       "y": 357
+                      },
+                      "name": "Editing",
+                      "ref_id": "@s2mz1xanu7ui0a:e69",
+                      "role": "menuitem",
+                      "role_description": "Menu Item",
+                      "states": [
+                       "haspopup"
+                      ]
+                     }
+                    ],
+                    "name": "Editing",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 95,
+                     "x": 1055,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 52,
+                       "x": 1076,
+                       "y": 359
+                      },
+                      "description": "Turn a document into an Adobe PDF for free every 60 days. Your file will be uploaded to Adobe cloud storage.",
+                      "name": "Create a PDF",
+                      "ref_id": "@s2mz1xanu7ui0a:e70",
+                      "role": "button",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "Adobe Acrobat",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 72,
+                     "x": 1150,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "Toggle",
+                       "Expand",
+                       "Collapse",
+                       "SetValue",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 52,
+                       "x": 1160,
+                       "y": 359
+                      },
+                      "children_count": 2,
+                      "description": "Now use voice typing to author content and voice commanding for a more hands-off experience.\n\nPowered by Microsoft Speech Services",
+                      "name": "Dictate",
+                      "ref_id": "@s2mz1xanu7ui0a:e71",
+                      "role": "menubutton",
+                      "role_description": "SplitButton"
+                     }
+                    ],
+                    "name": "Voice",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 72,
+                     "x": 1222,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 52,
+                       "x": 1232,
+                       "y": 359
+                      },
+                      "description": "Check for Spelling, Grammar and Writing Suggestions",
+                      "name": "Editor",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "WritingAssistanceCheckDocument"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e72",
+                      "role": "button",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "Editor",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 76,
+                     "x": 1294,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 56,
+                       "x": 1304,
+                       "y": 359
+                      },
+                      "description": "Find add-ins that add new functionality to Office, simplify tasks, and connect you to services you use every day.",
+                      "name": "Add‑ins",
+                      "native_id": {
+                       "kind": "automation_id",
+                       "value": "OfficeExtensionsShowAddinFlyout"
+                      },
+                      "ref_id": "@s2mz1xanu7ui0a:e73",
+                      "role": "switch",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "Add-ins",
+                    "role": "group",
+                    "role_description": "Group"
+                   },
+                   {
+                    "bounds": {
+                     "height": 120,
+                     "width": 80,
+                     "x": 1370,
+                     "y": 357
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 96,
+                       "width": 60,
+                       "x": 1380,
+                       "y": 359
+                      },
+                      "description": "Click to open ChatGPT",
+                      "name": "ChatGPT",
+                      "ref_id": "@s2mz1xanu7ui0a:e74",
+                      "role": "button",
+                      "role_description": "Button"
+                     }
+                    ],
+                    "name": "ChatGPT",
+                    "role": "group",
+                    "role_description": "Group"
+                   }
+                  ],
+                  "name": "Home",
+                  "role": "group",
+                  "role_description": "Group"
+                 }
+                ],
+                "name": "Lower Ribbon",
+                "ref_id": "@s2mz1xanu7ui0a:e30",
+                "role": "group",
+                "role_description": "Pane"
+               },
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 25,
+                 "width": 25,
+                 "x": 1647,
+                 "y": 449
+                },
+                "name": "Ribbon Display Options",
+                "ref_id": "@s2mz1xanu7ui0a:e75",
+                "role": "menuitem",
+                "role_description": "Menu Item",
+                "states": [
+                 "haspopup"
+                ]
+               }
+              ],
+              "name": "Ribbon",
+              "role": "group",
+              "role_description": "Pane"
+             }
+            ],
+            "role": "dialog",
+            "role_description": "Pane"
+           }
+          ],
+          "role": "group",
+          "role_description": "pane"
+         }
+        ],
+        "name": "Ribbon",
+        "role": "group",
+        "role_description": "pane"
+       }
+      ],
+      "name": "Ribbon toolbar",
+      "role": "toolbar",
+      "role_description": "tool bar"
+     }
+    ],
+    "name": "MsoDockTop",
+    "role": "group",
+    "role_description": "pane"
+   },
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 571,
+     "width": 1422,
+     "x": 265,
+     "y": 479
+    },
+    "children": [
+     {
+      "available_actions": [
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 571,
+       "width": 1422,
+       "x": 265,
+       "y": 479
+      },
+      "children": [
+       {
+        "available_actions": [
+         "Scroll",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 571,
+         "width": 1401,
+         "x": 265,
+         "y": 479
+        },
+        "children": [
+         {
+          "available_actions": [
+           "ScrollTo"
+          ],
+          "bounds": {
+           "height": 550,
+           "width": 992,
+           "x": 469,
+           "y": 500
+          },
+          "children": [
+           {
+            "available_actions": [
+             "ScrollTo"
+            ],
+            "bounds": {
+             "height": 450,
+             "width": 992,
+             "x": 469,
+             "y": 600
+            },
+            "children": [
+             {
+              "available_actions": [
+               "ScrollTo"
+              ],
+              "bounds": {
+               "height": 74,
+               "width": 218,
+               "x": 585,
+               "y": 761
+              },
+              "children": [
+               {
+                "available_actions": [
+                 "ScrollTo",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 22,
+                 "width": 202,
+                 "x": 585,
+                 "y": 761
+                },
+                "name": "•",
+                "ref_id": "@s2mz1xanu7ui0a:e78",
+                "role": "option",
+                "role_description": "list item"
+               },
+               {
+                "available_actions": [
+                 "ScrollTo",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 22,
+                 "width": 218,
+                 "x": 585,
+                 "y": 787
+                },
+                "name": "•",
+                "ref_id": "@s2mz1xanu7ui0a:e79",
+                "role": "option",
+                "role_description": "list item"
+               },
+               {
+                "available_actions": [
+                 "ScrollTo",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 22,
+                 "width": 190,
+                 "x": 585,
+                 "y": 813
+                },
+                "name": "•",
+                "ref_id": "@s2mz1xanu7ui0a:e80",
+                "role": "option",
+                "role_description": "list item"
+               }
+              ],
+              "role": "list",
+              "role_description": "list"
+             }
+            ],
+            "name": "Page 1 content",
+            "native_id": {
+             "kind": "automation_id",
+             "value": "Body"
+            },
+            "ref_id": "@s2mz1xanu7ui0a:e77",
+            "role": "textfield",
+            "role_description": "edit"
+           }
+          ],
+          "name": "Page 1",
+          "native_id": {
+           "kind": "automation_id",
+           "value": "UIA_AutomationId_Word_Page_1"
+          },
+          "role": "unknown",
+          "role_description": "page"
+         }
+        ],
+        "name": "Quarterly report",
+        "ref_id": "@s2mz1xanu7ui0a:e76",
+        "role": "document",
+        "role_description": "document"
+       },
+       {
+        "bounds": {
+         "height": 571,
+         "width": 21,
+         "x": 1666,
+         "y": 479
+        },
+        "children": [
+         {
+          "bounds": {
+           "height": 571,
+           "width": 21,
+           "x": 1666,
+           "y": 479
+          },
+          "children": [
+           {
+            "available_actions": [
+             "SetValue"
+            ],
+            "bounds": {
+             "height": 571,
+             "width": 21,
+             "x": 1666,
+             "y": 479
+            },
+            "name": "Used to change the vertical viewing area",
+            "ref_id": "@s2mz1xanu7ui0a:e81",
+            "role": "scrollbar",
+            "role_description": "ScrollBar"
+           }
+          ],
+          "role": "dialog",
+          "role_description": "Pane"
+         }
+        ],
+        "name": "Vertical",
+        "role": "group",
+        "role_description": "pane"
+       }
+      ],
+      "name": "Quarterly report",
+      "role": "group",
+      "role_description": "pane"
+     }
+    ],
+    "role": "group",
+    "role_description": "pane"
+   },
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 27,
+     "width": 1422,
+     "x": 265,
+     "y": 1050
+    },
+    "children": [
+     {
+      "bounds": {
+       "height": 27,
+       "width": 1422,
+       "x": 265,
+       "y": 1050
+      },
+      "children": [
+       {
+        "available_actions": [
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 27,
+         "width": 1422,
+         "x": 265,
+         "y": 1050
+        },
+        "children": [
+         {
+          "bounds": {
+           "height": 27,
+           "width": 1422,
+           "x": 265,
+           "y": 1050
+          },
+          "children": [
+           {
+            "bounds": {
+             "height": 27,
+             "width": 1422,
+             "x": 265,
+             "y": 1050
+            },
+            "children": [
+             {
+              "bounds": {
+               "height": 27,
+               "width": 1422,
+               "x": 265,
+               "y": 1050
+              },
+              "children": [
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 85,
+                 "x": 270,
+                 "y": 1051
+                },
+                "description": "The current page number in the document. Click or tap to open the Navigation Pane.",
+                "name": "Page Number Page 1 of 1",
+                "ref_id": "@s2mz1xanu7ui0a:e82",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 75,
+                 "x": 359,
+                 "y": 1051
+                },
+                "description": "The number of words in the document. Click or tap to open the Word Count dialog box.",
+                "name": "Word Count 38 words",
+                "ref_id": "@s2mz1xanu7ui0a:e83",
+                "role": "statictext",
+                "role_description": "Text"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 40,
+                 "x": 438,
+                 "y": 1051
+                },
+                "description": "Coauthoring in compatibility mode.",
+                "name": "Coauthoring Mode ",
+                "ref_id": "@s2mz1xanu7ui0a:e84",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 40,
+                 "x": 482,
+                 "y": 1051
+                },
+                "description": "No proofing errors",
+                "name": "Spelling and Grammar Check No Errors",
+                "ref_id": "@s2mz1xanu7ui0a:e85",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 125,
+                 "x": 522,
+                 "y": 1051
+                },
+                "description": "Language",
+                "name": "Language English (Malaysia)",
+                "ref_id": "@s2mz1xanu7ui0a:e86",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 134,
+                 "x": 651,
+                 "y": 1051
+                },
+                "description": "Switch text predictions on or off. Click or tap here to open settings for text predictions.",
+                "name": "Text Predictions Text Predictions: Off",
+                "ref_id": "@s2mz1xanu7ui0a:e87",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 73,
+                 "x": 1223,
+                 "y": 1051
+                },
+                "description": "Focus Mode",
+                "name": "Focus ",
+                "ref_id": "@s2mz1xanu7ui0a:e88",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Toggle",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 50,
+                 "x": 1300,
+                 "y": 1051
+                },
+                "name": "Read Mode",
+                "ref_id": "@s2mz1xanu7ui0a:e89",
+                "role": "switch",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Toggle",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 50,
+                 "x": 1350,
+                 "y": 1051
+                },
+                "name": "Print Layout",
+                "ref_id": "@s2mz1xanu7ui0a:e90",
+                "role": "switch",
+                "role_description": "Button",
+                "states": [
+                 "checked"
+                ]
+               },
+               {
+                "available_actions": [
+                 "Toggle",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 50,
+                 "x": 1400,
+                 "y": 1051
+                },
+                "name": "Web Layout",
+                "ref_id": "@s2mz1xanu7ui0a:e91",
+                "role": "switch",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 22,
+                 "x": 1451,
+                 "y": 1051
+                },
+                "name": "Zoom Out (Ctrl -)",
+                "ref_id": "@s2mz1xanu7ui0a:e92",
+                "role": "button",
+                "role_description": "Button",
+                "states": [
+                 "readonly"
+                ],
+                "value": "100"
+               },
+               {
+                "available_actions": [
+                 "SetValue"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 125,
+                 "x": 1473,
+                 "y": 1051
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Click"
+                  ],
+                  "bounds": {
+                   "height": 26,
+                   "width": 60,
+                   "x": 1473,
+                   "y": 1051
+                  },
+                  "description": "Moves the horizontal position left a couple of columns",
+                  "name": "Zoom Out",
+                  "ref_id": "@s2mz1xanu7ui0a:e94",
+                  "role": "button",
+                  "role_description": "Button",
+                  "states": [
+                   "readonly"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Click"
+                  ],
+                  "bounds": {
+                   "height": 26,
+                   "width": 59,
+                   "x": 1539,
+                   "y": 1051
+                  },
+                  "description": "Moves the horizontal position right a couple of columns",
+                  "name": "Zoom In",
+                  "ref_id": "@s2mz1xanu7ui0a:e95",
+                  "role": "button",
+                  "role_description": "Button",
+                  "states": [
+                   "readonly"
+                  ]
+                 }
+                ],
+                "name": "Zoom",
+                "ref_id": "@s2mz1xanu7ui0a:e93",
+                "role": "slider",
+                "role_description": "Slider",
+                "value": "100"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 22,
+                 "x": 1598,
+                 "y": 1051
+                },
+                "name": "Zoom In (Ctrl +)",
+                "ref_id": "@s2mz1xanu7ui0a:e96",
+                "role": "button",
+                "role_description": "Button",
+                "states": [
+                 "readonly"
+                ],
+                "value": "100"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 53,
+                 "x": 1620,
+                 "y": 1051
+                },
+                "description": "Zoom level. Click to open the Zoom dialog box.",
+                "name": "Zoom 100%",
+                "ref_id": "@s2mz1xanu7ui0a:e97",
+                "role": "button",
+                "role_description": "Button"
+               }
+              ],
+              "name": "Status Bar",
+              "role": "status",
+              "role_description": "Status Bar"
+             }
+            ],
+            "role": "dialog",
+            "role_description": "Pane"
+           }
+          ],
+          "role": "group",
+          "role_description": "pane"
+         }
+        ],
+        "name": "Status Bar",
+        "role": "group",
+        "role_description": "pane"
+       }
+      ],
+      "name": "Status Bar toolbar",
+      "role": "toolbar",
+      "role_description": "tool bar"
+     }
+    ],
+    "name": "MsoDockBottom",
+    "role": "group",
+    "role_description": "pane"
+   },
+   {
+    "available_actions": [
+     "SetValue",
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 0,
+     "width": 0,
+     "x": 0,
+     "y": 0
+    },
+    "children": [
+     {
+      "available_actions": [
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 28,
+       "width": 28,
+       "x": 265,
+       "y": 265
+      },
+      "children": [
+       {
+        "available_actions": [
+         "Expand",
+         "Collapse",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 28,
+         "width": 28,
+         "x": 265,
+         "y": 265
+        },
+        "name": "System",
+        "ref_id": "@s2mz1xanu7ui0a:e99",
+        "role": "menuitem",
+        "role_description": "menu item",
+        "states": [
+         "haspopup"
+        ]
+       }
+      ],
+      "name": "System",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "SystemMenuBar"
+      },
+      "role": "menu",
+      "role_description": "menu bar"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 30,
+       "width": 60,
+       "x": 1509,
+       "y": 228
+      },
+      "name": "Minimize",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Minimize-Restore"
+      },
+      "ref_id": "@s2mz1xanu7ui0a:e100",
+      "role": "button",
+      "role_description": "button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 30,
+       "width": 59,
+       "x": 1569,
+       "y": 228
+      },
+      "name": "Maximize",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Maximize-Restore"
+      },
+      "ref_id": "@s2mz1xanu7ui0a:e101",
+      "role": "button",
+      "role_description": "button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 30,
+       "width": 60,
+       "x": 1628,
+       "y": 228
+      },
+      "name": "Close",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Close"
+      },
+      "ref_id": "@s2mz1xanu7ui0a:e102",
+      "role": "button",
+      "role_description": "button"
+     }
+    ],
+    "native_id": {
+     "kind": "automation_id",
+     "value": "TitleBar"
+    },
+    "ref_id": "@s2mz1xanu7ui0a:e98",
+    "role": "group",
+    "role_description": "title bar",
+    "states": [
+     "offscreen"
+    ],
+    "value": "Quarterly report - Word"
+   }
+  ],
+  "name": "Quarterly report - Word",
+  "role": "window",
+  "role_description": "window"
+ }
+}

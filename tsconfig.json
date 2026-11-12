@@ -43,6 +43,7 @@
     "src/keys.js",
     "src/log.js",
     "src/welcome.js",
-    "src/costs.js"
+    "src/costs.js",
+    "src/scrub.js"
   ]
 }

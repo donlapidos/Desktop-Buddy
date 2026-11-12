@@ -14,7 +14,8 @@
     "dist:dir": "npm run setup && electron-builder --win --dir",
     "eval": "node scripts/eval.mjs",
     "e2e": "node scripts/e2e.mjs",
-    "setup": "node scripts/fetch-agent-desktop.mjs"
+    "setup": "node scripts/fetch-agent-desktop.mjs",
+    "record": "node scripts/record-window.mjs"
   },
   "repository": {
     "type": "git",
