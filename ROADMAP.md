@@ -155,8 +155,14 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   screen that follows (Excel's ribbon tabs, the Sort dialog, Settings' Text size, Calculator's mode list), and
   waiting hands it back as Buddy's own wait does. Every check is tested both ways (a good answer, built from controls
   the recordings really have, passes; a wrong one fails), and a scripted model run through Buddy's real Brain proves
-  the screens change. Not yet: explain and read tasks, file tasks, more do and refuse cases, and a real model run
-  (needs a key that isn't an employer's). Settings' Check this model still runs the short made-up set.
+  the screens change. Not yet: explain and read tasks, file tasks, more do and refuse cases. Settings' Check this
+  model still runs the short made-up set.
+  *First real run (2026-11-12), OpenAI gpt-6.1-sol, medium effort, `npm run eval:saved`:* 22/23, then 23/23 after a
+  fix. The one failure was Buddy's, not the model's: the spreadsheet-grid summary (2.5) also swallowed Excel's Sort
+  dialog, whose grid holds the Sort by / Sort On / Order dropdowns, so the model never saw "Sort by". Now only bare
+  cells are summed up, and only 20 or more; a test on the recorded dialog holds it. 17 s and 65k tokens per task on
+  average (90% cached); the slowest are the multi-screen Excel and Word tasks (8-12 model turns, 90-180k tokens).
+  That turn count, not the model's speed, is what 2.5 should cut first.
 - **2.3 Run every provider and publish the table.** `npm run eval` across at least: two Claude models, two OpenAI,
   one Gemini, one DeepSeek, two OpenRouter, three local models of different sizes. Publish pass rate, seconds and
   cost per task in the README; make Settings' "works well" come from this table, not from the model's family name.
