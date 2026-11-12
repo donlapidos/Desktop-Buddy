@@ -5,6 +5,9 @@
 * Buddy has its own repository, [donlapidos/desktop-buddy](https://github.com/donlapidos/desktop-buddy), and its own
   releases. It uses the agent-desktop CLI as a pinned, checksum-verified release (1.2.0) instead of building it.
   Settings › Request a feature and About › Releases open the new repository.
+* Pointing follows the control: if the window moved or scrolled since Buddy read it, the pointer goes to where the
+  control is now, and if it's gone Buddy looks again instead of pointing at empty space.
+* Activity also lists what Buddy clicked, pressed and typed in your apps. Text typed into password fields isn't kept.
 
 ## 0.2.0 (unreleased)
 

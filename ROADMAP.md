@@ -43,6 +43,9 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   the stray `v1.2.0` tag, and point electron-updater at Buddy's own tag prefix.
   *Done when:* a sync or upstream release can't change what `releases/latest/download/latest.yml` serves, and that
   is checked by a CI job.
+  **Decided: own repository. In progress (2026-11-12).** `donlapidos/desktop-buddy` is ready locally with Buddy's
+  history and tags, a pinned agent-desktop 1.2.0 (`npm run setup`), and its own CI and release workflows. Left: the
+  owner creates the GitHub repository and pushes, and installs from the fork are moved over (see 0.3).
 - **0.2 Turn on Issues (or Discussions).** Settings › Request a feature opens a GitHub issue; issues are disabled, so
   the link is dead. *Done when:* the button lands on a working form.
 - **0.3 Prove an update.** Ship 0.2.1 (any small fix), install 0.2.0 from the release, and watch it find, download
@@ -53,6 +56,11 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   files and commands but not clicks and typing Buddy did in apps; either list them or say so on the page.
   *Done when:* a test moves a window between look and point and the pointer follows; the Activity text matches what
   it lists.
+  **Done (2026-11-12).** (a) `point_at` points at the saved spot at once and checks the live position
+  (`get --property bounds`, about half a second): a moved control is followed, a vanished one sends the model back to
+  look. Unit tests stand in for the move; the live call was checked against agent-desktop 1.2.0 by hand. (b) Clicks,
+  keypresses and typing are listed, in the past tense, only once they ran; text typed into password-like fields and
+  key-shaped text are left out. The Activity page says so.
 
 ## Phase 1: a stranger can start (the biggest gap)
 
