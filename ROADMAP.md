@@ -4,6 +4,12 @@ Written 2026-11-11, after 0.2.0. This is a work plan for an agent (Claude Opus i
 the owner. Each task says why it matters, what to do, and how to tell it's done. Do the phases in order; inside a
 phase, tasks are independent unless one names another.
 
+**Direction (decided 2026-11-12):** Buddy stays free and open source, and may earn its keep through **Buddy Plus**, a
+monthly plan with the AI included (no key: Buddy relays to a provider on the owner's own API account). It is built
+only if people show they want it (task 1.6). Rules for it: never resell or route through anyone's Claude or ChatGPT
+subscription; never run it on an employer's account or credits; a privacy policy before screen content passes
+through a relay. A business tier (central policies, audit export, deployment) is the likely next step after that.
+
 ## Where Buddy stands
 
 **Works and is tested** (176 unit tests, 6 end-to-end checks, each protection broken on purpose to prove its test):
@@ -108,6 +114,14 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   the month (every model call, tasks and routines too) in Settings › AI & privacy › Spending, with an optional limit
   checked before every call. Unit tests cover the arithmetic per provider (cached tokens billed once), the month
   rolling over, and the limit stopping an answer before its next call; the `welcome` e2e check covers the footer.
+- **1.6 Is Buddy Plus wanted, and what would it cost to run?** (a) An interest link where people meet the key
+  question (the welcome's key page, Settings' key group, the README) to a short form: what they'd pay, what for, for
+  them or for work. (b) Real per-answer cost: `npm run eval` prints tokens per case and the same tokens at Haiku,
+  Sonnet and Opus prices; run it on a personal key (not an employer's) on Haiku 5.5 and Sonnet 5.5, then on the real
+  tasks of Phase 2. *Done when:* the owner has the numbers to decide: interest count and price answers, and cost per
+  answer and per heavy month on the cheapest model that passes the evals. (a) and the eval report are built
+  (2026-11-12); the form is a GitHub issue form for now (needs a GitHub account; a form without one, such as Tally or
+  Google Forms, made by the owner, is better for non-developers: change `PLUS_INTEREST` in `main.js` and the README).
 
 ## Phase 2: prove the core loop on real apps
 

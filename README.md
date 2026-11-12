@@ -93,6 +93,13 @@ Buddy keeps itself up to date: it checks the releases now and then, downloads a 
 (checked against its SHA-512), and installs it when you restart Buddy or choose **Restart to update** in the tray or
 in Settings › About & updates, where automatic checks can also be turned off.
 
+### Buddy Plus (an idea)
+
+Buddy needs an AI to think with: the AI app you already use, a free model on your PC, or an API key. **Buddy Plus**
+would be the fourth way: the AI included, nothing to set up, one monthly price. It isn't built yet. If you'd want it,
+[say so here](https://github.com/donlapidos/desktop-buddy/issues/new?template=buddy-plus.yml); it takes a minute.
+Buddy itself stays free and open source either way.
+
 ## Release
 
 1. Bump `version` in `package.json`, add the release to `CHANGELOG.md`, and commit.

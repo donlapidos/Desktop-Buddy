@@ -9,6 +9,8 @@
 * What it costs: each answer shows its tokens and an estimated cost (Anthropic and OpenRouter prices; free for a
   model on this PC), Settings › AI & privacy shows the month so far, and an optional monthly limit stops Buddy when
   it's reached.
+* A link to say you'd want **Buddy Plus**, the AI included for a monthly price (not built yet), on the API key page
+  and in Settings.
 
 ## 0.2.1
 
