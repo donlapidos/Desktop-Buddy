@@ -43,13 +43,18 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   the stray `v1.2.0` tag, and point electron-updater at Buddy's own tag prefix.
   *Done when:* a sync or upstream release can't change what `releases/latest/download/latest.yml` serves, and that
   is checked by a CI job.
-  **Decided: own repository. In progress (2026-11-12).** `donlapidos/desktop-buddy` is ready locally with Buddy's
-  history and tags, a pinned agent-desktop 1.2.0 (`npm run setup`), and its own CI and release workflows. Left: the
-  owner creates the GitHub repository and pushes, and installs from the fork are moved over (see 0.3).
+  **Done (2026-11-12): own repository,** [donlapidos/Desktop-Buddy](https://github.com/donlapidos/Desktop-Buddy),
+  with Buddy's history and tags, a pinned agent-desktop 1.2.0 (`npm run setup`), and its own CI and release
+  workflows. The fork's `Release` workflow is disabled. The fork carries a bridge release v0.2.1 (the same files) so
+  copies installed from it update once and then follow the new repository. Not built: a CI job that checks
+  `latest.yml`.
 - **0.2 Turn on Issues (or Discussions).** Settings › Request a feature opens a GitHub issue; issues are disabled, so
   the link is dead. *Done when:* the button lands on a working form.
+  **Done (2026-11-12):** Issues are on in the new repository.
 - **0.3 Prove an update.** Ship 0.2.1 (any small fix), install 0.2.0 from the release, and watch it find, download
   and install 0.2.1. *Done when:* that is seen once by hand and written into the release steps in the README.
+  **Published (2026-11-12):** 0.2.1 is Latest on both repositories (installer checksum checked against `latest.yml`).
+  Left: install 0.2.0 and watch it update, then write that into the README.
 - **0.4 Finish the two open items from the invariants review.** (a) `point_at` uses the position saved when the
   window was read and never re-checks it: after the user moves or scrolls the window, Buddy points at empty space.
   Re-resolve the ref's bounds before pointing, or drop bounds older than the window's last snapshot. (b) Activity lists
