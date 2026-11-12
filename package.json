@@ -16,7 +16,8 @@
     "e2e": "node scripts/e2e.mjs",
     "setup": "node scripts/fetch-agent-desktop.mjs",
     "record": "node scripts/record-window.mjs",
-    "record:tour": "node scripts/record-tour.mjs"
+    "record:tour": "node scripts/record-tour.mjs",
+    "eval:saved": "electron scripts/eval-saved-key.mjs"
   },
   "repository": {
     "type": "git",
