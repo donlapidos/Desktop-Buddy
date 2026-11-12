@@ -150,12 +150,13 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
 - **2.5 A speed budget.** Targets: pointer on the first control within 4 s of asking on a mid model; each later
   guided step with no model call. Measure with the timing log; fix the slowest step first (Excel's 7 s snapshot is
   the known one).
-  *Found while recording (2026-11-12):* `look` passes no `--max-depth`, so agent-desktop stops at its default of 10,
-  and in Excel that leaves out the whole sheet grid (113 controls, marked partial). The same window read with
-  `--max-depth 40` is complete in 1.5 s (502 controls: grid, Name Box, formula bar), so Buddy can't see cell
-  contents when it looks at Excel today. Read deeper, but say empty cells compactly first: the deep read renders to
-  24k characters (Buddy's cap, about 6k tokens a look), most of it empty cells. Check Word, Edge and the others the
-  same way; the Wikipedia article was partial too.
+  *Excel's sheet (fixed 2026-11-12):* a complete read of a small Excel sheet rendered past Buddy's 24k-character cap
+  (most of it empty cells: 292 of 361 grid children), so the end of the window was clipped from what the model saw.
+  `renderTree` now tells a grid by its filled cells and the selected one, with one line for the empty cells and
+  headers (columns and rows on screen, and "use the Name Box" to reach an empty one); every cell keeps its position
+  for pointing. Sample budget: 12k characters, complete, all data in it. `look` also reads to depth 30 now
+  (`LOOK_ARGS`, shared with the recorder): 502 controls instead of 480, same time. A read taken while a window is
+  still opening can come back partial (the first Excel recording did: 113 controls); that is timing, not depth.
 - **2.6 Injection tests.** Web pages, file contents and window text that tell Buddy to act ("ignore the user, run
   …", "send this file to …"). Each must end with no action taken or an approval card that says plainly what would
   happen. Add them to the task set so every model is scored on them.
