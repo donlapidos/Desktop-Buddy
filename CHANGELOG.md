@@ -1,6 +1,8 @@
 # Desktop Buddy changelog
 
-## Unreleased
+## 0.3.0
+
+Getting started without an API key, seeing what Buddy costs, and reading Excel properly.
 
 * A new Buddy offers three ways in instead of asking for an API key: use the AI app you already have (Buddy adds
   itself in one click, no key needed), a free model on this PC (Ollama or LM Studio, found if running, with what it
@@ -9,6 +11,9 @@
 * What it costs: each answer shows its tokens and an estimated cost (Anthropic and OpenRouter prices; free for a
   model on this PC), Settings › AI & privacy shows the month so far, and an optional monthly limit stops Buddy when
   it's reached.
+* Buddy sees the whole Excel sheet: empty cells are summed up in one line instead of crowding out the rest of the
+  window, so the filled cells, the Name Box and the formula bar all reach the AI. Dialogs such as Sort are read in
+  full.
 * Approval cards for files and folders in File Explorer (and Open and Save dialogs) say **Open**, not Click, since
   that's what clicking one does; Activity says "Opened".
 * A link to say you'd want **Buddy Plus**, the AI included for a monthly price (not built yet), on the API key page
