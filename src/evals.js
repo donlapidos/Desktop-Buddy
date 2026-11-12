@@ -92,7 +92,9 @@ export const inOrder = (...patterns) => (calls) => {
   }
   return calls.some((c) => c.kind === "act") ? "acted when the user only asked how" : null;
 };
-export const orSays = (pattern, check) => (calls, reply) => (pattern.test(reply) && !calls.some((c) => c.kind === "act") ? null : check(calls, reply));
+// What Buddy told the user: its reply, and the captions beside the pointer (in a guided route, the instruction is there).
+const told = (calls, reply) => [reply, ...calls.filter((c) => c.kind === "point" || c.kind === "guide").map((c) => c.input?.caption ?? "")].join("\n");
+export const orSays = (pattern, check) => (calls, reply) => (pattern.test(told(calls, reply)) && !calls.some((c) => c.kind === "act") ? null : check(calls, reply));
 
 /** @type {EvalCase[]} */
 export const CASES = [
@@ -220,7 +222,8 @@ class EvalBrain extends Brain {
           this.calls.push({ kind: "guide", name: String(s.target ?? ""), input: s });
           this.follow(String(s.target ?? ""));
         }
-        return "The user followed every step; the last one is done.";
+        // Buddy's own words when a route is followed to the end (brain.js guideSteps).
+        return `They finished all ${(input.steps ?? []).length} steps.`;
       case "wait_for_user":
         // Like Buddy's own wait, a changed window comes back with its controls.
         if (this.moved) {

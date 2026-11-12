@@ -76,16 +76,19 @@ export const SYSTEM = `You are Buddy, a friendly assistant that lives next to th
 You can see their apps through the accessibility tree and you have a pointer of your own.
 
 How you help:
-- Default to GUIDE mode. When the user asks how to do something, look at the screen, then use point_at to show them
-  exactly where to click, one step at a time, with a short caption on each point. Let them do the clicking.
-- When you can see the route, hand Buddy all of it at once with guide_steps: each step's caption, the control's
-  label as the user sees it (from the look), and the text that shows the step is done. Buddy then points at each
-  control in turn and follows the user on its own, much faster than a round trip to you per step, and comes back to
-  you only if a control isn't on screen, several share a name, or the user gets stuck. Pick up from where it says.
-  Give it the whole route in one call, including controls that only appear after an earlier step (a menu's items, a
-  dialog's buttons): Buddy finds each one when it shows up. Steps like "select cell E2" or "type the total" work too
-  (target the cell or field; Buddy sees the selection or text change). The windows Buddy's tools hand back are
-  current: read them instead of taking a screenshot unless the tree can't show what you need.
+- Default to GUIDE mode. When the user asks how to do something, show them on their own screen, with a short caption
+  on each step, and let them do the clicking.
+- Show a route with guide_steps: hand Buddy all of it at once, each step's caption, the control's label as the user
+  sees it (from the look), and the text that shows the step is done. Buddy then points at each control in turn and
+  follows the user on its own, much faster than a round trip to you per step, and comes back to you only if a
+  control isn't on screen, several share a name, or the user gets stuck. Pick up from where it says. One call covers
+  the whole route, even a single click, including controls that only appear after an earlier step (a menu's items,
+  a dialog's buttons): Buddy finds each one when it shows up. Steps like "select cell E2" or "type the total" work
+  too (target the cell or field; Buddy sees the selection or text change). Buddy does the pointing: don't point at
+  a step yourself before or after putting it in guide_steps, and when it says they finished, the job is done (no
+  extra look, no pointing again). The windows Buddy's tools hand back are current: read them instead of taking a
+  screenshot unless the tree can't show what you need.
+- To point something out when there's nothing for them to do after ("where is the Name Box?"), use one point_at.
 - For a step whose control you can't name yet, walk them through it live: call point_at for step 1 and wait_for_user in the SAME
   response (point first). Give wait_for_user steps: the text that will appear once they've done this step (the
   ribbon tab's buttons, a menu item, a dialog title such as "Create Table"), then the texts for the next two or three
@@ -432,6 +435,28 @@ export const TOOLS = [
   },
 ];
 
+// In Buddy's own conversations the model can hand over its closing line along with the route (then_say). When the
+// user finishes every step, or the one thing is pointed out, Buddy says the line and the answer ends there, with no
+// further model call: one call instead of two for most guidance. The AI apps that use Buddy's tools reply for
+// themselves, so they get the tools without it.
+const CLOSES = new Set(["guide_steps", "point_at"]);
+const THEN_SAY = "Your closing line to the user, one short sentence, said once this is done. Give it whenever this call is your whole answer: Buddy then ends the turn itself and they aren't kept waiting on you. Leave it out if you need to see what happens next.";
+const OWN_TOOLS = TOOLS.map((t) => (CLOSES.has(t.name) ? { ...t, input_schema: { ...t.input_schema, properties: { .../** @type {any} */ (t.input_schema).properties, then_say: str(THEN_SAY) } } } : t));
+const CLOSING = `Ending fast: guide_steps and point_at take then_say, your one-line reply for when it's done. When the route (or
+the one thing to point out) is your whole answer, which is most of the time, give then_say in that same call: Buddy
+says it once they've finished and the turn ends without coming back to you. If they get stuck or a control is
+missing, Buddy comes back to you instead and then_say is dropped.`;
+
+/**
+ * The closing line that ends the answer after this tool call, or null: the call asked for one and went all the way.
+ * @param {string} name @param {any} input @param {unknown} result
+ */
+export function closingLine(name, input, result) {
+  const say = typeof input?.then_say === "string" ? input.then_say.trim().slice(0, 600) : "";
+  if (!say || !CLOSES.has(name) || typeof result !== "string") return null;
+  return (name === "guide_steps" ? /^They finished all \d+ steps?\./ : /^Pointed/).test(result) ? say : null;
+}
+
 // Several task agents can run at once, but there is one mouse and one keyboard: actions take turns.
 // Approval happens before a task joins the queue, so a task waiting on the user never blocks the others.
 /** @type {Promise<unknown>} */
@@ -765,15 +790,25 @@ export class Brain {
 
       /** @type {Anthropic.Beta.BetaToolResultBlockParam[]} */
       const results = [];
+      // Set by the last tool call of the response when it carried the model's closing line and went all the way.
+      let closing = null;
       for (const use of toolUses) {
         if (this.abort.signal.aborted) break;
         const toolStart = Date.now();
         const content = await this.runTool(use.name, use.input ?? {});
         this.ui.trace?.({ kind: "tool", name: use.name, ms: Date.now() - toolStart, chars: typeof content === "string" ? content.length : undefined });
         results.push({ type: "tool_result", tool_use_id: use.id, content });
+        closing = closingLine(use.name, use.input, content);
       }
       if (this.abort.signal.aborted) return "Okay, stopped.";
       this.messages.push({ role: "user", content: results });
+      if (closing) {
+        // The answer ends here, in the model's own words, without another call. The line goes into the history as
+        // its reply, so the conversation reads as it would have.
+        this.messages.push({ role: "assistant", content: [{ type: "text", text: closing }] });
+        this.ui.trace?.({ kind: "closed-early", tool: toolUses.at(-1)?.name });
+        return closing;
+      }
     }
     return "That took more steps than I allow myself. Tell me where I got stuck and I'll keep going.";
   }
@@ -784,10 +819,10 @@ export class Brain {
     return !!(this.ui.documentsDir && this.ui.dataDir);
   }
   tools() {
-    return this.pcReady ? [...TOOLS, ...PC_TOOLS] : TOOLS;
+    return this.pcReady ? [...OWN_TOOLS, ...PC_TOOLS] : OWN_TOOLS;
   }
   system() {
-    return this.pcReady ? `${SYSTEM}\n\n${BEYOND_SCREEN}` : SYSTEM;
+    return this.pcReady ? `${SYSTEM}\n\n${CLOSING}\n\n${BEYOND_SCREEN}` : `${SYSTEM}\n\n${CLOSING}`;
   }
 
   /** @param {string} name @param {any} input */

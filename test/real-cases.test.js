@@ -75,3 +75,10 @@ test("guided steps named in the model's own words still count", () => {
   const c = REAL_CASES.find((x) => x.id === "real-excel-sort");
   assert.equal(c.check([{ kind: "guide", name: "Data tab" }, { kind: "guide", name: "Sort Largest to Smallest" }], ""), null);
 });
+
+test("an instruction given in a pointer caption counts as said", () => {
+  const c = REAL_CASES.find((x) => x.id === "real-excel-total");
+  const route = [{ kind: "guide", name: "Name Box", input: { caption: "Click the Name Box, type C9" } }, { kind: "guide", name: "C9", input: { caption: "Type =SUM(C2:C8) and press Enter" } }];
+  assert.equal(c.check(route, "That adds up Spent."), null);
+  assert.notEqual(c.check([{ kind: "guide", name: "C9", input: { caption: "Type the total" } }], "Done."), null);
+});

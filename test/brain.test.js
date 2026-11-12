@@ -296,3 +296,70 @@ test("a file or folder in a file list is opened by a click, and its card and Act
   await b.act({ action: "click", ref: file, summary: "Open the report" });
   assert.equal(listed.at(-1).summary, 'Opened "Quarterly report" (option) in explorer');
 });
+
+// A scripted chat model: answers each call with the next step in `script`, and counts the calls.
+function chatModel(script) {
+  const seen = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (_url, init) => {
+    const body = JSON.parse(init.body);
+    seen.push(body);
+    const step = script[Math.min(seen.length - 1, script.length - 1)];
+    const chunk = step.say
+      ? { choices: [{ delta: { content: step.say }, finish_reason: "stop" }] }
+      : { choices: [{ delta: { tool_calls: [{ index: 0, id: `c${seen.length}`, type: "function", function: { name: step.tool, arguments: JSON.stringify(step.input) } }] }, finish_reason: "tool_calls" }] };
+    return new Response(`data: ${JSON.stringify(chunk)}\n\ndata: [DONE]\n\n`, { headers: { "content-type": "text/event-stream" } });
+  };
+  return { seen, restore: () => (globalThis.fetch = realFetch) };
+}
+
+test("a route handed over with its closing line ends the answer without a second model call", async () => {
+  setBrainDefaults({ model: "claude-opus-5-5", effort: "low", providerModels: { custom: "m" } });
+  const model = chatModel([{ tool: "point_at", input: { ref: "@s1:e1", caption: "Here", then_say: "That's the Search box." } }, { say: "(a second call)" }]);
+  try {
+    const { b } = pointer(null);
+    b.provider = "custom";
+    b.model = "m";
+    b.ui.baseURL = "http://scripted.test/v1";
+    assert.equal(await b.run(null, "Where's the search box?"), "That's the Search box.");
+    assert.equal(model.seen.length, 1, "no second call");
+    assert.deepEqual(b.messages.at(-1), { role: "assistant", content: [{ type: "text", text: "That's the Search box." }] }, "the line is kept as Buddy's reply");
+    assert.ok(model.seen[0].tools.find((t) => t.function.name === "point_at").function.parameters.properties.then_say, "the model is offered then_say");
+  } finally {
+    model.restore();
+    setBrainDefaults({ model: "claude-opus-5-5", effort: "medium" });
+  }
+});
+
+test("a closing line is dropped when the call didn't go all the way, and the model is asked again", async () => {
+  setBrainDefaults({ model: "claude-opus-5-5", effort: "low", providerModels: { custom: "m" } });
+  const model = chatModel([{ tool: "point_at", input: { ref: "@s1:e404", caption: "Here", then_say: "Done!" } }, { say: "I couldn't find it." }]);
+  try {
+    const { b } = pointer(null);
+    b.provider = "custom";
+    b.model = "m";
+    b.ui.baseURL = "http://scripted.test/v1";
+    assert.equal(await b.run(null, "Where is it?"), "I couldn't find it.");
+    assert.equal(model.seen.length, 2);
+  } finally {
+    model.restore();
+    setBrainDefaults({ model: "claude-opus-5-5", effort: "medium" });
+  }
+});
+
+test("only a finished route or a made point closes, and only with a line to say", async () => {
+  const { closingLine } = await import("../src/brain.js");
+  assert.equal(closingLine("guide_steps", { then_say: " Sorted. " }, "They finished all 3 steps."), "Sorted.");
+  assert.equal(closingLine("guide_steps", { then_say: "Sorted." }, 'They did steps 1-2 of 3. At step 3 ("Now Sort") no control is named that.'), null);
+  assert.equal(closingLine("guide_steps", { then_say: "Sorted." }, "The user stopped."), null);
+  assert.equal(closingLine("guide_steps", {}, "They finished all 3 steps."), null);
+  assert.equal(closingLine("point_at", { then_say: "There." }, "Pointed (the control had moved; the pointer followed it)."), "There.");
+  assert.equal(closingLine("point_at", { then_say: "There." }, "No position known for @x. Look again and point at a fresh ref."), null);
+  assert.equal(closingLine("act", { then_say: "Done." }, "Done."), null, "acting never ends a turn unseen");
+});
+
+test("AI apps that use Buddy's tools aren't offered a closing line: they reply for themselves", async () => {
+  const { BRIDGE_TOOLS, INSTRUCTIONS } = await import("../src/bridge.js");
+  assert.ok(BRIDGE_TOOLS.every((t) => !t.input_schema?.properties?.then_say));
+  assert.doesNotMatch(INSTRUCTIONS, /then_say/);
+});
