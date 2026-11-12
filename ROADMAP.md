@@ -163,6 +163,13 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   cells are summed up, and only 20 or more; a test on the recorded dialog holds it. 17 s and 65k tokens per task on
   average (90% cached); the slowest are the multi-screen Excel and Word tasks (8-12 model turns, 90-180k tokens).
   That turn count, not the model's speed, is what 2.5 should cut first.
+  *Turns cut (2026-11-12):* `guide_steps` and `point_at` take `then_say`, the model's closing line; when the route
+  is followed to the end Buddy says it and ends the answer with no further model call (`closingLine` in brain.js;
+  not offered to AI apps over the bridge). The prompt now makes one `guide_steps` call the norm and forbids pointing
+  at a step twice. Same 23 tasks, same model: median turns 6 to 1 (131 to 56 in all), 17.4 s to 8.5 s, 65k to 29k
+  tokens a task, 23/23 still pass (one check widened: an instruction in a pointer caption counts as said). Still
+  slow, 5-10 turns: tasks that go on past the recorded screens (chart type, filter menu) and the two do-it tasks,
+  where the stand-in window doesn't change after an action, so the model tries again; the real app would move on.
 - **2.3 Run every provider and publish the table.** `npm run eval` across at least: two Claude models, two OpenAI,
   one Gemini, one DeepSeek, two OpenRouter, three local models of different sizes. Publish pass rate, seconds and
   cost per task in the README; make Settings' "works well" come from this table, not from the model's family name.

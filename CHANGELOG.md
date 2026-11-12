@@ -11,6 +11,9 @@ Getting started without an API key, seeing what Buddy costs, and reading Excel p
 * What it costs: each answer shows its tokens and an estimated cost (Anthropic and OpenRouter prices; free for a
   model on this PC), Settings › AI & privacy shows the month so far, and an optional monthly limit stops Buddy when
   it's reached.
+* Guidance is about twice as fast. The AI now hands Buddy the whole route together with its closing line, and Buddy
+  finishes the answer itself once you've done the steps, instead of going back to the AI. On 23 real tasks: 8.5
+  seconds a task instead of 17, and less than half the tokens.
 * Buddy sees the whole Excel sheet: empty cells are summed up in one line instead of crowding out the rest of the
   window, so the filled cells, the Name Box and the formula bar all reach the AI. Dialogs such as Sort are read in
   full.
