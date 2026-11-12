@@ -5,6 +5,7 @@
 * A new Buddy offers three ways in instead of asking for an API key: use the AI app you already have (Buddy adds
   itself in one click, no key needed), a free model on this PC (Ollama or LM Studio, found if running, with what it
   needs in memory if not), or an API key. A key that matches no provider now says what keys look like.
+* Right after setup, a short tour: ask Buddy about the app you're in, then a tip for Mark. Skippable, shown once.
 
 ## 0.2.1
 

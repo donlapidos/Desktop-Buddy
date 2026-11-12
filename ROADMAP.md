@@ -84,6 +84,10 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   app so it never touches the user's own); those paths are the same ones Settings has used since 0.2.0.
 - **1.2 A thirty-second tour.** After setup, Buddy guides the user through one real step in whatever window is in
   front ("press Ctrl+Alt+B and ask me how to…"), then shows Mark once. Skippable.
+  **Done (2026-11-12).** Right after setup in the bubble, a tip asks the user to ask about the app in front (named as
+  people say it, with their own shortcut); after the first answer, a tip shows Mark; "Got it", using Mark, or "Skip
+  tour" ends it, and the step is saved (`settings.tour`) so it never comes back. Buddys set up before this never see
+  it. The `welcome` e2e check walks it.
 - **1.3 Show it.** README and release page: one short screen recording of a guided task, three screenshots (pointer
   with caption, approval card, Activity). A one-page site (GitHub Pages) with the download button.
 - **1.4 Sign the installer.** Options to price and check eligibility for: Azure Trusted Signing, SignPath's free
