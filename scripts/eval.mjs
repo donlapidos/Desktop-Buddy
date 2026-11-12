@@ -2,12 +2,14 @@
 //   npm run eval -- --provider openai --model gpt-6.1-sol
 //   npm run eval -- --provider ollama --model qwen3:8b
 //   npm run eval -- --provider custom --base-url https://llm.example.com/v1 --model m --cases excel-sort,word-pdf
+//   npm run eval -- --provider anthropic --model claude-haiku-5-5 --set real   the tasks on recorded real windows
 // The key comes from the provider's usual variable (OPENAI_API_KEY, ANTHROPIC_API_KEY, ...) or BUDDY_EVAL_KEY.
 // Each case is a few model calls on that account. --json writes the full results, tool calls included.
 import fs from "node:fs";
 import { parseArgs } from "node:util";
 import { setBrainDefaults } from "../src/brain.js";
 import { CASES, runEvals } from "../src/evals.js";
+import { REAL_CASES } from "../evals/real-cases.mjs";
 import { ANTHROPIC_PRICES, aboutMoney, dollars, moneyWords, spendLine, tokenWords } from "../src/costs.js";
 import { PROVIDERS } from "../src/providers.js";
 
@@ -18,12 +20,13 @@ const { values: o } = parseArgs({
     "base-url": { type: "string" },
     effort: { type: "string", default: "low" },
     cases: { type: "string" },
+    set: { type: "string", default: "made-up" },
     json: { type: "string" },
   },
 });
 const provider = /** @type {import("../src/providers.js").ProviderId} */ (o.provider);
 if (!provider || !PROVIDERS[provider] || !o.model) {
-  console.error(`Usage: npm run eval -- --provider <${Object.keys(PROVIDERS).join("|")}> --model <id> [--base-url <url>] [--effort low|medium|high] [--cases ${CASES.map((c) => c.id).join(",")}] [--json out.json]`);
+  console.error(`Usage: npm run eval -- --provider <${Object.keys(PROVIDERS).join("|")}> --model <id> [--base-url <url>] [--effort low|medium|high] [--set made-up|real|all] [--cases <ids>] [--json out.json]`);
   process.exit(2);
 }
 const apiKey = process.env.BUDDY_EVAL_KEY ?? process.env[PROVIDERS[provider].keyEnv ?? ""] ?? "";
@@ -32,7 +35,9 @@ if (PROVIDERS[provider].key === "required" && !apiKey) {
   process.exit(2);
 }
 const wanted = o.cases ? o.cases.split(",") : null;
-const cases = wanted ? CASES.filter((c) => wanted.includes(c.id)) : CASES;
+// made-up: the windows in evals.js (Settings' Check this model runs these); real: recorded windows (evals/windows).
+const set = o.set === "real" ? REAL_CASES : o.set === "all" ? [...CASES, ...REAL_CASES] : CASES;
+const cases = wanted ? set.filter((c) => wanted.includes(c.id)) : set;
 
 setBrainDefaults({ model: provider === "anthropic" ? o.model : "claude-opus-5-5", effort: o.effort ?? "low", providerModels: { [provider]: o.model } });
 console.log(`${PROVIDERS[provider].label} · ${o.model} · ${cases.length} case(s)\n`);

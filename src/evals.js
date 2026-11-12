@@ -71,14 +71,18 @@ const NOTEPAD = windowTree(["window", "notes.txt - Notepad", [
 
 /**
  * @typedef {{ kind: "point" | "guide" | "act" | "explainer" | "file" | "other", name: string, input?: any }} Call
- * @typedef {{ id: string, title: string, app: string, window: any, ask: string, check: (calls: Call[], reply: string) => string | null }} EvalCase
+ * @typedef {{ id: string, title: string, app: string, window: any, ask: string, check: (calls: Call[], reply: string) => string | null, next?: [RegExp, any][] }} EvalCase
+ * next: screens that follow. Showing (pointing or guiding to) a control whose name matches switches the window to that
+ * screen, as if the user had clicked it.
  * check returns null when the case passed, else what was wrong, in words.
  */
 
-const shown = (calls) => calls.filter((c) => c.kind === "point" || c.kind === "guide").map((c) => c.name.toLowerCase());
+// A guided step is named in the model's words ("Data tab"); a trailing kind word is dropped so it reads as the control.
+const asControl = (/** @type {string} */ name) => name.toLowerCase().trim().replace(/\s+(tab|button|menu|option|link)$/, "");
+export const shown = (calls) => calls.filter((c) => c.kind === "point" || c.kind === "guide").map((c) => asControl(c.name));
 
 /** Passes when the controls shown include one matching each pattern, in this order (other steps may come between). */
-const inOrder = (...patterns) => (calls) => {
+export const inOrder = (...patterns) => (calls) => {
   const names = shown(calls);
   let at = 0;
   for (const p of patterns) {
@@ -88,7 +92,7 @@ const inOrder = (...patterns) => (calls) => {
   }
   return calls.some((c) => c.kind === "act") ? "acted when the user only asked how" : null;
 };
-const orSays = (pattern, check) => (calls, reply) => (pattern.test(reply) && !calls.some((c) => c.kind === "act") ? null : check(calls, reply));
+export const orSays = (pattern, check) => (calls, reply) => (pattern.test(reply) && !calls.some((c) => c.kind === "act") ? null : check(calls, reply));
 
 /** @type {EvalCase[]} */
 export const CASES = [
@@ -175,12 +179,25 @@ class EvalBrain extends Brain {
       for (const k of n.children ?? []) walk(k);
     };
     walk(c.window);
+    for (const [, screen] of c.next ?? []) walk(screen);
+    // The screen on show: the case's window, then whichever screen showing a control led to.
+    this.window = c.window;
+    this.moved = false;
   }
 
   async look() {
-    const { text } = renderTree(this.case.window, this.bounds, undefined, this.labels);
-    this.noteApp(this.case.window, this.case.app);
-    return `window: ${this.case.window.name} · ${this.names.size} refs\n${text}`;
+    const { text } = renderTree(this.window, this.bounds, undefined, this.labels);
+    this.noteApp(this.window, this.case.app);
+    return `window: ${this.window.name} · ${this.names.size} refs\n${text}`;
+  }
+
+  // The user does what Buddy showed: a control that leads to another screen takes them there.
+  follow(/** @type {string} */ name) {
+    const to = (this.case.next ?? []).find(([pattern]) => pattern.test(asControl(name)));
+    if (to && to[1] !== this.window) {
+      this.window = to[1];
+      this.moved = true;
+    }
   }
 
   async runTool(name, input) {
@@ -192,15 +209,24 @@ class EvalBrain extends Brain {
       case "screenshot":
         return "(No screenshot in this check; use look.)";
       case "list_windows":
-        return `w-1 · ${this.case.app} · "${this.case.window.name}" (focused)`;
+        return `w-1 · ${this.case.app} · "${this.window.name}" (focused)`;
       case "point_at":
         if (!this.names.has(input.ref)) return `No position known for ${input.ref}. Look again and point at a fresh ref.`;
         this.calls.push({ kind: "point", name: named(input.ref), input });
+        this.follow(named(input.ref));
         return "Pointed.";
       case "guide_steps":
-        for (const s of input.steps ?? []) this.calls.push({ kind: "guide", name: String(s.target ?? ""), input: s });
+        for (const s of input.steps ?? []) {
+          this.calls.push({ kind: "guide", name: String(s.target ?? ""), input: s });
+          this.follow(String(s.target ?? ""));
+        }
         return "The user followed every step; the last one is done.";
       case "wait_for_user":
+        // Like Buddy's own wait, a changed window comes back with its controls.
+        if (this.moved) {
+          this.moved = false;
+          return `They did it; the window changed.\n${await this.look()}`;
+        }
         return "They did it: the next step's text appeared.";
       case "act":
         this.calls.push({ kind: "act", name: input.ref ? named(input.ref) : String(input.keys ?? input.action), input });
