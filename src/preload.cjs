@@ -5,6 +5,9 @@ const on = (channel) => (fn) => ipcRenderer.on(channel, (_e, payload) => fn(payl
 contextBridge.exposeInMainWorld("buddy", {
   ask: (text, opts) => ipcRenderer.invoke("ask", text, opts),
   setKey: (key) => ipcRenderer.invoke("set-key", key),
+  welcomeState: () => ipcRenderer.invoke("welcome-state"),
+  welcomeApp: (id) => ipcRenderer.invoke("welcome-app", id),
+  welcomeLocal: () => ipcRenderer.invoke("welcome-local"),
   cancel: () => ipcRenderer.send("cancel"),
   reset: () => ipcRenderer.send("reset"),
   hide: () => ipcRenderer.send("hide"),
@@ -49,7 +52,7 @@ contextBridge.exposeInMainWorld("buddy", {
   onBubbleOpen: on("bubble-open"),
   onBubbleClose: on("bubble-close"),
   // Settings: opened from the bubble or island; the rest is answered only for the settings window itself
-  openSettings: () => ipcRenderer.send("open-settings"),
+  openSettings: (page) => ipcRenderer.send("open-settings", page),
   settingsState: () => ipcRenderer.invoke("settings-state"),
   settingsSet: (patch) => ipcRenderer.invoke("settings-set", patch),
   settingsCapture: (on) => ipcRenderer.invoke("settings-capture", on),

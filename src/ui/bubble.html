@@ -76,6 +76,26 @@
   body.listening #mic { background: var(--buddy); color: #fff; animation: ring 1.3s ease-out infinite; }
   @keyframes ring { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--buddy) 55%, transparent); } 100% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--buddy) 0%, transparent); } }
   @media (prefers-reduced-motion: reduce) { body.listening #mic { animation: none; } }
+  /* First-run setup: three ways in, each opening to its own short page. */
+  #welcome { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+  #welcome[hidden], #form[hidden], #reply[hidden] { display: none; }
+  #welcome p { margin: 0; }
+  #welcome .lede { color: var(--muted); font-size: 13px; }
+  /* Before an AI is set up, there's no conversation to move or restart, and nothing to say out loud. */
+  body.welcoming #totask, body.welcoming #new, body.welcoming #mic { display: none; }
+  .door { display: flex; flex-direction: column; align-items: flex-start; gap: 0; width: 100%; flex: none; text-align: left; border: 0; border-radius: 11px; padding: 6px 11px; background: var(--field); color: var(--fg); font: inherit; line-height: 1.35; cursor: pointer; }
+  .door:hover { background: var(--field-hover); }
+  .door b { font-weight: 600; }
+  .door span { font-size: 12.5px; color: var(--muted); }
+  .door.ready b::after { content: "  ✓"; color: var(--buddy); }
+  #welcome .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  #welcome .app { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 4px 4px 11px; border-radius: 10px; background: var(--field); }
+  #welcome .app .added { color: var(--muted); font-size: 12.5px; padding: 6px 8px; }
+  #welcome .btn { padding: 6px 11px; font-size: 13px; }
+  #welcome .problem { color: var(--danger); font-size: 13px; }
+  #welcome .problem:empty { display: none; }
+  #welcome::-webkit-scrollbar { width: 8px; }
+  #welcome::-webkit-scrollbar-thumb { background: #2a2d34; border-radius: 4px; }
 </style>
 </head>
 <body>
@@ -89,6 +109,7 @@
     <button id="stop" title="Stop (Esc)" hidden>Stop</button>
   </header>
   <div id="marks"></div>
+  <div id="welcome" hidden></div>
   <div id="reply"></div>
   <div id="confirm">
     <div>Can I do this? <span class="what" id="what"></span></div>
@@ -102,7 +123,7 @@
   <form id="form">
     <input id="input" autocomplete="off" spellcheck="false" placeholder="How do I…?  or  Do it for me">
     <button class="btn ghost" id="mic" type="button" title="Say it (Ctrl+Alt+T). Pause when you're done."><svg viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg></button>
-    <button class="btn" type="submit">Ask</button>
+    <button class="btn" id="submit" type="submit">Ask</button>
   </form>
 </div>
 <script>
@@ -125,11 +146,120 @@
     needsKey = nk;
     $("marks").classList.remove("on");
     $("where").textContent = nk ? "Welcome to Buddy" : target ? `Looking at ${target}` : "Buddy";
-    $("input").type = nk ? "password" : "text";
-    $("input").placeholder = nk ? "Paste an API key (Anthropic, OpenAI, OpenRouter, Gemini…)" : "How do I…?  or  Do it for me";
-    if (nk) show("I need an API key to think: Anthropic, OpenAI, OpenRouter or Gemini. It's stored encrypted on this PC. For DeepSeek, or a free model on this PC (Ollama, LM Studio), pick it in Settings › AI & privacy.");
-    if (!busy) { $("input").disabled = false; $("input").value = ""; $("input").focus(); }
+    if (nk) welcome("doors");
+    else leaveWelcome();
+    if (!busy) { $("input").disabled = false; $("input").value = ""; if (!nk) $("input").focus(); }
   });
+
+  // ---------- First-run setup: three ways in, never a bare "paste a key" ----------
+  const el = (tag, props = {}, ...kids) => {
+    const n = Object.assign(document.createElement(tag), props);
+    n.append(...kids);
+    return n;
+  };
+  const button = (cls, text, onClick) => { const b = el("button", { className: cls, type: "button", textContent: text }); b.addEventListener("click", onClick); return b; };
+  const back = () => button("btn ghost", "Back", () => welcome("doors"));
+  let welcomeData = null;
+
+  function leaveWelcome() {
+    document.body.classList.remove("welcoming");
+    $("submit").textContent = "Ask";
+    $("welcome").hidden = true;
+    $("reply").hidden = false;
+    $("form").hidden = false;
+    $("input").type = "text";
+    $("input").placeholder = "How do I…?  or  Do it for me";
+  }
+
+  // page: "doors" (the three choices), "apps", "local" or "key".
+  async function welcome(page) {
+    const box = $("welcome");
+    document.body.classList.add("welcoming");
+    $("submit").textContent = "Save";
+    box.hidden = false;
+    $("reply").hidden = true;
+    $("form").hidden = page !== "key";
+    console.log("WELCOME_PAGE " + page);
+    if (page === "key") {
+      $("input").type = "password";
+      $("input").placeholder = "Paste an API key";
+      box.replaceChildren(
+        el("p", { textContent: "Paste a key from Anthropic, OpenAI, Google Gemini or OpenRouter. It's kept encrypted on this PC and used only with that company, on your account there." }),
+        el("p", { className: "problem" }),
+        el("div", { className: "row" }, back(), button("btn ghost", "DeepSeek or another server…", () => window.buddy.openSettings("claude"))),
+      );
+      $("input").focus();
+      return;
+    }
+    if (page === "doors" || !welcomeData) {
+      box.replaceChildren(el("p", { className: "lede", textContent: "Looking for what's on this PC…" }));
+      welcomeData = await window.buddy.welcomeState();
+    }
+    const { apps, local } = welcomeData;
+    if (page === "doors") {
+      const found = apps.map((a) => a.label);
+      const inApp = apps.some((a) => a.added);
+      const door = (title, sub, go, ready = false) => { const b = el("button", { className: `door${ready ? " ready" : ""}`, type: "button" }, el("b", { textContent: title }), el("span", { textContent: sub })); b.addEventListener("click", go); b.dataset.door = go.name; return b; };
+      box.replaceChildren(
+        el("p", { className: "lede", textContent: "Buddy needs an AI to think with. Pick one way in:" }),
+        door("Use the AI app I already have", found.length ? `${found.slice(0, 3).join(", ")}${found.length > 3 ? "…" : ""} on this PC. No key needed.` : "Claude, Codex, Gemini CLI, Cursor and others. No key needed.", function apps() { welcome("apps"); }, inApp),
+        door("Free, on this PC", local.use ? `${local.use.label} is running. Private: nothing leaves this PC.` : "With Ollama or LM Studio. Private: nothing leaves this PC.", function local() { welcome("local"); }),
+        door("I have an API key", "Anthropic, OpenAI, Google Gemini, OpenRouter…", function key() { welcome("key"); }),
+      );
+      return;
+    }
+    if (page === "apps") {
+      const problem = el("p", { className: "problem" });
+      const rows = apps.map((a) => {
+        const row = el("div", { className: "app" }, el("span", { textContent: a.label }));
+        if (a.added) row.append(el("span", { className: "added", textContent: "Buddy is in it" }));
+        else row.append(button("btn", "Add Buddy", async (e) => {
+          e.target.disabled = true;
+          e.target.textContent = "Adding…";
+          const res = await window.buddy.welcomeApp(a.id);
+          console.log("WELCOME_APP " + JSON.stringify({ id: a.id, error: res.error }));
+          if (res.error) { problem.textContent = res.error; e.target.disabled = false; e.target.textContent = "Add Buddy"; return; }
+          welcomeData = res.state;
+          box.replaceChildren(
+            el("p", { textContent: `Buddy is in ${a.label}. ${res.after}` }),
+            el("p", { className: "lede", textContent: `Then ask there, for example: "Use Buddy to show me how to make a chart here." Buddy looks at your screen and points the way. The bubble here can also think on its own, with one of the other two ways.` }),
+            el("div", { className: "row" }, back()),
+          );
+        }));
+        return row;
+      });
+      box.replaceChildren(
+        el("p", { textContent: apps.length ? "You'll ask in your AI app, and Buddy looks and points for it. It runs on that app's own plan." : "No AI app Buddy works with was found on this PC. Buddy works with Claude (the app or Claude Code), Codex, Gemini CLI, Cursor, VS Code, Windsurf and LM Studio. Install one, or pick another way." }),
+        ...rows,
+        problem,
+        el("div", { className: "row" }, back()),
+      );
+      return;
+    }
+    if (page === "local") {
+      const problem = el("p", { className: "problem" });
+      const go = local.use
+        ? button("btn", `Use ${local.use.label}`, async (e) => {
+            e.target.disabled = true;
+            e.target.textContent = "Setting up…";
+            const res = await window.buddy.welcomeLocal();
+            console.log("WELCOME_LOCAL " + JSON.stringify(res));
+            if (!res.ok) { problem.textContent = res.error ?? "That didn't work."; e.target.disabled = false; e.target.textContent = `Use ${local.use.label}`; return; }
+            needsKey = false;
+            leaveWelcome();
+            $("where").textContent = "Buddy";
+            show(`Ready. I'm thinking with ${res.label} on this PC. Ask me anything about what's on your screen.`);
+            $("input").focus();
+          })
+        : button("btn", "Check again", async (e) => {
+            e.target.disabled = true;
+            e.target.textContent = "Checking…";
+            welcomeData = await window.buddy.welcomeState();
+            welcome("local");
+          });
+      box.replaceChildren(el("p", { textContent: local.text }), problem, el("div", { className: "row" }, back(), go));
+    }
+  }
 
   // Wait a frame so the window has painted the folded pill before it unfolds.
   window.buddy.onBubbleOpen(() => requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -214,11 +344,15 @@
     $("input").value = "";
     if (needsKey) {
       const { ok, error } = await window.buddy.setKey(text);
-      needsKey = !ok;
-      $("input").type = "text";
-      $("input").placeholder = "How do I…?  or  Do it for me";
+      console.log("WELCOME_KEY " + JSON.stringify({ ok, error }));
+      if (!ok) {
+        $("welcome").querySelector(".problem").textContent = error ?? "That didn't work. Try again.";
+        return;
+      }
+      needsKey = false;
+      leaveWelcome();
       $("where").textContent = "Buddy";
-      show(ok ? "Got it. Ask me anything about what's on your screen." : error ?? "That didn't work. Try again.");
+      show("Got it. Ask me anything about what's on your screen.");
       return;
     }
     setBusy(true);

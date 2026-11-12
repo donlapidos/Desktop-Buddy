@@ -1,7 +1,7 @@
 // End-to-end checks: the real app, run as separate test copies (each with its own data folder, so the user's Buddy,
 // settings and files are left alone), each driven by one of main.js's BUDDY_*_TEST hooks. The runner reads what each
 // copy prints, checks it, and keeps the screenshots.
-//   npm run e2e                  files, tasks, settings, explainer, voice, firstrun
+//   npm run e2e                  files, welcome, tasks, settings, explainer, voice, firstrun
 //   npm run e2e -- tasks voice   only those
 //   npm run e2e -- --exe "<path to Desktop Buddy.exe>"   against a built or installed copy
 //   npm run e2e -- --interactive also the marker (a full-screen freeze frame) and approval clicks (moves the mouse)
@@ -37,6 +37,18 @@ function scriptedModel() {
       : { choices: [{ delta: { tool_calls: [{ index: 0, id: "call_1", type: "function", function: { name: "write_file", arguments: JSON.stringify({ path: "Shopping list.txt", content: "- Eggs\n- Milk\n- Bread\n" }) } }] }, finish_reason: "tool_calls" }] };
     res.setHeader("content-type", "text/event-stream");
     res.end(`data: ${JSON.stringify(chunk)}\n\ndata: [DONE]\n\n`);
+  });
+  return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, close: () => server.close() })));
+}
+
+/** An Ollama-style server on "this PC": one model that can use tools, which says hello. */
+function scriptedOllama() {
+  const server = http.createServer(async (req, res) => {
+    for await (const _ of req);
+    if (req.url?.endsWith("/models")) return res.end(JSON.stringify({ data: [{ id: "scripted-local", object: "model" }] }));
+    if (req.url === "/api/show") return res.end(JSON.stringify({ capabilities: ["completion", "tools"] }));
+    res.setHeader("content-type", "text/event-stream");
+    res.end(`data: ${JSON.stringify({ choices: [{ delta: { content: "Hello from a model on this PC." }, finish_reason: "stop" }] })}\n\ndata: [DONE]\n\n`);
   });
   return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, close: () => server.close() })));
 }
@@ -149,6 +161,35 @@ const CHECKS = {
       ].filter(Boolean);
     } finally {
       model.close();
+    }
+  },
+
+  // First-run setup: a fresh Buddy offers three ways in, never a bare key field, and each way works.
+  async welcome() {
+    const model = await scriptedOllama();
+    // A made-up home with a Gemini CLI folder: the AI-app choice adds Buddy there, never to the user's own apps.
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), "buddy-e2e-home-"));
+    fs.mkdirSync(path.join(home, ".gemini"));
+    try {
+      const { markers, timedOut } = await runCopy("welcome", { BUDDY_WELCOME_TEST: model.url, BUDDY_APPS_HOME: home, BUDDY_WELCOME_TEST_OUT: out }, "WELCOME_TEST_DONE");
+      const r = markers.WELCOME_TEST?.[0];
+      if (!r) return [timedOut ? "timed out before the check finished" : "the check printed nothing"];
+      return [
+        JSON.stringify(r.doors) !== '["apps","local","key"]' && `the doors were ${JSON.stringify(r.doors)}`,
+        r.keyFieldAtStart && "a fresh Buddy showed the key field before a way in was chosen",
+        JSON.stringify(r.apps) !== '["Gemini CLI"]' && `the AI apps found were ${JSON.stringify(r.apps)}`,
+        !/^Buddy is in Gemini CLI\./.test(r.appText ?? "") && `after adding: ${JSON.stringify(r.appText)}`,
+        !r.appEntry?.args?.[0]?.endsWith("mcp-server.js") && `Gemini CLI's settings didn't get Buddy: ${JSON.stringify(r.appEntry)}`,
+        !/^That doesn't look like an API key\. .*sk.ant./.test(r.badKey ?? "") && `a bad key said ${JSON.stringify(r.badKey)}`,
+        !/Ollama is running/.test(r.localText ?? "") && `Free, on this PC said ${JSON.stringify(r.localText)}`,
+        (!r.localReady?.brain || r.localReady.provider !== "ollama") && `the model on this PC wasn't set up: ${JSON.stringify(r.localReady)}`,
+        r.localReply !== "Hello from a model on this PC." && `the model on this PC answered ${JSON.stringify(r.localReply)}`,
+        !r.doorsAgain && "without an AI again, the doors didn't come back",
+        (!r.keyReady?.brain || r.keyReady.provider !== "anthropic") && `the key wasn't taken: ${JSON.stringify(r.keyReady)}`,
+      ].filter(Boolean);
+    } finally {
+      model.close();
+      fs.rmSync(home, { recursive: true, force: true });
     }
   },
 

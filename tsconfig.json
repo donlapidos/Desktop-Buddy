@@ -41,6 +41,7 @@
     "src/island-state.js",
     "src/app-sessions.js",
     "src/keys.js",
-    "src/log.js"
+    "src/log.js",
+    "src/welcome.js"
   ]
 }

@@ -11,7 +11,7 @@ import { SAFE_TOOLS, startBridge } from "./bridge.js";
 import { APPS, APP_IDS, allowRules, appStatus, claudeCodeExe, launchSpec, quickChatArgs, quickChatConfig, setApp, setCodeAllowed, staleApps } from "./ai-apps.js";
 import { Brain, SESSION_PREFIX, failureFor, setAgentPolicy, setBrainDefaults, takeTurn } from "./brain.js";
 import { keyFor, keyRecord, originOf } from "./keys.js";
-import { PROVIDERS, ProviderError, addressProblem, capsOf, describeModels, keyFits, listModels, noteTested, providerForKey, testedOf, useCapsStore, verdict } from "./providers.js";
+import { PROVIDERS, ProviderError, addressProblem, capsOf, describeModels, keyFits, listModels, noteTested, providerForKey, providerOfKey, testedOf, useCapsStore, verdict } from "./providers.js";
 import { CASES, runEvals } from "./evals.js";
 import { createActivity, pruneUndo } from "./activity.js";
 import { createLog } from "./log.js";
@@ -33,6 +33,7 @@ import { createUpdates } from "./updates.js";
 import { describe as describeSchedule, nextRun, verdict as routineVerdict } from "./routines.js";
 import os from "node:os";
 import { createVoice } from "./voice.js";
+import { findLocal, localDoor } from "./welcome.js";
 
 /** @typedef {import("./geometry.js").DipPoint} DipPoint */
 /** @typedef {import("./geometry.js").DipRect} DipRect */
@@ -1022,7 +1023,11 @@ async function setApiKey(/** @type {string} */ key) {
   const k = key.trim();
   if (PROVIDERS[currentProvider()].key === "none") return `${PROVIDERS[currentProvider()].label} doesn't use a key.`;
   const provider = providerForKey(k, currentProvider());
-  if (!keyFits(provider, k)) return `That doesn't look like a key from ${PROVIDERS[provider].label}. Get one at ${PROVIDERS[provider].keyFrom}.`;
+  if (!keyFits(provider, k)) {
+    // A key that matches no provider's shape isn't "not OpenAI's": nobody chose OpenAI, it's only the fallback.
+    if (!providerOfKey(k)) return "That doesn't look like an API key. Anthropic keys start sk‑ant‑, OpenAI sk‑, OpenRouter sk‑or‑, Gemini AIza.";
+    return `That doesn't look like a key from ${PROVIDERS[provider].label}. Get one at ${PROVIDERS[provider].keyFrom}.`;
+  }
   if (provider !== "anthropic") {
     const error = await refreshModels(provider, k);
     if (error && !providerModelLists.get(provider)?.models.length) return error;
@@ -1047,6 +1052,40 @@ async function setAddress(/** @type {string} */ url) {
 handleFrom(fromBubble, "set-key", async (_e, key) => {
   const error = await setApiKey(String(key ?? ""));
   return { ok: !error && !!brain, error };
+});
+
+// ---------- First-run setup in the bubble (welcome.js): an AI app, a model on this PC, or a key ----------
+
+// End-to-end checks point the AI-app choice at a made-up home folder, so the user's own apps are never changed.
+const appPlaces = process.env.BUDDY_E2E && process.env.BUDDY_APPS_HOME
+  ? { home: process.env.BUDDY_APPS_HOME, appData: path.join(process.env.BUDDY_APPS_HOME, "AppData"), localAppData: path.join(process.env.BUDDY_APPS_HOME, "Local") }
+  : undefined;
+
+/** What the welcome offers: the AI apps on this PC (and whether Buddy is in each), and what a model on this PC needs. */
+async function welcomeState() {
+  const status = appStatus(appPlaces);
+  const apps = APP_IDS.filter((id) => status[id] !== "missing").map((id) => ({ id, label: APPS[id].label, added: status[id] === "added" }));
+  const local = localDoor(await findLocal({ urls: settings.providerURLs }), os.totalmem());
+  return { apps, local };
+}
+
+handleFrom(fromBubble, "welcome-state", () => welcomeState());
+
+handleFrom(fromBubble, "welcome-app", async (_e, id) => {
+  if (!APP_IDS.includes(id)) return { error: "Buddy doesn't know that app." };
+  const error = await setClaude(id, true, "welcome");
+  return { error, after: error ? null : APPS[id].after, state: await welcomeState() };
+});
+
+handleFrom(fromBubble, "welcome-local", async () => {
+  const { local } = await welcomeState();
+  if (!local.use) return { ok: false, error: local.text };
+  changeSettings({ provider: local.use.id });
+  const error = await refreshModels(local.use.id);
+  // The brain made when the provider changed came before the model was picked; the first question needs this one.
+  startBrain();
+  trace({ kind: "welcome-local", provider: local.use.id, ok: !!brain, error });
+  return { ok: !!brain && !error, error, label: local.use.label };
 });
 
 // Stop or Esc in the bubble. While the bubble's own answer runs, that answer stops (and withdraws its request on the
@@ -1429,7 +1468,7 @@ const appSpec = (/** @type {import("./ai-apps.js").AppId} */ id) => launchSpec(p
 
 /** Adds Buddy to one of the AI apps, or takes it out. Resolves an error message, or null. */
 async function setClaude(/** @type {import("./ai-apps.js").AppId} */ which, /** @type {boolean} */ on, why = "settings") {
-  const error = (await setApp(which, on ? appSpec(which) : null)) ?? (which === "code" ? setCodeAllowed(allowRules(SAFE_TOOLS), on) : null);
+  const error = (await setApp(which, on ? appSpec(which) : null, appPlaces)) ?? (which === "code" ? setCodeAllowed(allowRules(SAFE_TOOLS), on) : null);
   // Claude Code also gets allow rules for Buddy's look-and-point tools, so it doesn't stop to check each one.
   trace({ kind: "claude-setup", which, on, why, error });
   return error;
@@ -1878,7 +1917,7 @@ function startUpdates() {
   });
   updates.start();
 }
-onFrom(fromBubble, "open-settings", () => settingsWindow.open());
+onFrom(fromBubble, "open-settings", (_e, page) => settingsWindow.open(page === "claude" ? "claude" : undefined));
 
 app.whenReady().then(() => {
   const loaded = loadSettings(settingsFile());
@@ -1891,7 +1930,7 @@ app.whenReady().then(() => {
   refreshModels().catch(() => {});
   setAgentPolicy(settings);
   app.setAppUserModelId(APP_ID);
-  const devRun = process.env.BUDDY_POINT_TEST || process.env.BUDDY_EXPLAINER_TEST || process.env.BUDDY_MARK_TEST || process.env.BUDDY_TASK_TEST || process.env.BUDDY_VOICE_TEST || process.env.BUDDY_SETTINGS_TEST || process.env.BUDDY_APPROVAL_TEST || process.env.BUDDY_FILES_TEST || process.env.BUDDY_THEME;
+  const devRun = process.env.BUDDY_POINT_TEST || process.env.BUDDY_EXPLAINER_TEST || process.env.BUDDY_MARK_TEST || process.env.BUDDY_TASK_TEST || process.env.BUDDY_VOICE_TEST || process.env.BUDDY_SETTINGS_TEST || process.env.BUDDY_APPROVAL_TEST || process.env.BUDDY_FILES_TEST || process.env.BUDDY_WELCOME_TEST || process.env.BUDDY_THEME;
   // First-run setup (shortcuts, start with Windows) changes the user's PC, so only the real Buddy does it: never a dev
   // check, and never a test copy with a data folder of its own (--user-data-dir), which would otherwise leave a second
   // copy starting at sign-in.
@@ -2236,6 +2275,75 @@ app.whenReady().then(() => {
       const undone = listed[0] ? await activity?.undo(listed[0].id) : null;
       console.log("FILES_TEST", JSON.stringify({ card, otherWindowRefused, reply, made, listed: listed.map((e) => ({ kind: e.kind, summary: e.summary, canUndo: e.canUndo })), page, undone, goneAfterUndo: !fs.existsSync(file) }));
       console.log("FILES_TEST_DONE");
+    }, 2500);
+  } else if (process.env.BUDDY_WELCOME_TEST) {
+    // End-to-end check of first-run setup, through the real bubble: BUDDY_WELCOME_TEST=<address of a scripted
+    // Ollama-style server> (scripts/e2e.mjs runs one, and gives a made-up home in BUDDY_APPS_HOME holding a Gemini CLI
+    // folder). Walks each way in: add Buddy to the AI app, a bad key and then a good one, and the model on "this PC".
+    const out = process.env.BUDDY_WELCOME_TEST_OUT ?? app.getPath("userData");
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const js = (/** @type {string} */ code) => bubble.webContents.executeJavaScript(code);
+    const until = async (/** @type {string} */ code, ms = 10_000) => {
+      for (const end = Date.now() + ms; Date.now() < end; await wait(100)) if (await js(code)) return true;
+      return false;
+    };
+    const shot = async (/** @type {string} */ name) => fs.writeFileSync(path.join(out, `welcome-${name}.png`), (await bubble.webContents.capturePage()).toPNG());
+    const click = (/** @type {string} */ selector, text = "") => js(`[...document.querySelectorAll(${JSON.stringify(selector)})].find((b) => b.textContent.includes(${JSON.stringify(text)})).click()`);
+    const openDoors = async () => {
+      await summon();
+      await until(`document.querySelectorAll("[data-door]").length === 3`);
+      await wait(400);
+    };
+    setTimeout(async () => {
+      const r = {};
+      changeSettings({ providerURLs: { ollama: process.env.BUDDY_WELCOME_TEST } });
+      await openDoors();
+      r.doors = await js(`[...document.querySelectorAll("[data-door]")].map((b) => b.dataset.door)`);
+      r.keyFieldAtStart = await js(`!document.getElementById("form").hidden`);
+      await shot("doors");
+
+      await click("[data-door]", "AI app I already have");
+      await until(`document.querySelectorAll("#welcome .app").length > 0`);
+      r.apps = await js(`[...document.querySelectorAll("#welcome .app > span:first-child")].map((s) => s.textContent)`);
+      await click("#welcome .app button", "Add Buddy");
+      await until(`document.getElementById("welcome").innerText.startsWith("Buddy is in")`);
+      r.appText = await js(`document.getElementById("welcome").innerText`);
+      try {
+        r.appEntry = JSON.parse(fs.readFileSync(path.join(process.env.BUDDY_APPS_HOME ?? "", ".gemini", "settings.json"), "utf8")).mcpServers?.["desktop-buddy"] ?? null;
+      } catch {
+        r.appEntry = null;
+      }
+      await shot("app-added");
+
+      await click("#welcome button", "Back");
+      await until(`document.querySelectorAll("[data-door]").length === 3`);
+      await click("[data-door]", "API key");
+      await js(`document.getElementById("input").value = "not a key"; document.getElementById("form").requestSubmit()`);
+      await until(`!!document.querySelector("#welcome .problem")?.textContent`);
+      r.badKey = await js(`document.querySelector("#welcome .problem").textContent`);
+      await shot("bad-key");
+
+      await click("#welcome button", "Back");
+      await until(`document.querySelectorAll("[data-door]").length === 3`);
+      await click("[data-door]", "Free, on this PC");
+      await until(`[...document.querySelectorAll("#welcome button")].some((b) => b.textContent === "Use Ollama")`);
+      r.localText = await js(`document.getElementById("welcome").innerText`);
+      await click("#welcome button", "Use Ollama");
+      await until(`document.getElementById("welcome").hidden`, 20_000);
+      r.localReady = { brain: !!brain, provider: settings.provider, shown: await js(`document.getElementById("reply").textContent`) };
+      r.localReply = (await js(`window.buddy.ask("Say hello.", {})`)).reply;
+      await shot("local-ready");
+
+      changeSettings({ provider: "anthropic" });
+      await openDoors();
+      r.doorsAgain = !brain && (await js(`document.querySelectorAll("[data-door]").length`)) === 3;
+      await click("[data-door]", "API key");
+      await js(`document.getElementById("input").value = "sk-ant-api03-${"e2e".repeat(30)}"; document.getElementById("form").requestSubmit()`);
+      await until(`document.getElementById("welcome").hidden`);
+      r.keyReady = { brain: !!brain, provider: settings.provider, shown: await js(`document.getElementById("reply").textContent`) };
+      await shot("key-ready");
+      console.log("WELCOME_TEST", JSON.stringify(r));
+      console.log("WELCOME_TEST_DONE");
     }, 2500);
   } else if (!brain) summon();
 });
