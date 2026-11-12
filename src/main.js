@@ -34,6 +34,7 @@ import { describe as describeSchedule, nextRun, verdict as routineVerdict } from
 import os from "node:os";
 import { createVoice } from "./voice.js";
 import { appWords, findLocal, localDoor, tourNext, tourTip } from "./welcome.js";
+import { addCall, capProblem, createLedger, moneyWords, noSpend, priceOf, spendLine, tokenWords } from "./costs.js";
 
 /** @typedef {import("./geometry.js").DipPoint} DipPoint */
 /** @typedef {import("./geometry.js").DipRect} DipRect */
@@ -225,6 +226,46 @@ function startActivity() {
     onChange: () => settingsWindow?.refresh(),
   });
 }
+// ---------- What thinking costs (costs.js): each answer's spend, the month's, and the limit ----------
+
+/** @type {ReturnType<typeof createLedger> | null} */
+let ledger = null;
+const startLedger = () => (ledger = createLedger({ file: path.join(app.getPath("userData"), "spend.json") }));
+
+// Every Brain gets these: each model call is added to the month (tasks and routines count too), and the limit is
+// checked before each one. `spend.now` is the answer in progress, for the bubble's footer.
+const spendUI = () => {
+  const spend = { now: noSpend() };
+  return {
+    spend,
+    usage: (/** @type {string} */ provider, /** @type {string} */ model, /** @type {any} */ usage) => {
+      addCall(spend.now, provider, model, usage);
+      ledger?.add(addCall(noSpend(), provider, model, usage));
+      settingsWindow?.refresh();
+    },
+    mayCall: () => (ledger ? capProblem(ledger.month(), settings.monthlyCap) : null),
+  };
+};
+
+/** What Settings › AI & privacy says about spending: the month so far, and what the estimate rests on. */
+function spendState() {
+  const m = ledger?.month() ?? { cost: 0, tokens: 0, calls: 0, unpriced: 0 };
+  const provider = currentProvider();
+  const label = PROVIDERS[provider].label;
+  const model = provider === "anthropic" ? settings.model : settings.providerModels[provider] ?? "";
+  const price = priceOf(provider, model);
+  const month = m.calls
+    ? `This month so far: ${m.cost > 0 ? `about ${moneyWords(m.cost)}` : "nothing priced"}, ${tokenWords(m.tokens)} tokens over ${m.calls} model call${m.calls === 1 ? "" : "s"}.`
+    : "Nothing spent this month yet.";
+  const basis =
+    price === "free" ? `${label} runs on this PC, so it costs nothing.`
+    : price ? `Costs are estimates from ${label}'s published prices; your bill is what ${label} charges.`
+    : `Buddy doesn't know ${label}'s price for this model, so its use shows as tokens only and doesn't count toward a limit.`;
+  const unpriced = m.unpriced ? ` ${m.unpriced} call${m.unpriced === 1 ? "" : "s"} this month had no known price.` : "";
+  const cap = settings.monthlyCap > 0 ? ` Buddy stops when this month's priced spend reaches ${moneyWords(settings.monthlyCap)}.` : "";
+  return { month, note: `${basis}${unpriced}${cap}` };
+}
+
 // Shows the user what an answer made: one file opens in its usual app, several open their folder with one selected.
 async function revealMade(/** @type {string[]} */ files) {
   const there = files.filter((f) => fs.existsSync(f));
@@ -1000,6 +1041,8 @@ handleFrom(fromBubble, "ask", async (_e, text, opts = {}) => {
   releaseFocus();
   progress("Thinking…");
   let reply;
+  const tally = brain.ui.spend;
+  if (tally) tally.now = noSpend();
   try {
     const withMarks = pendingMarks;
     pendingMarks = null;
@@ -1016,7 +1059,7 @@ handleFrom(fromBubble, "ask", async (_e, text, opts = {}) => {
   tourEvent("answered");
   // After the mode is back to idle, so the island shows Buddy speaking (and a click stops it).
   if (talksBack(turn.spoken)) speak(reply);
-  return { reply };
+  return { reply, spend: tally ? spendLine(tally.now) : null };
 });
 
 // A key that plainly belongs to another provider (sk-ant-, sk-or-, AIza) is saved for that one, which becomes the
@@ -1399,7 +1442,7 @@ function bubbleExplain(plate) {
 }
 
 // What every Brain is made with for the current provider: its key (empty if it needs none) and where it is.
-const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined });
+const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, ...spendUI() });
 
 function startBrain() {
   brain = providerReady()
@@ -1810,6 +1853,7 @@ function settingsState() {
     tested: testedOf(providerURL() ?? undefined, chosenModel() ?? ""),
     checkTasks: CASES.length,
     activity: (activity?.list() ?? []).slice(0, 200).map((e) => ({ id: e.id, at: e.at, from: e.from, kind: e.kind, summary: e.summary, undone: e.undone ?? null, canUndo: e.canUndo, file: e.file ?? null })),
+    spend: spendState(),
     startsWithWindows: process.platform === "win32" && startsWithWindows(),
     data: { explainers, logBytes },
     claude: appStatus(),
@@ -1950,6 +1994,7 @@ app.whenReady().then(() => {
   setBrainDefaults(settings);
   loadModelCaps();
   startActivity();
+  startLedger();
   refreshModels().catch(() => {});
   setAgentPolicy(settings);
   app.setAppUserModelId(APP_ID);
@@ -2358,7 +2403,10 @@ app.whenReady().then(() => {
       const tipNow = () => js(`document.getElementById("tip").hidden ? null : document.getElementById("tip").innerText`);
       r.tipAfterSetup = await tipNow();
       await shot("local-ready");
-      r.localReply = (await js(`window.buddy.ask("Say hello.", {})`)).reply;
+      const answered = await js(`window.buddy.ask("Say hello.", {})`);
+      r.localReply = answered.reply;
+      r.localSpend = answered.spend;
+      r.spendSettings = spendState();
       await until(`/draw around/.test(document.getElementById("tip").innerText) && !document.getElementById("tip").hidden`, 3_000);
       r.tipAfterAnswer = await tipNow();
       await shot("tour-mark");

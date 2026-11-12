@@ -249,3 +249,24 @@ test("an action that failed or was declined isn't listed in Activity", async () 
   await b.act({ action: "click", ref: "@s1:e1", summary: "Click it" });
   assert.equal(listed.length, 0);
 });
+
+test("each model call's usage is reported, and the spending limit stops an answer before the next call", async () => {
+  setBrainDefaults({ model: "claude-opus-5-5", effort: "low", providerModels: { openai: "gpt-test" } });
+  const realFetch = globalThis.fetch;
+  let calls = 0;
+  const done = { type: "response.completed", response: { status: "completed", usage: { input_tokens: 1200, output_tokens: 30, input_tokens_details: { cached_tokens: 1000 } }, output: [{ type: "message", content: [{ type: "output_text", text: "Click Data." }] }] } };
+  globalThis.fetch = async () => (calls++, new Response(`data: ${JSON.stringify(done)}\n\n`));
+  try {
+    const used = [];
+    let limit = null;
+    const b = new Brain({ apiKey: "sk-proj-test", provider: "openai", point: async () => {}, confirm: async () => "deny", status: () => {}, usage: (...a) => void used.push(a), mayCall: () => limit });
+    assert.equal(await b.run(null, "How do I sort?"), "Click Data.");
+    assert.deepEqual(used, [["openai", "gpt-test", { input_tokens: 1200, output_tokens: 30, cache_read_input_tokens: 1000 }]]);
+    limit = "This month's spend has reached your limit.";
+    assert.equal(await b.run(null, "And filter?"), limit);
+    assert.equal(calls, 1, "no call went out once the limit was reached");
+  } finally {
+    globalThis.fetch = realFetch;
+    setBrainDefaults({ model: "claude-opus-5-5", effort: "medium" });
+  }
+});

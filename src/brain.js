@@ -552,6 +552,9 @@ const spokenNote = (lang) =>
  *   documentsDir?: string,
  *   dataDir?: string,
  *   record?: (change: Omit<import("./activity.js").Change, "id" | "at">) => void,
+ *   usage?: (provider: string, model: string, usage: any) => void,
+ *   mayCall?: () => string | null,
+ *   spend?: { now: import("./costs.js").Spend },
  *   source?: string,
  *   reveal?: (files: string[]) => Promise<void> | void,
  *   isOwnWindow?: (win: { pid?: number }) => boolean,
@@ -741,8 +744,12 @@ export class Brain {
   async loop() {
     for (let step = 0; step < MAX_STEPS; step++) {
       this.fitHistory();
+      // The user's monthly spending limit (costs.js) is checked before every call, so a long answer stops at it too.
+      const stop = this.ui.mayCall?.();
+      if (stop) return stop;
       const callStart = Date.now();
       const response = await this.turn();
+      this.ui.usage?.(this.provider, this.model, response.usage);
 
       this.ui.trace?.({ kind: "model", ms: Date.now() - callStart, in: response.usage?.input_tokens, cached: response.usage?.cache_read_input_tokens, out: response.usage?.output_tokens, tools: response.content.filter((b) => b.type === "tool_use").map((b) => b.name) });
       if (response.stop_reason === "refusal") return "Sorry, I can't help with that one.";

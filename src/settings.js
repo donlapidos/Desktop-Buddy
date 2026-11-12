@@ -74,7 +74,11 @@ export const DEFAULTS = Object.freeze({
   autoUpdate: true,
   launchSetupDone: false,
   tour: "none",
+  monthlyCap: 0,
 });
+
+// The monthly spending limit, in US dollars (costs.js). 0 is none.
+export const CAP = Object.freeze({ max: 10_000 });
 
 /**
  * @typedef {{ every: "day" | "weekday" | "week" | "hours", time: string, days: number[], hours: number }} Schedule
@@ -83,7 +87,7 @@ export const DEFAULTS = Object.freeze({
  *   voice: number, speed: number, talkBack: string, accent: string, appearance: string,
  *   hotkeys: Record<HotkeyName, string>, provider: string, model: string, providerModels: Record<string, string>, providerURLs: Record<string, string>, effort: string, dictateStop: string, language: string,
  *   rope: string, trustedApps: string[], blockedApps: string[], routines: Routine[], autoUpdate: boolean,
- *   launchSetupDone: boolean, tour: string,
+ *   launchSetupDone: boolean, tour: string, monthlyCap: number,
  * }} Settings
  */
 
@@ -216,6 +220,9 @@ export function normalize(raw) {
     autoUpdate: r.autoUpdate !== false,
     launchSetupDone: r.launchSetupDone === true,
     tour: pick(r.tour, TOUR_STEPS, DEFAULTS.tour),
+    monthlyCap: typeof r.monthlyCap === "number" && Number.isFinite(r.monthlyCap) && r.monthlyCap >= 0 && r.monthlyCap <= CAP.max
+      ? Math.round(r.monthlyCap * 100) / 100
+      : DEFAULTS.monthlyCap,
   };
 }
 

@@ -2,6 +2,7 @@
 // Responses API, and the rest through Chat Completions, which they all speak. Buddy's conversation stays in
 // Anthropic's message format (text, image, tool_use and tool_result blocks); it is converted on the way out and the
 // reply converted back, so history, trimming and tools work the same whichever provider answers.
+import { fromOpenRouter, rememberPrice } from "./costs.js";
 
 /**
  * @typedef {"anthropic" | "openai" | "openrouter" | "gemini" | "deepseek" | "ollama" | "lmstudio" | "custom"} ProviderId
@@ -256,6 +257,9 @@ export async function describeModels(provider, key, models, { baseURL = PROVIDER
       const inputs = m.architecture?.input_modalities;
       const params = m.supported_parameters;
       learnCaps(baseURL, m.id, { vision: Array.isArray(inputs) ? inputs.includes("image") : null, tools: Array.isArray(params) ? params.includes("tools") : null });
+      // Its list says what each model costs, so the bubble and Settings can too (costs.js).
+      const price = fromOpenRouter(m.pricing);
+      if (price) rememberPrice("openrouter", m.id, price);
     }
   }
 }

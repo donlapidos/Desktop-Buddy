@@ -48,7 +48,9 @@ function scriptedOllama() {
     if (req.url?.endsWith("/models")) return res.end(JSON.stringify({ data: [{ id: "scripted-local", object: "model" }] }));
     if (req.url === "/api/show") return res.end(JSON.stringify({ capabilities: ["completion", "tools"] }));
     res.setHeader("content-type", "text/event-stream");
-    res.end(`data: ${JSON.stringify({ choices: [{ delta: { content: "Hello from a model on this PC." }, finish_reason: "stop" }] })}\n\ndata: [DONE]\n\n`);
+    const said = { choices: [{ delta: { content: "Hello from a model on this PC." }, finish_reason: "stop" }] };
+    const usage = { choices: [], usage: { prompt_tokens: 1500, completion_tokens: 20 } };
+    res.end(`data: ${JSON.stringify(said)}\n\ndata: ${JSON.stringify(usage)}\n\ndata: [DONE]\n\n`);
   });
   return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, close: () => server.close() })));
 }
@@ -184,6 +186,9 @@ const CHECKS = {
         !/Ollama is running/.test(r.localText ?? "") && `Free, on this PC said ${JSON.stringify(r.localText)}`,
         (!r.localReady?.brain || r.localReady.provider !== "ollama") && `the model on this PC wasn't set up: ${JSON.stringify(r.localReady)}`,
         r.localReply !== "Hello from a model on this PC." && `the model on this PC answered ${JSON.stringify(r.localReply)}`,
+        r.localSpend !== "1.5k tokens · free, on this PC" && `the answer's cost line said ${JSON.stringify(r.localSpend)}`,
+        !/1\.5k tokens over 1 model call/.test(r.spendSettings?.month ?? "") && `Settings' month said ${JSON.stringify(r.spendSettings?.month)}`,
+        !/runs on this PC, so it costs nothing/.test(r.spendSettings?.note ?? "") && `Settings' spending note said ${JSON.stringify(r.spendSettings?.note)}`,
         !/^Try it: ask me how to do something in .*Skip tour$/s.test(r.tipAfterSetup ?? "") && `after setup, the tour said ${JSON.stringify(r.tipAfterSetup)}`,
         !/press Ctrl\+Alt\+M, then draw around.*Got it$/s.test(r.tipAfterAnswer ?? "") && `after the first answer, the tour said ${JSON.stringify(r.tipAfterAnswer)}`,
         (r.tipAfterGotIt !== null || r.tourStep !== "done") && `"Got it" didn't end the tour (${r.tourStep}: ${JSON.stringify(r.tipAfterGotIt)})`,

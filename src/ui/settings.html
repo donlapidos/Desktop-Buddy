@@ -392,6 +392,13 @@
         <div class="seg" id="effort" role="group" aria-label="Thinking effort"></div>
         <p class="fixed" id="effort-fixed" hidden>Set by BUDDY_EFFORT, which overrides this.</p>
       </div>
+      <div class="group">
+        <h3>Spending</h3>
+        <p class="help" id="spend-month"></p>
+        <div class="row"><label for="cap">Monthly limit in US dollars</label><input class="field" id="cap" type="number" min="0" step="1" inputmode="decimal" placeholder="No limit" style="width: 9em"></div>
+        <p class="note" id="spend-note"></p>
+        <p class="problem" id="cap-problem"></p>
+      </div>
       <div class="group switch-row" id="startup-row">
         <div>
           <h3>Start with Windows</h3>
@@ -1042,9 +1049,25 @@
     renderAgents();
     if (!editing) renderRoutines();
     renderClaude();
+    renderSpend();
     renderActivity();
     renderAbout();
   }
+
+  // ---------- Spending: the month so far, and the limit ----------
+  function renderSpend() {
+    const sp = S.spend;
+    if (!sp) return;
+    $("spend-month").textContent = sp.month;
+    $("spend-note").textContent = sp.note;
+    if (document.activeElement !== $("cap")) $("cap").value = S.settings.monthlyCap > 0 ? String(S.settings.monthlyCap) : "";
+  }
+  $("cap").addEventListener("change", async (e) => {
+    const text = e.target.value.trim();
+    const v = text === "" ? 0 : Math.round(Number(text) * 100) / 100;
+    const refused = !Number.isFinite(v) || v < 0 || (await set({ monthlyCap: v })).monthlyCap !== undefined;
+    $("cap-problem").textContent = refused ? "That limit wasn't saved: give an amount in dollars, up to 10,000, or leave it empty for none." : "";
+  });
 
   // ---------- Activity ----------
   let undoing = null; // id of the change being undone

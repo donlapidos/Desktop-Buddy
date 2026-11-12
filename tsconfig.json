@@ -42,6 +42,7 @@
     "src/app-sessions.js",
     "src/keys.js",
     "src/log.js",
-    "src/welcome.js"
+    "src/welcome.js",
+    "src/costs.js"
   ]
 }
