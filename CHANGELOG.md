@@ -1,6 +1,6 @@
 # Desktop Buddy changelog
 
-## Unreleased
+## 0.2.1
 
 * Buddy has its own repository, [donlapidos/desktop-buddy](https://github.com/donlapidos/desktop-buddy), and its own
   releases. It uses the agent-desktop CLI as a pinned, checksum-verified release (1.2.0) instead of building it.
@@ -9,7 +9,7 @@
   control is now, and if it's gone Buddy looks again instead of pointing at empty space.
 * Activity also lists what Buddy clicked, pressed and typed in your apps. Text typed into password fields isn't kept.
 
-## 0.2.0 (unreleased)
+## 0.2.0
 
 ### Any AI, not only Claude
 
