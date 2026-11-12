@@ -10,7 +10,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { listWindows, renderTree, snapshotResilient } from "../src/desktop.js";
+import { LOOK_ARGS, listWindows, renderTree, snapshotResilient } from "../src/desktop.js";
 import { namesToHide, scrubText, scrubTree } from "../src/scrub.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -46,7 +46,7 @@ if (!win || String(win.app_name).toLowerCase() !== o.app.toLowerCase()) {
 }
 
 // The same read as Buddy's look tool (brain.js look): interactive controls, compact, with positions.
-const res = await snapshotResilient(["--app", o.app, "--window-id", o["window-id"]], ["-i", "--compact", "--include-bounds"], { timeoutMs: 30_000 });
+const res = await snapshotResilient(["--app", o.app, "--window-id", o["window-id"]], [...LOOK_ARGS], { timeoutMs: 30_000 });
 if (!res.ok) {
   console.error(`Couldn't read the window: ${JSON.stringify(res.error)}`);
   process.exit(1);

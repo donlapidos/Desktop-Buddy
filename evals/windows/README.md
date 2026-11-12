@@ -1,8 +1,9 @@
 # Recorded windows
 
-Real app windows, read the way Buddy reads them when it looks (`-i --compact --include-bounds`, agent-desktop's
-default depth), for the model check (`src/evals.js`, roadmap Phase 2). Each file says the app, what was open, the day
-it was recorded, the agent-desktop version, and what was replaced.
+Real app windows, read the way Buddy reads them when it looks (`LOOK_ARGS` in `src/desktop.js`), for the model
+check (`src/evals.js`, roadmap Phase 2). Each file says the app, what was open, the day it was recorded, the
+agent-desktop version, and what was replaced. Record a window once it has finished opening: a read taken while it's
+still settling can come back partial.
 
 Recorded only from made-up or public content: sample files (a budget CSV, a Word report, a PDF, a text file), a
 Wikipedia article, and app screens with nothing personal on them. Names, email addresses, numbers that could be

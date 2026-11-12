@@ -128,3 +128,32 @@ test("findControl matches near misses by meaning, and doesn't guess between equa
   assert.equal(findControl(ui("Sort", "Sort by colour"), "sorts")?.node?.name, "Sort", "the shorter label wins when both cover it");
   assert.deepEqual(nearestNames(ui("Word count", "Wrap text", "Zoom"), "Word wrap"), ["Word count", "Wrap text"]);
 });
+
+test("a spreadsheet grid is told by its filled cells; empty ones and headers become one line, and keep their places", async () => {
+  const { renderTree } = await import("../src/desktop.js");
+  const at = (n) => ({ x: n * 10, y: 0, width: 10, height: 10 });
+  let n = 0;
+  const cell = (name, extra = {}) => ({ role: "cell", role_description: "item", name, ref_id: `@s1:e${++n}`, bounds: at(n), ...extra });
+  const grid = {
+    role: "grid",
+    name: "Grid",
+    children: [
+      { role: "column", role_description: "header item", name: "Select All", ref_id: `@s1:e${++n}`, bounds: at(n) },
+      ...["A", "B", "C"].map((c) => cell(c, { role_description: "Column Header" })),
+      ...["1", "2"].map((r) => cell(r, { role_description: "Row Header" })),
+      cell("A1", { value: "Rent", states: ["focused", "selected"] }),
+      cell("B1", { value: "1200" }),
+      cell("C1"),
+      cell("A2"),
+      cell("B2", { value: "" }),
+      cell("C2", { value: "0" }),
+    ],
+  };
+  const bounds = new Map();
+  const { text } = renderTree({ role: "window", name: "Book1 - Excel", children: [grid] }, bounds);
+  assert.match(text, /\(columns A-C, rows 1-2 on screen; 9 empty cells and headers left out: .*Name Box\)/);
+  assert.match(text, /cell "A1" value="Rent" \[focused,selected\]/);
+  assert.match(text, /cell "C2" value="0"/, "a zero is a value, not an empty cell");
+  assert.doesNotMatch(text, /cell "C1"|cell "A2"|Row Header|"Select All"/);
+  assert.equal(bounds.size, n, "every cell can still be pointed at");
+});

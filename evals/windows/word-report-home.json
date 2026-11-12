@@ -5,7 +5,7 @@
  "note": "Sample two-page report open in Word, Home tab",
  "recordedAt": "2026-11-12",
  "agentDesktop": "1.2.0",
- "refCount": 102,
+ "refCount": 125,
  "complete": true,
  "replaced": {
   "email": 1,
@@ -102,7 +102,7 @@
                    "kind": "automation_id",
                    "value": "AutoSaveSwitch"
                   },
-                  "ref_id": "@s2mz1xanu7ui0a:e1",
+                  "ref_id": "@s1b1jo336zicg1:e1",
                   "role": "switch",
                   "role_description": "Toggle Switch"
                  },
@@ -123,7 +123,7 @@
                    "kind": "automation_id",
                    "value": "FileSave"
                   },
-                  "ref_id": "@s2mz1xanu7ui0a:e2",
+                  "ref_id": "@s1b1jo336zicg1:e2",
                   "role": "button",
                   "role_description": "Button"
                  },
@@ -153,7 +153,7 @@
                     },
                     "description": "Can't Undo (Ctrl+Z)",
                     "name": "Can't Undo",
-                    "ref_id": "@s2mz1xanu7ui0a:e4",
+                    "ref_id": "@s1b1jo336zicg1:e4",
                     "role": "button",
                     "role_description": "Button",
                     "states": [
@@ -178,7 +178,7 @@
                      "kind": "automation_id",
                      "value": "Undo_Dropdown"
                     },
-                    "ref_id": "@s2mz1xanu7ui0a:e5",
+                    "ref_id": "@s1b1jo336zicg1:e5",
                     "role": "menuitem",
                     "role_description": "Menu Item",
                     "states": [
@@ -193,7 +193,7 @@
                    "kind": "automation_id",
                    "value": "Undo"
                   },
-                  "ref_id": "@s2mz1xanu7ui0a:e3",
+                  "ref_id": "@s1b1jo336zicg1:e3",
                   "role": "menubutton",
                   "role_description": "SplitButton",
                   "states": [
@@ -218,7 +218,7 @@
                    "kind": "automation_id",
                    "value": "RedoOrRepeat"
                   },
-                  "ref_id": "@s2mz1xanu7ui0a:e6",
+                  "ref_id": "@s1b1jo336zicg1:e6",
                   "role": "button",
                   "role_description": "Button",
                   "states": [
@@ -239,7 +239,7 @@
                    "y": 268
                   },
                   "name": "Customize Quick Access Toolbar",
-                  "ref_id": "@s2mz1xanu7ui0a:e7",
+                  "ref_id": "@s1b1jo336zicg1:e7",
                   "role": "menuitem",
                   "role_description": "Menu Item",
                   "states": [
@@ -274,11 +274,10 @@
                   },
                   "description": "Saved to this PC",
                   "name": "‪Quarterly report‬  -  Saved to this PC",
-                  "ref_id": "@s2mz1xanu7ui0a:e8",
+                  "ref_id": "@s1b1jo336zicg1:e8",
                   "role": "menuitem",
                   "role_description": "Menu Item",
                   "states": [
-                   "disabled",
                    "haspopup"
                   ]
                  }
@@ -318,7 +317,7 @@
                    "kind": "automation_id",
                    "value": "TellMeTextBoxAutomationId"
                   },
-                  "ref_id": "@s2mz1xanu7ui0a:e10",
+                  "ref_id": "@s1b1jo336zicg1:e10",
                   "role": "textfield",
                   "role_description": "Edit Box",
                   "value": "Search"
@@ -330,7 +329,7 @@
                  "kind": "automation_id",
                  "value": "TellMeControlAnchor"
                 },
-                "ref_id": "@s2mz1xanu7ui0a:e9",
+                "ref_id": "@s1b1jo336zicg1:e9",
                 "role": "menuitem",
                 "role_description": "Menu Item",
                 "states": [
@@ -356,7 +355,7 @@
                  "kind": "automation_id",
                  "value": "MeControlWidget"
                 },
-                "ref_id": "@s2mz1xanu7ui0a:e11",
+                "ref_id": "@s1b1jo336zicg1:e11",
                 "role": "menuitem",
                 "role_description": "Menu Item",
                 "states": [
@@ -375,7 +374,7 @@
                 },
                 "description": "Moves the window out of the way",
                 "name": "Minimize",
-                "ref_id": "@s2mz1xanu7ui0a:e12",
+                "ref_id": "@s1b1jo336zicg1:e12",
                 "role": "button",
                 "role_description": "Button"
                },
@@ -391,7 +390,7 @@
                 },
                 "description": "Makes the window full screen",
                 "name": "Maximize",
-                "ref_id": "@s2mz1xanu7ui0a:e13",
+                "ref_id": "@s1b1jo336zicg1:e13",
                 "role": "button",
                 "role_description": "Button"
                },
@@ -407,7 +406,7 @@
                 },
                 "description": "Closes the window",
                 "name": "Close",
-                "ref_id": "@s2mz1xanu7ui0a:e14",
+                "ref_id": "@s1b1jo336zicg1:e14",
                 "role": "button",
                 "role_description": "Button"
                },
@@ -427,7 +426,7 @@
                  "kind": "automation_id",
                  "value": "FileTabButton"
                 },
-                "ref_id": "@s2mz1xanu7ui0a:e15",
+                "ref_id": "@s1b1jo336zicg1:e15",
                 "role": "button",
                 "role_description": "Button"
                },
@@ -462,7 +461,7 @@
                    "kind": "automation_id",
                    "value": "TabHome"
                   },
-                  "ref_id": "@s2mz1xanu7ui0a:e17",
+                  "ref_id": "@s1b1jo336zicg1:e17",
                   "role": "tab",
                   "role_description": "Tab Item",
                   "states": [
@@ -486,7 +485,7 @@
                    "kind": "automation_id",
                    "value": "TabInsert"
                   },
-                  "ref_id": "@s2mz1xanu7ui0a:e18",
+                  "ref_id": "@s1b1jo336zicg1:e18",
                   "role": "tab",
                   "role_description": "Tab Item"
                  },
@@ -507,7 +506,7 @@
                    "kind": "automation_id",
                    "value": "TabWordDesign"
                   },
-                  "ref_id": "@s2mz1xanu7ui0a:e19",
+                  "ref_id": "@s1b1jo336zicg1:e19",
                   "role": "tab",
                   "role_description": "Tab Item"
                  },
@@ -528,7 +527,7 @@
                    "kind": "automation_id",
                    "value": "TabPageLayoutWord"
                   },
-                  "ref_id": "@s2mz1xanu7ui0a:e20",
+                  "ref_id": "@s1b1jo336zicg1:e20",
                   "role": "tab",
                   "role_description": "Tab Item"
                  },
@@ -549,7 +548,7 @@
                    "kind": "automation_id",
                    "value": "TabReferences"
                   },
-                  "ref_id": "@s2mz1xanu7ui0a:e21",
+                  "ref_id": "@s1b1jo336zicg1:e21",
                   "role": "tab",
                   "role_description": "Tab Item"
                  },
@@ -570,7 +569,7 @@
                    "kind": "automation_id",
                    "value": "TabMailings"
                   },
-                  "ref_id": "@s2mz1xanu7ui0a:e22",
+                  "ref_id": "@s1b1jo336zicg1:e22",
                   "role": "tab",
                   "role_description": "Tab Item"
                  },
@@ -591,7 +590,7 @@
                    "kind": "automation_id",
                    "value": "TabReviewWord"
                   },
-                  "ref_id": "@s2mz1xanu7ui0a:e23",
+                  "ref_id": "@s1b1jo336zicg1:e23",
                   "role": "tab",
                   "role_description": "Tab Item"
                  },
@@ -612,7 +611,7 @@
                    "kind": "automation_id",
                    "value": "TabView"
                   },
-                  "ref_id": "@s2mz1xanu7ui0a:e24",
+                  "ref_id": "@s1b1jo336zicg1:e24",
                   "role": "tab",
                   "role_description": "Tab Item"
                  },
@@ -633,7 +632,7 @@
                    "kind": "automation_id",
                    "value": "HelpTab"
                   },
-                  "ref_id": "@s2mz1xanu7ui0a:e25",
+                  "ref_id": "@s1b1jo336zicg1:e25",
                   "role": "tab",
                   "role_description": "Tab Item"
                  },
@@ -650,7 +649,7 @@
                    "y": 317
                   },
                   "name": "Acrobat",
-                  "ref_id": "@s2mz1xanu7ui0a:e26",
+                  "ref_id": "@s1b1jo336zicg1:e26",
                   "role": "tab",
                   "role_description": "Tab Item"
                  },
@@ -668,7 +667,7 @@
                   },
                   "description": "See and respond to comments in this document.",
                   "name": "Comments",
-                  "ref_id": "@s2mz1xanu7ui0a:e27",
+                  "ref_id": "@s1b1jo336zicg1:e27",
                   "role": "switch",
                   "role_description": "Button"
                  },
@@ -687,7 +686,7 @@
                    "y": 321
                   },
                   "name": "Editing",
-                  "ref_id": "@s2mz1xanu7ui0a:e28",
+                  "ref_id": "@s1b1jo336zicg1:e28",
                   "role": "combobox",
                   "role_description": "ComboBox",
                   "value": "Editing"
@@ -707,7 +706,7 @@
                   },
                   "description": "Share this document, and see who it's shared with.",
                   "name": "Share",
-                  "ref_id": "@s2mz1xanu7ui0a:e29",
+                  "ref_id": "@s1b1jo336zicg1:e29",
                   "role": "menuitem",
                   "role_description": "Menu Item",
                   "states": [
@@ -716,7 +715,7 @@
                  }
                 ],
                 "name": "Ribbon Tabs",
-                "ref_id": "@s2mz1xanu7ui0a:e16",
+                "ref_id": "@s1b1jo336zicg1:e16",
                 "role": "tablist",
                 "role_description": "Pane",
                 "states": [
@@ -764,10 +763,56 @@
                        "x": 290,
                        "y": 359
                       },
-                      "children_count": 2,
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 48,
+                         "width": 52,
+                         "x": 290,
+                         "y": 359
+                        },
+                        "description": "Add content on the Clipboard to your document.",
+                        "name": "Paste",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "Paste"
+                        },
+                        "ref_id": "@s1b1jo336zicg1:e32",
+                        "role": "button",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 48,
+                         "width": 52,
+                         "x": 290,
+                         "y": 407
+                        },
+                        "description": "Pick a paste option, such as keeping formatting or pasting only content.",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "PasteMenu_Dropdown"
+                        },
+                        "ref_id": "@s1b1jo336zicg1:e33",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
                       "description": "Pick a paste option, such as keeping formatting or pasting only content.",
                       "name": "Paste",
-                      "ref_id": "@s2mz1xanu7ui0a:e31",
+                      "ref_id": "@s1b1jo336zicg1:e31",
                       "role": "menubutton",
                       "role_description": "SplitButton"
                      },
@@ -788,7 +833,7 @@
                        "kind": "automation_id",
                        "value": "Cut"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e32",
+                      "ref_id": "@s1b1jo336zicg1:e34",
                       "role": "button",
                       "role_description": "Button",
                       "states": [
@@ -812,7 +857,7 @@
                        "kind": "automation_id",
                        "value": "Copy"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e33",
+                      "ref_id": "@s1b1jo336zicg1:e35",
                       "role": "button",
                       "role_description": "Button",
                       "states": [
@@ -837,7 +882,7 @@
                        "kind": "automation_id",
                        "value": "FormatPainter"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e34",
+                      "ref_id": "@s1b1jo336zicg1:e36",
                       "role": "switch",
                       "role_description": "Button"
                      },
@@ -858,7 +903,7 @@
                        "kind": "automation_id",
                        "value": "ShowClipboard"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e35",
+                      "ref_id": "@s1b1jo336zicg1:e37",
                       "role": "button",
                       "role_description": "Button"
                      }
@@ -888,14 +933,49 @@
                        "x": 394,
                        "y": 359
                       },
-                      "children_count": 2,
+                      "children": [
+                       {
+                        "available_actions": [
+                         "SetValue",
+                         "SetFocus"
+                        ],
+                        "bounds": {
+                         "height": 24,
+                         "width": 196,
+                         "x": 395,
+                         "y": 362
+                        },
+                        "description": "Pick a new font for your text.",
+                        "name": "Font",
+                        "ref_id": "@s1b1jo336zicg1:e39",
+                        "role": "textfield",
+                        "role_description": "Edit Box",
+                        "value": "Aptos"
+                       },
+                       {
+                        "available_actions": [
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 28,
+                         "width": 16,
+                         "x": 591,
+                         "y": 360
+                        },
+                        "description": "Pick a new font for your text.",
+                        "name": "Open",
+                        "ref_id": "@s1b1jo336zicg1:e40",
+                        "role": "button",
+                        "role_description": "Button"
+                       }
+                      ],
                       "description": "Pick a new font for your text.",
                       "name": "Font",
                       "native_id": {
                        "kind": "automation_id",
                        "value": "Font"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e36",
+                      "ref_id": "@s1b1jo336zicg1:e38",
                       "role": "combobox",
                       "role_description": "ComboBox",
                       "value": "Aptos"
@@ -913,14 +993,49 @@
                        "x": 610,
                        "y": 359
                       },
-                      "children_count": 2,
+                      "children": [
+                       {
+                        "available_actions": [
+                         "SetValue",
+                         "SetFocus"
+                        ],
+                        "bounds": {
+                         "height": 24,
+                         "width": 37,
+                         "x": 611,
+                         "y": 362
+                        },
+                        "description": "Change the size of your text.",
+                        "name": "Font Size",
+                        "ref_id": "@s1b1jo336zicg1:e42",
+                        "role": "textfield",
+                        "role_description": "Edit Box",
+                        "value": "24"
+                       },
+                       {
+                        "available_actions": [
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 28,
+                         "width": 16,
+                         "x": 648,
+                         "y": 360
+                        },
+                        "description": "Change the size of your text.",
+                        "name": "Open",
+                        "ref_id": "@s1b1jo336zicg1:e43",
+                        "role": "button",
+                        "role_description": "Button"
+                       }
+                      ],
                       "description": "Change the size of your text.",
                       "name": "Font Size",
                       "native_id": {
                        "kind": "automation_id",
                        "value": "FontSize"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e37",
+                      "ref_id": "@s1b1jo336zicg1:e41",
                       "role": "combobox",
                       "role_description": "ComboBox",
                       "value": "24"
@@ -942,7 +1057,7 @@
                        "kind": "automation_id",
                        "value": "FontSizeIncreaseWord"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e38",
+                      "ref_id": "@s1b1jo336zicg1:e44",
                       "role": "button",
                       "role_description": "Button"
                      },
@@ -963,7 +1078,7 @@
                        "kind": "automation_id",
                        "value": "FontSizeDecreaseWord"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e39",
+                      "ref_id": "@s1b1jo336zicg1:e45",
                       "role": "button",
                       "role_description": "Button"
                      },
@@ -986,7 +1101,7 @@
                        "kind": "automation_id",
                        "value": "ChangeCaseGallery"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e40",
+                      "ref_id": "@s1b1jo336zicg1:e46",
                       "role": "menuitem",
                       "role_description": "Menu Item",
                       "states": [
@@ -1010,7 +1125,7 @@
                        "kind": "automation_id",
                        "value": "ClearFormatting"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e41",
+                      "ref_id": "@s1b1jo336zicg1:e47",
                       "role": "button",
                       "role_description": "Button"
                      },
@@ -1032,7 +1147,7 @@
                        "kind": "automation_id",
                        "value": "Bold"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e42",
+                      "ref_id": "@s1b1jo336zicg1:e48",
                       "role": "switch",
                       "role_description": "Button",
                       "states": [
@@ -1057,7 +1172,7 @@
                        "kind": "automation_id",
                        "value": "Italic"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e43",
+                      "ref_id": "@s1b1jo336zicg1:e49",
                       "role": "switch",
                       "role_description": "Button"
                      },
@@ -1076,14 +1191,57 @@
                        "x": 458,
                        "y": 391
                       },
-                      "children_count": 2,
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Toggle",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 458,
+                         "y": 391
+                        },
+                        "description": "Underline your text.",
+                        "name": "Underline",
+                        "ref_id": "@s1b1jo336zicg1:e51",
+                        "role": "switch",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 19,
+                         "x": 488,
+                         "y": 391
+                        },
+                        "description": "Underline your text.",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "UnderlineGallery_Dropdown"
+                        },
+                        "ref_id": "@s1b1jo336zicg1:e52",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
                       "description": "Underline your text.",
                       "name": "Underline",
                       "native_id": {
                        "kind": "automation_id",
                        "value": "UnderlineGallery"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e44",
+                      "ref_id": "@s1b1jo336zicg1:e50",
                       "role": "menubutton",
                       "role_description": "SplitButton"
                      },
@@ -1105,7 +1263,7 @@
                        "kind": "automation_id",
                        "value": "Strikethrough"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e45",
+                      "ref_id": "@s1b1jo336zicg1:e53",
                       "role": "switch",
                       "role_description": "Button"
                      },
@@ -1127,7 +1285,7 @@
                        "kind": "automation_id",
                        "value": "Subscript"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e46",
+                      "ref_id": "@s1b1jo336zicg1:e54",
                       "role": "switch",
                       "role_description": "Button"
                      },
@@ -1149,7 +1307,7 @@
                        "kind": "automation_id",
                        "value": "Superscript"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e47",
+                      "ref_id": "@s1b1jo336zicg1:e55",
                       "role": "switch",
                       "role_description": "Button"
                      },
@@ -1172,7 +1330,7 @@
                        "kind": "automation_id",
                        "value": "TextEffectsGallery"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e48",
+                      "ref_id": "@s1b1jo336zicg1:e56",
                       "role": "menuitem",
                       "role_description": "Menu Item",
                       "states": [
@@ -1194,14 +1352,57 @@
                        "x": 446,
                        "y": 423
                       },
-                      "children_count": 2,
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Toggle",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 446,
+                         "y": 423
+                        },
+                        "description": "Make your text pop by highlighting it in a bright color.",
+                        "name": "Text Highlight Color Yellow",
+                        "ref_id": "@s1b1jo336zicg1:e58",
+                        "role": "switch",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 19,
+                         "x": 476,
+                         "y": 423
+                        },
+                        "description": "Make your text pop by highlighting it in a bright color.",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "TextHighlightColorPicker_Dropdown"
+                        },
+                        "ref_id": "@s1b1jo336zicg1:e59",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
                       "description": "Make your text pop by highlighting it in a bright color.",
                       "name": "Text Highlight Color",
                       "native_id": {
                        "kind": "automation_id",
                        "value": "TextHighlightColorPicker"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e49",
+                      "ref_id": "@s1b1jo336zicg1:e57",
                       "role": "menubutton",
                       "role_description": "SplitButton",
                       "value": "Yellow"
@@ -1220,14 +1421,56 @@
                        "x": 497,
                        "y": 423
                       },
-                      "children_count": 2,
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 497,
+                         "y": 423
+                        },
+                        "description": "Change the color of your text.",
+                        "name": "Font Color Red",
+                        "ref_id": "@s1b1jo336zicg1:e61",
+                        "role": "button",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 19,
+                         "x": 527,
+                         "y": 423
+                        },
+                        "description": "Change the color of your text.",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "FontColorPicker_Dropdown"
+                        },
+                        "ref_id": "@s1b1jo336zicg1:e62",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
                       "description": "Change the color of your text.",
                       "name": "Font Color",
                       "native_id": {
                        "kind": "automation_id",
                        "value": "FontColorPicker"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e50",
+                      "ref_id": "@s1b1jo336zicg1:e60",
                       "role": "menubutton",
                       "role_description": "SplitButton",
                       "value": "Red"
@@ -1249,7 +1492,7 @@
                        "kind": "automation_id",
                        "value": "FontDialog"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e51",
+                      "ref_id": "@s1b1jo336zicg1:e63",
                       "role": "button",
                       "role_description": "Button"
                      }
@@ -1281,14 +1524,57 @@
                        "x": 685,
                        "y": 359
                       },
-                      "children_count": 2,
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Toggle",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 685,
+                         "y": 359
+                        },
+                        "description": "Create a bulleted list.\n\nClick the arrow to change the look of the bullet.",
+                        "name": "Bullets",
+                        "ref_id": "@s1b1jo336zicg1:e65",
+                        "role": "switch",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 19,
+                         "x": 715,
+                         "y": 359
+                        },
+                        "description": "Create a bulleted list.\n\nClick the arrow to change the look of the bullet.",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "BulletsGalleryWord_Dropdown"
+                        },
+                        "ref_id": "@s1b1jo336zicg1:e66",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
                       "description": "Create a bulleted list.\n\nClick the arrow to change the look of the bullet.",
                       "name": "Bullets",
                       "native_id": {
                        "kind": "automation_id",
                        "value": "BulletsGalleryWord"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e52",
+                      "ref_id": "@s1b1jo336zicg1:e64",
                       "role": "menubutton",
                       "role_description": "SplitButton"
                      },
@@ -1307,14 +1593,57 @@
                        "x": 736,
                        "y": 359
                       },
-                      "children_count": 2,
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Toggle",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 736,
+                         "y": 359
+                        },
+                        "description": "Create a numbered list.\n\nClick the arrow for more numbering formats.",
+                        "name": "Numbering",
+                        "ref_id": "@s1b1jo336zicg1:e68",
+                        "role": "switch",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 19,
+                         "x": 766,
+                         "y": 359
+                        },
+                        "description": "Create a numbered list.\n\nClick the arrow for more numbering formats.",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "NumberingGalleryWord_Dropdown"
+                        },
+                        "ref_id": "@s1b1jo336zicg1:e69",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
                       "description": "Create a numbered list.\n\nClick the arrow for more numbering formats.",
                       "name": "Numbering",
                       "native_id": {
                        "kind": "automation_id",
                        "value": "NumberingGalleryWord"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e53",
+                      "ref_id": "@s1b1jo336zicg1:e67",
                       "role": "menubutton",
                       "role_description": "SplitButton"
                      },
@@ -1337,7 +1666,7 @@
                        "kind": "automation_id",
                        "value": "MultilevelListGallery"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e54",
+                      "ref_id": "@s1b1jo336zicg1:e70",
                       "role": "menuitem",
                       "role_description": "Menu Item",
                       "states": [
@@ -1361,7 +1690,7 @@
                        "kind": "automation_id",
                        "value": "IndentDecreaseWord"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e55",
+                      "ref_id": "@s1b1jo336zicg1:e71",
                       "role": "button",
                       "role_description": "Button"
                      },
@@ -1382,7 +1711,7 @@
                        "kind": "automation_id",
                        "value": "IndentIncreaseWord"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e56",
+                      "ref_id": "@s1b1jo336zicg1:e72",
                       "role": "button",
                       "role_description": "Button"
                      },
@@ -1403,7 +1732,7 @@
                        "kind": "automation_id",
                        "value": "SortDialogClassic"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e57",
+                      "ref_id": "@s1b1jo336zicg1:e73",
                       "role": "button",
                       "role_description": "Button"
                      },
@@ -1425,7 +1754,7 @@
                        "kind": "automation_id",
                        "value": "ParagraphMarks"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e58",
+                      "ref_id": "@s1b1jo336zicg1:e74",
                       "role": "switch",
                       "role_description": "Button"
                      },
@@ -1447,7 +1776,7 @@
                        "kind": "automation_id",
                        "value": "AlignLeft"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e59",
+                      "ref_id": "@s1b1jo336zicg1:e75",
                       "role": "switch",
                       "role_description": "Button",
                       "states": [
@@ -1472,7 +1801,7 @@
                        "kind": "automation_id",
                        "value": "AlignCenter"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e60",
+                      "ref_id": "@s1b1jo336zicg1:e76",
                       "role": "switch",
                       "role_description": "Button"
                      },
@@ -1494,7 +1823,7 @@
                        "kind": "automation_id",
                        "value": "AlignRight"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e61",
+                      "ref_id": "@s1b1jo336zicg1:e77",
                       "role": "switch",
                       "role_description": "Button"
                      },
@@ -1516,7 +1845,7 @@
                        "kind": "automation_id",
                        "value": "AlignJustify"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e62",
+                      "ref_id": "@s1b1jo336zicg1:e78",
                       "role": "switch",
                       "role_description": "Button"
                      },
@@ -1539,7 +1868,7 @@
                        "kind": "automation_id",
                        "value": "LineSpacingGallery"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e63",
+                      "ref_id": "@s1b1jo336zicg1:e79",
                       "role": "menuitem",
                       "role_description": "Menu Item",
                       "states": [
@@ -1560,14 +1889,56 @@
                        "x": 685,
                        "y": 423
                       },
-                      "children_count": 2,
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 685,
+                         "y": 423
+                        },
+                        "description": "Change the color behind the selected text, paragraph or table cell.\n\nThis is especially useful when you want information to jump off the page.",
+                        "name": "Shading RGB(0, 0, 0)",
+                        "ref_id": "@s1b1jo336zicg1:e81",
+                        "role": "button",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 19,
+                         "x": 715,
+                         "y": 423
+                        },
+                        "description": "Change the color behind the selected text, paragraph or table cell.\n\nThis is especially useful when you want information to jump off the page.",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "ShadingColorPicker_Dropdown"
+                        },
+                        "ref_id": "@s1b1jo336zicg1:e82",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
                       "description": "Change the color behind the selected text, paragraph or table cell.\n\nThis is especially useful when you want information to jump off the page.",
                       "name": "Shading",
                       "native_id": {
                        "kind": "automation_id",
                        "value": "ShadingColorPicker"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e64",
+                      "ref_id": "@s1b1jo336zicg1:e80",
                       "role": "menubutton",
                       "role_description": "SplitButton",
                       "value": "RGB(0, 0, 0)"
@@ -1587,14 +1958,57 @@
                        "x": 736,
                        "y": 423
                       },
-                      "children_count": 2,
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Toggle",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 30,
+                         "x": 736,
+                         "y": 423
+                        },
+                        "description": "Add or remove borders from your selection.\n\nTo change the look of the borders, check out the options on the Table Tools Design tab or use the Borders and Shading dialog box.",
+                        "name": "Borders",
+                        "ref_id": "@s1b1jo336zicg1:e84",
+                        "role": "switch",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 30,
+                         "width": 19,
+                         "x": 766,
+                         "y": 423
+                        },
+                        "description": "Add or remove borders from your selection.\n\nTo change the look of the borders, check out the options on the Table Tools Design tab or use the Borders and Shading dialog box.",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "BordersSelectionGallery_Dropdown"
+                        },
+                        "ref_id": "@s1b1jo336zicg1:e85",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
                       "description": "Add or remove borders from your selection.\n\nTo change the look of the borders, check out the options on the Table Tools Design tab or use the Borders and Shading dialog box.",
                       "name": "Borders",
                       "native_id": {
                        "kind": "automation_id",
                        "value": "BordersSelectionGallery"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e65",
+                      "ref_id": "@s1b1jo336zicg1:e83",
                       "role": "menubutton",
                       "role_description": "SplitButton"
                      },
@@ -1615,7 +2029,7 @@
                        "kind": "automation_id",
                        "value": "ParagraphDialog"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e66",
+                      "ref_id": "@s1b1jo336zicg1:e86",
                       "role": "button",
                       "role_description": "Button"
                      }
@@ -1651,7 +2065,7 @@
                        "kind": "automation_id",
                        "value": "QuickStylesGallery"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e67",
+                      "ref_id": "@s1b1jo336zicg1:e87",
                       "role": "menuitem",
                       "role_description": "Menu Item",
                       "states": [
@@ -1675,7 +2089,7 @@
                        "kind": "automation_id",
                        "value": "StylesPane"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e68",
+                      "ref_id": "@s1b1jo336zicg1:e88",
                       "role": "button",
                       "role_description": "Button"
                      }
@@ -1706,7 +2120,7 @@
                        "y": 357
                       },
                       "name": "Editing",
-                      "ref_id": "@s2mz1xanu7ui0a:e69",
+                      "ref_id": "@s1b1jo336zicg1:e89",
                       "role": "menuitem",
                       "role_description": "Menu Item",
                       "states": [
@@ -1739,7 +2153,7 @@
                       },
                       "description": "Turn a document into an Adobe PDF for free every 60 days. Your file will be uploaded to Adobe cloud storage.",
                       "name": "Create a PDF",
-                      "ref_id": "@s2mz1xanu7ui0a:e70",
+                      "ref_id": "@s1b1jo336zicg1:e90",
                       "role": "button",
                       "role_description": "Button"
                      }
@@ -1771,10 +2185,57 @@
                        "x": 1160,
                        "y": 359
                       },
-                      "children_count": 2,
+                      "children": [
+                       {
+                        "available_actions": [
+                         "Toggle",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 48,
+                         "width": 52,
+                         "x": 1160,
+                         "y": 359
+                        },
+                        "description": "Now use voice typing to author content and voice commanding for a more hands-off experience.\n\nPowered by Microsoft Speech Services",
+                        "name": "Dictate",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "Dictate"
+                        },
+                        "ref_id": "@s1b1jo336zicg1:e92",
+                        "role": "switch",
+                        "role_description": "Button"
+                       },
+                       {
+                        "available_actions": [
+                         "Expand",
+                         "Collapse",
+                         "Click"
+                        ],
+                        "bounds": {
+                         "height": 48,
+                         "width": 52,
+                         "x": 1160,
+                         "y": 407
+                        },
+                        "description": "Now use voice typing to author content and voice commanding for a more hands-off experience.\n\nPowered by Microsoft Speech Services",
+                        "name": "More Options",
+                        "native_id": {
+                         "kind": "automation_id",
+                         "value": "DictationMenu_Dropdown"
+                        },
+                        "ref_id": "@s1b1jo336zicg1:e93",
+                        "role": "menuitem",
+                        "role_description": "Menu Item",
+                        "states": [
+                         "haspopup"
+                        ]
+                       }
+                      ],
                       "description": "Now use voice typing to author content and voice commanding for a more hands-off experience.\n\nPowered by Microsoft Speech Services",
                       "name": "Dictate",
-                      "ref_id": "@s2mz1xanu7ui0a:e71",
+                      "ref_id": "@s1b1jo336zicg1:e91",
                       "role": "menubutton",
                       "role_description": "SplitButton"
                      }
@@ -1808,7 +2269,7 @@
                        "kind": "automation_id",
                        "value": "WritingAssistanceCheckDocument"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e72",
+                      "ref_id": "@s1b1jo336zicg1:e94",
                       "role": "button",
                       "role_description": "Button"
                      }
@@ -1843,7 +2304,7 @@
                        "kind": "automation_id",
                        "value": "OfficeExtensionsShowAddinFlyout"
                       },
-                      "ref_id": "@s2mz1xanu7ui0a:e73",
+                      "ref_id": "@s1b1jo336zicg1:e95",
                       "role": "switch",
                       "role_description": "Button"
                      }
@@ -1873,7 +2334,7 @@
                       },
                       "description": "Click to open ChatGPT",
                       "name": "ChatGPT",
-                      "ref_id": "@s2mz1xanu7ui0a:e74",
+                      "ref_id": "@s1b1jo336zicg1:e96",
                       "role": "button",
                       "role_description": "Button"
                      }
@@ -1889,7 +2350,7 @@
                  }
                 ],
                 "name": "Lower Ribbon",
-                "ref_id": "@s2mz1xanu7ui0a:e30",
+                "ref_id": "@s1b1jo336zicg1:e30",
                 "role": "group",
                 "role_description": "Pane"
                },
@@ -1907,7 +2368,7 @@
                  "y": 449
                 },
                 "name": "Ribbon Display Options",
-                "ref_id": "@s2mz1xanu7ui0a:e75",
+                "ref_id": "@s1b1jo336zicg1:e97",
                 "role": "menuitem",
                 "role_description": "Menu Item",
                 "states": [
@@ -2021,7 +2482,7 @@
                  "y": 761
                 },
                 "name": "•",
-                "ref_id": "@s2mz1xanu7ui0a:e78",
+                "ref_id": "@s1b1jo336zicg1:e100",
                 "role": "option",
                 "role_description": "list item"
                },
@@ -2037,7 +2498,7 @@
                  "y": 787
                 },
                 "name": "•",
-                "ref_id": "@s2mz1xanu7ui0a:e79",
+                "ref_id": "@s1b1jo336zicg1:e101",
                 "role": "option",
                 "role_description": "list item"
                },
@@ -2053,7 +2514,7 @@
                  "y": 813
                 },
                 "name": "•",
-                "ref_id": "@s2mz1xanu7ui0a:e80",
+                "ref_id": "@s1b1jo336zicg1:e102",
                 "role": "option",
                 "role_description": "list item"
                }
@@ -2067,7 +2528,7 @@
              "kind": "automation_id",
              "value": "Body"
             },
-            "ref_id": "@s2mz1xanu7ui0a:e77",
+            "ref_id": "@s1b1jo336zicg1:e99",
             "role": "textfield",
             "role_description": "edit"
            }
@@ -2081,10 +2542,13 @@
           "role_description": "page"
          }
         ],
-        "name": "Quarterly report",
-        "ref_id": "@s2mz1xanu7ui0a:e76",
+        "name": "Quarterly report  -  Last saved by user",
+        "ref_id": "@s1b1jo336zicg1:e98",
         "role": "document",
-        "role_description": "document"
+        "role_description": "document",
+        "states": [
+         "focused"
+        ]
        },
        {
         "bounds": {
@@ -2113,7 +2577,7 @@
              "y": 479
             },
             "name": "Used to change the vertical viewing area",
-            "ref_id": "@s2mz1xanu7ui0a:e81",
+            "ref_id": "@s1b1jo336zicg1:e103",
             "role": "scrollbar",
             "role_description": "ScrollBar"
            }
@@ -2202,7 +2666,7 @@
                 },
                 "description": "The current page number in the document. Click or tap to open the Navigation Pane.",
                 "name": "Page Number Page 1 of 1",
-                "ref_id": "@s2mz1xanu7ui0a:e82",
+                "ref_id": "@s1b1jo336zicg1:e104",
                 "role": "button",
                 "role_description": "Button"
                },
@@ -2219,7 +2683,7 @@
                 },
                 "description": "The number of words in the document. Click or tap to open the Word Count dialog box.",
                 "name": "Word Count 38 words",
-                "ref_id": "@s2mz1xanu7ui0a:e83",
+                "ref_id": "@s1b1jo336zicg1:e105",
                 "role": "statictext",
                 "role_description": "Text"
                },
@@ -2236,7 +2700,7 @@
                 },
                 "description": "Coauthoring in compatibility mode.",
                 "name": "Coauthoring Mode ",
-                "ref_id": "@s2mz1xanu7ui0a:e84",
+                "ref_id": "@s1b1jo336zicg1:e106",
                 "role": "button",
                 "role_description": "Button"
                },
@@ -2253,7 +2717,7 @@
                 },
                 "description": "No proofing errors",
                 "name": "Spelling and Grammar Check No Errors",
-                "ref_id": "@s2mz1xanu7ui0a:e85",
+                "ref_id": "@s1b1jo336zicg1:e107",
                 "role": "button",
                 "role_description": "Button"
                },
@@ -2270,7 +2734,7 @@
                 },
                 "description": "Language",
                 "name": "Language English (Malaysia)",
-                "ref_id": "@s2mz1xanu7ui0a:e86",
+                "ref_id": "@s1b1jo336zicg1:e108",
                 "role": "button",
                 "role_description": "Button"
                },
@@ -2287,7 +2751,24 @@
                 },
                 "description": "Switch text predictions on or off. Click or tap here to open settings for text predictions.",
                 "name": "Text Predictions Text Predictions: Off",
-                "ref_id": "@s2mz1xanu7ui0a:e87",
+                "ref_id": "@s1b1jo336zicg1:e109",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 185,
+                 "x": 789,
+                 "y": 1051
+                },
+                "description": "Accessibility check complete. Click here to learn more.",
+                "name": "Accessibility Checker Accessibility: Good to go",
+                "ref_id": "@s1b1jo336zicg1:e110",
                 "role": "button",
                 "role_description": "Button"
                },
@@ -2304,7 +2785,7 @@
                 },
                 "description": "Focus Mode",
                 "name": "Focus ",
-                "ref_id": "@s2mz1xanu7ui0a:e88",
+                "ref_id": "@s1b1jo336zicg1:e111",
                 "role": "button",
                 "role_description": "Button"
                },
@@ -2321,7 +2802,7 @@
                  "y": 1051
                 },
                 "name": "Read Mode",
-                "ref_id": "@s2mz1xanu7ui0a:e89",
+                "ref_id": "@s1b1jo336zicg1:e112",
                 "role": "switch",
                 "role_description": "Button"
                },
@@ -2338,7 +2819,7 @@
                  "y": 1051
                 },
                 "name": "Print Layout",
-                "ref_id": "@s2mz1xanu7ui0a:e90",
+                "ref_id": "@s1b1jo336zicg1:e113",
                 "role": "switch",
                 "role_description": "Button",
                 "states": [
@@ -2358,7 +2839,7 @@
                  "y": 1051
                 },
                 "name": "Web Layout",
-                "ref_id": "@s2mz1xanu7ui0a:e91",
+                "ref_id": "@s1b1jo336zicg1:e114",
                 "role": "switch",
                 "role_description": "Button"
                },
@@ -2374,7 +2855,7 @@
                  "y": 1051
                 },
                 "name": "Zoom Out (Ctrl -)",
-                "ref_id": "@s2mz1xanu7ui0a:e92",
+                "ref_id": "@s1b1jo336zicg1:e115",
                 "role": "button",
                 "role_description": "Button",
                 "states": [
@@ -2405,7 +2886,7 @@
                   },
                   "description": "Moves the horizontal position left a couple of columns",
                   "name": "Zoom Out",
-                  "ref_id": "@s2mz1xanu7ui0a:e94",
+                  "ref_id": "@s1b1jo336zicg1:e117",
                   "role": "button",
                   "role_description": "Button",
                   "states": [
@@ -2424,7 +2905,7 @@
                   },
                   "description": "Moves the horizontal position right a couple of columns",
                   "name": "Zoom In",
-                  "ref_id": "@s2mz1xanu7ui0a:e95",
+                  "ref_id": "@s1b1jo336zicg1:e118",
                   "role": "button",
                   "role_description": "Button",
                   "states": [
@@ -2433,7 +2914,7 @@
                  }
                 ],
                 "name": "Zoom",
-                "ref_id": "@s2mz1xanu7ui0a:e93",
+                "ref_id": "@s1b1jo336zicg1:e116",
                 "role": "slider",
                 "role_description": "Slider",
                 "value": "100"
@@ -2450,7 +2931,7 @@
                  "y": 1051
                 },
                 "name": "Zoom In (Ctrl +)",
-                "ref_id": "@s2mz1xanu7ui0a:e96",
+                "ref_id": "@s1b1jo336zicg1:e119",
                 "role": "button",
                 "role_description": "Button",
                 "states": [
@@ -2471,7 +2952,7 @@
                 },
                 "description": "Zoom level. Click to open the Zoom dialog box.",
                 "name": "Zoom 100%",
-                "ref_id": "@s2mz1xanu7ui0a:e97",
+                "ref_id": "@s1b1jo336zicg1:e120",
                 "role": "button",
                 "role_description": "Button"
                }
@@ -2528,6 +3009,7 @@
       "children": [
        {
         "available_actions": [
+         "Click",
          "Expand",
          "Collapse",
          "SetFocus"
@@ -2539,7 +3021,7 @@
          "y": 265
         },
         "name": "System",
-        "ref_id": "@s2mz1xanu7ui0a:e99",
+        "ref_id": "@s1b1jo336zicg1:e122",
         "role": "menuitem",
         "role_description": "menu item",
         "states": [
@@ -2570,7 +3052,7 @@
        "kind": "automation_id",
        "value": "Minimize-Restore"
       },
-      "ref_id": "@s2mz1xanu7ui0a:e100",
+      "ref_id": "@s1b1jo336zicg1:e123",
       "role": "button",
       "role_description": "button"
      },
@@ -2589,7 +3071,7 @@
        "kind": "automation_id",
        "value": "Maximize-Restore"
       },
-      "ref_id": "@s2mz1xanu7ui0a:e101",
+      "ref_id": "@s1b1jo336zicg1:e124",
       "role": "button",
       "role_description": "button"
      },
@@ -2608,7 +3090,7 @@
        "kind": "automation_id",
        "value": "Close"
       },
-      "ref_id": "@s2mz1xanu7ui0a:e102",
+      "ref_id": "@s1b1jo336zicg1:e125",
       "role": "button",
       "role_description": "button"
      }
@@ -2617,7 +3099,7 @@
      "kind": "automation_id",
      "value": "TitleBar"
     },
-    "ref_id": "@s2mz1xanu7ui0a:e98",
+    "ref_id": "@s1b1jo336zicg1:e121",
     "role": "group",
     "role_description": "title bar",
     "states": [

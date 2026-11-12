@@ -2,7 +2,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { askUser, requestApproval } from "./approvals.js";
 import { decide } from "./policy.js";
-import { findControl, nearestNames, observe, perform, renderReading, renderTree, snapshotResilient, waitForProgress } from "./desktop.js";
+import { LOOK_ARGS, findControl, nearestNames, observe, perform, renderReading, renderTree, snapshotResilient, waitForProgress } from "./desktop.js";
 import { writeDocx } from "./documents.js";
 import { PROVIDERS, ProviderError, capsOf, chatTurn } from "./providers.js";
 import { BEYOND_SCREEN, PC_TOOLS, PC_TOOL_NAMES, hideSecrets, placesHere, runPcTool } from "./pc-tools.js";
@@ -610,7 +610,7 @@ export class Brain {
   }
 
   async look(input) {
-    const extra = ["-i", "--compact", "--include-bounds", ...(input.skeleton && !input.root ? ["--skeleton"] : [])];
+    const extra = input.skeleton && !input.root ? ["-i", "--compact", "--include-bounds", "--skeleton"] : [...LOOK_ARGS];
     const res = input.root
       ? await observe(["snapshot", "--root", input.root, ...extra], { timeoutMs: 20_000, session: this.session })
       : await snapshotResilient(this.windowArgs(input), extra, { timeoutMs: 20_000, session: this.session });

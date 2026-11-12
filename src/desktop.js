@@ -187,6 +187,10 @@ const INTERESTING_STATES = new Set([
  * @param {number} [maxChars]
  * @param {Map<string, string> | null} [labels]
  */
+// How Buddy reads a window when it looks: interactive controls, compact, with positions, and deep enough to reach a
+// spreadsheet's cells (agent-desktop stops at depth 10 by default, which leaves out Excel's whole sheet).
+export const LOOK_ARGS = Object.freeze(["-i", "--compact", "--include-bounds", "--max-depth", "30"]);
+
 export function renderTree(tree, bounds = new Map(), maxChars = 24_000, labels = null) {
   const lines = [];
   let used = 0;
@@ -215,7 +219,32 @@ export function renderTree(tree, bounds = new Map(), maxChars = 24_000, labels =
       return;
     }
     lines.push(line);
+    if (node.role === "grid") return gridCells(node, depth + 1);
     for (const child of node.children ?? []) walk(child, depth + 1);
+  };
+
+  // A spreadsheet's grid lists every square on screen, most of them empty (Excel: 292 of 361 on a small sheet). The
+  // model gets the cells with something in them and the selected one; the empty ones and the row and column headers
+  // become one line saying what's on screen. Every cell's position is still kept, for pointing.
+  const gridCells = (grid, depth) => {
+    const kids = grid.children ?? [];
+    const header = (/** @type {any} */ c) => /header/i.test(`${c.role} ${c.role_description ?? ""}`);
+    const said = kids.filter((c) => c.role !== "cell" || header(c) ? false : (c.value != null && c.value !== "") || (c.states ?? []).some((s) => s === "focused" || s === "selected"));
+    const columns = kids.filter((c) => header(c) && /column/i.test(`${c.role} ${c.role_description ?? ""}`) && /^[A-Z]{1,3}$/.test(c.name ?? "")).map((c) => c.name);
+    const rows = kids.filter((c) => header(c) && /row/i.test(c.role_description ?? "") && /^\d+$/.test(c.name ?? "")).map((c) => c.name);
+    const left = kids.length - said.length;
+    for (const c of kids) {
+      if (c.ref_id && c.bounds) bounds.set(c.ref_id, c.bounds);
+      if (c.ref_id && labels) labels.set(c.ref_id, c.name ? `${JSON.stringify(String(c.name).slice(0, 60))} (${c.role ?? "control"})` : `the ${c.role ?? "control"}`);
+    }
+    if (left) {
+      const span = (/** @type {string[]} */ a) => (a.length ? (a.length === 1 ? a[0] : `${a[0]}-${a.at(-1)}`) : null);
+      const where = [span(columns) && `columns ${span(columns)}`, span(rows) && `rows ${span(rows)}`].filter(Boolean).join(", ");
+      const summary = `${"  ".repeat(depth)}(${where ? `${where} on screen; ` : ""}${left} empty cells and headers left out: to reach one, type its address, like E2, in the Name Box)`;
+      used += summary.length + 1;
+      lines.push(summary);
+    }
+    for (const c of said) walk(c, depth);
   };
 
   walk(tree, 0);
