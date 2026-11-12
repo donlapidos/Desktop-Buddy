@@ -179,3 +179,32 @@ test("the slip for a keypress names the window it was judged for", async () => {
   assert.deepEqual(action.args, ["press", "ctrl+s", "--app", "EXCEL.EXE", "--window-id", "w-3"], "the keys can't land anywhere but the judged window");
   assert.equal(action.app, "EXCEL.EXE");
 });
+
+// A Brain whose pointer records where it went, and whose live position check answers `live`.
+function pointer(live) {
+  const went = [];
+  const b = new Brain({ apiKey: "sk-test", status() {}, confirm: async () => "deny", point: async (bounds) => void went.push(bounds) });
+  b.bounds.set("@s1:e1", /** @type {any} */ ({ x: 10, y: 20, width: 200, height: 30 }));
+  b.liveBounds = async () => live;
+  return { b, went };
+}
+
+test("pointing at a control that moved since it was read follows it there", async () => {
+  const { b, went } = pointer({ x: 10, y: 320, width: 200, height: 30 });
+  assert.match(await b.runTool("point_at", { ref: "@s1:e1" }), /followed/);
+  assert.deepEqual(went, [{ x: 10, y: 20, width: 200, height: 30 }, { x: 10, y: 320, width: 200, height: 30 }]);
+  assert.deepEqual(b.bounds.get("@s1:e1"), { x: 10, y: 320, width: 200, height: 30 }, "the new position is kept");
+});
+
+test("pointing at a control that's still where it was points once", async () => {
+  for (const live of [{ x: 12, y: 21, width: 200, height: 30 }, null]) {
+    const { b, went } = pointer(live);
+    assert.equal(await b.runTool("point_at", { ref: "@s1:e1" }), "Pointed.");
+    assert.equal(went.length, 1);
+  }
+});
+
+test("pointing at a control that's gone tells the model to look again", async () => {
+  const { b } = pointer("gone");
+  assert.match(await b.runTool("point_at", { ref: "@s1:e1" }), /isn't there any more.*Look again/);
+});

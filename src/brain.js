@@ -32,6 +32,10 @@ export function setBrainDefaults({ model, effort, providerModels = {} }) {
 }
 const MAX_STEPS = 30;
 
+// A control counts as moved when its box shifted or changed size by more than a few pixels.
+const moved = (/** @type {{ x: number, y: number, width: number, height: number }} */ a, /** @type {typeof a} */ b) =>
+  Math.abs(a.x - b.x) > 4 || Math.abs(a.y - b.y) > 4 || Math.abs(a.width - b.width) > 4 || Math.abs(a.height - b.height) > 4;
+
 // What Buddy says when the model call itself fails, in words an everyday user can act on. Keys are the Agent SDK's
 // error kinds; the direct engine maps its API errors onto the same ones.
 export const FAILURES = {
@@ -830,6 +834,22 @@ export class Brain {
       .finalMessage();
   }
 
+  /**
+   * Where a control is now (physical pixels), "gone" if its window no longer has it, or null if that couldn't be told
+   * (then the saved position stands).
+   * @param {string} ref @returns {Promise<import("./geometry.js").PhysicalRect | "gone" | null>}
+   */
+  async liveBounds(ref) {
+    const res = await observe(["get", ref, "--property", "bounds"], { timeoutMs: 3_000, session: this.session });
+    if (!res.ok) {
+      const code = /** @type {{ error?: { code?: string } }} */ (res).error?.code ?? "";
+      return ["STALE_REF", "ELEMENT_NOT_FOUND", "WINDOW_NOT_FOUND"].includes(code) ? "gone" : null;
+    }
+    const v = res.data?.value;
+    if (!v || ![v.x, v.y, v.width, v.height].every(Number.isFinite)) return null;
+    return /** @type {import("./geometry.js").PhysicalRect} */ (/** @type {unknown} */ ({ x: Math.round(v.x), y: Math.round(v.y), width: Math.round(v.width), height: Math.round(v.height) }));
+  }
+
   /** The window in front right now, from list-windows, or null. */
   async frontWindow() {
     const res = await observe(["list-windows"], { timeoutMs: 10_000, session: this.session });
@@ -930,7 +950,26 @@ export class Brain {
             ? `There is no mark ${input.mark}.`
             : `No position known for ${input.ref}. Look again and point at a fresh ref.`;
         }
-        await this.ui.point(bounds, input.caption);
+        if (input.mark != null) {
+          await this.ui.point(bounds, input.caption);
+          return "Pointed.";
+        }
+        // The window may have moved or scrolled since it was read. Point at once where the control was, and in the
+        // meantime ask where it is now: if it moved, the pointer follows; if it's gone, the model is told to look again.
+        const pointing = this.ui.point(bounds, input.caption);
+        const now = await this.liveBounds(input.ref);
+        if (now === "gone") {
+          await pointing;
+          return "That control isn't there any more: the window changed since you looked. Look again and point at a fresh ref.";
+        }
+        if (now && moved(now, bounds)) {
+          this.bounds.set(input.ref, now);
+          this.ui.trace?.({ kind: "point-followed", dx: now.x - bounds.x, dy: now.y - bounds.y });
+          await pointing;
+          await this.ui.point(now, input.caption);
+          return "Pointed (the control had moved; the pointer followed it).";
+        }
+        await pointing;
         return "Pointed.";
       }
       case "show_explainer": {

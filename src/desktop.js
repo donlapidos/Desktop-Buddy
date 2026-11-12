@@ -38,7 +38,8 @@ const BIN = resolveBinary();
 
 // Commands that only look. observe() runs these and nothing else; everything that operates the computer goes
 // through perform(), which needs a slip from approvals.js.
-const READ_ONLY = new Set(["version", "list-windows", "snapshot", "screenshot"]);
+// get reads one property of a control (where it is now, for pointing).
+const READ_ONLY = new Set(["version", "list-windows", "snapshot", "screenshot", "get"]);
 
 /**
  * Runs a read-only agent-desktop command.
