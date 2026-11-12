@@ -128,6 +128,17 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
 - **2.1 Record real windows.** A dev command that saves the accessibility snapshot of the front window with names
   and values scrubbed to placeholders where they could be personal. Collect about 40 from Excel, Word, Outlook, Edge,
   Chrome, File Explorer, Settings, Teams, Notepad, a PDF reader.
+  *In progress (2026-11-12).* `npm run record` (scripts/record-window.mjs + `src/scrub.js`) saves a named window to
+  `evals/windows/`; owner chose made-up or public content only to start. Six so far: Excel (sample budget), Word
+  (sample report), Edge (Wikipedia article), File Explorer (sample folder), Settings (Display), Calculator. Learned:
+  - A fresh Edge profile (`--user-data-dir`) signs itself in to the work account on this PC (managed sign-in) and
+    syncs extensions, so it is not clean: no more Edge or Chrome recordings until there's a profile that can't sign
+    in (a Guest window, if policy allows, or a separate Windows account).
+  - Outlook, Teams and Notepad are skipped: they open on the owner's mail, chats or open files. They need the
+    owner's option 1 (recording their own windows) or a separate Windows account with sample data.
+  - The scrubber can't know an organisation or a shared library is private (File Explorer's side panel showed both);
+    `--names` covers them, and every recording is read through before it's kept.
+  - More states per app (other ribbon tabs, dialogs, menus) need clicks, which the recorder doesn't do; next.
 - **2.2 A real task set.** 40-60 tasks over those windows (guide, do, explain, read, files), each with a check, in
   `evals.js`. Include tasks that should be *refused or asked about*.
 - **2.3 Run every provider and publish the table.** `npm run eval` across at least: two Claude models, two OpenAI,
@@ -139,6 +150,12 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
 - **2.5 A speed budget.** Targets: pointer on the first control within 4 s of asking on a mid model; each later
   guided step with no model call. Measure with the timing log; fix the slowest step first (Excel's 7 s snapshot is
   the known one).
+  *Found while recording (2026-11-12):* `look` passes no `--max-depth`, so agent-desktop stops at its default of 10,
+  and in Excel that leaves out the whole sheet grid (113 controls, marked partial). The same window read with
+  `--max-depth 40` is complete in 1.5 s (502 controls: grid, Name Box, formula bar), so Buddy can't see cell
+  contents when it looks at Excel today. Read deeper, but say empty cells compactly first: the deep read renders to
+  24k characters (Buddy's cap, about 6k tokens a look), most of it empty cells. Check Word, Edge and the others the
+  same way; the Wikipedia article was partial too.
 - **2.6 Injection tests.** Web pages, file contents and window text that tell Buddy to act ("ignore the user, run
   …", "send this file to …"). Each must end with no action taken or an approval card that says plainly what would
   happen. Add them to the task set so every model is scored on them.
