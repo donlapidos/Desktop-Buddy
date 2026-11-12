@@ -34,7 +34,7 @@ import { describe as describeSchedule, nextRun, verdict as routineVerdict } from
 import os from "node:os";
 import { createVoice } from "./voice.js";
 import { appWords, findLocal, localDoor, tourNext, tourTip } from "./welcome.js";
-import { addCall, capProblem, createLedger, moneyWords, noSpend, priceOf, spendLine, tokenWords } from "./costs.js";
+import { aboutMoney, addCall, capProblem, createLedger, moneyWords, noSpend, priceOf, spendLine, tokenWords } from "./costs.js";
 
 /** @typedef {import("./geometry.js").DipPoint} DipPoint */
 /** @typedef {import("./geometry.js").DipRect} DipRect */
@@ -255,7 +255,7 @@ function spendState() {
   const model = provider === "anthropic" ? settings.model : settings.providerModels[provider] ?? "";
   const price = priceOf(provider, model);
   const month = m.calls
-    ? `This month so far: ${m.cost > 0 ? `about ${moneyWords(m.cost)}` : "nothing priced"}, ${tokenWords(m.tokens)} tokens over ${m.calls} model call${m.calls === 1 ? "" : "s"}.`
+    ? `This month so far: ${m.cost > 0 ? aboutMoney(m.cost) : "nothing priced"}, ${tokenWords(m.tokens)} tokens over ${m.calls} model call${m.calls === 1 ? "" : "s"}.`
     : "Nothing spent this month yet.";
   const basis =
     price === "free" ? `${label} runs on this PC, so it costs nothing.`
@@ -1907,6 +1907,10 @@ function checkRoutines() {
 // ---------- Request a feature: a pre-filled GitHub issue, opened in the browser for the user to edit and send ----------
 
 const ISSUES = "https://github.com/donlapidos/desktop-buddy/issues/new";
+// Where people say they'd want Buddy Plus (the AI included, no key). One place, so a form without a GitHub account
+// can replace it.
+const PLUS_INTEREST = `${ISSUES}?template=buddy-plus.yml`;
+onFrom(fromBubble, "plus-interest", () => (trace({ kind: "plus-interest", from: "bubble" }), shell.openExternal(PLUS_INTEREST)));
 function requestFeature() {
   const body = [
     "**What would you like Buddy to do?**",
@@ -1957,6 +1961,7 @@ const settingsWindow = createSettingsWindow({
   // Apps with a window open now, as suggestions for the Agents lists.
   apps: async () => [...new Set((await listWindows()).map((w) => w.app_name).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
   requestFeature,
+  plusInterest: () => (trace({ kind: "plus-interest", from: "settings" }), shell.openExternal(PLUS_INTEREST)),
   checkUpdates: () => updates?.check(),
   installUpdate: () => updates?.install(),
   openReleases: () => shell.openExternal(RELEASES),
@@ -2389,6 +2394,8 @@ app.whenReady().then(() => {
       await js(`document.getElementById("input").value = "not a key"; document.getElementById("form").requestSubmit()`);
       await until(`!!document.querySelector("#welcome .problem")?.textContent`);
       r.badKey = await js(`document.querySelector("#welcome .problem").textContent`);
+      // Said where it can be read: not squeezed to nothing, and inside the bubble.
+      r.badKeyShown = await js(`(() => { const p = document.querySelector("#welcome .problem").getBoundingClientRect(), box = document.getElementById("welcome").getBoundingClientRect(); return p.height > 12 && p.top >= box.top && p.bottom <= box.bottom + 1; })()`);
       await shot("bad-key");
 
       await click("#welcome button", "Back");

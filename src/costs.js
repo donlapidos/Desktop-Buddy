@@ -99,6 +99,9 @@ export function moneyWords(usd) {
   return `$${usd.toFixed(2)}`;
 }
 
+/** An estimate, said as one: "about $0.04", or "under a cent" (never "about under a cent"). @param {number} usd */
+export const aboutMoney = (usd) => (usd > 0 && usd < 0.005 ? "under a cent" : `about ${moneyWords(usd)}`);
+
 /** A token count as people read it: "850", "12k", "1.2M". @param {number} n */
 export function tokenWords(n) {
   if (n < 1000) return String(Math.round(n));
@@ -112,7 +115,7 @@ export function spendLine(s) {
   const tokens = `${tokenWords(s.tokens)} tokens`;
   if (s.free) return `${tokens} · free, on this PC`;
   if (!s.priced) return s.cost > 0 ? `${tokens} · at least ${moneyWords(s.cost)}` : tokens;
-  return `${tokens} · about ${moneyWords(s.cost)}`;
+  return `${tokens} · ${aboutMoney(s.cost)}`;
 }
 
 // ---------- The month's running total, and the cap ----------

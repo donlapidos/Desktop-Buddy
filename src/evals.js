@@ -5,6 +5,7 @@
 // in the right order (or does the right action), the way a person checking its answer would judge it.
 import { Brain } from "./brain.js";
 import { renderTree } from "./desktop.js";
+import { addCall, noSpend, tokensOf } from "./costs.js";
 
 // ---------- Windows ----------
 
@@ -244,10 +245,18 @@ export async function runEvals({ provider, apiKey, baseURL, cases = CASES, timeo
     let turns = 0;
     let tokensIn = 0;
     let tokensOut = 0;
+    // What the case cost (costs.js), and its tokens split by how they're billed, for pricing Buddy Plus.
+    const spend = noSpend();
+    const split = { fresh: 0, cached: 0, wrote: 0, out: 0 };
     const ui = {
       apiKey,
       provider,
       baseURL,
+      usage: (/** @type {string} */ p, /** @type {string} */ m, /** @type {any} */ u) => {
+        addCall(spend, p, m, u);
+        const t = tokensOf(p, u);
+        for (const k of /** @type {const} */ (["fresh", "cached", "wrote", "out"])) split[k] += t[k];
+      },
       // Gives the model Buddy's PC tools; they are only recorded here (EvalBrain.runTool), never run.
       documentsDir: "C:\\Eval\\Documents\\Buddy",
       dataDir: "C:\\Eval\\Data",
@@ -278,7 +287,7 @@ export async function runEvals({ provider, apiKey, baseURL, cases = CASES, timeo
       signal?.removeEventListener("abort", stop);
     }
     const problem = reply === "Okay, stopped." ? "took too long" : c.check(calls, reply);
-    const r = { id: c.id, title: c.title, passed: !problem, problem, reply, ms: Date.now() - start, turns, tokensIn, tokensOut, calls };
+    const r = { id: c.id, title: c.title, passed: !problem, problem, reply, ms: Date.now() - start, turns, tokensIn, tokensOut, spend, split, calls };
     results.push(r);
     onCase?.(r, i, cases.length);
   }

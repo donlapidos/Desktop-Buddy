@@ -50,6 +50,7 @@ test("an answer's calls add up, and a partly unknown price is said as a floor", 
 
 test("money and tokens are said as people read them", () => {
   assert.equal(moneyWords(0.001), "under a cent");
+  assert.equal(spendLine(addCall(noSpend(), "anthropic", "claude-haiku-5-5", { input_tokens: 1000, output_tokens: 10 })), "1k tokens · under a cent");
   assert.equal(moneyWords(0.04), "$0.04");
   assert.equal(moneyWords(12.3), "$12.30");
   assert.equal(tokenWords(850), "850");

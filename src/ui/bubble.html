@@ -80,6 +80,8 @@
   #welcome { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
   #welcome[hidden], #form[hidden], #reply[hidden] { display: none; }
   #welcome p { margin: 0; }
+  /* Nothing on a welcome page is squeezed to fit: past the bubble's height, the page scrolls instead. */
+  #welcome > * { flex: none; }
   #welcome .lede { color: var(--muted); font-size: 13px; }
   /* Before an AI is set up, there's no conversation to move or restart, and nothing to say out loud. */
   body.welcoming #totask, body.welcoming #new, body.welcoming #mic { display: none; }
@@ -93,6 +95,7 @@
   #welcome .app .added { color: var(--muted); font-size: 12.5px; padding: 6px 8px; }
   #welcome .btn { padding: 6px 11px; font-size: 13px; }
   #welcome .problem { color: var(--danger); font-size: 13px; }
+  #welcome .link { align-self: flex-start; border: 0; padding: 0; background: none; color: color-mix(in srgb, var(--buddy) 55%, white); font: inherit; font-size: 12.5px; text-align: left; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
   #welcome .problem:empty { display: none; }
   /* What the last answer cost, under it. */
   #spend { margin-top: -6px; font-size: 11.5px; color: var(--muted); text-align: right; }
@@ -209,9 +212,10 @@
       $("input").type = "password";
       $("input").placeholder = "Paste an API key";
       box.replaceChildren(
-        el("p", { textContent: "Paste a key from Anthropic, OpenAI, Google Gemini or OpenRouter. It's kept encrypted on this PC and used only with that company, on your account there." }),
+        el("p", { textContent: "Paste a key from Anthropic, OpenAI, Google Gemini or OpenRouter. It's kept encrypted on this PC." }),
         el("p", { className: "problem" }),
         el("div", { className: "row" }, back(), button("btn ghost", "DeepSeek or another server…", () => window.buddy.openSettings("claude"))),
+        button("link", "No key? Would you want Buddy Plus, with the AI included?", () => window.buddy.plusInterest()),
       );
       $("input").focus();
       return;

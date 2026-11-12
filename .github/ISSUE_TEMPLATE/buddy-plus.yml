@@ -1,0 +1,34 @@
+name: Buddy Plus (I'm interested)
+description: Buddy with the AI included, no API key needed, for a monthly fee. Tell us you'd want it.
+title: "Buddy Plus: interested"
+labels: ["buddy-plus"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Buddy Plus** would be Buddy with the AI already set up: no key to get, no provider account, one monthly price.
+        It isn't built yet. If enough people want it, it will be. This page is public, so don't put anything private here.
+  - type: dropdown
+    id: price
+    attributes:
+      label: What would you pay a month for it?
+      options:
+        - Under $5
+        - $5 to $10
+        - $10 to $20
+        - More than $20, if it's good
+        - I wouldn't pay, but I'd use a free version
+    validations:
+      required: true
+  - type: textarea
+    id: use
+    attributes:
+      label: What would you use Buddy for?
+      description: The apps you'd ask about, or the jobs you'd want done. A sentence is plenty.
+  - type: dropdown
+    id: who
+    attributes:
+      label: For you, or for work?
+      options:
+        - Just me
+        - Me and my team at work

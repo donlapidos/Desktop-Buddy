@@ -8,6 +8,7 @@ import fs from "node:fs";
 import { parseArgs } from "node:util";
 import { setBrainDefaults } from "../src/brain.js";
 import { CASES, runEvals } from "../src/evals.js";
+import { ANTHROPIC_PRICES, aboutMoney, dollars, moneyWords, spendLine, tokenWords } from "../src/costs.js";
 import { PROVIDERS } from "../src/providers.js";
 
 const { values: o } = parseArgs({
@@ -40,8 +41,21 @@ const run = await runEvals({
   apiKey,
   baseURL: o["base-url"] ?? PROVIDERS[provider].baseURL,
   cases,
-  onCase: (r, i, n) => console.log(`${r.passed ? "PASS" : "FAIL"}  ${String(i + 1).padStart(2)}/${n}  ${r.title.padEnd(44)} ${(r.ms / 1000).toFixed(1).padStart(5)} s  ${r.turns} turn(s)${r.problem ? `\n      ${r.problem}\n      reply: ${r.reply.replace(/\s+/g, " ").slice(0, 160)}` : ""}`),
+  onCase: (r, i, n) => console.log(`${r.passed ? "PASS" : "FAIL"}  ${String(i + 1).padStart(2)}/${n}  ${r.title.padEnd(44)} ${(r.ms / 1000).toFixed(1).padStart(5)} s  ${r.turns} turn(s)  ${spendLine(r.spend) ?? ""}${r.problem ? `\n      ${r.problem}\n      reply: ${r.reply.replace(/\s+/g, " ").slice(0, 160)}` : ""}`),
 });
 console.log(`\n${run.passed}/${run.total} passed · ${(run.avgMs / 1000).toFixed(1)} s per case on average`);
+
+// What an answer like these costs, for pricing a plan with the AI included. The same tokens at each Claude model's
+// prices: rough, since other models count and cache tokens differently, but enough to see the order of size.
+if (run.results.length) {
+  const n = run.results.length;
+  const avg = { fresh: 0, cached: 0, wrote: 0, out: 0 };
+  for (const r of run.results) for (const k of /** @type {const} */ (["fresh", "cached", "wrote", "out"])) avg[k] += r.split[k] / n;
+  const per = (/** @type {string} */ model) => dollars(avg, ANTHROPIC_PRICES[model]);
+  console.log(`Per answer on average: ${tokenWords(avg.fresh + avg.cached + avg.wrote + avg.out)} tokens (${tokenWords(avg.fresh)} new, ${tokenWords(avg.cached)} cached, ${tokenWords(avg.out)} written)`);
+  for (const [model, label] of [["claude-haiku-5-5", "Haiku 5.5"], ["claude-sonnet-5-5", "Sonnet 5.5"], ["claude-opus-5-5", "Opus 5.5"]]) {
+    console.log(`  at ${label.padEnd(10)} prices: ${aboutMoney(per(model)).padEnd(14)} an answer, ${moneyWords(per(model) * 300).padStart(7)} for 300 answers a month`);
+  }
+}
 if (o.json) fs.writeFileSync(o.json, JSON.stringify({ provider, model: o.model, at: new Date().toISOString(), ...run }, null, 2));
 process.exit(run.passed === run.total ? 0 : 1);

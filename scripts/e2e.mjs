@@ -183,6 +183,7 @@ const CHECKS = {
         !/^Buddy is in Gemini CLI\./.test(r.appText ?? "") && `after adding: ${JSON.stringify(r.appText)}`,
         !r.appEntry?.args?.[0]?.endsWith("mcp-server.js") && `Gemini CLI's settings didn't get Buddy: ${JSON.stringify(r.appEntry)}`,
         !/^That doesn't look like an API key\. .*sk.ant./.test(r.badKey ?? "") && `a bad key said ${JSON.stringify(r.badKey)}`,
+        r.badKeyShown !== true && "the bad-key message wasn't visible in the bubble",
         !/Ollama is running/.test(r.localText ?? "") && `Free, on this PC said ${JSON.stringify(r.localText)}`,
         (!r.localReady?.brain || r.localReady.provider !== "ollama") && `the model on this PC wasn't set up: ${JSON.stringify(r.localReady)}`,
         r.localReply !== "Hello from a model on this PC." && `the model on this PC answered ${JSON.stringify(r.localReply)}`,

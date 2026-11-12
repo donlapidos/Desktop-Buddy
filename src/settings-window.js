@@ -24,6 +24,7 @@ const SIZE = { width: 640, height: 600 };
  *   openData: () => void,
  *   runRoutine: (id: string) => Promise<string | null>,    // start a routine now; returns an error message, or null
  *   apps: () => Promise<string[]>,                          // apps with a window open, for suggestions
+ *   plusInterest: () => void,                               // open the Buddy Plus interest form
  *   requestFeature: () => void,                             // open a pre-filled feature request in the browser
  *   checkUpdates: () => void,
  *   installUpdate: () => void,                              // restart into a downloaded update
@@ -96,6 +97,7 @@ export function createSettingsWindow(deps) {
   handle("settings-run-routine", async (id) => ({ error: await deps.runRoutine(String(id)), state: deps.state() }));
   handle("settings-apps", () => deps.apps());
   handle("settings-feature", () => deps.requestFeature());
+  handle("settings-plus", () => deps.plusInterest());
   handle("settings-update-check", () => deps.checkUpdates());
   handle("settings-update-install", () => deps.installUpdate());
   handle("settings-releases", () => deps.openReleases());

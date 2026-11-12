@@ -70,6 +70,8 @@ contextBridge.exposeInMainWorld("buddy", {
   settingsRunRoutine: (id) => ipcRenderer.invoke("settings-run-routine", id),
   settingsApps: () => ipcRenderer.invoke("settings-apps"),
   settingsFeature: () => ipcRenderer.invoke("settings-feature"),
+  settingsPlus: () => ipcRenderer.invoke("settings-plus"),
+  plusInterest: () => ipcRenderer.send("plus-interest"),
   settingsUpdateCheck: () => ipcRenderer.invoke("settings-update-check"),
   settingsUpdateInstall: () => ipcRenderer.invoke("settings-update-install"),
   settingsReleases: () => ipcRenderer.invoke("settings-releases"),

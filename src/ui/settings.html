@@ -369,6 +369,7 @@
         <h3 id="key-title">API key</h3>
         <div id="key"></div>
         <p class="problem" id="key-problem"></p>
+        <button class="link" id="plus">No key? Say if you'd want Buddy Plus: the AI included, one monthly price.</button>
       </div>
       <div class="group">
         <h3>Use with your AI app</h3>
@@ -1002,6 +1003,7 @@
   });
 
   $("feature").addEventListener("click", () => window.buddy.settingsFeature());
+  $("plus").addEventListener("click", () => window.buddy.settingsPlus());
   // Changes made elsewhere (the tray, a routine running) arrive here too.
   window.buddy.onSettingsChanged((state) => render(state));
 
