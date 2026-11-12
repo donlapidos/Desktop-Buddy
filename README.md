@@ -1,6 +1,6 @@
 # Desktop Buddy
 
-A Clicky-style desktop assistant for Windows, built on [agent-desktop](../../README.md).
+A Clicky-style desktop assistant for Windows, built on [agent-desktop](https://github.com/vercel-labs/agent-desktop).
 Press **Ctrl+Alt+B** anywhere and ask a question about the app in front of you, or use the island at the
 top of the screen. Buddy thinks with the AI you choose: Claude, GPT, Gemini, DeepSeek, any model through OpenRouter,
 a free model on your own PC (Ollama, LM Studio), or the AI app you already use (Claude Code, Codex, Gemini CLI, Cursor,
@@ -82,7 +82,7 @@ VS Code and more).
 ## Install
 
 Download `Desktop-Buddy-Setup-<version>.exe` from the repository's
-[Releases](https://github.com/donlapidos/agent-desktop/releases) and run it. It installs for your Windows account only
+[Releases](https://github.com/donlapidos/desktop-buddy/releases) and run it. It installs for your Windows account only
 (no administrator prompt), adds **Desktop Buddy** to the Start menu and the desktop, and can be removed from
 Settings › Apps like any other app; your settings, key and voice models stay in `%APPDATA%\desktop-buddy`.
 
@@ -95,24 +95,26 @@ in Settings › About & updates, where automatic checks can also be turned off.
 
 ## Release
 
-1. Bump `version` in `apps/buddy/package.json` and commit.
-2. Push a matching tag: `git tag buddy-v0.2.0 && git push origin buddy-v0.2.0`.
-3. `.github/workflows/buddy-release.yml` builds agent-desktop and the installer on Windows, runs the checks and tests,
-   and uploads the installer and `latest.yml` to a **draft** release `v0.2.0`.
+1. Bump `version` in `package.json`, add the release to `CHANGELOG.md`, and commit.
+2. Push a matching tag: `git tag v0.2.1 && git push origin v0.2.1`.
+3. `.github/workflows/release.yml` fetches the pinned agent-desktop, runs the checks and tests, builds the installer on
+   Windows, and uploads it with `latest.yml` to a **draft** release `v0.2.1`.
 4. Review the draft, add notes, and publish it. Installed copies only see published releases.
 
-`npm run dist` builds the same installer locally into `dist/` (after `cargo build --release -p agent-desktop`);
-`npm run dist:dir` builds just the unpacked app, which can't update itself.
+`npm run dist` builds the same installer locally into `dist/`; `npm run dist:dir` builds just the unpacked app, which
+can't update itself.
+
+Buddy drives the [agent-desktop](https://github.com/vercel-labs/agent-desktop) CLI at the version pinned in
+`package.json` (`agentDesktop`: version and SHA-256 of upstream's Windows release). `npm run setup` downloads it into
+`bin/`, checks the checksum, and does nothing if the pinned version is already there. To move to a newer
+agent-desktop, update both fields from that release's `checksums.txt`, run `npm run setup`, and run `npm test` and
+`npm run e2e`.
 
 ## Run from source
 
 ```bash
-# 1. Build the agent-desktop CLI from this repo (from the repo root)
-cargo build --release -p agent-desktop
-
-# 2. Start Buddy
-cd apps/buddy
 npm install
+npm run setup   # fetches the pinned agent-desktop CLI into bin/
 npm start
 ```
 
@@ -133,8 +135,8 @@ touched). They pin down the rules that matter most: approvals, slips and their s
 read-only command path, the mode and task-state tables, the island's state, the provider adapters and what models can
 do, the file tools' places and the PowerShell guard, undo, keys bound to their address, sessions from AI apps, history
 trimming, the SVG sanitizer and escaping in explainers, the reading view, spoken text, and never overwriting a
-document. CI (`.github/workflows/buddy.yml`) runs `npm run check` and `npm test` on Windows for every change under
-`apps/buddy`.
+document. CI (`.github/workflows/ci.yml`) runs `npm run check`, `npm test` and `npm audit` on Windows for every push
+and pull request.
 
 `npm run e2e` runs the real app end to end, each check in a separate test copy with its own data folder (your Buddy,
 settings and files are left alone): **files** (a scripted model asks for a file; the approval card is clicked; the file
@@ -206,7 +208,7 @@ These environment variables override Settings (useful for development):
 | `BUDDY_GPU` | unset | `1` turns GPU acceleration back on. It's off by default because on some dual-GPU laptops the GPU compositor leaves Buddy's transparent windows (the island, the pointer) blank |
 | `BUDDY_MODEL` | Settings | The model, for whichever provider is chosen |
 | `BUDDY_EFFORT` | `medium` | `low` is snappier, `high` is more careful |
-| `AGENT_DESKTOP_BIN` | `../../target/release/agent-desktop.exe` | CLI to drive |
+| `AGENT_DESKTOP_BIN` | `bin/agent-desktop.exe` | CLI to drive (a local agent-desktop build, for instance) |
 | `BUDDY_DOCUMENTS_DIR` | `Documents\Buddy` | Buddy's working folder |
 | `BUDDY_ENGINE` | unset | `sdk` runs Anthropic conversations on the Claude Agent SDK (needs the SDK, which installers leave out) |
 

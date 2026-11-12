@@ -17,14 +17,14 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const exe = process.platform === "win32" ? "agent-desktop.exe" : "agent-desktop";
 
 // The installed app carries agent-desktop in its resources folder (electron-builder's extraResources); a source checkout
-// uses the repo's own build.
+// uses the pinned release `npm run setup` puts in bin/.
 export function resolveBinary() {
   const resources = /** @type {any} */ (process).resourcesPath;
+  // An override, the installed app's bundled copy, the pinned copy `npm run setup` fetched for a source checkout.
   const candidates = [
     process.env.AGENT_DESKTOP_BIN,
     resources && path.join(resources, "bin", exe),
-    path.resolve(here, "../../../target/release", exe),
-    path.resolve(here, "../../../target/debug", exe),
+    path.resolve(here, "../bin", exe),
   ].filter(Boolean);
   return candidates.find((p) => fs.existsSync(p)) ?? "agent-desktop";
 }

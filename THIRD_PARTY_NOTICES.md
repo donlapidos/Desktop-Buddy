@@ -1,6 +1,6 @@
 # Third-party notices
 
-Desktop Buddy is part of agent-desktop and is licensed under the Apache License 2.0 (see `../../LICENSE`). It uses
+Desktop Buddy is licensed under the Apache License 2.0 (see `LICENSE`). It uses
 the following third-party software, fonts and models.
 
 ## Software
@@ -15,7 +15,7 @@ the following third-party software, fonts and models.
 | [electron-updater](https://github.com/electron-userland/electron-builder) | MIT | Installing updates from GitHub releases |
 | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) (`sherpa-onnx-node`) | Apache-2.0 | Running the speech models |
 | [ONNX Runtime](https://github.com/microsoft/onnxruntime) (bundled with sherpa-onnx) | MIT | Running the speech models |
-| [agent-desktop](../../README.md) | Apache-2.0 | Reading and operating apps through accessibility |
+| [agent-desktop](https://github.com/vercel-labs/agent-desktop) (Vercel) | Apache-2.0 | Reading and operating apps through accessibility; its Windows release binary ships inside the installer |
 
 ## Fonts
 

@@ -1800,7 +1800,7 @@ function checkRoutines() {
 
 // ---------- Request a feature: a pre-filled GitHub issue, opened in the browser for the user to edit and send ----------
 
-const ISSUES = "https://github.com/donlapidos/agent-desktop/issues/new";
+const ISSUES = "https://github.com/donlapidos/desktop-buddy/issues/new";
 function requestFeature() {
   const body = [
     "**What would you like Buddy to do?**",
@@ -1812,7 +1812,7 @@ function requestFeature() {
     "---",
     `Desktop Buddy ${app.getVersion()} · Windows ${os.release()}`,
   ].join("\n");
-  shell.openExternal(`${ISSUES}?${new URLSearchParams({ title: "Feature request: ", body, labels: "buddy" })}`);
+  shell.openExternal(`${ISSUES}?${new URLSearchParams({ title: "Feature request: ", body, labels: "enhancement" })}`);
 }
 
 const settingsWindow = createSettingsWindow({
@@ -1860,7 +1860,7 @@ const settingsWindow = createSettingsWindow({
 
 // ---------- App updates (updates.js) ----------
 
-const RELEASES = "https://github.com/donlapidos/agent-desktop/releases";
+const RELEASES = "https://github.com/donlapidos/desktop-buddy/releases";
 let announcedUpdate = null;
 function startUpdates() {
   updates = createUpdates({

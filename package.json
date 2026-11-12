@@ -1,21 +1,36 @@
 {
   "name": "desktop-buddy",
   "version": "0.2.0",
-  "private": true,
   "description": "A Clicky-style desktop buddy: points at your screen to teach, and drives your apps when you ask. Built on agent-desktop.",
-  "type": "module",
   "main": "src/main.js",
+  "type": "module",
   "scripts": {
     "start": "electron .",
     "smoke": "node scripts/smoke.js",
     "check": "tsc -p .",
     "measure:idle": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/measure-idle.ps1",
     "test": "node --test \"test/*.test.js\"",
-    "dist": "electron-builder --win --publish never",
-    "dist:dir": "electron-builder --win --dir",
+    "dist": "npm run setup && electron-builder --win --publish never",
+    "dist:dir": "npm run setup && electron-builder --win --dir",
     "eval": "node scripts/eval.mjs",
-    "e2e": "node scripts/e2e.mjs"
+    "e2e": "node scripts/e2e.mjs",
+    "setup": "node scripts/fetch-agent-desktop.mjs"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/donlapidos/desktop-buddy.git"
+  },
+  "homepage": "https://github.com/donlapidos/desktop-buddy",
+  "bugs": {
+    "url": "https://github.com/donlapidos/desktop-buddy/issues"
+  },
+  "license": "Apache-2.0",
+  "author": "donlapidos",
+  "agentDesktop": {
+    "version": "1.2.0",
+    "sha256": "a4199f741a441cedd349bf56c5eba01783b1261258b498efeb7ec9945220c3e8"
+  },
+  "private": true,
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.3.321",
     "@anthropic-ai/sdk": "^1.5.0",
@@ -29,13 +44,6 @@
     "electron": "^45.2.3",
     "electron-builder": "26.18.1",
     "typescript": "5.9.3"
-  },
-  "author": "donlapidos",
-  "license": "Apache-2.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/donlapidos/agent-desktop.git",
-    "directory": "apps/buddy"
   },
   "build": {
     "appId": "io.github.donlapidos.desktopbuddy",
@@ -59,7 +67,7 @@
     ],
     "extraResources": [
       {
-        "from": "../../target/release/agent-desktop.exe",
+        "from": "bin/agent-desktop.exe",
         "to": "bin/agent-desktop.exe"
       },
       {
@@ -67,7 +75,7 @@
         "to": "THIRD_PARTY_NOTICES.md"
       },
       {
-        "from": "../../LICENSE",
+        "from": "LICENSE",
         "to": "LICENSE.txt"
       }
     ],
@@ -95,7 +103,7 @@
       {
         "provider": "github",
         "owner": "donlapidos",
-        "repo": "agent-desktop",
+        "repo": "desktop-buddy",
         "releaseType": "draft"
       }
     ],

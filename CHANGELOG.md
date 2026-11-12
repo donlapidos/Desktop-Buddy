@@ -1,5 +1,11 @@
 # Desktop Buddy changelog
 
+## Unreleased
+
+* Buddy has its own repository, [donlapidos/desktop-buddy](https://github.com/donlapidos/desktop-buddy), and its own
+  releases. It uses the agent-desktop CLI as a pinned, checksum-verified release (1.2.0) instead of building it.
+  Settings › Request a feature and About › Releases open the new repository.
+
 ## 0.2.0 (unreleased)
 
 ### Any AI, not only Claude
