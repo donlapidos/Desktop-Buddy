@@ -6,6 +6,9 @@
   itself in one click, no key needed), a free model on this PC (Ollama or LM Studio, found if running, with what it
   needs in memory if not), or an API key. A key that matches no provider now says what keys look like.
 * Right after setup, a short tour: ask Buddy about the app you're in, then a tip for Mark. Skippable, shown once.
+* What it costs: each answer shows its tokens and an estimated cost (Anthropic and OpenRouter prices; free for a
+  model on this PC), Settings › AI & privacy shows the month so far, and an optional monthly limit stops Buddy when
+  it's reached.
 
 ## 0.2.1
 

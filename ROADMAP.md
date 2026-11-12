@@ -93,9 +93,21 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
 - **1.4 Sign the installer.** Options to price and check eligibility for: Azure Trusted Signing, SignPath's free
   tier for open source, or publishing through winget (Microsoft validates). *Owner's decision on spend.*
   *Done when:* a fresh Windows account installs without the SmartScreen block.
+  *Research (2026-11-12):* Azure Artifact Signing (formerly Trusted Signing) takes individuals only in the US and
+  Canada, so it's out. SignPath Foundation's free open-source certificate fits (OSI licence, public repo, GitHub-hosted
+  builds) but names "SignPath Foundation" as publisher and needs a signing policy page, MFA and a split release
+  workflow (sign, then rebuild `latest.yml` from the signed installer). A Certum open-source certificate (about
+  €49-69 a year, cloud HSM) is the fallback with the owner's own name. No signed option clears SmartScreen on day one:
+  reputation builds over releases under one publisher. winget (free) and the Microsoft Store (free individual account;
+  MSIX re-signed by Microsoft) are extra channels. Recommended: SignPath Foundation plus winget.
 - **1.5 What it costs.** People on their own key need to see spend: tokens and an estimated cost per answer in the
   bubble's footer, a running total in Settings, and an optional monthly cap that stops Buddy with a clear message.
   *Done when:* unit tests cover the arithmetic per provider and the cap.
+  **Done (2026-11-12).** `src/costs.js`: Anthropic's published prices, OpenRouter's from its model list, local models
+  free, anything else tokens only (Buddy doesn't guess prices). Each answer's tokens and cost under it in the bubble;
+  the month (every model call, tasks and routines too) in Settings › AI & privacy › Spending, with an optional limit
+  checked before every call. Unit tests cover the arithmetic per provider (cached tokens billed once), the month
+  rolling over, and the limit stopping an answer before its next call; the `welcome` e2e check covers the footer.
 
 ## Phase 2: prove the core loop on real apps
 
