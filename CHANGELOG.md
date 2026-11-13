@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+* Buddy's default engine starts each question with a fresh window picture and its accessibility text, when the
+  model is known to support images. Reading and capture run together, stop on cancellation, and fall back independently.
+* Window screenshots can be turned off in AI & privacy. Automatic captures stay within the requested window,
+  skip blocked apps, and are resized before sending; earlier automatic pictures are omitted from later questions.
+
+* Replies stream into the bubble and task windows. Spoken replies begin with complete sentences before the whole
+  answer finishes, without reading the final answer twice.
+* Change direction mid-answer in the bubble: type a follow-up or use Talk. The previous answer stops before the
+  next starts; pending speech, approvals and queued desktop actions are cancelled with it.
+
 * **Running commands is now off until you turn it on** (Settings › Agents › Let Buddy run commands). It's the one
   thing Buddy does that it can't undo or fully fence in. If you used Buddy for jobs like renaming many files, turn
   it on there; until then Buddy tells you when a job needs it. Files, apps and web pages work as before.

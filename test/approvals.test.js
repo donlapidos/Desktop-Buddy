@@ -14,6 +14,23 @@ test("a declined request yields no slip", async () => {
   assert.equal(await requestApproval(action, { confirm, standing: new Set() }), null);
 });
 
+test("an interrupted answer cannot receive an approval, including trusted and standing permissions", async () => {
+  const controller = new AbortController();
+  const standing = new Set(["screen", "files"]);
+  controller.abort();
+  const confirm = async () => { assert.fail("an interrupted answer must not ask"); };
+  assert.equal(await askUser("Write a file", { confirm, standing, scope: "files", signal: controller.signal }), false);
+  assert.equal(await requestApproval({ ...action, kind: "click", app: "notepad" }, {
+    confirm, standing, signal: controller.signal, policy: { rope: "trusted", trustedApps: ["notepad"], blockedApps: [] },
+  }), null);
+
+  const during = new AbortController();
+  assert.equal(await requestApproval(action, { standing: new Set(), signal: during.signal, confirm: async () => {
+    during.abort();
+    return "allow";
+  } }), null, "a click on Allow after cancellation cannot issue a slip");
+});
+
 test("an allowed request yields a slip that works exactly once", async () => {
   const { confirm } = answering("allow");
   const slip = await requestApproval(action, { confirm, standing: new Set() });

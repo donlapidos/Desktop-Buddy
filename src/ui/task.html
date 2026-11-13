@@ -127,6 +127,14 @@
     }
   });
 
+  window.buddy.onTaskStream((text) => {
+    if (!turn) return;
+    let answer = turn.querySelector(".buddy");
+    if (!answer) { answer = el("div", "buddy"); turn.append(answer); }
+    answer.textContent = text;
+    scrollDown();
+  });
+
   // An approval takes a deliberate click. This window is often focused while the task works (you just typed in it),
   // so nothing on the card takes focus, or the next Space or Enter would press Allow; and clicks in the card's first
   // moments are ignored.
@@ -169,7 +177,9 @@
     $("confirm").classList.remove("on");
     if (title) $("title").textContent = title;
     turn.classList.add("done");
-    if (reply) turn.append(el("div", "buddy", reply));
+    const answer = turn.querySelector(".buddy");
+    if (reply && answer) answer.textContent = reply;
+    else if (reply) turn.append(el("div", "buddy", reply));
     turn = null;
     scrollDown();
     $("input").focus();

@@ -537,9 +537,9 @@ const refused = new Map();
  * One model turn on a provider other than Anthropic, streamed: OpenAI through Responses, the rest through Chat
  * Completions. Resolves the Anthropic-shaped reply. Images go only to a model not known to be blind; one that refuses
  * them is remembered as blind and the turn retried without them. One that refuses tools throws "no_tools".
- * @param {{ provider: ProviderId, key: string, model: string, effort: string, system: string, tools: any[], messages: any[], maxTokens: number, baseURL?: string, signal?: AbortSignal, fetchImpl?: typeof fetch }} o
+ * @param {{ provider: ProviderId, key: string, model: string, effort: string, system: string, tools: any[], messages: any[], maxTokens: number, baseURL?: string, signal?: AbortSignal, fetchImpl?: typeof fetch, onText?: (delta: string) => void }} o
  */
-export async function chatTurn({ provider, key, model, signal, baseURL = PROVIDERS[provider].baseURL, fetchImpl = fetch, messages, ...rest }) {
+export async function chatTurn({ provider, key, model, signal, baseURL = PROVIDERS[provider].baseURL, fetchImpl = fetch, messages, onText, ...rest }) {
   const responses = provider === "openai";
   const memo = `${baseURL}|${model}`;
   const drop = refused.get(memo) ?? new Set();
@@ -555,7 +555,8 @@ export async function chatTurn({ provider, key, model, signal, baseURL = PROVIDE
       }),
     );
     if (res.ok) {
-      const reply = await (responses ? readResponses(res) : readStream(res));
+      const emit = (delta) => { if (!signal?.aborted) onText?.(delta); };
+      const reply = await (responses ? readResponses(res, emit) : readStream(res, emit));
       if (reply.content.some((b) => b.type === "tool_use")) learnCaps(baseURL, model, { tools: true }, "use");
       return reply;
     }
@@ -600,8 +601,9 @@ function failed(/** @type {any} */ error) {
   return new ProviderError(kind, 500, message);
 }
 
-async function readResponses(/** @type {Response} */ res) {
+async function readResponses(/** @type {Response} */ res, onText) {
   for await (const e of events(res)) {
+    if (e.type === "response.output_text.delta" && typeof e.delta === "string") onText?.(e.delta);
     if (e.type === "response.completed" || e.type === "response.incomplete") return fromResponses(e.response);
     if (e.type === "response.failed") throw failed(e.response?.error);
     if (e.type === "error") throw failed(e.error ?? e);
@@ -609,10 +611,12 @@ async function readResponses(/** @type {Response} */ res) {
   throw new ProviderError("server_error", 500, "The reply stopped before it finished.");
 }
 
-async function readStream(/** @type {Response} */ res) {
+async function readStream(/** @type {Response} */ res, onText) {
   const chunks = [];
   for await (const chunk of events(res)) {
     if (chunk.error) throw failed(chunk.error);
+    const delta = chunk.choices?.find((c) => (c.index ?? 0) === 0)?.delta?.content;
+    if (typeof delta === "string") onText?.(delta);
     chunks.push(chunk);
   }
   const { message, finish, usage } = foldChunks(chunks);

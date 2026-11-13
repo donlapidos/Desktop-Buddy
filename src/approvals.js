@@ -46,6 +46,7 @@ const issued = new WeakSet();
  *   scope?: string,
  *   standing: Set<string>,
  *   policy?: import("./policy.js").AgentPolicy,
+ *   signal?: AbortSignal,
  * }} Ask
  */
 
@@ -69,9 +70,11 @@ function issue(action) {
  * @param {Ask} how
  * @returns {Promise<boolean>}
  */
-export async function askUser(summary, { confirm, bounds = null, note, scope, standing }) {
+export async function askUser(summary, { confirm, bounds = null, note, scope, standing, signal }) {
+  if (signal?.aborted) return false;
   if (scope && standing.has(scope)) return true;
   const decision = await confirm(summary, bounds, note);
+  if (signal?.aborted) return false;
   if (decision === "always" && scope) standing.add(scope);
   return decision === "allow" || decision === "always";
 }
@@ -84,9 +87,11 @@ export async function askUser(summary, { confirm, bounds = null, note, scope, st
  * @returns {Promise<Approved | null>}
  */
 export async function requestApproval(action, how) {
+  if (how.signal?.aborted) return null;
   const verdict = how.policy ? decide(how.policy, action) : "ask";
   if (verdict === "block") return null;
   if (verdict === "ask" && !(await askUser(action.summary, { ...how, scope: "screen" }))) return null;
+  if (how.signal?.aborted) return null;
   return issue(action);
 }
 

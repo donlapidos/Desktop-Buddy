@@ -1,7 +1,7 @@
 // End-to-end checks: the real app, run as separate test copies (each with its own data folder, so the user's Buddy,
 // settings and files are left alone), each driven by one of main.js's BUDDY_*_TEST hooks. The runner reads what each
 // copy prints, checks it, and keeps the screenshots.
-//   npm run e2e                  files, welcome, tasks, settings, explainer, voice, firstrun
+//   npm run e2e                  context, conversation, files, welcome, tasks, settings, explainer, voice, firstrun
 //   npm run e2e -- tasks voice   only those
 //   npm run e2e -- --exe "<path to Desktop Buddy.exe>"   against a built or installed copy
 //   npm run e2e -- --interactive also the marker (a full-screen freeze frame) and approval clicks (moves the mouse)
@@ -143,6 +143,62 @@ function keyProblems(k) {
 
 /** @type {Record<string, { interactive?: boolean, run: () => Promise<string[]> }>} each resolves its problems */
 const CHECKS = {
+  async context() {
+    const observations = [];
+    const server = http.createServer(async (req, res) => {
+      let body = "";
+      for await (const c of req) body += c;
+      if (req.url?.endsWith("/models")) return res.end(JSON.stringify({ data: [{ id: "vision-fixture" }] }));
+      const messages = JSON.parse(body || "{}").messages ?? [];
+      const images = messages.flatMap((m) => Array.isArray(m.content) ? m.content.filter((c) => c.type === "image_url") : []);
+      const text = messages.map((m) => typeof m.content === "string" ? m.content : (m.content ?? []).map((c) => c.text ?? "").join("\n")).join("\n");
+      observations.push({ images: images.length, jpeg: images.some((i) => /^data:image\/jpeg;base64,/.test(i.image_url?.url ?? "") && i.image_url.url.length > 1000), tree: text.includes("Quarterly sales") && /@s[a-z0-9]+:e\d+/i.test(text) });
+      const content = images.length ? "Visual context received." : "Text-only context received.";
+      res.setHeader("content-type", "text/event-stream");
+      res.end(`data: ${JSON.stringify({ choices: [{ delta: { content }, finish_reason: "stop" }] })}\n\ndata: [DONE]\n\n`);
+    });
+    await new Promise((r) => server.listen(0, "127.0.0.1", r));
+    try {
+      const url = `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`;
+      const { markers, timedOut } = await runCopy("context", { BUDDY_SCREEN_CONTEXT_TEST: url, BUDDY_SCREEN_CONTEXT_SAMPLE: path.join(app, "scripts/samples/context-window.ps1"), BUDDY_SCREEN_CONTEXT_TEST_OUT: path.join(out, "context-settings.png") }, "SCREEN_CONTEXT_TEST_DONE");
+      const r = markers.SCREEN_CONTEXT_TEST?.[0];
+      if (!r) return [timedOut ? "timed out" : "no visual context result"];
+      return [r.error, r.first !== "Visual context received." && "the first question didn't carry a screenshot",
+        !observations[0]?.jpeg && "the sample screenshot wasn't sent as a bounded JPEG",
+        !observations[0]?.tree && "the first question didn't carry the sample's real accessibility refs",
+        !r.largeImageBounded && "a large screenshot wasn't resized within the image budget",
+        r.second !== "Text-only context received." && "turning screenshots off didn't remove old and new images",
+        !r.settingWasOn && "the screenshot setting wasn't initially on", !r.settingOff && "the setting didn't switch off", !r.settingUIOff && "the switch didn't display its saved off state", !r.savedOff && "the setting wasn't saved",
+      ].filter(Boolean);
+    } finally { server.closeAllConnections(); server.close(); }
+  },
+  async conversation() {
+    const server = http.createServer(async (req, res) => {
+      let body = "";
+      for await (const c of req) body += c;
+      if (req.url?.endsWith("/models")) return res.end(JSON.stringify({ data: [{ id: "scripted" }] }));
+      if (req.url === "/api/show") return res.end(JSON.stringify({ capabilities: ["completion", "tools"] }));
+      const messages = JSON.parse(body || "{}").messages ?? [];
+      const last = String(messages.filter((m) => m.role === "user").at(-1)?.content ?? "");
+      res.setHeader("content-type", "text/event-stream");
+      const chunk = (text, finish = null) => `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: text }, finish_reason: finish }] })}\n\n`;
+      if (last.includes("Change direction")) return res.end(chunk("Here is the corrected answer.", "stop"));
+      res.write(chunk("The first sentence is visible. "));
+      const timer = setTimeout(() => res.end(chunk("The old answer finished.", "stop")), 15_000);
+      res.on("close", () => clearTimeout(timer));
+    });
+    await new Promise((r) => server.listen(0, "127.0.0.1", r));
+    try {
+      const url = `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`;
+      const { markers, timedOut } = await runCopy("conversation", { BUDDY_CONVERSATION_TEST: url, BUDDY_CONVERSATION_TEST_OUT: path.join(out, "conversation.png") }, "CONVERSATION_TEST_DONE");
+      const r = markers.CONVERSATION_TEST?.[0];
+      if (!r) return [timedOut ? "timed out" : "no conversation result"];
+      return [!r.partial && "text wasn't visible before completion", !r.editable && "the input was disabled while answering", !r.corrected && "the correction didn't replace the old answer", r.error].filter(Boolean);
+    } finally {
+      server.closeAllConnections();
+      server.close();
+    }
+  },
   async files() {
     const model = await scriptedModel();
     const docs = fs.mkdtempSync(path.join(os.tmpdir(), "buddy-e2e-docs-"));

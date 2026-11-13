@@ -13,6 +13,12 @@ VS Code and more).
   and knows which part is on screen right now. Long or slow pages take a few seconds ("Reading the page…").
 - **Guide mode (default):** Buddy reads the app through its accessibility tree, flies its pointer to the
   control you need and labels it, one step at a time. You do the clicking.
+- **Visual context:** when you ask, a model known to support images receives a fresh screenshot of the requested
+  window alongside its control names and refs. This helps with charts, canvases and layouts. The two sources are
+  prepared together with a four-second deadline; if either fails, Buddy uses the other. Automatic context skips
+  minimized windows, Buddy's own windows and apps on **Never act in**, and never falls back to capturing a whole
+  display. Settings › AI & privacy › **Window screenshots** turns window screenshots off immediately; Mark and
+  Explain still send the area you explicitly choose. Text-only and unverified models start from text.
 - **Mark:** press **Ctrl+Alt+M** (or **Mark** on the island). The screen becomes a still with a blue frame.
   - **Click** something to explain it right away.
   - **Draw** over one or more things with the highlighter; each stroke gets a number. Press Enter and ask about
@@ -42,6 +48,12 @@ VS Code and more).
   while loaded). Measured on a Core Ultra 5 laptop on battery: about 0.4 s to understand a sentence and 1.6 s before
   Buddy starts speaking a short one.
   **Talk back** in Settings chooses when Buddy speaks: when you spoke (default), always, or never.
+- **Replies arrive as Buddy thinks:** answers appear progressively in the bubble and task windows. Spoken replies
+  start with complete sentences while the rest is still arriving. Tools still wait for complete arguments and
+  approvals. This uses Buddy's default engine; the optional SDK engine keeps its existing reply behavior.
+- **Change direction:** while the bubble is answering or guiding, type a follow-up and press **Send**, or press
+  **Ctrl+Alt+T** to interrupt and ask out loud. Buddy stops the old answer and clears its pending approvals before
+  starting the correction, keeping the conversation. **Stop** or Esc cancels without starting another question.
 - **Task windows:** hover the island and click **Task** (or **Make task** in the bubble to move the current
   conversation) to give a job its own agent and window. Tasks work side by side while you keep using your computer;
   each shows the steps it takes and asks for approval in its own window. **–** tucks a task into a numbered chip on
@@ -162,7 +174,9 @@ document. CI (`.github/workflows/ci.yml`) runs `npm run check`, `npm test` and `
 and pull request.
 
 `npm run e2e` runs the real app end to end, each check in a separate test copy with its own data folder (your Buddy,
-settings and files are left alone): **files** (a scripted model asks for a file; the approval card is clicked; the file
+settings and files are left alone): **context** (a test-owned chart window supplies a real screenshot and accessibility
+refs; turning screenshots off removes images from the next request), **conversation** (streaming and mid-answer
+corrections), **files** (a scripted model asks for a file; the approval card is clicked; the file
 is made, listed in Activity and undone; another window can't answer the card), **tasks**, **settings** (including a
 key that must stay with its server), **explainer**, **voice**, and **firstrun** (a plain test copy must leave your
 startup entries and shortcuts as they were). Any check whose copy logged a refused mode or task-state change fails.
@@ -287,6 +301,12 @@ Buddy has no server and no account of its own. What leaves your PC depends on ho
 - **A provider on your API key** (Anthropic, OpenAI, OpenRouter, Gemini, DeepSeek): your question, the text of the
   window you're asking about, and screenshots when the model can see images go to that provider, under your account
   and its terms. OpenAI is asked not to store them (`store: false`). Nothing goes to any other provider.
+- **Automatic window pictures:** in Buddy's default engine, each question can include a fresh picture of that
+  window. It is resized in memory to at most 1,600 pixels on its longest edge and sent as JPEG. Earlier automatic
+  pictures are removed from later questions; the image data is not written to Buddy's timing log. Turn off
+  **Window screenshots** in AI & privacy to use window text instead and block screenshot-tool requests, including
+  requests through connected AI apps. Mark and Explain still use images you explicitly choose. The optional SDK
+  engine keeps its existing context behavior.
 - **A model on your PC** (Ollama, LM Studio): nothing leaves the PC.
 - **Another server:** goes to that address only. Plain `http://` is allowed only on this PC or your local network,
   and its key is tied to the address it was entered for: change the address to another host and the key isn't sent.

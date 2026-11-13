@@ -11,7 +11,7 @@ import { SAFE_TOOLS, startBridge } from "./bridge.js";
 import { APPS, APP_IDS, allowRules, appStatus, claudeCodeExe, launchSpec, quickChatArgs, quickChatConfig, setApp, setCodeAllowed, staleApps } from "./ai-apps.js";
 import { Brain, SESSION_PREFIX, failureFor, setAgentPolicy, setBrainDefaults, takeTurn } from "./brain.js";
 import { keyFor, keyRecord, originOf } from "./keys.js";
-import { PROVIDERS, ProviderError, addressProblem, capsOf, describeModels, keyFits, listModels, noteTested, providerForKey, providerOfKey, testedOf, useCapsStore, verdict } from "./providers.js";
+import { PROVIDERS, ProviderError, addressProblem, capsOf, describeModels, keyFits, learnCaps, listModels, noteTested, providerForKey, providerOfKey, testedOf, useCapsStore, verdict } from "./providers.js";
 import { CASES, runEvals } from "./evals.js";
 import { createActivity, pruneUndo } from "./activity.js";
 import { createLog } from "./log.js";
@@ -33,6 +33,8 @@ import { createUpdates } from "./updates.js";
 import { describe as describeSchedule, nextRun, verdict as routineVerdict } from "./routines.js";
 import os from "node:os";
 import { createVoice } from "./voice.js";
+import { createReplyStream } from "./reply-stream.js";
+import { createTurnQueue } from "./turn-queue.js";
 import { appWords, findLocal, localDoor, tourNext, tourTip } from "./welcome.js";
 import { aboutMoney, addCall, capProblem, createLedger, moneyWords, noSpend, priceOf, spendLine, tokenWords } from "./costs.js";
 
@@ -79,6 +81,7 @@ if (!process.env.BUDDY_GPU) app.disableHardwareAcceleration();
 app.on("second-instance", () => summon());
 
 let tray, bubble, island, brain, tasks, voice, updates;
+let answeringBrain = null;
 let heardLang = "en"; // the language of the last thing heard, waiting for the bubble to send it as a question
 
 // The answer running (or the last one): whether its question was said out loud and in what language (spoken
@@ -88,6 +91,22 @@ let heardLang = "en"; // the language of the last thing heard, waiting for the b
 /** @type {Turn} */
 let turn = { spoken: false, lang: "en", at: 0, explainerShown: false };
 const startTurn = ({ spoken = false, lang = "en" } = {}) => (turn = { spoken, lang, at: Date.now(), explainerShown: false });
+let replyMuted = false;
+const liveReply = createReplyStream({
+  display: (text) => bubble?.webContents.send("reply-stream", text),
+  speak: async (text) => {
+    saying = oneLine(text);
+    await voice?.say(text);
+  },
+  hush: () => voice?.hush(),
+  canSpeak: () => !replyMuted && talksBack(turn.spoken),
+});
+function hushReply() {
+  replyMuted = true;
+  liveReply.cancel();
+  voice?.hush();
+}
+const bubbleTurns = createTurnQueue({ stop: () => { answeringBrain?.cancel(); hushReply(); } });
 
 // What the next question is about: the window the user was in and the point on screen (plates open beside it). Set
 // together, when they call Buddy, finish marking, or click something to explain.
@@ -1031,36 +1050,51 @@ function openExplainer(explainer, { near = cursor(), observed = null } = {}) {
 // ---------- IPC ----------
 
 handleFrom(fromBubble, "ask", async (_e, text, opts = {}) => {
+  if (typeof text !== "string" || !text.trim()) return { reply: null };
+  if (!["idle", "working", "listening"].includes(mode)) return { reply: BUSY[mode] };
+  return bubbleTurns.run((isCurrent) => answerQuestion(text, opts, isCurrent));
+});
+
+async function answerQuestion(text, opts, isCurrent) {
   if (!brain) return { reply: "Choose how I think first, in Settings › AI & privacy: an API key (Anthropic, OpenAI, OpenRouter, Gemini, DeepSeek), or a free model on this PC with Ollama or LM Studio. Or ask me from the AI app you already use (Claude, Codex, Gemini, Copilot): Use with your AI app, in the same place." };
   // Typed while the mic was open: the typing wins.
   if (mode === "listening") voice.cancelListening();
   else if (mode !== "idle") return { reply: BUSY[mode] };
   enter("working");
+  const engine = brain;
+  answeringBrain = engine;
   startTurn({ spoken: !!opts?.spoken, lang: opts?.spoken ? heardLang : "en" });
-  voice?.hush();
+  hushReply();
+  replyMuted = false;
   releaseFocus();
   progress("Thinking…");
   let reply;
-  const tally = brain.ui.spend;
+  const tally = engine.ui.spend;
   if (tally) tally.now = noSpend();
   try {
     const withMarks = pendingMarks;
     pendingMarks = null;
     const how = { spoken: turn.spoken, lang: turn.lang };
-    reply = withMarks ? await brain.askWithMarks(text, withMarks, how) : await brain.ask(text, about.window, how);
+    reply = withMarks ? await engine.askWithMarks(text, withMarks, how) : await engine.ask(text, about.window, how);
   } catch (err) {
+    hushReply();
     notice("Something broke");
     return { reply: `Something broke: ${err.message}` };
   } finally {
+    answeringBrain = null;
     enter("idle");
     releaseLater("bubble");
   }
+  if (!isCurrent()) return { reply: null, superseded: true };
   notice(oneLine(reply));
   tourEvent("answered");
   // After the mode is back to idle, so the island shows Buddy speaking (and a click stops it).
-  if (talksBack(turn.spoken)) speak(reply);
+  if (!liveReply.covers(reply)) {
+    liveReply.cancel();
+    if (!replyMuted && talksBack(turn.spoken)) speak(reply);
+  }
   return { reply, spend: tally ? spendLine(tally.now) : null };
-});
+}
 
 // A key that plainly belongs to another provider (sk-ant-, sk-or-, AIza) is saved for that one, which becomes the
 // provider Buddy uses. Other providers' keys are tried on their model list before they're kept. Resolves an error
@@ -1157,17 +1191,20 @@ handleFrom(fromBubble, "welcome-local", async () => {
 // Stop or Esc in the bubble. While the bubble's own answer runs, that answer stops (and withdraws its request on the
 // card); otherwise the card on show is for an AI app using Buddy, and Stop says no to it.
 onFrom(fromBubble, "cancel", () => {
+  bubbleTurns.cancel();
   voice?.cancelListening();
-  voice?.hush();
-  if (mode === "working") brain?.cancel();
+  hushReply();
+  if (mode === "working") { (answeringBrain ?? brain)?.cancel(); notice("Stopped."); }
   else answerApproval("deny");
 });
 onFrom(fromBubble, "reset", () => {
+  if (mode === "working") return;
+  hushReply();
   brain?.reset();
   clearMarks();
 });
 onFrom(fromBubble, "hide", () => {
-  voice?.hush();
+  hushReply();
   hideBubble();
 });
 onFrom(fromBubble, "confirm-reply", (_e, decision) => {
@@ -1185,7 +1222,7 @@ onFrom(fromIsland, "island-action", (_e, action) => {
   else if (verb === "settings") settingsWindow.open();
   else if (verb === "mark") startMarking();
   else if (verb === "talk") talk();
-  else if (verb === "hush") voice?.hush();
+  else if (verb === "hush") hushReply();
   else if (verb === "show") showBubble({ focus: false });
   // The island faded an outcome: it has been seen.
   else if (verb === "settle") {
@@ -1253,6 +1290,7 @@ function answerApproval(decision) {
 // caption carry the step, and the bubble would otherwise sit over the ribbon or dialog they need to click.
 /** @param {PhysicalRect} bounds @param {string} caption */
 function guidePoint(bounds, caption) {
+  liveReply.cancel();
   if (mode === "working" && bubble.isVisible() && !waitingForOk()) hideBubble();
   // In a spoken conversation Buddy says each step as it points, the way a person beside you would.
   if (caption && talksBack(turn.spoken)) voice.say(caption);
@@ -1275,8 +1313,14 @@ const HEARD_ERRORS = {
 async function talk() {
   if (!voice) return;
   if (mode === "listening") return voice.finishListening();
+  if (mode === "working") {
+    bubbleTurns.cancel();
+    await bubbleTurns.settled();
+    // Another hotkey may have taken over while the answer was being cancelled.
+    if (currentMode() !== "idle") return;
+  }
   const wasSpeaking = voice.speaking;
-  voice.hush();
+  hushReply();
   if (mode !== "idle") return wasSpeaking || progress(BUSY[mode]);
   if (!brain) return summon();
   enter("listening");
@@ -1302,7 +1346,7 @@ async function dictate() {
   if (!voice) return;
   if (mode === "dictating") return voice.finishListening();
   const wasSpeaking = voice.speaking;
-  voice.hush();
+  hushReply();
   if (mode !== "idle") return wasSpeaking || progress(BUSY[mode]);
   enter("dictating");
   const continuous = settings.dictateStop === "press";
@@ -1442,11 +1486,21 @@ function bubbleExplain(plate) {
 }
 
 // What every Brain is made with for the current provider: its key (empty if it needs none) and where it is.
-const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, commands: () => settings.commands, ...spendUI() });
+// Resize in memory before sending: detailed enough to read a window, without uploading a full-resolution 4K PNG.
+function prepareScreenImage(image) {
+  const original = nativeImage.createFromBuffer(Buffer.from(image.source.data, "base64"));
+  if (original.isEmpty()) throw new Error("Couldn't read the window picture.");
+  const { width, height } = original.getSize();
+  const scale = Math.min(1, 1600 / Math.max(width, height));
+  const resized = scale < 1 ? original.resize({ width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)), quality: "good" }) : original;
+  return /** @type {import("./screen-context.js").ScreenImage} */ ({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: resized.toJPEG(82).toString("base64") } });
+}
+const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, commands: () => settings.commands,
+  screenContext: () => settings.screenContext, prepareImage: prepareScreenImage, ...spendUI() });
 
 function startBrain() {
   brain = providerReady()
-    ? makeEngine({ ...providerUI(), point: guidePoint, confirm, status, explain: bubbleExplain, trace, documentsDir: documentsDir(), dataDir: app.getPath("userData"), record: recordChange, reveal: revealMade, isOwnWindow: (w) => ownPids().includes(Number(w.pid)), openFile })
+    ? makeEngine({ ...providerUI(), point: guidePoint, confirm, status, stream: (update) => liveReply.receive(update), explain: bubbleExplain, trace, documentsDir: documentsDir(), dataDir: app.getPath("userData"), record: recordChange, reveal: revealMade, isOwnWindow: (w) => ownPids().includes(Number(w.pid)), openFile })
     : null;
 }
 
@@ -1492,6 +1546,7 @@ function makeAppBrain(/** @type {number} */ conn, /** @type {string} */ client) 
   const owner = `app-${conn}`;
   /** @type {Brain} */
   const appBrain = new Brain({
+    screenContext: () => settings.screenContext,
     point: (bounds, caption) => {
       const shown = point(bounds, caption, owner);
       releaseLater(owner, 60_000);
@@ -1709,7 +1764,7 @@ function changeSettings(patch) {
   }
   setAgentPolicy(settings);
   if (next.language !== before.language) voice?.prepare();
-  if (next.talkBack === "never" && before.talkBack !== "never") voice?.hush();
+  if (next.talkBack === "never" && before.talkBack !== "never") hushReply();
   buildTrayMenu();
   showIsland({ force: true });
   settingsWindow?.refresh();
@@ -2313,6 +2368,92 @@ app.whenReady().then(() => {
       console.log("EXPLAINER_SHOWN", JSON.stringify({ windows: plates.length, visible: plates.some((w) => w.isVisible()), chars: text.length, title: text.split("\n").find((l) => l.trim()) ?? "" }));
       console.log("EXPLAINER_TEST_DONE");
     }, 4000);
+  } else if (process.env.BUDDY_SCREEN_CONTEXT_TEST) {
+    // Capture only this test-owned sample. The scripted server checks both image transport and the real tree.
+    setTimeout(async () => {
+      let sample;
+      try {
+        const title = "Buddy visual context sample";
+        const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+        const script = process.env.BUDDY_SCREEN_CONTEXT_SAMPLE ?? path.join(here, "../scripts/samples/context-window.ps1");
+        sample = spawn("powershell.exe", ["-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", script], { windowsHide: false });
+        let sampleErrors = "";
+        sample.stderr.on("data", (chunk) => { sampleErrors += chunk.toString(); });
+        let sampleOutput = "";
+        sample.stdout.on("data", (chunk) => { sampleOutput += chunk.toString(); });
+        await new Promise((resolve, reject) => { sample.once("spawn", resolve); sample.once("error", reject); });
+        let target;
+        for (let i = 0; i < 50; i++) {
+          target = (await listWindows()).find((w) => w.title === title && Number(w.pid) === sample.pid);
+          if (target) break;
+          await wait(200);
+        }
+        if (!target) throw new Error(`The sample window wasn't found (exit ${sample.exitCode}). ${sampleErrors.slice(0, 1000)} ${sampleOutput.slice(0, 200)}`);
+        changeSettings({ provider: "custom", providerURLs: { custom: process.env.BUDDY_SCREEN_CONTEXT_TEST }, providerModels: { custom: "vision-fixture" }, screenContext: true, talkBack: "never" });
+        learnCaps(providerURL(), "vision-fixture", { tools: true, vision: true });
+        about = { window: target, point: null };
+        const js = (code) => bubble.webContents.executeJavaScript(code);
+        const first = await js(`window.buddy.ask("Which bar is higher?", {})`);
+        const sentImage = brain.messages.flatMap((m) => Array.isArray(m.content) ? m.content : []).find((c) => c.type === "image");
+        let largeImageBounded = false;
+        if (sentImage) {
+          const large = nativeImage.createFromBuffer(Buffer.from(sentImage.source.data, "base64")).resize({ width: 3200, height: 2400 });
+          const compressed = prepareScreenImage({ source: { data: large.toPNG().toString("base64") } });
+          const size = nativeImage.createFromBuffer(Buffer.from(compressed.source.data, "base64")).getSize();
+          largeImageBounded = size.width === 1600 && size.height === 1200 && compressed.source.media_type === "image/jpeg";
+        }
+        settingsWindow.open("claude");
+        let settingsWin;
+        for (let i = 0; i < 100; i++) {
+          settingsWin = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("settings.html") && !w.webContents.isLoading());
+          if (settingsWin && await settingsWin.webContents.executeJavaScript(`document.getElementById("screen-context")?.getAttribute("aria-checked") === "true"`)) break;
+          await wait(100);
+        }
+        if (!settingsWin) throw new Error("Settings didn't open.");
+        const settingWasOn = await settingsWin.webContents.executeJavaScript(`document.getElementById("screen-context").getAttribute("aria-checked") === "true"`);
+        await settingsWin.webContents.executeJavaScript(`document.getElementById("screen-context").click()`);
+        for (let i = 0; settings.screenContext && i < 50; i++) await wait(50);
+        let settingUIOff = false;
+        for (let i = 0; i < 50; i++) {
+          settingUIOff = await settingsWin.webContents.executeJavaScript(`document.getElementById("screen-context").getAttribute("aria-checked") === "false"`);
+          if (settingUIOff) break;
+          await wait(50);
+        }
+        if (process.env.BUDDY_SCREEN_CONTEXT_TEST_OUT) fs.writeFileSync(process.env.BUDDY_SCREEN_CONTEXT_TEST_OUT, (await settingsWin.webContents.capturePage()).toPNG());
+        const second = await js(`window.buddy.ask("Read the chart title", {})`);
+        const saved = JSON.parse(fs.readFileSync(settingsFile(), "utf8"));
+        console.log("SCREEN_CONTEXT_TEST", JSON.stringify({ first: first.reply, second: second.reply, settingWasOn, settingOff: !settings.screenContext, settingUIOff, savedOff: saved.screenContext === false, largeImageBounded }));
+      } catch (err) {
+        console.log("SCREEN_CONTEXT_TEST", JSON.stringify({ error: err.message }));
+      } finally {
+        sample?.kill();
+        console.log("SCREEN_CONTEXT_TEST_DONE");
+      }
+    }, 2500);
+  } else if (process.env.BUDDY_CONVERSATION_TEST) {
+    // Real renderer + IPC + streamed model: show a partial answer, then steer it while it is still running.
+    setTimeout(async () => {
+      const js = (code) => bubble.webContents.executeJavaScript(code);
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const until = async (code) => {
+        for (const end = Date.now() + 10_000; Date.now() < end; await wait(50)) if (await js(code)) return true;
+        return false;
+      };
+      try {
+        changeSettings({ provider: "ollama", providerURLs: { ollama: process.env.BUDDY_CONVERSATION_TEST }, providerModels: { ollama: "scripted" }, talkBack: "never" });
+        await summon();
+        await js(`document.getElementById("input").value = "Start answering"; document.getElementById("form").requestSubmit();`);
+        const partial = await until(`document.getElementById("reply").textContent === "The first sentence is visible. " && !document.getElementById("stop").hidden`);
+        const editable = await js(`!document.getElementById("input").disabled`);
+        if (process.env.BUDDY_CONVERSATION_TEST_OUT) fs.writeFileSync(process.env.BUDDY_CONVERSATION_TEST_OUT, (await bubble.webContents.capturePage()).toPNG());
+        await js(`document.getElementById("input").value = "Change direction"; document.getElementById("form").requestSubmit();`);
+        const corrected = await until(`document.getElementById("reply").textContent === "Here is the corrected answer." && document.getElementById("stop").hidden`);
+        console.log("CONVERSATION_TEST", JSON.stringify({ partial, editable, corrected }));
+      } catch (err) {
+        console.log("CONVERSATION_TEST", JSON.stringify({ error: err.message }));
+      }
+      console.log("CONVERSATION_TEST_DONE");
+    }, 2500);
   } else if (process.env.BUDDY_FILES_TEST) {
     // End-to-end check of Buddy working with files, through the real app: BUDDY_FILES_TEST=<address of a scripted
     // OpenAI-style server> (scripts/e2e.mjs runs one). The model asks to make a file; the approval card is clicked;

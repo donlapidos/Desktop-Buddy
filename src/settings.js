@@ -77,6 +77,7 @@ export const DEFAULTS = Object.freeze({
   monthlyCap: 0,
   // Whether Buddy may run PowerShell commands (pc-tools.js). Off until the user turns it on.
   commands: false,
+  screenContext: true,
 });
 
 // The monthly spending limit, in US dollars (costs.js). 0 is none.
@@ -89,7 +90,7 @@ export const CAP = Object.freeze({ max: 10_000 });
  *   voice: number, speed: number, talkBack: string, accent: string, appearance: string,
  *   hotkeys: Record<HotkeyName, string>, provider: string, model: string, providerModels: Record<string, string>, providerURLs: Record<string, string>, effort: string, dictateStop: string, language: string,
  *   rope: string, trustedApps: string[], blockedApps: string[], routines: Routine[], autoUpdate: boolean,
- *   launchSetupDone: boolean, tour: string, monthlyCap: number, commands: boolean,
+ *   launchSetupDone: boolean, tour: string, monthlyCap: number, commands: boolean, screenContext: boolean,
  * }} Settings
  */
 
@@ -226,6 +227,7 @@ export function normalize(raw) {
       ? Math.round(r.monthlyCap * 100) / 100
       : DEFAULTS.monthlyCap,
     commands: r.commands === true,
+    screenContext: typeof r.screenContext === "boolean" ? r.screenContext : DEFAULTS.screenContext,
   };
 }
 

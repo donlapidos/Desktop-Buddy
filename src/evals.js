@@ -169,6 +169,9 @@ export const CASES = [
 
 /** A Brain whose desktop is the case's window: looking reads it, pointing and acting are recorded. */
 class EvalBrain extends Brain {
+  // Evaluations use recorded windows only. Initial context must never read or capture the evaluator's real PC.
+  glance(_target) {}
+  async initialContext() { return { reading: await this.look(), image: null }; }
   /** @param {import("./brain.js").BrainUI} ui @param {EvalCase} c @param {Call[]} calls */
   constructor(ui, c, calls) {
     super(ui);

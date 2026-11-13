@@ -362,6 +362,13 @@
     <section id="page-claude" hidden>
       <h2>AI &amp; privacy</h2>
       <p class="lede">Buddy thinks with the AI you choose: a provider on your own API key, or a model running on this PC. It can also work inside the AI app you already use (Claude, Codex, Gemini, Copilot), on your own plan. Questions, and what's on screen when you ask, go to the AI you choose; with a model on this PC, they stay here. Besides that, Buddy only downloads its voice models once and checks GitHub for updates.</p>
+      <div class="group switch-row">
+        <div>
+          <h3>Window screenshots</h3>
+          <p class="help" id="screen-context-help" style="margin:0">When you ask, Buddy includes a picture of that window to understand charts and layouts. With a cloud AI, the picture goes to your provider. Off, Buddy reads window text instead. Mark and Explain still use the area you choose.</p>
+        </div>
+        <button class="switch" id="screen-context" role="switch" aria-label="Window screenshots" aria-describedby="screen-context-help"></button>
+      </div>
       <div class="group">
         <h3>Provider</h3>
         <p class="help">Each keeps its own key and address, so you can switch back and forth.</p>
@@ -763,6 +770,7 @@
 
   function renderClaudeRest() {
     const s = S.settings;
+    $("screen-context").setAttribute("aria-checked", String(s.screenContext));
     $("provider").replaceChildren(...S.providers.map((p) => {
       const b = el("button", { className: "model" }, el("span", { className: "radio" }), el("b", { textContent: p.label }), el("span", { textContent: p.note }));
       b.setAttribute("role", "radio");
@@ -889,6 +897,7 @@
   $("blocked-add").addEventListener("click", () => addApp("blocked-input", "blockedApps"));
 
   $("commands").addEventListener("click", () => set({ commands: !S.settings.commands }));
+  $("screen-context").addEventListener("click", () => set({ screenContext: !S.settings.screenContext }));
   function renderAgents() {
     const s = S.settings;
     $("commands").setAttribute("aria-checked", String(s.commands));

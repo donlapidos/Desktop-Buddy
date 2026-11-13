@@ -11,6 +11,17 @@ const tempFile = (t) => {
   return path.join(dir, "settings.json");
 };
 
+test("window screenshots are a validated, persistent choice", (t) => {
+  assert.equal(normalize({}).screenContext, true);
+  assert.equal(normalize({ screenContext: false }).screenContext, false);
+  assert.equal(normalize({ screenContext: "false" }).screenContext, true);
+  const changed = update(normalize({}), { screenContext: false });
+  assert.deepEqual(changed.rejected, []);
+  const file = tempFile(t);
+  save(file, changed.settings);
+  assert.equal(load(file).settings.screenContext, false);
+});
+
 test("anything unknown or invalid falls back to its default", () => {
   const s = normalize({ voice: 42, speed: "fast", talkBack: "sometimes", accent: "#ff0000", appearance: "neon", model: "gpt-9", effort: "max", hotkeys: { ask: "B" }, extra: 1 });
   assert.deepEqual({ ...s, hotkeys: { ...s.hotkeys } }, { ...DEFAULTS, hotkeys: { ...DEFAULTS.hotkeys } });

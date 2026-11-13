@@ -143,12 +143,16 @@
 <script>
   const $ = (id) => document.getElementById(id);
   let needsKey = false, busy = false;
+  let askSequence = 0;
 
   function setBusy(on) {
     busy = on;
     $("dot").classList.toggle("busy", on);
     $("stop").hidden = !on;
-    $("input").disabled = on;
+    $("input").disabled = false;
+    $("submit").textContent = on ? "Send" : "Ask";
+    $("new").disabled = on;
+    $("input").placeholder = on ? "Change direction or ask a follow-up…" : "How do I…?  or  Do it for me";
   }
 
   function show(text, status = false) {
@@ -298,6 +302,7 @@
   window.buddy.onBubbleClose(() => document.body.classList.remove("open"));
 
   window.buddy.onStatus((text) => show(text, true));
+  window.buddy.onReplyStream((text) => { if (busy) show(text); });
 
   // What the user highlighted: numbered chips matching the marker numbers on screen.
   window.buddy.onMarks((list) => {
@@ -369,7 +374,7 @@
     const text = $("input").value.trim();
     const wasSpoken = spoken;
     spoken = false;
-    if (!text || busy) return;
+    if (!text) return;
     $("input").value = "";
     if (needsKey) {
       const { ok, error } = await window.buddy.setKey(text);
@@ -385,11 +390,14 @@
       return;
     }
     setBusy(true);
+    const sequence = ++askSequence;
     $("spend").textContent = "";
     show(wasSpoken ? `“${text}”` : "Thinking…", true);
-    const { reply, spend } = await window.buddy.ask(text, { spoken: wasSpoken });
+    const { reply, spend, superseded } = await window.buddy.ask(text, { spoken: wasSpoken });
+    if (sequence !== askSequence) return;
     setBusy(false);
-    show(reply);
+    if (!superseded) show(reply);
+    else if (!listening) show("Okay, stopped.");
     $("spend").textContent = spend ?? "";
     $("confirm").classList.remove("on");
   });

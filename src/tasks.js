@@ -64,6 +64,12 @@ export function createTasks({ here, icon, makeBrain, currentTarget, point, relea
       point: (bounds, caption) => point(bounds, caption, t.id),
       explain: (plate) => explain(plate, t.target),
       status: (text) => setState(t, "working", text),
+      stream: ({ text }) => {
+        if (text && tasks.has(t.id)) {
+          t.line = text;
+          send(t, "task-stream", text);
+        }
+      },
       // Who made a change, in Settings › Activity.
       source: t.title,
       // Approvals belong to the task asking: its window comes forward (without stealing focus) and its chip turns amber.
