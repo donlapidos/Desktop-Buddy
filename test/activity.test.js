@@ -26,7 +26,7 @@ function pc() {
   const log = path.join(places.buddyData, "activity.json");
   const make = () => createActivity({ file: log, undoDir, trash: async (f) => fs.renameSync(f, path.join(bin, path.basename(f))) });
   const activity = make();
-  const ctx = { places, undoDir, ask: async () => true, status: () => {}, record: (c) => activity.add({ ...c, from: "Buddy" }) };
+  const ctx = { places, undoDir, ask: async () => true, status: () => {}, commands: true, record: (c) => activity.add({ ...c, from: "Buddy" }) };
   return { places, bin, log, activity, make, ctx };
 }
 

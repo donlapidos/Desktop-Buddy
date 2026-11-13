@@ -24,7 +24,8 @@ function pc() {
     usersDir,
   };
   const asked = [];
-  const ctx = (answer = true) => ({ places, undoDir: path.join(places.buddyData, "undo"), ask: async (s, n) => (asked.push({ s, n }), answer), status: () => {} });
+  // With the user's "Let Buddy run commands" switch on; the tests for it being off say so.
+  const ctx = (answer = true) => ({ places, undoDir: path.join(places.buddyData, "undo"), ask: async (s, n) => (asked.push({ s, n }), answer), status: () => {}, commands: true });
   return { root, home, places, asked, ctx };
 }
 
@@ -149,7 +150,7 @@ test("Buddy's own conversations get the PC tools; a Brain serving Claude's apps 
   const { places } = pc();
   const ui = { point: async () => {}, confirm: async () => "deny", status: () => {} };
   const own = new Brain({ ...ui, documentsDir: places.workDir, dataDir: places.buddyData });
-  assert.ok(own.tools().some((t) => t.name === "run_powershell"));
+  assert.ok(own.tools().some((t) => t.name === "write_file"));
   assert.match(own.system(), /Beyond the screen/);
   const bridged = new Brain(ui);
   assert.ok(!bridged.tools().some((t) => t.name === "write_file"));
@@ -159,7 +160,7 @@ test("Buddy's own conversations get the PC tools; a Brain serving Claude's apps 
 test("an Allow for this task on a file change doesn't let PowerShell or a web page through unasked", async () => {
   const { places } = pc();
   const cards = [];
-  const b = new Brain({ point: async () => {}, status: () => {}, confirm: async (s) => (cards.push(s), "always"), documentsDir: places.workDir, dataDir: places.buddyData });
+  const b = new Brain({ point: async () => {}, status: () => {}, confirm: async (s) => (cards.push(s), "always"), documentsDir: places.workDir, dataDir: places.buddyData, commands: () => true });
   b.abort = new AbortController();
   await b.runTool("write_file", { path: "a.txt", content: "a" });
   await b.runTool("write_file", { path: "b.txt", content: "b" });
@@ -245,4 +246,34 @@ test("editing a file too big to load is refused, as reading one is", async () =>
   fs.truncateSync(big, 21 * 1048576);
   assert.match(await runPcTool("edit_file", { path: "huge.log", old_text: "start", new_text: "x" }, ctx()), /over 20 MB/);
   assert.match(await runPcTool("read_file", { path: "huge.log" }, ctx()), /over 20 MB/);
+});
+
+test("running commands is off until the user turns it on: not offered, not described, and refused if called", async () => {
+  const { places, asked, ctx } = pc();
+  const cards = [];
+  let on = false;
+  const b = new Brain({ point: async () => {}, status: () => {}, confirm: async (s) => (cards.push(s), "allow"), documentsDir: places.workDir, dataDir: places.buddyData, commands: () => on });
+  b.abort = new AbortController();
+
+  // Off (also when nothing says either way): the model isn't offered the tool and is told what to say instead.
+  for (const brain of [b, new Brain({ point: async () => {}, status: () => {}, confirm: async () => "allow", documentsDir: places.workDir, dataDir: places.buddyData })]) {
+    assert.ok(!brain.tools().some((t) => t.name === "run_powershell"));
+    assert.ok(brain.tools().some((t) => t.name === "write_file"), "files still work");
+    assert.match(brain.system(), /You can't run commands: the user hasn't turned that on/);
+    assert.doesNotMatch(brain.system(), /run_powershell|DeleteFile/);
+  }
+  // A call that comes anyway runs nothing and asks nothing.
+  const refused = await b.runTool("run_powershell", { command: "'hi' | Out-File proof.txt", description: "Say hi" });
+  assert.match(refused, /turned off, so nothing was run.*Settings › Agents › Let Buddy run commands/);
+  assert.equal(cards.length, 0, "no approval card for something that can't happen");
+  assert.ok(!fs.existsSync(path.join(places.workDir, "proof.txt")));
+  assert.match(await runPcTool("run_powershell", { command: "'hi'", description: "Say hi" }, { ...ctx(), commands: false }), /turned off/);
+  assert.equal(asked.length, 0);
+
+  // On: offered, described, asked for, and run. The switch works at once, in the same conversation.
+  on = true;
+  assert.ok(b.tools().some((t) => t.name === "run_powershell"));
+  assert.match(b.system(), /run_powershell/);
+  assert.match(await b.runTool("run_powershell", { command: "'hi'", description: "Say hi" }), /hi/);
+  assert.deepEqual(cards, ["Say hi"]);
 });

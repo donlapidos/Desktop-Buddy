@@ -1442,7 +1442,7 @@ function bubbleExplain(plate) {
 }
 
 // What every Brain is made with for the current provider: its key (empty if it needs none) and where it is.
-const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, ...spendUI() });
+const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, commands: () => settings.commands, ...spendUI() });
 
 function startBrain() {
   brain = providerReady()

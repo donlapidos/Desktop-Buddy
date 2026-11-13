@@ -5,7 +5,7 @@ import { decide } from "./policy.js";
 import { LOOK_ARGS, findControl, nearestNames, observe, perform, renderReading, renderTree, snapshotResilient, waitForProgress } from "./desktop.js";
 import { writeDocx } from "./documents.js";
 import { PROVIDERS, ProviderError, capsOf, chatTurn } from "./providers.js";
-import { BEYOND_SCREEN, PC_TOOLS, PC_TOOL_NAMES, hideSecrets, placesHere, runPcTool } from "./pc-tools.js";
+import { PC_TOOL_NAMES, beyondScreen, hideSecrets, pcTools, placesHere, runPcTool } from "./pc-tools.js";
 import { fingerprint } from "./activity.js";
 import path from "node:path";
 
@@ -579,6 +579,7 @@ const spokenNote = (lang) =>
  *   record?: (change: Omit<import("./activity.js").Change, "id" | "at">) => void,
  *   usage?: (provider: string, model: string, usage: any) => void,
  *   mayCall?: () => string | null,
+ *   commands?: () => boolean,
  *   spend?: { now: import("./costs.js").Spend },
  *   source?: string,
  *   reveal?: (files: string[]) => Promise<void> | void,
@@ -818,11 +819,15 @@ export class Brain {
   get pcReady() {
     return !!(this.ui.documentsDir && this.ui.dataDir);
   }
+  // Whether the user lets Buddy run commands (Settings › Agents). Read each time, so the switch works at once.
+  get commands() {
+    return this.ui.commands?.() === true;
+  }
   tools() {
-    return this.pcReady ? [...OWN_TOOLS, ...PC_TOOLS] : OWN_TOOLS;
+    return this.pcReady ? [...OWN_TOOLS, ...pcTools(this.commands)] : OWN_TOOLS;
   }
   system() {
-    return this.pcReady ? `${SYSTEM}\n\n${CLOSING}\n\n${BEYOND_SCREEN}` : `${SYSTEM}\n\n${CLOSING}`;
+    return this.pcReady ? `${SYSTEM}\n\n${CLOSING}\n\n${beyondScreen(this.commands)}` : `${SYSTEM}\n\n${CLOSING}`;
   }
 
   /** @param {string} name @param {any} input */
@@ -835,6 +840,7 @@ export class Brain {
       ask: (summary, note, scope) => askUser(summary, { ...this.asking({ note }), scope }),
       status: (text) => this.ui.status(text),
       signal: this.abort?.signal,
+      commands: this.commands,
       record: (change) => {
         if (change.kind === "created" && change.file) this.made.push(change.file);
         this.ui.record?.({ ...change, from: this.ui.source ?? "Buddy" });

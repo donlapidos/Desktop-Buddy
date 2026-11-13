@@ -277,6 +277,13 @@
         <div class="chips" id="blocked"></div>
         <div class="row"><input class="field" id="blocked-input" list="running-apps" placeholder="App name, e.g. KeePass" autocomplete="off" spellcheck="false"><button class="btn" id="blocked-add">Add</button></div>
       </div>
+      <div class="group switch-row">
+        <div>
+          <h3>Let Buddy run commands</h3>
+          <p class="help" style="margin:0">For bigger jobs: renaming or sorting many files, converting, building things. Buddy asks before every command and says what it will do, but a command can change or delete things Buddy can't put back, and Buddy can't fully fence in what a command reaches. Leave it off unless you need it. Off, Buddy still works in your apps and makes and edits files, which it can undo.</p>
+        </div>
+        <button class="switch" id="commands" role="switch" aria-label="Let Buddy run commands"></button>
+      </div>
       <datalist id="running-apps"></datalist>
     </section>
 
@@ -881,8 +888,10 @@
   $("trusted-add").addEventListener("click", () => addApp("trusted-input", "trustedApps"));
   $("blocked-add").addEventListener("click", () => addApp("blocked-input", "blockedApps"));
 
+  $("commands").addEventListener("click", () => set({ commands: !S.settings.commands }));
   function renderAgents() {
     const s = S.settings;
+    $("commands").setAttribute("aria-checked", String(s.commands));
     $("rope").replaceChildren(...ROPES.map(([id, label, note]) => {
       const b = el("button", { className: "model" }, el("span", { className: "radio" }), el("b", { textContent: label }), el("span", { textContent: note }));
       b.setAttribute("role", "radio");
