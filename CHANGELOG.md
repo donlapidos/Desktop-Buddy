@@ -1,5 +1,11 @@
 # Desktop Buddy changelog
 
+## Unreleased
+
+* **Running commands is now off until you turn it on** (Settings › Agents › Let Buddy run commands). It's the one
+  thing Buddy does that it can't undo or fully fence in. If you used Buddy for jobs like renaming many files, turn
+  it on there; until then Buddy tells you when a job needs it. Files, apps and web pages work as before.
+
 ## 0.3.0
 
 Getting started without an API key, seeing what Buddy costs, and reading Excel properly.

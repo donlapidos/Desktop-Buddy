@@ -199,6 +199,10 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   under a restricted token / AppContainer with access only to the working folder and folders the user grants, or ship
   it **off** with a switch ("Let Buddy run commands: for building things"), which fits "building is opt-in".
   *Recommended: off by default now, the wall later.*
+  **Off by default: done (2026-11-13).** `settings.commands` (false for everyone, existing installs too). Off, the
+  model isn't offered `run_powershell`, its guidance says what to tell the user instead, and a call that comes anyway
+  runs nothing and shows no card (`COMMANDS_OFF` in pc-tools.js). The switch is in Settings › Agents and works at
+  once. Each layer has a test that fails without it. The wall (restricted token or AppContainer) is still to do.
 - **3.2 Places the user grants.** Replace "everyday folders are read freely" with a short list the user sees and can
   edit (Documents, Desktop, Downloads to start), shown in Settings.
 - **3.3 A problem report the user can send.** "Report a problem" gathers the timing log (already short and bounded),

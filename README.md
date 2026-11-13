@@ -66,13 +66,17 @@ VS Code and more).
 - **Do mode:** say "do it for me" and Buddy operates the app. It asks before every action
   (Allow, Allow for this task, Don't), and it points at the target while it asks. "Allow for this task" covers more of
   the same kind only: screen actions, file changes, PowerShell, and each website, separately.
-- **Beyond the screen:** Buddy can list, read, write and edit your files, run PowerShell and read web pages, with
-  every model, when that's the quickest way to get something done (renaming photos, tidying a folder, making a list
-  or a budget sheet, looking something up). It works in **Documents › Buddy** unless you name another place, and a
-  file it makes opens when the answer is done. Your everyday folders are read without asking; anything else, and every
-  change, asks first. Passwords and keys, browser profiles, the AI apps' settings and Buddy's own data are off limits
-  to the file tools whatever is asked; PowerShell commands that name them are refused, and anything shaped like a
-  secret key is hidden from the model (PowerShell runs as you, so this narrows it rather than walling it off).
+- **Beyond the screen:** Buddy can list, read, write and edit your files and read web pages, with every model, when
+  that's the quickest way to get something done (making a list or a budget sheet, looking something up). It works in
+  **Documents › Buddy** unless you name another place, and a file it makes opens when the answer is done. Your
+  everyday folders are read without asking; anything else, and every change, asks first. Passwords and keys, browser
+  profiles, the AI apps' settings and Buddy's own data are off limits to the file tools whatever is asked, and
+  anything shaped like a secret key is hidden from the model.
+- **Running commands is off until you turn it on** (Settings › Agents › **Let Buddy run commands**). On, Buddy can
+  run PowerShell for bigger jobs (renaming many photos, tidying a folder, converting, building things), asking
+  before each command. Commands that name private places are refused, but PowerShell runs as you, so that narrows
+  what a command can reach rather than walling it off, and Buddy can't undo what a command does. Off, Buddy says
+  when a job needs it and how to turn it on.
 - **Activity and undo:** Settings › **Activity** (or **Recent changes…** in the tray) lists what Buddy made or changed
   this past week, commands it ran and pages it read. **Undo** sends a file it made to the Recycle Bin or puts a
   changed one back (the old version is kept for a week); a file you changed since is only put back if you say so again.
