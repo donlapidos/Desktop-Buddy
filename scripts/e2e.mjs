@@ -366,6 +366,11 @@ const CHECKS = {
       lang.lang && lang.lang !== "es" && `Spanish heard as ${lang.lang}`,
       !lang.text && "nothing heard in the language check (are the voice models downloaded?)",
       !fs.existsSync(path.join(out, "settings-claude.png")) && "no Settings screenshots",
+      !markers.SETTINGS_REPORT?.[0]?.shown && "Report a problem didn't show its preview",
+      markers.SETTINGS_REPORT?.[0]?.shown && !markers.SETTINGS_REPORT[0].version && "the problem report didn't say Buddy's version",
+      markers.SETTINGS_REPORT?.[0]?.shown && !markers.SETTINGS_REPORT[0].timing && "the problem report had no timing log",
+      markers.SETTINGS_REPORT?.[0]?.key && "the problem report carried a saved key",
+      markers.SETTINGS_REPORT?.[0]?.home && "the problem report carried a path in the user's folder",
       ...keyProblems(markers.SETTINGS_KEYS?.[0]),
     ].filter(Boolean);
   },

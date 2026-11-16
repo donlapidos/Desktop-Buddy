@@ -357,3 +357,13 @@ loses focus (`guessGone`, unit-tested), or after 10 s.
 - Eval: `npm run eval -- --set sight` runs five screens with nothing named in their tree (a paint canvas, a scanned
   PDF, a remote desktop, a chart picture, a game menu; `scripts/make-sight-screens.cjs`), each passing only for a
   spot inside the target box. The share passed is the model's hit rate. Hit rates per model are the owner's runs.
+
+**2026-11-17 · package 8 · Report a problem.** In the tray and Settings › About & updates. Buddy builds the report
+(version, settings without keys, addresses, routines or app lists, and the last 60 timing entries) and takes out
+key-shaped text, whole paths in the user's folder, email addresses, numbers, and the user's and PC's names. The user
+reads all of it. It is sent only by **Open a GitHub issue** (a pre-filled issue in their browser; a report too long
+for a link is also copied) or **Copy**. Unit tests cover keys, key-shaped text and paths in the user's folder,
+however written (with the redaction removed on purpose, 3 failed). The `settings` e2e check opens the preview, finds
+the version and the log in it, and finds neither the saved key nor the home folder. In the final full e2e run,
+`annotations` failed once at its focus step and passed twice when rerun alone: it depends on which window Windows
+lets come to the front.

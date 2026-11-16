@@ -158,6 +158,10 @@ Open **Settings** from the tray, the sliders icon on the island, or the bubble. 
   "can't use tools", with its last check score) and thinking effort for new conversations, **Use with your AI app**,
   start with Windows, and clearing saved explainers or the timing log.
 - **Activity:** see above.
+- **About & updates:** the version, updates, and **Report a problem** (also in the tray menu): Buddy puts together
+  its version, your settings without keys, addresses or routines, and the end of its timing log, with anything that
+  looks like a key or a file in your folder taken out. You read all of it first; it is sent only if you press **Open
+  a GitHub issue** (which opens GitHub in your browser, where you submit it yourself) or **Copy**.
 
 Settings live in `%APPDATA%/desktop-buddy/settings.json`. Every value is checked when it is read and written, and the
 file is replaced in one step; a damaged file is set aside as `settings.json.bad` and Buddy carries on with defaults.

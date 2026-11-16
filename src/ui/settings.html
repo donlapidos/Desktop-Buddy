@@ -154,6 +154,7 @@
   .field { height: 34px; flex: 1; min-width: 220px; padding: 0 11px; border: 1px solid transparent; border-radius: 9px; background: var(--field); outline: none; }
   .field:focus { border-color: color-mix(in srgb, var(--buddy) 70%, transparent); }
   .field::placeholder { color: #6f7682; }
+  #report-text { display: block; width: 100%; box-sizing: border-box; margin: 6px 0 10px; padding: 9px 11px; border: 1px solid transparent; border-radius: 9px; background: var(--field); color: inherit; font: 11.5px/1.45 ui-monospace, Consolas, monospace; resize: vertical; }
   .models { display: grid; gap: 6px; max-width: 440px; }
   .check-row { margin-top: 10px; align-items: center; gap: 10px; }
   .check-row .status-text { color: var(--muted); font-size: 12.5px; }
@@ -330,6 +331,21 @@
           <p class="help" style="margin:0">Buddy looks at its GitHub releases now and then and downloads a new version in the background. It installs when you restart Buddy.</p>
         </div>
         <button class="switch" id="auto-update" role="switch" aria-label="Check for updates automatically"></button>
+      </div>
+      <div class="group">
+        <h3>Report a problem</h3>
+        <p class="help">Buddy puts together its version, your settings (without keys, addresses or routines) and its recent timing log, with anything that looks like a key or a file in your folder taken out. You see every word first, and nothing is sent unless you choose to.</p>
+        <div class="row"><button class="btn" id="report">Report a problem…</button></div>
+        <div id="report-preview" hidden>
+          <p class="help">This is everything that would be sent. Opening an issue takes you to GitHub, where you add what happened, and can change or remove anything, before you submit it.</p>
+          <textarea id="report-text" readonly rows="12" spellcheck="false" aria-label="The report, as it would be sent"></textarea>
+          <div class="row">
+            <button class="btn" id="report-issue">Open a GitHub issue</button>
+            <button class="btn" id="report-copy">Copy</button>
+            <button class="link" id="report-cancel">Cancel</button>
+          </div>
+          <p class="help" id="report-status" role="status"></p>
+        </div>
       </div>
       <div class="group">
         <h3>Source and licences</h3>
@@ -1040,6 +1056,25 @@
   });
 
   $("feature").addEventListener("click", () => window.buddy.settingsFeature());
+
+  // Report a problem: shown in full first; sent only by one of the two buttons, exactly as shown.
+  async function openReport() {
+    const report = await window.buddy.settingsReport();
+    $("report-text").value = report.body;
+    $("report-status").textContent = "";
+    $("report-preview").hidden = false;
+    $("report-text").scrollIntoView({ block: "nearest" });
+  }
+  $("report").addEventListener("click", openReport);
+  $("report-cancel").addEventListener("click", () => { $("report-preview").hidden = true; });
+  const sendReport = async (how) => {
+    const r = await window.buddy.settingsReportSend(how, $("report-text").value);
+    $("report-status").textContent = how === "copy" ? "Copied. Paste it wherever you'd like to send it."
+      : r.copied ? "GitHub is open in your browser. The report was too long for the link, so it's copied: paste it into the issue."
+      : "GitHub is open in your browser with the report filled in. Nothing is posted until you submit it there.";
+  };
+  $("report-issue").addEventListener("click", () => sendReport("issue"));
+  $("report-copy").addEventListener("click", () => sendReport("copy"));
   $("plus").addEventListener("click", () => window.buddy.settingsPlus());
   // Changes made elsewhere (the tray, a routine running) arrive here too.
   window.buddy.onSettingsChanged((state) => render(state));
@@ -1162,7 +1197,15 @@
 
   // Opened on a given page (the tray's "Recent changes…" opens Activity).
   let requestedPage = null;
+  let reportWanted = false;
   window.buddy.onSettingsShowPage?.((p) => {
+    // The tray's "Report a problem…" opens About with the report ready to read.
+    if (p === "report") {
+      requestedPage = "about";
+      reportWanted = true;
+      if (S) { show("about"); openReport(); }
+      return;
+    }
     if (!pages.includes(p)) return;
     requestedPage = p;
     if (S) show(p);
@@ -1173,6 +1216,7 @@
     try { page = pages.includes(localStorage.getItem("settings-page")) ? localStorage.getItem("settings-page") : "voice"; } catch {}
     render(await window.buddy.settingsState());
     show(requestedPage ?? page);
+    if (reportWanted) openReport();
   })();
 </script>
 </body>

@@ -5,6 +5,7 @@
 import { app, BrowserWindow, clipboard, desktopCapturer, globalShortcut, nativeImage, screen } from "electron";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { setBrainDefaults } from "./brain.js";
 import { listWindows, observe, resolveBinary } from "./desktop.js";
@@ -371,6 +372,19 @@ function settingsTest(kit) {
     await updates.check();
     await wait(4000);
     await shoot("about", "settings-about");
+    // Report a problem: the preview opens with the whole report to read. Nothing is sent: no send button is pressed.
+    await win.webContents.executeJavaScript(`document.getElementById("report").click()`);
+    let report = "";
+    for (let i = 0; i < 50 && !report; i++) {
+      await wait(100);
+      report = await win.webContents.executeJavaScript(`document.getElementById("report-preview").hidden ? "" : document.getElementById("report-text").value`);
+    }
+    await win.webContents.executeJavaScript(`document.getElementById("report-text").scrollIntoView()`);
+    await wait(300);
+    fs.writeFileSync(path.join(out, "settings-report.png"), (await win.webContents.capturePage()).toPNG());
+    console.log("SETTINGS_REPORT", JSON.stringify({ shown: !!report, version: report.includes(`Desktop Buddy ${app.getVersion()}`), timing: /"kind":/.test(report),
+      key: report.includes("key-for-server-a-0123456789"), home: report.toLowerCase().includes(os.homedir().toLowerCase()), chars: report.length }));
+    await win.webContents.executeJavaScript(`document.getElementById("report-cancel").click()`);
     console.log("SETTINGS_INSTALLED", JSON.stringify({ packaged: app.isPackaged, agentDesktop: resolveBinary(), userData: app.getPath("userData"), updates: updates.state() }));
     await win.webContents.executeJavaScript(`render(${JSON.stringify(settingsState())})`);
     await shoot("look", "settings-look-coral");

@@ -18,6 +18,8 @@ import { createLog } from "./log.js";
 import { questionTiming } from "./latency.js";
 import { createHoldKey, uiohookHook } from "./hold-key.js";
 import { worksWell } from "./model-results.js";
+import { buildReport, issueLink } from "./problem-report.js";
+import { namesToHide } from "./scrub.js";
 import { createApprovalQueue } from "./approval-queue.js";
 import { createAppSessions } from "./app-sessions.js";
 import { islandView } from "./island-state.js";
@@ -2118,6 +2120,7 @@ function buildTrayMenu() {
       ...(updates?.state().status === "ready" ? [{ label: `Restart to update to ${updates.state().next}`, click: () => updates.install() }] : []),
       ...(appStatus().code !== "missing" ? [{ label: "Quick chat in Claude Code", click: () => openQuickChat() }] : []),
       { label: "Recent changes…", click: () => settingsWindow.open("activity") },
+      { label: "Report a problem…", click: () => settingsWindow.open("report") },
       { label: "Settings…", click: () => settingsWindow.open() },
       { label: "Recreate shortcuts", visible: process.platform === "win32" && !app.isPackaged, click: writeShortcuts },
       { type: "separator" },
@@ -2232,6 +2235,40 @@ const ISSUES = "https://github.com/donlapidos/desktop-buddy/issues/new";
 // can replace it.
 const PLUS_INTEREST = `${ISSUES}?template=buddy-plus.yml`;
 onFrom(fromBubble, "plus-interest", () => (trace({ kind: "plus-interest", from: "bubble" }), shell.openExternal(PLUS_INTEREST)));
+// "Report a problem" (problem-report.js): built for the user to read in Settings, and sent only when they press a
+// button there, exactly as they saw it.
+const AGENT_DESKTOP = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(here, "../package.json"), "utf8")).agentDesktop?.version ?? "?";
+  } catch {
+    return "?";
+  }
+})();
+function problemReport() {
+  let timing = [];
+  try {
+    const text = fs.readFileSync(timingLog(), "utf8");
+    timing = text.slice(-200_000).split(/\r?\n/);
+  } catch {}
+  const user = os.userInfo().username;
+  return buildReport({ version: app.getVersion(), windows: os.release(), electron: process.versions.electron, agentDesktop: AGENT_DESKTOP,
+    settings, timing, home: os.homedir(), names: namesToHide([user]), pc: os.hostname() });
+}
+
+/** Sends the report the user read: opens a pre-filled issue (copying it too, if it's too long for a link), or copies it. */
+async function sendProblemReport(/** @type {string} */ how, /** @type {string} */ body) {
+  const report = { title: "Problem: ", body: String(body).slice(0, 200_000) };
+  trace({ kind: "problem-report", how });
+  if (how === "copy") {
+    await clipboard.writeText(report.body);
+    return { copied: true, opened: false };
+  }
+  const link = issueLink(ISSUES, report);
+  if (link.copy) await clipboard.writeText(report.body);
+  await shell.openExternal(link.url);
+  return { copied: link.copy, opened: true };
+}
+
 function requestFeature() {
   const body = [
     "**What would you like Buddy to do?**",
@@ -2282,6 +2319,8 @@ const settingsWindow = createSettingsWindow({
   // Apps with a window open now, as suggestions for the Agents lists.
   apps: async () => [...new Set((await listWindows()).map((w) => w.app_name).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
   requestFeature,
+  report: () => problemReport(),
+  sendReport: (how, body) => sendProblemReport(how, body),
   plusInterest: () => (trace({ kind: "plus-interest", from: "settings" }), shell.openExternal(PLUS_INTEREST)),
   checkUpdates: () => updates?.check(),
   installUpdate: () => updates?.install(),
