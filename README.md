@@ -34,7 +34,7 @@ Buddy needs an AI to think with. The first time it starts, it offers three ways 
 
 - **Ask:** press **Ctrl+Alt+B** in any app, or hover the island at the top of your screen. Buddy reads the window,
   points at what you need and labels it. If you work ahead, it follows.
-- **Talk:** press **Ctrl+Alt+T** and say what you need. Buddy answers out loud. Listening and speaking run on your PC.
+- **Talk:** hold **Ctrl+Alt+B**, say what you need, and let go. Buddy answers out loud. Listening and speaking run on your PC.
 - **Mark:** press **Ctrl+Alt+M** and draw around anything on your screen, then ask about it ("what does 1 do?").
 - **Explain:** hover over anything and press **Ctrl+Alt+E** for an illustrated one-page explanation.
 - **Do it for me:** say "do it for me" and Buddy works the app itself, asking before each click, keystroke or file

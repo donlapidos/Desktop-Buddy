@@ -52,11 +52,13 @@ VS Code and more).
   light. A dim dot means idle, a bright dot means active; **Ctrl+Alt+B** switches between them. It also shows
   what Buddy is doing (looking, drawing, waiting for your OK).
   Hover it for **Ask**, **Talk**, **Mark** and **Task**.
-- **Voice:** press **Ctrl+Alt+T** (or the mic in the bubble, or **Talk** on the island) and say what you need. Buddy
-  stops listening when you pause (or press the key again), shows what it heard, and answers out loud: its reply and,
+- **Voice:** hold **Ctrl+Alt+B** (or **Ctrl+Alt+T**), say what you need, and let go. A quick press of Ctrl+Alt+B
+  still opens the bubble to type; a quick press of Ctrl+Alt+T (or the mic in the bubble, or **Talk** on the island)
+  listens until you pause. To see when you let go, Buddy watches the keyboard only while the key is down, never
+  otherwise; Settings › Shortcuts › Hold to talk turns this off. Buddy shows what it heard, and answers out loud: its reply and,
   while guiding, each step as it points. Press the key again or click the island to cut it off; Esc cancels.
   Everything runs on this PC: Moonshine (base, English) for listening and Supertonic 3 for talking, through
-  [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) on the CPU. The first run downloads about 275 MB of models into
+  [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) on the CPU. Once setup is done, Buddy offers to download about 275 MB of models (or does it the first time you talk) into
   `%APPDATA%/desktop-buddy/models`, each file checked against a pinned SHA-256 (see `src/models.js`); after that
   nothing leaves the machine. The models load when you start talking and unload after 10 idle minutes (about 520 MB
   while loaded). Measured on a Core Ultra 5 laptop on battery: about 0.4 s to understand a sentence and 1.6 s before

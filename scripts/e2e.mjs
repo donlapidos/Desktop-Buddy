@@ -299,6 +299,10 @@ const CHECKS = {
         !/1\.5k tokens over 1 model call/.test(r.spendSettings?.month ?? "") && `Settings' month said ${JSON.stringify(r.spendSettings?.month)}`,
         !/runs on this PC, so it costs nothing/.test(r.spendSettings?.note ?? "") && `Settings' spending note said ${JSON.stringify(r.spendSettings?.note)}`,
         !/^Try it: ask me how to do something in .*Skip tour$/s.test(r.tipAfterSetup ?? "") && `after setup, the tour said ${JSON.stringify(r.tipAfterSetup)}`,
+        r.voiceSetupAtStart !== "ask" && `a new profile's voice download was ${JSON.stringify(r.voiceSetupAtStart)}, not offered`,
+        !/275 MB/.test(r.voiceOffer ?? "") && `after setup, the voice offer said ${JSON.stringify(r.voiceOffer)}`,
+        (!r.voiceDeclined?.hidden || r.voiceDeclined.setting !== "no" || r.voiceDeclined.fetches !== 0) && `"Not now" didn't leave the voice alone: ${JSON.stringify(r.voiceDeclined)}`,
+        (!/^Talking is ready/.test(r.voiceAccepted?.text ?? "") || r.voiceAccepted.setting !== "yes" || r.voiceAccepted.fetches !== 1 || !r.voiceAccepted.buttons) && `"Set up talking" didn't fetch the voice once: ${JSON.stringify(r.voiceAccepted)}`,
         !/press Ctrl\+Alt\+M, then draw around.*Got it$/s.test(r.tipAfterAnswer ?? "") && `after the first answer, the tour said ${JSON.stringify(r.tipAfterAnswer)}`,
         (r.tipAfterGotIt !== null || r.tourStep !== "done") && `"Got it" didn't end the tour (${r.tourStep}: ${JSON.stringify(r.tipAfterGotIt)})`,
         r.tipAfterSecondSetup !== null && `setting up again brought the tour back: ${JSON.stringify(r.tipAfterSecondSetup)}`,
@@ -359,10 +363,22 @@ const CHECKS = {
 
   async voice() {
     const line = "Click the Formulas tab, then choose Insert Function.";
-    const { markers, timedOut } = await runCopy("voice", { BUDDY_VOICE_TEST: line }, "VOICE_TEST_DONE", 120_000);
+    // Talking needs an AI set up (without one, Buddy opens the bubble to ask for a key); no call is made.
+    const { markers, timedOut } = await runCopy("voice", { BUDDY_VOICE_TEST: line, BUDDY_HOLD_TIMEOUT_MS: "2000", ANTHROPIC_API_KEY: "sk-ant-e2e-not-used-0000000000" }, "VOICE_TEST_DONE", 150_000);
     const heard = String(markers.VOICE_HEARD?.[0] ?? "").toLowerCase();
     if (!markers.VOICE_SYNTH) return [timedOut ? "timed out (are the voice models downloaded?)" : "nothing spoken"];
-    return [!heard.includes("formulas") && `heard ${heard || "nothing"}`, !markers.VOICE_SAID && "the reply wasn't played"].filter(Boolean);
+    const hold = markers.VOICE_HOLD?.[0];
+    return [!heard.includes("formulas") && `heard ${heard || "nothing"}`, !markers.VOICE_SAID && "the reply wasn't played",
+      !hold && "the hold-to-talk check printed nothing",
+      hold && !hold.idleBefore && "the keyboard hook was installed before any key was pressed",
+      hold && !hold.installedWhileDown && "the keyboard hook wasn't installed while the key was down",
+      hold && hold.held !== "listen,hold,finish" && `holding and letting go did ${hold.held}, not listen, hold, finish`,
+      hold && !hold.idleAfterHold && "after letting go, the hook stayed or Buddy didn't return to rest",
+      hold && hold.tapped !== "listen" && `a tap did ${hold.tapped}, not just listen`,
+      hold && !hold.hookGoneAfterTap && "the hook stayed after a tap",
+      hold && hold.timedOut !== "listen,hold,finish" && `a release that never came did ${hold.timedOut}, not listen, hold, finish`,
+      hold && !hold.idleAfterTimeout && "after the release timed out, the hook stayed or Buddy kept listening",
+    ].filter(Boolean);
   },
 
   // A plain test copy (no dev hook, its own data folder) must leave the user's PC as it was: no start-with-Windows

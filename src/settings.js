@@ -78,7 +78,15 @@ export const DEFAULTS = Object.freeze({
   // Whether Buddy may run PowerShell commands (pc-tools.js). Off until the user turns it on.
   commands: false,
   screenContext: true,
+  // Holding the Ask or Talk shortcut talks to Buddy until it's let go; a tap does what it always did (hold-key.js).
+  holdToTalk: true,
+  // Whether Buddy may fetch its voice models (~275 MB) in the background: "ask" offers it once setup is done, "yes"
+  // fetches them, "no" waits for the first time the user talks. Profiles from before the offer existed fetched them
+  // without asking, and keep doing so ("yes"); a new profile starts at "ask" (load).
+  voiceSetup: "yes",
 });
+
+export const VOICE_SETUP = Object.freeze(["ask", "yes", "no"]);
 
 // The monthly spending limit, in US dollars (costs.js). 0 is none.
 export const CAP = Object.freeze({ max: 10_000 });
@@ -91,6 +99,7 @@ export const CAP = Object.freeze({ max: 10_000 });
  *   hotkeys: Record<HotkeyName, string>, provider: string, model: string, providerModels: Record<string, string>, providerURLs: Record<string, string>, effort: string, dictateStop: string, language: string,
  *   rope: string, trustedApps: string[], blockedApps: string[], routines: Routine[], autoUpdate: boolean,
  *   launchSetupDone: boolean, tour: string, monthlyCap: number, commands: boolean, screenContext: boolean,
+ *   holdToTalk: boolean, voiceSetup: string,
  * }} Settings
  */
 
@@ -228,6 +237,8 @@ export function normalize(raw) {
       : DEFAULTS.monthlyCap,
     commands: r.commands === true,
     screenContext: typeof r.screenContext === "boolean" ? r.screenContext : DEFAULTS.screenContext,
+    holdToTalk: typeof r.holdToTalk === "boolean" ? r.holdToTalk : DEFAULTS.holdToTalk,
+    voiceSetup: pick(r.voiceSetup, VOICE_SETUP, DEFAULTS.voiceSetup),
   };
 }
 
@@ -275,7 +286,8 @@ export function load(file) {
   try {
     text = fs.readFileSync(file, "utf8");
   } catch {
-    return { settings: normalize({}), recovered: false };
+    // First run: the voice download is offered, not started.
+    return { settings: normalize({ voiceSetup: "ask" }), recovered: false };
   }
   try {
     return { settings: normalize(JSON.parse(text)), recovered: false };

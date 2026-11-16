@@ -42,6 +42,7 @@
     "docx": "^9.5.1",
     "electron-updater": "6.8.11",
     "sherpa-onnx-node": "2.0.1",
+    "uiohook-napi": "1.5.5",
     "zod": "4.6.7"
   },
   "devDependencies": {
@@ -62,10 +63,14 @@
       "package.json",
       "!**/*.map",
       "!node_modules/@anthropic-ai/claude-agent-sdk/**",
-      "!node_modules/@anthropic-ai/claude-agent-sdk-*/**"
+      "!node_modules/@anthropic-ai/claude-agent-sdk-*/**",
+      "!node_modules/uiohook-napi/prebuilds/{darwin,linux}-*/**",
+      "!node_modules/uiohook-napi/prebuilds/win32-arm64/**",
+      "!node_modules/uiohook-napi/{libuiohook,src}/**"
     ],
     "asar": true,
     "asarUnpack": [
+      "node_modules/uiohook-napi/**",
       "node_modules/sherpa-onnx-node/**",
       "node_modules/sherpa-onnx-win-x64/**"
     ],

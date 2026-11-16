@@ -357,6 +357,13 @@
       <h2>Shortcuts</h2>
       <p class="lede">Work from any app. Click a shortcut, then press the keys you want; Esc cancels.</p>
       <div class="group keys" id="keys"></div>
+      <div class="group switch-row">
+        <div>
+          <h3>Hold to talk</h3>
+          <p class="help" id="hold-to-talk-help" style="margin:0">Hold down the Ask or Talk shortcut, say your question, and let go. A quick press works as before. Buddy watches for you letting go only while the keys are down.</p>
+        </div>
+        <button class="switch" id="hold-to-talk" role="switch" aria-label="Hold to talk" aria-describedby="hold-to-talk-help"></button>
+      </div>
     </section>
 
     <section id="page-claude" hidden>
@@ -771,6 +778,7 @@
   function renderClaudeRest() {
     const s = S.settings;
     $("screen-context").setAttribute("aria-checked", String(s.screenContext));
+    $("hold-to-talk").setAttribute("aria-checked", String(s.holdToTalk));
     $("provider").replaceChildren(...S.providers.map((p) => {
       const b = el("button", { className: "model" }, el("span", { className: "radio" }), el("b", { textContent: p.label }), el("span", { textContent: p.note }));
       b.setAttribute("role", "radio");
@@ -898,6 +906,7 @@
 
   $("commands").addEventListener("click", () => set({ commands: !S.settings.commands }));
   $("screen-context").addEventListener("click", () => set({ screenContext: !S.settings.screenContext }));
+  $("hold-to-talk").addEventListener("click", () => set({ holdToTalk: !S.settings.holdToTalk }));
   function renderAgents() {
     const s = S.settings;
     $("commands").setAttribute("aria-checked", String(s.commands));

@@ -123,3 +123,19 @@ test("addresses are kept per provider, and unsafe ones refused", () => {
   assert.deepEqual(update(s.settings, { providerURLs: { custom: "http://llm.example.com/v1" } }).rejected, ["providerURLs.custom"], "plain http to the internet");
   assert.deepEqual(update(s.settings, { providerURLs: { openai: "https://evil.example.com/v1" } }).settings.providerURLs, { ollama: "http://localhost:11500/v1" }, "fixed providers' addresses can't be changed");
 });
+
+test("hold to talk is on unless switched off, and only a yes or no is kept", () => {
+  assert.equal(normalize({}).holdToTalk, true);
+  assert.equal(normalize({ holdToTalk: false }).holdToTalk, false);
+  assert.equal(normalize({ holdToTalk: "no" }).holdToTalk, true);
+  assert.deepEqual(update(normalize({}), { holdToTalk: false }).rejected, []);
+});
+
+test("a new profile is offered the voice download; an older one keeps fetching it as it always did", (t) => {
+  assert.equal(load(tempFile(t)).settings.voiceSetup, "ask", "first run: offered, not started");
+  const file = tempFile(t);
+  fs.writeFileSync(file, JSON.stringify({ voice: 2 }));
+  assert.equal(load(file).settings.voiceSetup, "yes", "a profile from before the offer");
+  assert.equal(normalize({ voiceSetup: "no" }).voiceSetup, "no");
+  assert.equal(normalize({ voiceSetup: "later" }).voiceSetup, "yes");
+});

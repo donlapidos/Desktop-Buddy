@@ -16,6 +16,16 @@ the following third-party software, fonts and models.
 | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) (`sherpa-onnx-node`) | Apache-2.0 | Running the speech models |
 | [ONNX Runtime](https://github.com/microsoft/onnxruntime) (bundled with sherpa-onnx) | MIT | Running the speech models |
 | [agent-desktop](https://github.com/vercel-labs/agent-desktop) (Vercel) | Apache-2.0 | Reading and operating apps through accessibility; its Windows release binary ships inside the installer |
+| [uiohook-napi](https://github.com/SnosMe/uiohook-napi) 1.5.5 | MIT | Hold to talk: seeing when the Talk key is let go. Installed only while the key is held |
+| [libuiohook](https://github.com/kwhat/libuiohook) (inside uiohook-napi) | LGPL-3.0-or-later | The keyboard hook itself |
+
+### libuiohook (LGPL-3.0-or-later)
+
+libuiohook, Copyright (C) 2006-2023 Alexander Barker, is free software under the GNU Lesser General Public License,
+version 3 or later (<https://www.gnu.org/licenses/lgpl-3.0.html>). It is compiled into
+`resources/app.asar.unpacked/node_modules/uiohook-napi/prebuilds/win32-x64/uiohook-napi.node`, which Buddy loads at
+run time and which you may replace with your own build. Its source is at <https://github.com/kwhat/libuiohook>, and
+the exact copy used is in the uiohook-napi 1.5.5 package (<https://github.com/SnosMe/uiohook-napi/tree/v1.5.5>).
 
 ## Fonts
 

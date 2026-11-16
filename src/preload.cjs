@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld("buddy", {
   welcomeLocal: () => ipcRenderer.invoke("welcome-local"),
   tour: (event) => ipcRenderer.send("tour", event),
   onTour: on("tour"),
+  voiceOffer: (answer) => ipcRenderer.send("voice-offer", answer),
+  onVoiceOffer: on("voice-offer"),
   cancel: () => ipcRenderer.send("cancel"),
   reset: () => ipcRenderer.send("reset"),
   hide: () => ipcRenderer.send("hide"),

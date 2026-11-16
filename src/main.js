@@ -16,6 +16,7 @@ import { CASES, runEvals } from "./evals.js";
 import { createActivity, pruneUndo } from "./activity.js";
 import { createLog } from "./log.js";
 import { questionTiming } from "./latency.js";
+import { createHoldKey, uiohookHook } from "./hold-key.js";
 import { createApprovalQueue } from "./approval-queue.js";
 import { createAppSessions } from "./app-sessions.js";
 import { islandView } from "./island-state.js";
@@ -777,6 +778,7 @@ async function summon() {
     target: win ? `${win.app_name} — ${win.title}` : null,
     needsKey: !brain,
     tip: tourTipNow(),
+    voiceOffer: voiceOfferNow(),
   });
   showBubble();
 }
@@ -1143,6 +1145,11 @@ async function answerQuestion(text, opts, isCurrent) {
   if (mode === "listening") voice.cancelListening();
   else if (mode !== "idle") return { reply: BUSY[mode] };
   enter("working");
+  // "Talking is ready" (or why it isn't) has been read by now; the tour's tip can have the space back.
+  if (voiceFetched) {
+    voiceFetched = null;
+    sendVoiceOffer();
+  }
   const engine = brain;
   answeringBrain = engine;
   startTurn({ spoken: !!opts?.spoken, lang: opts?.spoken ? heardLang : "en" });
@@ -1230,6 +1237,8 @@ const tourTipNow = () => tourTip(/** @type {import("./welcome.js").TourStep} */ 
 /** Moves the tour on, and shows the bubble the new tip (or none). */
 function tourEvent(/** @type {import("./welcome.js").TourEvent} */ event) {
   const next = tourNext(/** @type {import("./welcome.js").TourStep} */ (settings.tour), event);
+  // Setup just finished: offer the voice download too.
+  if (event === "setup") sendVoiceOffer();
   if (next === settings.tour) return;
   changeSettings({ tour: next });
   trace({ kind: "tour", step: next, event });
@@ -1238,6 +1247,58 @@ function tourEvent(/** @type {import("./welcome.js").TourEvent} */ event) {
 
 onFrom(fromBubble, "tour", (_e, event) => {
   if (event === "skip" || event === "gotit") tourEvent(event);
+});
+
+// ---------- Voice ready at setup: the one-time download, offered rather than started ----------
+
+/** @type {null | { words: string }} the offered download while it runs: what it's fetching, how far */
+let voiceFetch = null;
+/** @type {null | "ready" | "failed"} how the offered download ended, shown for a moment */
+let voiceFetched = null;
+
+/** What the bubble's voice offer shows, or null for nothing. */
+function voiceOfferNow() {
+  if (!voice || !brain) return null;
+  if (voiceFetch) return { state: "fetching", text: voiceFetch.words };
+  if (voiceFetched === "ready") return { state: "done", text: settings.holdToTalk
+    ? `Talking is ready. Hold ${keyLabel(hotkey("ask"))}, say your question, and let go.`
+    : `Talking is ready. Press ${keyLabel(hotkey("talk"))} and say your question.` };
+  if (voiceFetched === "failed") return { state: "done", text: "I couldn't download my voice just now. I'll try again the first time you talk to me." };
+  if (settings.voiceSetup !== "ask" || voice.installed()) return null;
+  return { state: "offer", text: "Want to talk to me out loud? It needs a one-time download (275 MB, about a minute)." };
+}
+const sendVoiceOffer = () => bubble?.webContents.send("voice-offer", voiceOfferNow());
+
+/** Download progress from voice.js, while the offered download runs. */
+function voiceFetchProgress(/** @type {{ what: string, loaded: number, total: number }} */ info) {
+  if (!voiceFetch) return;
+  const words = `Getting my ${info.what === "speaking" ? "voice" : "ears"} ready… ${Math.round((100 * info.loaded) / info.total)}%`;
+  if (words === voiceFetch.words) return;
+  voiceFetch.words = words;
+  sendVoiceOffer();
+}
+
+onFrom(fromBubble, "voice-offer", async (_e, answer) => {
+  if (!voice || voiceFetch) return;
+  trace({ kind: "voice-offer", answer });
+  if (answer === "no") {
+    changeSettings({ voiceSetup: "no" });
+    return sendVoiceOffer();
+  }
+  if (answer !== "yes") return;
+  changeSettings({ voiceSetup: "yes" });
+  voiceFetch = { words: "Getting my voice ready…" };
+  sendVoiceOffer();
+  try {
+    await voice.prepare();
+  } catch {}
+  voiceFetch = null;
+  voiceFetched = voice.installed() ? "ready" : "failed";
+  sendVoiceOffer();
+  setTimeout(() => {
+    voiceFetched = null;
+    sendVoiceOffer();
+  }, 10_000);
 });
 
 // ---------- First-run setup in the bubble (welcome.js): an AI app, a model on this PC, or a key ----------
@@ -1309,7 +1370,7 @@ onFrom(fromIsland, "island-action", (_e, action) => {
   if (verb === "ask") summon();
   else if (verb === "settings") settingsWindow.open();
   else if (verb === "mark") startMarking();
-  else if (verb === "talk") talk();
+  else if (verb === "talk") talkByClick();
   else if (verb === "hush") hushReply();
   else if (verb === "show") showBubble({ focus: false });
   // The island faded an outcome: it has been seen.
@@ -1418,8 +1479,15 @@ async function talk() {
     brain.glance?.(about.window, { keep: true });
   } else await summon();
   bubble.webContents.send("listening", true);
-  progress("Listening…");
-  const { text, error, lang, heardMs, endedAt } = await voice.listen();
+  progress(talkHold ? "Listening… let go when you're done" : "Listening…");
+  const listening = voice.listen();
+  // The Talk key may have been held, or already let go, while the bubble was opening.
+  if (talkHold === "held") voice.holdListening();
+  else if (talkHold === "released") {
+    talkHold = null;
+    voice.finishListening();
+  }
+  const { text, error, lang, heardMs, endedAt } = await listening;
   heardLang = lang ?? "en";
   heardTiming = text && endedAt ? { at: endedAt, heardMs } : null;
   bubble.webContents.send("listening", false);
@@ -1429,6 +1497,68 @@ async function talk() {
   if (text) return bubble.webContents.send("voice-text", text);
   if (error === "cancelled") return showIsland();
   notice(HEARD_ERRORS[error] ?? `Couldn't hear you: ${error}`);
+}
+
+// ---------- Hold to talk: one key, tapped to type or held to talk ----------
+
+// Holding the Ask or Talk shortcut talks to Buddy until it's let go; a tap keeps what each did before (Ask opens or
+// closes the bubble, Talk listens until a pause). The keyboard hook that sees the release exists only between the press
+// and the release (hold-key.js). `talkHold` is that press's state for talk(): null, "held" or "released".
+/** @type {null | "held" | "released"} */
+let talkHold = null;
+/** @type {import("./hold-key.js").KeyHook} */
+let keyHook = uiohookHook();
+/** @type {{ name: string, bubbleWasOpen: boolean } | null} */
+let pressedKey = null;
+const holdKey = createHoldKey({
+  hook: { start: (onKeyUp) => keyHook.start(onKeyUp), stop: () => keyHook.stop() },
+  // End-to-end checks shorten the wait for a release that never comes.
+  releaseTimeoutMs: Number(process.env.BUDDY_E2E && process.env.BUDDY_HOLD_TIMEOUT_MS) || undefined,
+  trace,
+  onTap: () => {
+    const p = pressedKey;
+    pressedKey = null;
+    talkHold = null;
+    if (p?.name === "ask" && p.bubbleWasOpen) toggle();
+  },
+  onHoldStart: () => {
+    talkHold = "held";
+    if (pressedKey?.name === "ask") talk();
+    // Already listening: keep going through pauses. Still opening the bubble: talk() applies it once listening starts.
+    else if (mode === "listening" && voice?.listening) voice.holdListening();
+  },
+  onHoldEnd: ({ timedOut }) => {
+    pressedKey = null;
+    if (timedOut) trace({ kind: "hold-released-late" });
+    // Let go while listening: that's the end of the question. Let go before listening began (the bubble was still
+    // opening): talk() ends it as soon as it starts.
+    if (mode === "listening" && voice?.listening) {
+      talkHold = null;
+      voice.finishListening();
+    } else talkHold = "released";
+  },
+});
+
+// Talk from a click (the bubble's mic, the island, the tray): no key is held.
+const talkByClick = () => {
+  talkHold = null;
+  return talk();
+};
+
+/** A global shortcut fired. @param {import("./settings.js").HotkeyName} name */
+function pressHotkey(name) {
+  if (!settings.holdToTalk || !voice || (name !== "ask" && name !== "talk")) return HOTKEY_ACTIONS[name]();
+  if (holdKey.watching) return; // the key repeating while held
+  const bubbleWasOpen = !!bubble?.isVisible();
+  pressedKey = { name, bubbleWasOpen };
+  talkHold = null;
+  if (!holdKey.pressed(hotkey(name))) {
+    pressedKey = null;
+    return HOTKEY_ACTIONS[name]();
+  }
+  // Ask opens the bubble at once (a tap on an open one closes it, on release); Talk starts listening at once.
+  if (name === "talk") talk();
+  else if (!bubbleWasOpen) toggle();
 }
 
 // ---------- Dictation: say it, and it's typed where you are ----------
@@ -1488,7 +1618,7 @@ function speak(text) {
   saying = oneLine(text);
   voice.say(text);
 }
-onFrom(fromBubble, "talk", () => talk());
+onFrom(fromBubble, "talk", () => talkByClick());
 
 let downloadSettle = null; // returns the island to rest once download progress stops coming
 function onVoiceState(state, info) {
@@ -1497,6 +1627,7 @@ function onVoiceState(state, info) {
     islandFacts.transcribing = true;
     showIsland();
   } else if (state === "downloading") {
+    voiceFetchProgress(/** @type {any} */ (info));
     islandFacts.download = `Getting Buddy's ${info.what === "speaking" ? "voice" : "ears"} ready… ${Math.round((100 * info.loaded) / info.total)}%`;
     showIsland();
     clearTimeout(downloadSettle);
@@ -1520,7 +1651,11 @@ function startVoice() {
     onSound: () => questionClock?.audio(),
     trace,
   });
-  setTimeout(() => voice.prepare(), 4000);
+  // The models are fetched in the background only when the user said yes (or an older profile, which always did);
+  // a new profile is asked once setup is done (voiceOfferNow). Already on this PC: prepare only tidies old caches.
+  setTimeout(() => {
+    if (settings.voiceSetup === "yes" || voice.installed()) voice.prepare();
+  }, 4000);
 }
 
 // Buddy keeps an eye on its own CPU. Normal use measures at 2-3% of one core (an approval waiting, the pointer
@@ -1909,7 +2044,7 @@ function registerHotkeys() {
   held.clear();
   for (const name of HOTKEY_NAMES) {
     const accel = hotkey(name);
-    if (globalShortcut.register(accel, HOTKEY_ACTIONS[name])) held.set(name, accel);
+    if (globalShortcut.register(accel, () => pressHotkey(name))) held.set(name, accel);
     else console.error(`Could not register ${accel}`);
   }
 }
@@ -1941,7 +2076,7 @@ function buildTrayMenu() {
   tray.setContextMenu(
     Menu.buildFromTemplate([
       { label: `Ask Buddy  (${keyLabel(hotkey("ask"))})`, click: () => summon() },
-      { label: `Talk to Buddy  (${keyLabel(hotkey("talk"))})`, click: () => talk() },
+      { label: `Talk to Buddy  (${keyLabel(hotkey("talk"))})`, click: () => talkByClick() },
       { label: `Mark or explain something  (${keyLabel(hotkey("mark"))})`, click: () => startMarking() },
       { label: "New conversation", click: () => brain?.reset() },
       { label: "New task window", click: () => newTask() },
@@ -2151,7 +2286,8 @@ const devKit = () => ({
   here, trace, point, guidePoint, confirm, summon, toggle, ownPids, startMarking, cancelMarking, stopMarkMode, enter, currentMode, grabDisplay,
   toLocalRect, annotationLayer, showAnnotations, releaseLater, openExplainer, changeSettings, settingsState, settingsFile, settingsWindow, runRoutine,
   typeText, saveApiKey, loadApiKey, providerURL, prepareScreenImage, timingLog, documentsDir, startBrain, spendState,
-  bubble, island, tasks, voice, updates, activity,
+  bubble, island, tasks, voice, updates, activity, pressHotkey, sendVoiceOffer,
+  useKeyHook: (/** @type {import("./hold-key.js").KeyHook} */ hook) => { keyHook = hook; },
   get settings() { return settings; },
   get brain() { return brain; },
   set brain(b) { brain = b; },

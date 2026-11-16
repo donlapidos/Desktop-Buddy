@@ -301,3 +301,19 @@ of the wait (the model's share comes on top).
 Still to do for "done": median `first-pointer` under 3 s on the owner's model, from `npm run measure:latency`
 after real use, and `npm run eval -- --set real` / `--set workflows` pass rates unchanged. Both spend the owner's
 model credit, so they are the owner's to run.
+
+**2026-11-16 · package 4 · voice first.** Owner's decision: add the native hook. `uiohook-napi` 1.5.5 (MIT),
+pinned; it compiles in libuiohook, which is LGPL-3.0-or-later, so it ships as its own replaceable file outside the
+app archive, with the notice and source link in `THIRD_PARTY_NOTICES.md`.
+- 4.1 Hold to talk: holding Ask or Talk keeps listening through pauses until the key is let go; a short press
+  does what it did. The hook is installed at the press and removed at the release or after 30 s. Unit test: the hook
+  is never installed while idle (with removal broken on purpose, 4 of 5 tests failed). The `voice` e2e check drives
+  the real shortcut handling with a stand-in hook: hold and release, a tap, and a release that never arrives.
+- 4.2 One main key: Ask is the main key (tap to type, hold to talk); Talk keeps its own shortcut. Settings ›
+  Shortcuts › Hold to talk switches it off.
+- 4.3 Voice ready at setup: the 275 MB were in fact fetched without asking, 4 s after the first start. A new
+  profile is now asked once setup is done ("Set up talking" or "Not now", with progress in the bubble); profiles from
+  before keep fetching in the background as they did. The `welcome` e2e check walks both answers.
+- 4.4 What was heard: the bubble already showed the heard sentence at once; checked, unchanged.
+- Still to measure: median speech-end-to-first-pointer under 3.5 s, from `npm run measure:latency` (spoken rows)
+  after the owner has used this build.

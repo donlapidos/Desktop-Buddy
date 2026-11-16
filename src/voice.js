@@ -199,6 +199,8 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
 
   /** Ends listening now and uses what was said so far. */
   const finishListening = () => heard && send({ cmd: "finish" });
+  /** The Talk key is being held: keep listening through pauses until finishListening(). */
+  const holdListening = () => heard && send({ cmd: "hold" });
   const cancelListening = () => {
     if (!heard) return;
     send({ cmd: "cancel" });
@@ -266,12 +268,15 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
     listen,
     dictate,
     finishListening,
+    holdListening,
     cancelListening,
     say,
     hush,
     warm,
     // On a first run, fetch the models in the background so the first question isn't a long wait. Caches of the
     // speech models earlier versions used are removed once the current ones are in place.
+    /** Whether the models for listening (in the language from Settings) and speaking are on this PC. */
+    installed: () => [getLanguage() === "auto" ? ASR_MULTI : ASR, TTS].every((m) => isInstalled(cacheDir, m)),
     prepare: async () => {
       const needed = [getLanguage() === "auto" ? ASR_MULTI : ASR, TTS];
       if (!needed.every((m) => isInstalled(cacheDir, m))) await warm();

@@ -26,6 +26,7 @@ import { learnCaps } from "./providers.js";
  *   changeSettings: (patch: object) => any, settingsState: () => any, settingsFile: () => string, runRoutine: Function,
  *   typeText: (text: string) => Promise<void>, saveApiKey: Function, loadApiKey: Function, providerURL: Function,
  *   prepareScreenImage: Function, timingLog: () => string, documentsDir: () => string, startBrain: Function, spendState: Function,
+ *   pressHotkey: (name: any) => void, sendVoiceOffer: () => void, useKeyHook: (hook: import("./hold-key.js").KeyHook) => void,
  * }} DevKit
  */
 
@@ -166,8 +167,58 @@ function voiceTest(kit) {
     await voice.say(`**${line}** It's under the *Formulas* tab → Insert Function.`);
     console.log("VOICE_SAID", Date.now() - t0, "ms");
     if (process.env.BUDDY_VOICE_TEST_MIC) console.log("VOICE_MIC", JSON.stringify(await voice.listen()));
+    console.log("VOICE_HOLD", JSON.stringify(await holdToTalkCheck(kit)));
     console.log("VOICE_TEST_DONE");
   }, 1500);
+}
+
+// Hold to talk through the real shortcut handling, with a stand-in for the keyboard hook and for the microphone (the
+// check never opens the mic): a hold keeps listening through pauses and its release ends it; a tap only starts
+// listening; a release that never comes times out (BUDDY_HOLD_TIMEOUT_MS) and stops listening. The hook must be
+// installed only while the key is down.
+/** @param {DevKit} kit */
+async function holdToTalkCheck(kit) {
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const T = 20; // uiohook's code for T, the key of the default Talk shortcut (Control+Alt+T)
+  const hook = { installed: false, onKeyUp: null, start(cb) { this.installed = true; this.onKeyUp = cb; }, stop() { this.installed = false; this.onKeyUp = null; } };
+  kit.useKeyHook(hook);
+  /** @type {string[]} */
+  let calls = [];
+  let finishListen = null;
+  const voice = kit.voice;
+  voice.listen = () => { calls.push("listen"); return new Promise((r) => { finishListen = r; }); };
+  voice.holdListening = () => calls.push("hold");
+  voice.finishListening = () => { calls.push("finish"); finishListen?.({ error: "cancelled" }); finishListen = null; };
+  voice.cancelListening = () => { calls.push("cancel"); finishListen?.({ error: "cancelled" }); finishListen = null; };
+  Object.defineProperty(voice, "listening", { get: () => !!finishListen, configurable: true });
+  const idle = async () => { for (let i = 0; i < 50 && kit.currentMode() !== "idle"; i++) await wait(100); return kit.currentMode() === "idle"; };
+  const r = { idleBefore: !hook.installed };
+  // Held for a second, then let go.
+  kit.pressHotkey("talk");
+  await wait(150);
+  r.installedWhileDown = hook.installed;
+  await wait(850);
+  hook.onKeyUp?.(T);
+  await wait(300);
+  r.held = calls.join(",");
+  r.idleAfterHold = !hook.installed && (await idle());
+  // A tap: listening starts as before (until a pause), and nothing holds it open.
+  calls = [];
+  kit.pressHotkey("talk");
+  await wait(100);
+  hook.onKeyUp?.(T);
+  await wait(600);
+  r.tapped = calls.join(",");
+  r.hookGoneAfterTap = !hook.installed;
+  voice.cancelListening();
+  await idle();
+  // Held, and the release never arrives.
+  calls = [];
+  kit.pressHotkey("talk");
+  await wait(Number(process.env.BUDDY_HOLD_TIMEOUT_MS ?? 2000) + 800);
+  r.timedOut = calls.join(",");
+  r.idleAfterTimeout = !hook.installed && (await idle());
+  return r;
 }
 
 /** BUDDY_APPROVAL_TEST @param {DevKit} kit */
@@ -554,6 +605,16 @@ function welcomeTest(kit) {
   };
   setTimeout(async () => {
     const r = {};
+    // The voice models stand in as not yet on this PC, and the offered download is a stand-in too (no 275 MB here).
+    let voiceThere = false;
+    let fetches = 0;
+    r.voiceSetupAtStart = kit.settings.voiceSetup;
+    kit.voice.installed = () => voiceThere;
+    kit.voice.prepare = async () => {
+      fetches++;
+      await wait(300);
+      voiceThere = true;
+    };
     changeSettings({ providerURLs: { ollama: process.env.BUDDY_WELCOME_TEST } });
     await openDoors();
     r.doors = await js(`[...document.querySelectorAll("[data-door]")].map((b) => b.dataset.door)`);
@@ -593,8 +654,25 @@ function welcomeTest(kit) {
     r.localReady = { brain: !!kit.brain, provider: kit.settings.provider, shown: await js(`document.getElementById("reply").textContent`) };
     // The tour: a tip to ask about the window in front, then, once answered, one for Mark; "Got it" ends it.
     const tipNow = () => js(`document.getElementById("tip").hidden ? null : document.getElementById("tip").innerText`);
-    r.tipAfterSetup = await tipNow();
     await shot("local-ready");
+    // The voice offer, once setup is done: "Not now" leaves the models alone; "Set up talking" fetches them.
+    const offerNow = () => js(`document.getElementById("voice-offer").hidden ? null : document.getElementById("voice-offer-text").textContent`);
+    await until(`!document.getElementById("voice-offer").hidden`, 3_000);
+    r.voiceOffer = await offerNow();
+    await shot("voice-offer");
+    await js(`document.getElementById("voice-no").click()`);
+    await until(`document.getElementById("voice-offer").hidden`, 3_000);
+    r.voiceDeclined = { hidden: (await offerNow()) === null, setting: kit.settings.voiceSetup, fetches };
+    // One at a time: the tour's first tip comes once the voice offer is answered.
+    r.tipAfterSetup = await tipNow();
+    await shot("tour-ask");
+    changeSettings({ voiceSetup: "ask" });
+    kit.sendVoiceOffer();
+    await until(`!document.getElementById("voice-offer").hidden`, 3_000);
+    await js(`document.getElementById("voice-yes").click()`);
+    await until(`/Talking is ready/.test(document.getElementById("voice-offer-text").textContent)`, 5_000);
+    r.voiceAccepted = { text: await offerNow(), setting: kit.settings.voiceSetup, fetches, buttons: await js(`document.getElementById("voice-yes").hidden && document.getElementById("voice-no").hidden`) };
+    await shot("voice-ready");
     const answered = await js(`window.buddy.ask("Say hello.", {})`);
     r.localReply = answered.reply;
     r.localSpend = answered.spend;

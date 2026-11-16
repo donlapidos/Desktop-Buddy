@@ -41,9 +41,10 @@
     return out;
   }
 
-  async function listen({ continuous = false } = {}) {
+  // `held`: the user is holding the Talk key, so a pause doesn't end the request; letting go does ("finish").
+  async function listen({ continuous = false, held = false } = {}) {
     if (take) return;
-    const t = { chunks: [], frame: [], frameLen: 0, speech: false, lastVoice: 0, started: performance.now(), opened: performance.now(), segmentStart: 0, segments: 0, continuous, floor: null, loud: 0 };
+    const t = { chunks: [], frame: [], frameLen: 0, speech: false, lastVoice: 0, started: performance.now(), opened: performance.now(), segmentStart: 0, segments: 0, continuous, held, floor: null, loud: 0 };
     take = t;
     try {
       t.stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
@@ -93,6 +94,10 @@
       if (t.speech && (now - t.lastVoice > END_SILENCE_MS || now - t.segmentStart > SEGMENT_MAX_MS)) segment(t, now);
       else if (!t.speech && now - t.started > CONTINUOUS_IDLE_MS) finish();
       else if (now - t.opened > CONTINUOUS_MAX_MS) finish();
+      return;
+    }
+    if (t.held) {
+      if (now - t.started > MAX_MS) finish();
       return;
     }
     if (t.speech && now - t.lastVoice > END_SILENCE_MS) finish();
@@ -157,6 +162,7 @@
   window.buddy.onVoice(({ cmd, ...rest }) => {
     if (cmd === "listen") listen(rest);
     else if (cmd === "finish") finish();
+    else if (cmd === "hold" && take && !take.continuous) take.held = true;
     else if (cmd === "cancel") cancel();
     else if (cmd === "play") play(rest);
     else if (cmd === "hush") hush();
