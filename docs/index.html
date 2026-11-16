@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desktop Buddy</title>
+<meta name="description" content="Shows you where to click, in any Windows app, with the AI you choose. Free and open source.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; media-src 'self'">
+<style>
+  /* Tokens from DESIGN.md: the field-guide world (paper, plate, ink, hairlines, one Buddy blue). */
+  :root {
+    --paper: #f2f4f0; --plate: #e6eae3; --ink: #1a201c; --ink-2: #4c5650; --ink-3: #5a645e; --rule: #cfd5cd;
+    --blue: #2f7aff; --blue-deep: #1f5fd6; --on-blue: #ffffff;
+    --display: "Alegreya Sans", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+    --text: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    --hand: "Patrick Hand", "Segoe Print", cursive;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #131815; --plate: #1b221d; --ink: #e5ebe6; --ink-2: #aab5ad; --ink-3: #8c968f; --rule: #2c352f;
+      --blue: #6ea2ff; --blue-deep: #6ea2ff; --on-blue: #0b1a33;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--paper); }
+  body { margin: 0; background: var(--paper); color: var(--ink-2); font: 400 16px/1.55 var(--text); }
+  ::selection { background: var(--blue); color: var(--on-blue); }
+  main { max-width: 780px; margin: 0 auto; padding: 0 30px 40px; }
+  .chrome { max-width: 780px; margin: 0 auto; padding: 18px 30px 0; font-size: 13px; color: var(--ink-3); display: flex; justify-content: space-between; gap: 16px; }
+  .chrome a { color: var(--ink-3); }
+  .mark { display: inline-flex; align-items: center; gap: 8px; }
+  h1 { font: 800 clamp(36px, 7vw, 56px)/0.98 var(--display); letter-spacing: -0.02em; color: var(--ink); margin: 34px 0 10px; text-wrap: balance; }
+  .claim { font: 500 italic clamp(18px, 2.6vw, 21px)/1.35 var(--display); color: var(--ink-2); margin: 0 0 14px; }
+  .lede { font-size: 17px; line-height: 1.5; max-width: 34em; margin: 0 0 24px; }
+  .download { display: inline-block; background: var(--blue-deep); color: var(--on-blue); font: 700 17px/1 var(--text); text-decoration: none; padding: 15px 22px; }
+  .download:hover, .download:focus-visible { background: var(--blue); outline: 2px solid var(--ink); outline-offset: 2px; }
+  .small { font-size: 13.5px; color: var(--ink-3); margin: 10px 0 0; }
+  .stage { background: var(--plate); margin: 34px -30px 0; padding: 22px 30px 14px; }
+  .stage video { display: block; width: 100%; aspect-ratio: 16 / 9; background: var(--plate); }
+  .caption { font: 400 17px/1.3 var(--hand); color: var(--ink-2); margin: 10px 0 0; }
+  section { border-top: 1px solid var(--rule); margin-top: 30px; padding-top: 10px; }
+  h2 { font: 800 15px/1.2 var(--display); letter-spacing: 0.01em; color: var(--ink); margin: 0 0 14px; }
+  ol, ul { margin: 0; padding-left: 1.3em; }
+  li { margin: 0 0 10px; }
+  li b { color: var(--ink); }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px; }
+  .pair img { display: block; max-width: 100%; height: auto; }
+  a { color: var(--blue-deep); }
+  @media (prefers-color-scheme: dark) { a { color: var(--blue); } }
+  kbd { font: 600 0.92em var(--text); color: var(--ink); }
+  footer { border-top: 1px solid var(--rule); margin-top: 34px; padding: 12px 0 0; font-size: 13px; color: var(--ink-3); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  footer a { color: var(--ink-3); }
+  @media (max-width: 560px) {
+    main, .chrome { padding-left: 16px; padding-right: 16px; }
+    .stage { margin-left: -16px; margin-right: -16px; padding-left: 16px; padding-right: 16px; }
+    .pair { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="chrome">
+  <span class="mark">
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M1 1 L13 6 L7.5 7.5 L6 13 Z" fill="#2f7aff"/></svg>
+    Desktop Buddy
+  </span>
+  <a href="https://github.com/donlapidos/desktop-buddy">Source on GitHub</a>
+</div>
+<main>
+  <h1>Desktop Buddy</h1>
+  <p class="claim">Shows you where to click, in any Windows app, with the AI you choose.</p>
+  <p class="lede">Ask how to do something in the app in front of you. Buddy's blue pointer flies to the button you
+    need and says what to do, one step at a time, while you do the clicking. It does things for you only when you ask,
+    and asks before each one unless you tell it otherwise.</p>
+  <a class="download" href="https://github.com/donlapidos/desktop-buddy/releases/latest">Download for Windows</a>
+  <p class="small">Free and open source. Installs for your Windows account only, no administrator needed, and keeps
+    itself up to date.</p>
+
+  <div class="stage">
+    <!-- OWNER: add docs/media/buddy-demo.mp4 (the 30-second guided Excel task). -->
+    <video src="media/buddy-demo.mp4" controls muted loop playsinline preload="metadata"
+      aria-label="Buddy guiding a task in Excel">A short recording of Buddy guiding a task in Excel.</video>
+    <p class="caption">Buddy guiding a task in Excel, step by step.</p>
+  </div>
+
+  <section>
+    <h2>Three ways to start</h2>
+    <ol>
+      <li><b>With the AI app you already use:</b> Claude Code, the Claude app, Codex, Gemini CLI, Cursor, VS Code
+        (Copilot), Windsurf or LM Studio. Buddy adds itself in one click; no key needed.</li>
+      <li><b>With a key from an AI company:</b> Anthropic (Claude), OpenAI (GPT), OpenRouter, Google Gemini or
+        DeepSeek. You can set a monthly spending limit.</li>
+      <li><b>With a free model on your own PC:</b> Ollama or LM Studio, with a model that can use tools and about
+        8 GB of free memory. Nothing leaves your PC.</li>
+    </ol>
+  </section>
+
+  <section class="pair">
+    <div>
+      <h2>What you can do</h2>
+      <ul>
+        <li><b>Ask</b> with <kbd>Ctrl+Alt+B</kbd> in any app, and Buddy points the way.</li>
+        <li><b>Talk</b> with <kbd>Ctrl+Alt+T</kbd>; Buddy answers out loud.</li>
+        <li><b>Mark</b> with <kbd>Ctrl+Alt+M</kbd>: draw over anything on screen and ask about it.</li>
+        <li><b>Explain</b> with <kbd>Ctrl+Alt+E</kbd>: an illustrated page about whatever is under the cursor.</li>
+        <li><b>Do it for me:</b> Buddy works the app itself, and you can undo what it changed.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>It asks first</h2>
+      <img src="media/approval-card.png" width="532" height="205"
+        alt="Buddy asking: Can I do this? Click Save. Buttons: Allow, Allow for this task, Don't.">
+    </div>
+  </section>
+
+  <section>
+    <h2>Your privacy</h2>
+    <ul>
+      <li>Buddy has no server and no account of its own.</li>
+      <li>With a key, your question and the window you ask about (its text, and a picture when the model can see
+        pictures) go to the AI company you chose, under your account. Nothing goes to anyone else.</li>
+      <li>With a model on your PC, nothing leaves the PC.</li>
+      <li>Listening and speaking run on your PC. Keys are stored encrypted by Windows and only sent to their own
+        provider.</li>
+      <li>Window pictures can be turned off in Settings › AI &amp; privacy. Some apps, such as password managers, are
+        off limits to Buddy's actions from the start.</li>
+    </ul>
+    <p class="small"><a href="https://github.com/donlapidos/desktop-buddy/blob/main/docs/GUIDE.md#ai-and-privacy">All
+      the details</a></p>
+  </section>
+
+  <footer>
+    <span>Apache-2.0 · built on <a href="https://github.com/vercel-labs/agent-desktop">agent-desktop</a></span>
+    <span><a href="https://github.com/donlapidos/desktop-buddy/blob/main/CHANGELOG.md">What's new</a> ·
+      <a href="https://github.com/donlapidos/desktop-buddy/releases">All releases</a></span>
+  </footer>
+</main>
+</body>
+</html>
