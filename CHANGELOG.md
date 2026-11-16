@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* Mark prepares its hidden drawing window and captures the screen in parallel. Esc can cancel preparation, and a
+  ten-second deadline also covers waiting for the image to load.
+* Late captures and retired windows cannot cancel or reopen a newer Mark session. Overlapping captures keep
+  Buddy's own overlay hidden until the active captures finish; startup phase timings are recorded without image content.
+  If the requested display is unavailable, capture stops instead of using another monitor.
+
 * Mark keeps completed strokes on their own drawing layer, so moving the pen no longer repaints every older mark.
   Long strokes keep following the pen when their point budget fills; empty coalesced events still draw correctly.
 * Cancelled pointer strokes are discarded, another pointer cannot interrupt an active stroke, and pointer-up keeps

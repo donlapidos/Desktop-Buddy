@@ -27,6 +27,7 @@ VS Code and more).
   display. Settings › AI & privacy › **Window screenshots** turns window screenshots off immediately; Mark and
   Explain still send the area you explicitly choose. Text-only and unverified models start from text.
 - **Mark:** press **Ctrl+Alt+M** (or **Mark** on the island). The screen becomes a still with a blue frame.
+  Esc also cancels while the screen is being prepared. Preparation and image loading have a ten-second deadline.
   Completed marks stay on a separate canvas while the pen draws, avoiding repeated redraws as marks accumulate.
   Long strokes keep following the pen; a cancelled stroke is discarded.
   - **Click** something to explain it right away.
@@ -187,7 +188,8 @@ document. CI (`.github/workflows/ci.yml`) runs `npm run check`, `npm test` and `
 and pull request.
 
 `npm run e2e` runs the real app end to end, each check in a separate test copy with its own data folder (your Buddy,
-settings and files are left alone): **markerRender** (generated sample content, standard/high-DPI pixels, long strokes,
+settings and files are left alone): **markerStartup** (generated captures, parallel preparation, cancellation,
+late-window ownership and timeout recovery), **markerRender** (generated sample content, standard/high-DPI pixels, long strokes,
 pointer cancellation, Undo and composed-image marks; no real mouse input or desktop capture), **annotations** (all five drawing types, safe labels, task ownership, a real
 guided step with its expected result, interruption and focus/anchor cleanup), **context** (a test-owned chart window supplies a real screenshot and accessibility
 refs; turning screenshots off removes images from the next request), **conversation** (streaming and mid-answer

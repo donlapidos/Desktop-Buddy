@@ -143,6 +143,13 @@ function keyProblems(k) {
 
 /** @type {Record<string, { interactive?: boolean, run: () => Promise<string[]> }>} each resolves its problems */
 const CHECKS = {
+  async markerStartup() {
+    const { markers, timedOut } = await runCopy("marker-startup", { BUDDY_MARK_STARTUP_TEST: "1", ANTHROPIC_API_KEY: "sk-ant-e2e-not-used-0000000000" }, "MARK_STARTUP_TEST_DONE", 60000);
+    const r = markers.MARK_STARTUP_TEST?.[0];
+    if (!r) return [timedOut ? "timed out" : "no marker startup result"];
+    return [r.error, ...["loadedDuringCapture", "cancelledPromptly", "replacementSurvived", "imageReady", "closed", "unreadyRecovered", "sharedCaptureStarted",
+      "captureCancelled", "newCaptureStillHidden", "lateCaptureIgnored", "captureReleased", "missingDisplayRejected"].filter((key) => !r[key]).map((key) => `${key} failed`)].filter(Boolean);
+  },
   async markerRender() {
     const { markers, timedOut } = await runCopy("marker-render", { BUDDY_MARK_RENDER_TEST: out }, "MARK_RENDER_TEST_DONE", 60000);
     const r = markers.MARK_RENDER_TEST?.[0];

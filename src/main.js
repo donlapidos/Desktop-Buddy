@@ -36,6 +36,7 @@ import { createVoice } from "./voice.js";
 import { createReplyStream } from "./reply-stream.js";
 import { createTurnQueue } from "./turn-queue.js";
 import { centerOf, createAnnotationLayer, insideBox, sameBox } from "./annotations.js";
+import { abortable, prepareMarker } from "./marker-startup.js";
 import { appKey } from "./policy.js";
 import { appWords, findLocal, localDoor, tourNext, tourTip } from "./welcome.js";
 import { aboutMoney, addCall, capProblem, createLedger, moneyWords, noSpend, priceOf, spendLine, tokenWords } from "./costs.js";
@@ -162,6 +163,8 @@ let marks = [];
 let pendingMarks = null; // what the user highlighted, waiting for their question
 let markWin = null; // the freeze-frame of the screen the user draws on
 let markDisplay = null;
+let markStartup = null;
+let displayCaptures = 0;
 let bubbleHideTimer = null;
 
 const ownPids = () => [process.pid, ...app.getAppMetrics().map((m) => m.pid)];
@@ -775,16 +778,19 @@ async function summon() {
 // ---------- Explain: capture around a point, ask the brain, show an infographic ----------
 
 // The whole display as an image, with Buddy's own pointer hidden.
-async function grabDisplay(display) {
+async function grabDisplay(display, signal = undefined, getSources = (options) => desktopCapturer.getSources(options)) {
+  if (signal?.aborted) throw signal.reason;
   const sf = display.scaleFactor;
   const size = { width: Math.round(display.size.width * sf), height: Math.round(display.size.height * sf) };
-  broadcast("hide-buddy", true);
-  await new Promise((r) => setTimeout(r, 60));
+  if (++displayCaptures === 1) broadcast("hide-buddy", true);
   try {
-    const sources = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: size });
-    return (sources.find((s) => s.display_id === String(display.id)) ?? sources[0]).thumbnail;
+    await abortable(() => new Promise((r) => setTimeout(r, 60)), signal);
+    const sources = await abortable(() => getSources({ types: ["screen"], thumbnailSize: size }), signal);
+    const source = sources.find((s) => s.display_id === String(display.id));
+    if (!source) throw new Error("This display isn't available for capture. Try again.");
+    return source.thumbnail;
   } finally {
-    broadcast("hide-buddy", false);
+    if (--displayCaptures === 0) broadcast("hide-buddy", false);
   }
 }
 
@@ -857,7 +863,7 @@ function bboxOf(points, pad = 10) {
 
 // Marking draws on a still of the screen in an opaque window (like the Snipping Tool). Drawing straight on the
 // transparent overlay meant Windows repainted the whole screen for every stroke segment, which lagged.
-async function startMarking() {
+async function startMarking({ capture = grabDisplay, display = screen.getDisplayNearestPoint(cursor()), timeoutMs = 10000 } = {}) {
   if (mode !== "idle") return;
   if (!brain) return summon();
   clearMarks();
@@ -865,12 +871,13 @@ async function startMarking() {
   tourEvent("marked");
   hideBubble({ now: true });
   progress("Getting the screen ready…");
-  markDisplay = screen.getDisplayNearestPoint(cursor());
+  markDisplay = display;
+  const job = { abort: new AbortController(), started: Date.now(), display, ready: false, readyTimer: null };
+  markStartup = job;
+  globalShortcut.register("Escape", cancelMarking);
   try {
-    const shot = await grabDisplay(markDisplay);
-    if (currentMode() !== "marking") return;
     const win = new BrowserWindow({
-      ...markDisplay.bounds,
+      ...display.bounds,
       frame: false,
       resizable: false,
       movable: false,
@@ -886,12 +893,23 @@ async function startMarking() {
     markWin = win;
     win.setAlwaysOnTop(true, "screen-saver");
     win.on("closed", () => {
-      if (markWin === win) markWin = null;
-      cancelMarking();
+      if (markWin === win) cancelMarking();
     });
-    win.webContents.once("did-finish-load", () => win.webContents.send("mark-start", { png: shot.toPNG() }));
-    win.loadFile(path.join(here, "ui/marker.html"));
+    const prepared = await prepareMarker({
+      capture: async (signal) => { const shot = await capture(display, signal); if (signal.aborted) throw signal.reason; return shot.toPNG(); },
+      load: () => win.loadFile(path.join(here, "ui/marker.html")),
+      signal: job.abort.signal,
+      timeoutMs,
+    });
+    if (markStartup !== job || job.abort.signal.aborted || currentMode() !== "marking" || win.isDestroyed()) return;
+    trace({ kind: "mark-startup", captureMs: prepared.captureMs, loadMs: prepared.loadMs, totalMs: prepared.totalMs });
+    job.readyTimer = setTimeout(() => {
+      if (markStartup !== job || job.ready) return;
+      stopMarkMode(); enter("idle"); notice("The screen took too long. Try Mark again.");
+    }, Math.max(1, timeoutMs - (Date.now() - job.started)));
+    win.webContents.send("mark-start", { png: prepared.image });
   } catch (err) {
+    if (markStartup !== job || job.abort.signal.aborted) return;
     stopMarkMode();
     enter("idle");
     notice(`Couldn't start marking: ${err.message}`);
@@ -901,6 +919,10 @@ async function startMarking() {
 // Takes the still down; the caller decides what mode comes next.
 // `delay` keeps the still up a moment so the overlay can paint the finished marks underneath first.
 function stopMarkMode(delay = 0) {
+  const startup = markStartup;
+  markStartup = null;
+  clearTimeout(startup?.readyTimer);
+  startup?.abort.abort();
   globalShortcut.unregister("Return");
   globalShortcut.unregister("Escape");
   const win = markWin;
@@ -1012,7 +1034,10 @@ function handleFrom(check, channel, fn) {
   });
 }
 ipcMain.on("mark-ready", (e) => {
-  if (!fromMarker(e)) return;
+  if (!fromMarker(e) || mode !== "marking" || !markStartup || markStartup.abort.signal.aborted) return;
+  markStartup.ready = true;
+  clearTimeout(markStartup.readyTimer);
+  trace({ kind: "mark-ready", ms: Date.now() - markStartup.started });
   markWin.show();
   markWin.setBounds(markDisplay.bounds); // Windows clamps oversized windows to the work area on create
   markWin.focus();
@@ -2424,6 +2449,13 @@ app.whenReady().then(() => {
       console.log("EXPLAINER_SHOWN", JSON.stringify({ windows: plates.length, visible: plates.some((w) => w.isVisible()), chars: text.length, title: text.split("\n").find((l) => l.trim()) ?? "" }));
       console.log("EXPLAINER_TEST_DONE");
     }, 4000);
+  } else if (process.env.BUDDY_MARK_STARTUP_TEST) {
+    setTimeout(async () => {
+      const { runMarkerStartupTest } = await import("./marker-startup-test.js");
+      await runMarkerStartupTest({ start: startMarking, cancel: cancelMarking,
+        retire: (delay) => { stopMarkMode(delay); enter("idle"); }, window: () => markWin, mode: currentMode,
+        captureFrame: grabDisplay, activeCaptures: () => displayCaptures });
+    }, 2500);
   } else if (process.env.BUDDY_MARK_RENDER_TEST) {
     setTimeout(async () => {
       const { runMarkerTest } = await import("./marker-test.js");

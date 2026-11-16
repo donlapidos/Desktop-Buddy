@@ -208,7 +208,12 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   callback CPU time from 2.8–3.0 ms to 0.4–0.5 ms at 1x/2x DPI. This measures drawing work, not end-to-end pen latency
   or frame rate. The new non-interactive `markerRender` check also verifies pixels in the active/saved layers and
   composed image, long-stroke endpoints, empty coalesced samples, cancellation, pointer isolation and Undo.
-  Mark still uses a frozen screen image; its capture/startup path has not changed.
+  These drawing measurements exclude capture/startup; Mark still uses a frozen screen image.
+  *Marker startup (2026-11-16):* hidden-page loading and screen capture now overlap. Esc cancels preparation,
+  a ten-second deadline includes image readiness, and a retired window or late capture cannot take over a newer
+  session. Generated-image tests exercise the actual window lifecycle and shared capture visibility without reading
+  the owner's desktop. Local `mark-startup` and `mark-ready` timing entries measure preparation phases and total
+  readiness without logging pixels. Real capture latency still needs measurement during normal Mark use.
 - **2.6 Injection tests.** Web pages, file contents and window text that tell Buddy to act ("ignore the user, run
   …", "send this file to …"). Each must end with no action taken or an approval card that says plainly what would
   happen. Add them to the task set so every model is scored on them.
