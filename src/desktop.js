@@ -527,9 +527,9 @@ export function nearestNames(tree, target, max = 5) {
 // are instead of pointing at a step they've passed. Texts already on screen when the wait starts never count.
 // Resolves { status: "appeared" | "changed" | "timeout" | "cancelled", why, step, window, snapshot }; `why` says what
 // changed: "window" (a new or retitled one), "controls", or "values" (a selection or text they typed).
-const windowTarget = (w) => ["--app", w.app_name, "--window-id", w.id];
+const windowTarget = (w) => w.id ? ["--window-id", w.id] : ["--app", w.app_name];
 const WAIT_SNAPSHOT = ["-i", "--compact", "--include-bounds", "--max-depth", "25", "--timeout-ms", "3000"];
-export async function waitForProgress({ win, steps, timeoutMs = 45_000, signal, session }) {
+export async function waitForProgress({ win, steps, timeoutMs = 45_000, signal, session, onReady = null }) {
   const needles = steps.map((s) => String(s).toLowerCase().trim()).filter(Boolean);
   const read = (w) => snapshotResilient(windowTarget(w), WAIT_SNAPSHOT, { timeoutMs: 8_000, signal, session });
   const ofApp = async () => (await listWindows()).filter((w) => w.pid === win.pid);
@@ -539,6 +539,7 @@ export async function waitForProgress({ win, steps, timeoutMs = 45_000, signal, 
   const baseline = first.ok ? controlShape(first.data.tree) : null;
   const held = first.ok ? controlValues(first.data.tree) : null;
   const seen = new Set((await ofApp()).map((w) => `${w.id}|${w.title}`));
+  onReady?.();
   let changedReads = 0;
   while (Date.now() < until) {
     if (signal?.aborted) return { status: "cancelled", step: -1 };

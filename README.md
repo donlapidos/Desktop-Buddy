@@ -13,6 +13,13 @@ VS Code and more).
   and knows which part is on screen right now. Long or slow pages take a few seconds ("Reading the page…").
 - **Guide mode (default):** Buddy reads the app through its accessibility tree, flies its pointer to the
   control you need and labels it, one step at a time. You do the clicking.
+- **Draw on the screen:** Buddy can highlight or circle controls, connect them with an arrow, add short labels,
+  and show a drag path between two controls. Guide routes use numbered highlights; a step can use a circle or drag
+  path when that explains it better. In a spoken conversation the instruction is read as its drawing appears.
+  These drawings never click or drag for you. Each task owns its own batch; Stop clears that conversation's drawings.
+  Drawings also clear when the window loses focus, moves or closes, or an anchor changes position, and stop polling
+  when cleared. Completed answers leave their drawing for six seconds; a live batch expires after one minute.
+  If an app exposes no accessible controls, Buddy can explain its screenshot but cannot anchor these drawings yet.
 - **Visual context:** when you ask, a model known to support images receives a fresh screenshot of the requested
   window alongside its control names and refs. This helps with charts, canvases and layouts. The two sources are
   prepared together with a four-second deadline; if either fails, Buddy uses the other. Automatic context skips
@@ -94,6 +101,8 @@ VS Code and more).
   changed one back (the old version is kept for a week); a file you changed since is only put back if you say so again.
 - **Guiding a whole route:** the model can hand Buddy every step at once (`guide_steps`); Buddy points at each in turn,
   follows you when you work ahead, and matches controls by meaning when the app words them differently.
+  The default engine keeps everyday guidance instructions small and loads illustrated explanations when needed.
+  It also includes hints for Excel, Word, browsers, File Explorer and Windows Settings, checked against your current screen.
 
 ## Install
 
@@ -174,7 +183,8 @@ document. CI (`.github/workflows/ci.yml`) runs `npm run check`, `npm test` and `
 and pull request.
 
 `npm run e2e` runs the real app end to end, each check in a separate test copy with its own data folder (your Buddy,
-settings and files are left alone): **context** (a test-owned chart window supplies a real screenshot and accessibility
+settings and files are left alone): **annotations** (all five drawing types, safe labels, task ownership, a real
+guided step with its expected result, interruption and focus/anchor cleanup), **context** (a test-owned chart window supplies a real screenshot and accessibility
 refs; turning screenshots off removes images from the next request), **conversation** (streaming and mid-answer
 corrections), **files** (a scripted model asks for a file; the approval card is clicked; the file
 is made, listed in Activity and undone; another window can't answer the card), **tasks**, **settings** (including a
@@ -183,9 +193,30 @@ startup entries and shortcuts as they were). Any check whose copy logged a refus
 `npm run e2e -- --exe "<path to Desktop Buddy.exe>"` runs them against a built or installed copy. `npm run e2e -- --interactive` adds the marker (a full-screen freeze frame) and the approval
 clicks below (it moves the mouse). Screenshots and logs go to `e2e-out/`.
 
-`npm run eval -- --provider openai --model <id>` runs the model check (seven real Buddy tasks, scored) from the
+`npm run eval -- --provider openai --model <id>` runs the model check (seven sample Buddy tasks, scored) from the
 command line, with the key from the provider's usual variable; Settings › AI & privacy › **Check this model** runs the
 same with your saved key.
+
+For stricter checks over recorded Excel and Edge windows, list the six workflows without making a model call:
+`npm run eval -- --set workflows --list`. They cover opening and verifying a dialog, correcting a target,
+continuing after a tab change, website search, a missing button and an unopened dialog.
+
+Run a model against them with `npm run eval -- --provider <provider> --model <id> --set workflows --json workflow-results.json`.
+This uses that provider's API and can cost money. Each result includes every request and correction, tool calls,
+time to first reply text, time to first guidance tool result, total time and token usage. The saved-key runner accepts
+the same options. Unknown case IDs and set names fail before any model call.
+
+Workflow replay accepts only controls in the current recorded screen and requires a newly observed expected result
+before a guide can finish. It never reads or operates your desktop. The older `made-up` and `real` sets remain
+route checks; their scores do not prove completion. Recorded replay does not measure drawing smoothness, actual
+mouse use or time spent waiting for a person. Its English recovery checks are explicit heuristics: review the saved
+transcript alongside the score before judging model quality. `npm test` checks the runner with scripted replies;
+those passes are not a live model score.
+
+To apply corrected checks to saved replies without another API call, use
+`npm run eval -- --set workflows --rescore workflow-results.json --json workflow-rescored.json`.
+Choose a new output file: existing files cannot be overwritten. Transport failures and cancellations remain failures. The saved-key runner uses its own
+temporary runtime profile and only reads the saved key from Buddy's profile.
 
 `BUDDY_APPROVAL_TEST=cycle npm start` checks, with a real mouse click (the pointer moves; keep your hands off the
 mouse), that an approval card takes a click and that the keyboard goes back to your app afterwards. Cases: `plain`,

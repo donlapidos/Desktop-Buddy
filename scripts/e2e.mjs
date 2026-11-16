@@ -143,6 +143,18 @@ function keyProblems(k) {
 
 /** @type {Record<string, { interactive?: boolean, run: () => Promise<string[]> }>} each resolves its problems */
 const CHECKS = {
+  async annotations() {
+    const { markers, timedOut } = await runCopy("annotations", { BUDDY_ANNOTATIONS_TEST: out, BUDDY_ANNOTATIONS_SAMPLE: path.join(app, "scripts/samples/context-window.ps1") }, "ANNOTATIONS_TEST_DONE", 120_000);
+    const r = markers.ANNOTATIONS_TEST?.[0];
+    if (!r) return [timedOut ? "timed out" : "no annotation result"];
+    return [r.error, ...["highlight", "circle", "arrow", "label", "drag"].filter((kind) => !r.kinds?.includes(kind)).map((kind) => `${kind} didn't render`),
+      !r.escaped && "a label wasn't rendered safely as text", !r.ownerIsolated && "another task's drawings were cleared",
+      !r.sampleClick && "the sample's semantic click failed", !/^They finished all 1 steps/.test(r.route ?? "") && `the route didn't verify completion: ${r.route}`,
+      !r.routeCleared && "a finished route left drawings behind", !r.cancelCleared && "interruption left drawings behind",
+      !r.noLateCaption && "a cancelled flight showed a late caption", !r.movementCleared && "a moved anchor kept its old drawing",
+      !r.focusCleared && "switching to another window left the old drawing visible",
+    ].filter(Boolean);
+  },
   async context() {
     const observations = [];
     const server = http.createServer(async (req, res) => {

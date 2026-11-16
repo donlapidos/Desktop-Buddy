@@ -5,18 +5,28 @@
 //   npm run eval:saved -- --provider openai --model gpt-6.1-sol --set real
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { app, safeStorage } from "electron";
 import { keyRecord } from "../src/keys.js";
 
-app.setPath("userData", path.join(app.getPath("appData"), "desktop-buddy"));
+// Only the key is read from Buddy's profile. Chromium's cache and session belong
+// to this process, so an active Buddy never competes with the benchmark for them.
+const savedData = path.join(app.getPath("appData"), "desktop-buddy");
+const runtimeData = fs.mkdtempSync(path.join(os.tmpdir(), "buddy-eval-"));
+app.setPath("userData", runtimeData);
+app.setPath("sessionData", runtimeData);
 // Not awaited at the top: in an ES module entry, Electron is only ready once the module has finished loading.
 app.whenReady().then(async () => {
+  if (process.argv.includes("--list") || process.argv.includes("--rescore")) {
+    await import("./eval.mjs");
+    return;
+  }
   const at = process.argv.indexOf("--provider");
   const provider = at >= 0 ? process.argv[at + 1] : "";
-  const file = path.join(app.getPath("userData"), provider === "anthropic" ? "api-key.bin" : `api-key-${provider}.bin`);
+  const file = path.join(savedData, provider === "anthropic" ? "api-key.bin" : `api-key-${provider}.bin`);
   let key = null;
   try {
-    key = keyRecord(safeStorage.decryptString(fs.readFileSync(file)))?.key ?? null;
+    key = keyRecord(await safeStorage.decryptStringAsync(fs.readFileSync(file)))?.key ?? null;
   } catch {}
   if (!key) {
     console.error(`No ${provider || "provider"} key is saved in Buddy (Settings › AI & privacy).`);

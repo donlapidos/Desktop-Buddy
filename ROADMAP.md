@@ -170,6 +170,18 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   tokens a task, 23/23 still pass (one check widened: an instruction in a pointer caption counts as said). Still
   slow, 5-10 turns: tasks that go on past the recorded screens (chart type, filter menu) and the two do-it tasks,
   where the stand-in window doesn't change after an action, so the model tries again; the real app would move on.
+  *Workflow replay added (2026-11-16):* `--set workflows` adds six stricter Excel and Edge cases over the existing
+  recordings: two requests can share a conversation, controls must exist in the current screen, and an expected
+  result must newly appear before a route finishes. Includes correction, tab-change/stale-ref, missing-control and
+  unverified-dialog cases, plus per-request first-text and first-guidance timing. The runner is tested with good
+  and deliberately bad scripted replies. The older results above measure route choices,
+  not verified completion. Text recovery checks remain heuristics and need transcript review. Visual smoothness
+  and actual user interaction still need separate checks; no new browser recordings were taken.
+  *First workflow run (2026-11-16):* the configured OpenAI `gpt-6.1-sol`, medium effort, passed all six cases after
+  human review and a scoring correction for smart apostrophes (the original score was 4/6). The existing replies
+  were rescored without a second API run. Eight user requests used nine model turns; first guidance was 2.3–6.7 s
+  (median 3.1 s), and average total time was 4.1 s per request. This is one small text-replay sample, not a claim
+  about drawing smoothness or broad app reliability. Response latency remains a visible gap.
 - **2.3 Run every provider and publish the table.** `npm run eval` across at least: two Claude models, two OpenAI,
   one Gemini, one DeepSeek, two OpenRouter, three local models of different sizes. Publish pass rate, seconds and
   cost per task in the README; make Settings' "works well" come from this table, not from the model's family name.

@@ -4,6 +4,7 @@
 // guiding are recorded, and actions are approved and recorded. A case passes when the model shows the right controls
 // in the right order (or does the right action), the way a person checking its answer would judge it.
 import { Brain } from "./brain.js";
+import { ReplayDesktop } from "./eval-replay.js";
 import { renderTree } from "./desktop.js";
 import { addCall, noSpend, tokensOf } from "./costs.js";
 
@@ -71,7 +72,8 @@ const NOTEPAD = windowTree(["window", "notes.txt - Notepad", [
 
 /**
  * @typedef {{ kind: "point" | "guide" | "act" | "explainer" | "file" | "other", name: string, input?: any }} Call
- * @typedef {{ id: string, title: string, app: string, window: any, ask: string, check: (calls: Call[], reply: string) => string | null, next?: [RegExp, any][] }} EvalCase
+ * @typedef {{ ask: string, window?: any, check: (calls: Call[], reply: string) => string | null }} EvalFollowUp
+ * @typedef {{ id: string, title: string, app: string, window: any, ask: string, check: (calls: Call[], reply: string) => string | null, next?: [RegExp, any][], strict?: boolean, followUps?: EvalFollowUp[] }} EvalCase
  * next: screens that follow. Showing (pointing or guiding to) a control whose name matches switches the window to that
  * screen, as if the user had clicked it.
  * check returns null when the case passed, else what was wrong, in words.
@@ -83,14 +85,15 @@ export const shown = (calls) => calls.filter((c) => c.kind === "point" || c.kind
 
 /** Passes when the controls shown include one matching each pattern, in this order (other steps may come between). */
 export const inOrder = (...patterns) => (calls) => {
+  if (calls.some((c) => c.kind === "act")) return "acted when the user only asked how";
   const names = shown(calls);
   let at = 0;
   for (const p of patterns) {
     const i = names.findIndex((n, k) => k >= at && p.test(n));
     if (i < 0) return names.length ? `showed ${names.map((n) => `"${n}"`).join(", ")}; expected one matching ${p} after that` : "didn't show any control";
-    at = i;
+    at = i + 1;
   }
-  return calls.some((c) => c.kind === "act") ? "acted when the user only asked how" : null;
+  return null;
 };
 // What Buddy told the user: its reply, and the captions beside the pointer (in a guided route, the instruction is there).
 const told = (calls, reply) => [reply, ...calls.filter((c) => c.kind === "point" || c.kind === "guide").map((c) => c.input?.caption ?? "")].join("\n");
@@ -187,10 +190,18 @@ class EvalBrain extends Brain {
     for (const [, screen] of c.next ?? []) walk(screen);
     // The screen on show: the case's window, then whichever screen showing a control led to.
     this.window = c.window;
+    this.replay = c.strict ? new ReplayDesktop(c.window, c.next) : null;
     this.moved = false;
   }
 
   async look() {
+    if (this.replay) {
+      this.window = this.replay.tree;
+      this.names = new Map([...this.replay.nodes()].map(([ref, node]) => [ref, node.name ?? node.role]));
+      this.bounds.clear();
+      this.labels.clear();
+      this.refApps.clear();
+    }
     const { text } = renderTree(this.window, this.bounds, undefined, this.labels);
     this.noteApp(this.window, this.case.app);
     return `window: ${this.window.name} · ${this.names.size} refs\n${text}`;
@@ -206,6 +217,8 @@ class EvalBrain extends Brain {
   }
 
   async runTool(name, input) {
+    if (name === "prepare_explainer") return super.runTool(name, input);
+    if (this.replay && ["point_at", "guide_steps", "wait_for_user", "act", "annotate", "clear_annotations"].includes(name)) return this.replayTool(name, input);
     const named = (ref) => this.names.get(ref) ?? String(ref);
     switch (name) {
       case "look":
@@ -254,13 +267,65 @@ notes.txt · 1 KB · 2026-11-10 17:40`;
         return "Shown.";
       default:
         this.calls.push({ kind: "other", name, input });
-        return "Done.";
+        return this.replay ? "This tool has no recorded outcome in this workflow. Nothing was done." : "Done.";
     }
+  }
+
+  async replayTool(name, input) {
+    const replay = this.replay;
+    if (name === "act") this.calls.push({ kind: "act", name: replay.nodes().get(input.ref)?.name ?? String(input.keys ?? input.ref ?? input.action), input });
+    if (name === "clear_annotations") return "Your drawings are cleared.";
+    if (name === "wait_for_user") {
+      const result = replay.progress(input.steps);
+      this.calls.push({ kind: "other", name: `wait-${result.status}`, input });
+      return `${result.status === "appeared" ? `They reached step ${result.step + 1}; its text appeared.` : result.status === "changed" ? "Their window changed, but the expected result wasn't observed." : "The wait timed out; no expected result appeared. Ask whether they are stuck."}\n${await this.look()}`;
+    }
+    if (name === "guide_steps") {
+      const steps = input.steps ?? [];
+      if (!steps.length) return "guide_steps needs steps.";
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const match = replay.match(step.target, step.role);
+        if (!match?.node) {
+          this.calls.push({ kind: "other", name: match ? "ambiguous-control" : "missing-control", input: step });
+          return `They did ${i} of ${steps.length} steps. At step ${i + 1}, ${match ? "several controls match" : "nothing on screen is called"} "${step.target}".\n${await this.look()}`;
+        }
+        replay.point(match.node.ref_id);
+        this.calls.push({ kind: "guide", name: match.node.name, input: step });
+        const needles = [];
+        const stepOf = [];
+        for (let j = i; j < steps.length; j++) for (const text of [].concat(steps[j].done_when ?? [])) {
+          if (typeof text === "string" && text.trim()) { needles.push(text); stepOf.push(j); }
+        }
+        const result = replay.progress(needles);
+        this.calls.push({ kind: "other", name: `wait-${result.status}`, input: { step: i + 1 } });
+        if (result.status !== "appeared") return `They did ${i} of ${steps.length} steps. ${result.status === "changed" ? "Their screen changed, but the expected result wasn't observed." : "The wait timed out; the step is not verified."} Check the current window before claiming completion.\n${await this.look()}`;
+        i = stepOf[result.step];
+      }
+      await this.look();
+      return `They finished all ${steps.length} steps.`;
+    }
+    if (name === "annotate") {
+      const refs = (input.items ?? []).flatMap((item) => [item.ref, ...(item.to_ref ? [item.to_ref] : [])]);
+      if (!refs.length || refs.some((ref) => !replay.nodes().has(ref))) return "A drawing anchor is not in the current recorded window. Read it again.";
+      for (const ref of refs) this.calls.push({ kind: "point", name: replay.nodes().get(ref).name, input: { caption: input.caption } });
+      return "Annotated. Nothing was operated.";
+    }
+    const node = replay.nodes().get(input.ref);
+    if (!node) {
+      replay.pending = null;
+      this.calls.push({ kind: "other", name: "invalid-ref", input });
+      return "No current control has that ref. Read the current window again.";
+    }
+    if (name === "point_at") replay.point(input.ref);
+    if (name !== "act") this.calls.push({ kind: "point", name: node.name, input });
+    return name === "act" ? "The action was recorded, but its result has not been verified." : "Pointed.";
   }
 }
 
 /**
- * @typedef {{ id: string, title: string, passed: boolean, problem: string | null, reply: string, ms: number, turns: number, tokensIn: number, tokensOut: number, calls: Call[] }} EvalResult
+ * @typedef {{ ask: string, reply: string, problem: string | null, ms: number, firstTextMs: number | null, firstGuidanceMs: number | null, calls: Call[] }} EvalStage
+ * @typedef {{ id: string, title: string, mode: string, passed: boolean, problem: string | null, reply: string, ms: number, turns: number, tokensIn: number, tokensOut: number, calls: Call[], stages: EvalStage[] }} EvalResult
  */
 
 /**
@@ -277,6 +342,10 @@ export async function runEvals({ provider, apiKey, baseURL, cases = CASES, timeo
     let turns = 0;
     let tokensIn = 0;
     let tokensOut = 0;
+    let stageStart = 0;
+    let stageCallStart = 0;
+    let firstTextMs = null;
+    let firstGuidanceMs = null;
     // What the case cost (costs.js), and its tokens split by how they're billed, for pricing Buddy Plus.
     const spend = noSpend();
     const split = { fresh: 0, cached: 0, wrote: 0, out: 0 };
@@ -295,7 +364,9 @@ export async function runEvals({ provider, apiKey, baseURL, cases = CASES, timeo
       point: async () => {},
       confirm: async () => "allow",
       status: () => {},
+      stream: ({ text }) => { if (text?.trim() && firstTextMs === null) firstTextMs = Date.now() - stageStart; },
       trace: (e) => {
+        if (e.kind === "tool" && firstGuidanceMs === null && calls.slice(stageCallStart).some((call) => call.kind === "point" || call.kind === "guide")) firstGuidanceMs = Date.now() - stageStart;
         if (e.kind !== "model") return;
         turns++;
         tokensIn += e.in ?? 0;
@@ -305,24 +376,69 @@ export async function runEvals({ provider, apiKey, baseURL, cases = CASES, timeo
     const brain = new EvalBrain(ui, c, calls);
     const target = { id: "w-1", app_name: c.app, title: c.window.name };
     const start = Date.now();
-    const stop = () => brain.cancel();
+    let stopped = false;
+    const stop = () => { stopped = true; brain.cancel(); };
     signal?.addEventListener("abort", stop, { once: true });
     const timer = setTimeout(stop, timeoutMs);
     brain.glance(target);
     let reply = "";
+    /** @type {EvalStage[]} */
+    const stages = [];
     try {
-      reply = await brain.ask(c.ask, target);
-    } catch (err) {
-      reply = `(failed: ${err?.message ?? err})`;
+      for (const stage of [{ ask: c.ask, check: c.check }, ...(c.followUps ?? [])]) {
+        if (stopped || signal?.aborted) break;
+        if (brain.replay) brain.replay.pending = null;
+        if (stage.window) {
+          brain.window = stage.window;
+          if (brain.replay) { brain.replay.tree = stage.window; brain.replay.pending = null; }
+        }
+        stageStart = Date.now();
+        stageCallStart = calls.length;
+        firstTextMs = null;
+        firstGuidanceMs = null;
+        const turnsBefore = turns;
+        let failure = null;
+        try { reply = await brain.ask(stage.ask, target); }
+        catch (err) { failure = `model check failed: ${err?.message ?? err}`; reply = `(failed: ${err?.message ?? err})`; }
+        const stageCalls = calls.slice(stageCallStart);
+        const problem = failure ?? (brain.abort?.signal.aborted ? signal?.aborted ? "cancelled" : "took too long" : turns === turnsBefore ? "no model response was received" : stage.check(stageCalls, reply));
+        stages.push({ ask: stage.ask, reply, problem, ms: Date.now() - stageStart, firstTextMs, firstGuidanceMs, calls: stageCalls });
+        if (failure || brain.abort?.signal.aborted) break;
+      }
     } finally {
       clearTimeout(timer);
       signal?.removeEventListener("abort", stop);
     }
-    const problem = reply === "Okay, stopped." ? "took too long" : c.check(calls, reply);
-    const r = { id: c.id, title: c.title, passed: !problem, problem, reply, ms: Date.now() - start, turns, tokensIn, tokensOut, spend, split, calls };
+    const failed = stages.findIndex((stage) => stage.problem !== null);
+    const problem = failed >= 0 ? `${stages.length > 1 ? `Request ${failed + 1}: ` : ""}${stages[failed].problem}` : stages.length < 1 + (c.followUps?.length ?? 0) ? "cancelled before all requests ran" : null;
+    const r = { id: c.id, title: c.title, mode: c.strict ? "workflow" : "route", passed: !problem, problem, reply, ms: Date.now() - start, turns, tokensIn, tokensOut, spend, split, calls, stages };
     results.push(r);
     onCase?.(r, i, cases.length);
   }
   const passed = results.filter((r) => r.passed).length;
   return { results, passed, total: results.length, avgMs: results.length ? Math.round(results.reduce((n, r) => n + r.ms, 0) / results.length) : 0 };
+}
+
+/** Recheck saved replies with current checks. Never calls a model or a desktop tool. */
+export function rescoreEvals(saved, cases) {
+  if (!Array.isArray(saved?.results) || !saved.results.length) throw new Error("The saved run has no results.");
+  const seen = new Set();
+  const results = saved.results.map((result) => {
+    const c = cases.find((item) => item.id === result.id);
+    if (!c || seen.has(result.id)) throw new Error(`Unknown or duplicate saved case: ${result.id}`);
+    seen.add(result.id);
+    const requests = [c, ...(c.followUps ?? [])];
+    if (!Array.isArray(result.stages) || result.stages.length !== requests.length) throw new Error(`Incomplete request history for ${result.id}.`);
+    const stages = result.stages.map((stage, i) => {
+      if (!Array.isArray(stage.calls) || typeof stage.reply !== "string" || stage.ask !== requests[i].ask) throw new Error(`Invalid request history for ${result.id}.`);
+      // Re-evaluating the answer must not turn a transport failure or cancellation
+      // into a passing no-action case. Keep the original evidence and timings.
+      const failedToRun = /^(model check failed:|no model response|took too long|cancelled)/.test(stage.problem ?? "");
+      return { ...stage, problem: failedToRun ? stage.problem : requests[i].check(stage.calls, stage.reply) };
+    });
+    const failed = stages.findIndex((stage) => stage.problem !== null);
+    const problem = failed < 0 ? null : `${stages.length > 1 ? `Request ${failed + 1}: ` : ""}${stages[failed].problem}`;
+    return { ...result, stages, passed: !problem, problem };
+  });
+  return { ...saved, results, passed: results.filter((r) => r.passed).length, total: results.length };
 }

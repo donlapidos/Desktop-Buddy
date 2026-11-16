@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld("buddy", {
   onConfirmClear: on("confirm-clear"),
   onCursor: on("cursor"),
   onPoint: on("point"),
+  onAnnotations: on("annotations"),
+  onAnnotationsClear: on("annotations-clear"),
   onRelease: on("release"),
   onIsland: on("island"),
   onIslandAttach: on("island-attach"),

@@ -3,6 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { askUser, requestApproval } from "./approvals.js";
 import { appKey, decide } from "./policy.js";
 import { collectScreenContext } from "./screen-context.js";
+import { annotationRequest, sameBox, validBox } from "./annotations.js";
+import { FOLLOW_UP_GUIDANCE, guidanceFor } from "./guidance.js";
 import { LOOK_ARGS, findControl, nearestNames, observe, perform, renderReading, renderTree, snapshotResilient, waitForProgress } from "./desktop.js";
 import { writeDocx } from "./documents.js";
 import { PROVIDERS, ProviderError, capsOf, chatTurn } from "./providers.js";
@@ -72,6 +74,8 @@ const PREVIEW_WAIT_MS = 4_000;
 // guide_steps reads windows as deep as wait_for_user does, and gives a just-opened menu this long to draw.
 const GUIDE_SNAPSHOT = ["-i", "--compact", "--include-bounds", "--max-depth", "25", "--timeout-ms", "3000"];
 const MENU_SETTLE_MS = 400;
+// An unrelated selection or layout change is not proof that an explicitly expected result happened.
+export const needsGuideInspection = (step, result) => result.status === "changed" && [].concat(step.done_when ?? []).some((text) => typeof text === "string" && text.trim());
 
 export const SYSTEM = `You are Buddy, a friendly assistant that lives next to the user's cursor on their Windows desktop.
 You can see their apps through the accessibility tree and you have a pointer of your own.
@@ -93,6 +97,11 @@ How you help:
   extra look, no pointing again). The windows Buddy's tools hand back are current: read them instead of taking a
   screenshot unless the tree can't show what you need.
 - To point something out when there's nothing for them to do after ("where is the Name Box?"), use one point_at.
+- Use annotate to explain a relationship on their actual screen: highlight or circle a control, add a short label,
+  connect two controls with an arrow, or show a drag path. Use refs from the latest look, never made-up coordinates.
+  Its caption is spoken as the drawing appears. It only draws: the user still does the clicking and dragging.
+  Drawings clear if their window or controls change. For guide_steps, each step is highlighted automatically;
+  use its annotation field for a circle, arrow or drag to another named control. Never draw a step twice.
 - For a step whose control you can't name yet, walk them through it live: call point_at for step 1 and wait_for_user in the SAME
   response (point first). Give wait_for_user steps: the text that will appear once they've done this step (the
   ribbon tab's buttons, a menu item, a dialog title such as "Create Table"), then the texts for the next two or three
@@ -263,6 +272,25 @@ export const TOOLS = [
     },
   },
   {
+    name: "annotate",
+    description: "Draw on the screen without clicking: highlight, circle, arrow, label or drag path, anchored to real control refs. Up to six in one window. Destinations use to_ref; drag requires one. Previous drawings are replaced. Use caption for the spoken instruction.",
+    input_schema: { type: "object", properties: {
+      caption: str("One short instruction to say as the drawing appears."),
+      items: { type: "array", minItems: 1, maxItems: 6, items: { type: "object", properties: {
+        kind: { type: "string", enum: ["highlight", "circle", "arrow", "label", "drag"] },
+        ref: str("A control ref from the latest look. No coordinates."),
+        to_ref: str("Another control ref, for a connecting arrow or drag path."),
+        label: str("A short label, up to 120 characters."),
+        number: { type: "integer", minimum: 1, maximum: 99 },
+      }, required: ["kind", "ref"] } },
+    }, required: ["items"] },
+  },
+  {
+    name: "clear_annotations",
+    description: "Remove this conversation's drawings. It does not affect another task's drawings.",
+    input_schema: { type: "object", properties: {} },
+  },
+  {
     name: "create_document",
     description:
       "Write a Word document (.docx) from Markdown and open it in Word. Supports # title, ## and ### headings, paragraphs, - bullets (indent two spaces to nest), 1. numbered items, | tables | with a header row, **bold** and *italic*. Saved in the user's Documents\\Buddy folder; never overwrites. Needs the user's approval.",
@@ -304,6 +332,11 @@ export const TOOLS = [
               caption: str("The instruction shown beside the pointer, the whole step in a few words: 'Click Data', 'Now Sort'."),
               target: str("The control's label exactly as the user sees it on screen (from your look), e.g. 'Data' or 'Sort A to Z'."),
               role: str("Optional, to tell same-named controls apart: tab, button, menuitem, checkbox, listitem..."),
+              annotation: { type: "object", properties: {
+                kind: { type: "string", enum: ["highlight", "circle", "arrow", "label", "drag"] },
+                to_target: str("The destination control's exact label for an arrow or drag."),
+                to_role: str("Optional destination role."),
+              } },
               done_when: {
                 type: "array",
                 items: { type: "string" },
@@ -445,6 +478,15 @@ export const TOOLS = [
 // themselves, so they get the tools without it.
 const CLOSES = new Set(["guide_steps", "point_at"]);
 const THEN_SAY = "Your closing line to the user, one short sentence, said once this is done. Give it whenever this call is your whole answer: Buddy then ends the turn itself and they aren't kept waiting on you. Leave it out if you need to see what happens next.";
+// Keep the exported contract intact for AI-app clients and the SDK engine. Only
+// Buddy's direct engine loads the illustrated-explainer instructions on demand.
+export const GUIDANCE_SYSTEM = SYSTEM.slice(0, SYSTEM.indexOf("\n\nExplaining:")) + SYSTEM.slice(SYSTEM.indexOf("\n\nStyle:")) +
+  "\n\nFor an illustrated explanation of a concept or something on screen, first call prepare_explainer. It loads the figure instructions and show_explainer tool. Ordinary how-to guidance needs no explainer.";
+const PREPARE_EXPLAINER = {
+  name: "prepare_explainer",
+  description: "Load illustrated-explanation instructions and the show_explainer tool for this request. Use for a visual explanation of a concept, not ordinary step-by-step app guidance.",
+  input_schema: { type: /** @type {const} */ ("object"), properties: {}, additionalProperties: false },
+};
 const OWN_TOOLS = TOOLS.map((t) => (CLOSES.has(t.name) ? { ...t, input_schema: { ...t.input_schema, properties: { .../** @type {any} */ (t.input_schema).properties, then_say: str(THEN_SAY) } } } : t));
 const CLOSING = `Ending fast: guide_steps and point_at take then_say, your one-line reply for when it's done. When the route (or
 the one thing to point out) is your whole answer, which is most of the time, give then_say in that same call: Buddy
@@ -577,6 +619,8 @@ const spokenNote = (lang) =>
  *   confirm: import("./approvals.js").Ask["confirm"],
  *   status: (text: string) => void,
  *   stream?: (update: { text: string, done: boolean }) => void,
+ *   annotate?: (items: import("./annotations.js").Annotation[], context: { window: import("./desktop.js").DesktopWindow, caption: string, verify: () => Promise<boolean>, signal?: AbortSignal }) => Promise<boolean>,
+ *   clearAnnotations?: (ms?: number) => void,
  *   screenContext?: () => boolean,
  *   prepareImage?: (image: import("./screen-context.js").ScreenImage) => import("./screen-context.js").ScreenImage,
  *   explain?: (plate: object) => void | Promise<void>,
@@ -615,15 +659,19 @@ export class Brain {
   }
 
   reset() {
+    this.ui.clearAnnotations?.();
     this.preview?.abort?.abort();
     this.preview = null;
     this.contextImages = new WeakSet();
+    this.explainerReady = false;
     /** @type {Anthropic.Beta.BetaMessageParam[]} */
     this.messages = [];
     /** @type {Map<string, import("./geometry.js").PhysicalRect>} ref -> where agent-desktop says it is */
     this.bounds = new Map();
     this.labels = new Map(); // ref -> plain element name, for approval cards
     this.refApps = new Map(); // ref -> the app its window belongs to, for the Agents policy
+    this.refWindows = new Map(); // ref -> exact observed window; drawings never cross into another app
+    this.offscreenRefs = new Set();
     this.opens = new Set(); // refs a click opens rather than selects (files and folders in a file list)
     this.provider = this.ui.provider ?? "anthropic";
     this.model = this.provider === "anthropic" ? startWith.model : (process.env.BUDDY_MODEL ?? startWith.models[this.provider] ?? "");
@@ -644,6 +692,7 @@ export class Brain {
 
   cancel() {
     this.abort?.abort();
+    this.ui.clearAnnotations?.();
     this.preview?.abort?.abort();
   }
 
@@ -658,7 +707,10 @@ export class Brain {
       return trimEnvelope(res);
     }
     const { text } = renderTree(res.data.tree, this.bounds, undefined, this.labels);
-    this.noteApp(res.data.tree, input.root ? this.refApps.get(input.root) : res.data.app ?? input.app ?? this.target?.app_name);
+    const app = input.root ? this.refApps.get(input.root) : res.data.app ?? input.app ?? this.target?.app_name;
+    const observed = input.root ? this.refWindows.get(input.root) : { ...this.target, ...res.data.window,
+      id: input.window_id ?? res.data.window?.id ?? this.target?.id, app_name: app };
+    this.noteApp(res.data.tree, app, observed);
     const unreadable = res.data.unreadable_regions ? ` · ${res.data.unreadable_regions} region(s) unreadable, take a screenshot if what you need isn't here` : "";
     const head = `window: ${res.data.window?.title ?? res.data.app ?? "?"} · ${res.data.ref_count ?? 0} refs${res.data.complete === false ? " · partial" : ""}${unreadable}`;
     return `${head}\n${text}`;
@@ -793,12 +845,14 @@ export class Brain {
     return this.run(target, [
       { type: "image", source: { type: "base64", media_type: "image/png", data: image } },
       { type: "text", text },
-    ]);
+    ], null, { explainer: true });
   }
 
-  async run(target, content, prepare = null) {
+  async run(target, content, prepare = null, { explainer = false } = {}) {
+    this.ui.clearAnnotations?.();
     this.standing = new Set();
     this.target = target;
+    this.explainerReady = explainer;
     this.abort = new AbortController();
     this.made = [];
     try {
@@ -820,6 +874,7 @@ export class Brain {
       if (err instanceof Anthropic.APIError) return `The model call failed (${err.status}).`;
       throw err;
     } finally {
+      this.ui.clearAnnotations?.(this.abort.signal.aborted ? 0 : 6000);
       this.closeDanglingToolUse();
     }
   }
@@ -860,6 +915,7 @@ export class Brain {
       const stop = this.ui.mayCall?.();
       if (stop) return stop;
       const callStart = Date.now();
+      const offeredExplainer = this.explainerReady;
       const response = await this.turn();
       this.ui.usage?.(this.provider, this.model, response.usage);
 
@@ -881,7 +937,9 @@ export class Brain {
       for (const use of toolUses) {
         if (this.abort.signal.aborted) break;
         const toolStart = Date.now();
-        const content = await this.runTool(use.name, use.input ?? {});
+        const content = use.name === "show_explainer" && !offeredExplainer
+          ? "Call prepare_explainer first, then use show_explainer with the loaded instructions on your next turn."
+          : await this.runTool(use.name, use.input ?? {});
         this.ui.trace?.({ kind: "tool", name: use.name, ms: Date.now() - toolStart, chars: typeof content === "string" ? content.length : undefined });
         results.push({ type: "tool_result", tool_use_id: use.id, content });
         closing = closingLine(use.name, use.input, content);
@@ -909,11 +967,14 @@ export class Brain {
     return this.ui.commands?.() === true;
   }
   tools() {
-    const tools = this.pcReady ? [...OWN_TOOLS, ...pcTools(this.commands)] : OWN_TOOLS;
+    const own = this.explainerReady ? OWN_TOOLS : [...OWN_TOOLS.filter((t) => t.name !== "show_explainer"), PREPARE_EXPLAINER];
+    const tools = this.pcReady ? [...own, ...pcTools(this.commands)] : own;
     return this.ui.screenContext?.() === false ? tools.filter((t) => t.name !== "screenshot") : tools;
   }
   system() {
-    const base = this.pcReady ? `${SYSTEM}\n\n${CLOSING}\n\n${beyondScreen(this.commands)}` : `${SYSTEM}\n\n${CLOSING}`;
+    const instructions = this.explainerReady ? SYSTEM : GUIDANCE_SYSTEM;
+    const pack = guidanceFor(this.target?.app_name);
+    const base = `${instructions}\n\n${CLOSING}\n\n${FOLLOW_UP_GUIDANCE}${pack ? `\n\nActive-app guidance (confirm against the current screen): ${pack.text}` : ""}${this.pcReady ? `\n\n${beyondScreen(this.commands)}` : ""}`;
     return this.ui.screenContext?.() === false ? `${base}\nWindow screenshots are turned off. Read text with look or read_page instead. Mark and Explain can still carry an image the user explicitly chose.` : base;
   }
 
@@ -1008,7 +1069,7 @@ export class Brain {
    * @param {string} ref @returns {Promise<import("./geometry.js").PhysicalRect | "gone" | null>}
    */
   async liveBounds(ref) {
-    const res = await observe(["get", ref, "--property", "bounds"], { timeoutMs: 3_000, session: this.session });
+    const res = await observe(["get", ref, "--property", "bounds"], { timeoutMs: 3_000, session: this.session, signal: this.abort?.signal });
     if (!res.ok) {
       const code = /** @type {{ error?: { code?: string } }} */ (res).error?.code ?? "";
       return ["STALE_REF", "ELEMENT_NOT_FOUND", "WINDOW_NOT_FOUND"].includes(code) ? "gone" : null;
@@ -1106,10 +1167,15 @@ export class Brain {
   // Remembers which app each element in a snapshot belongs to, so the Agents policy judges the app an action lands in.
   // Also notes the files and folders in a file list (File Explorer, and Open and Save dialogs, call it "Items View"):
   // clicking one opens it, so its approval card says Open, not Click.
-  noteApp(tree, app) {
+  noteApp(tree, app, window = this.target) {
     const walk = (n, inFileList) => {
       if (!n) return;
       if (n.ref_id && app) this.refApps.set(n.ref_id, app);
+      if (n.ref_id && window?.id) this.refWindows.set(n.ref_id, { ...window, app_name: app ?? window.app_name });
+      if (n.ref_id) {
+        if (n.states?.includes("offscreen")) this.offscreenRefs.add(n.ref_id);
+        else this.offscreenRefs.delete(n.ref_id);
+      }
       if (n.ref_id && inFileList && /option|list ?item/i.test(`${n.role} ${n.role_description ?? ""}`)) this.opens.add(n.ref_id);
       const fileList = inFileList || (/list/i.test(n.role ?? "") && n.name === "Items View");
       for (const c of n.children ?? []) walk(c, fileList);
@@ -1120,6 +1186,11 @@ export class Brain {
   async runTool(name, input) {
     if (PC_TOOL_NAMES.has(name)) return this.pcTool(name, input);
     switch (name) {
+      case "prepare_explainer":
+        this.explainerReady = true;
+        return "Illustrated explanations are ready. Follow the Explaining instructions now supplied and call show_explainer. No screen action was taken.";
+      case "annotate": return this.drawAnnotations(input);
+      case "clear_annotations": this.ui.clearAnnotations?.(); return "Your drawings are cleared.";
       case "look":
         this.ui.status("Looking…");
         return this.look(input);
@@ -1245,6 +1316,35 @@ export class Brain {
     }
   }
 
+  async drawAnnotations(input) {
+    if (!this.ui.annotate) return "Screen drawings aren't available in this window.";
+    this.ui.clearAnnotations?.();
+    const signal = this.abort?.signal;
+    if (signal?.aborted) return "The user stopped.";
+    let request;
+    try { request = annotationRequest(input); } catch (error) { return error.message; }
+    const refs = [...new Set(request.items.flatMap((item) => [item.ref, item.to_ref].filter(Boolean)))];
+    const windows = refs.map((ref) => this.refWindows.get(ref));
+    if (refs.some((ref) => !this.bounds.has(ref) || this.offscreenRefs.has(ref)) || windows.some((w) => !w?.id)) return "A drawing needs visible control refs from a fresh look. Read the window again.";
+    const window = windows[0];
+    if (windows.some((w) => w.id !== window.id || appKey(w.app_name) !== appKey(window.app_name))) return "Keep one drawing batch in one window. Read that window and use its refs.";
+    if (!this.canObserveTarget(window)) return "That window isn't available for drawing.";
+    const boxes = await Promise.all(refs.map((ref) => this.liveBounds(ref)));
+    if (signal?.aborted) return "The user stopped.";
+    if (boxes.some((box) => !validBox(box))) return "A control moved out of view or couldn't be located. Read the window again before drawing.";
+    const anchors = new Map(refs.map((ref, i) => [ref, /** @type {import("./geometry.js").PhysicalRect} */ (boxes[i])]));
+    const items = request.items.map((item) => ({ kind: item.kind, bounds: anchors.get(item.ref),
+      ...(item.to_ref ? { to: anchors.get(item.to_ref) } : {}), label: item.label, ...(item.number ? { number: item.number } : {}) }));
+    const verify = async () => {
+      if (signal?.aborted || !this.canObserveTarget(window)) return false;
+      const current = await Promise.all(refs.map((ref) => this.liveBounds(ref)));
+      return !signal?.aborted && current.every((box, i) => sameBox(box, boxes[i]));
+    };
+    const shown = await this.ui.annotate(items, { window, caption: request.caption, verify, signal });
+    if (signal?.aborted) return "The user stopped.";
+    return shown ? "Annotated. The user does the clicking or dragging; nothing was operated." : "The window changed before the drawing could be shown. Read it again.";
+  }
+
   // guide_steps: points at each step's control and follows the user, locally, until they finish or Buddy needs Claude.
   async guideSteps(input) {
     const steps = (Array.isArray(input.steps) ? input.steps : []).filter((s) => typeof s?.target === "string" && s.target.trim());
@@ -1254,7 +1354,7 @@ export class Brain {
     const signal = this.abort?.signal;
     const doneSoFar = (i) => (i ? `They did steps 1-${i} of ${steps.length}.` : `They haven't started yet.`);
     // As deep as the waits read: menus and their items sit far down in apps like Excel.
-    const read = (w) => snapshotResilient(this.windowArgs({ app: w.app_name, window_id: w.id }), GUIDE_SNAPSHOT, { timeoutMs: 20_000, session: this.session });
+    const read = (w) => snapshotResilient(["--window-id", w.id], GUIDE_SNAPSHOT, { timeoutMs: 20_000, session: this.session, signal });
     let win = this.target;
     let i = 0;
     while (i < steps.length) {
@@ -1278,7 +1378,7 @@ export class Brain {
         }
       }
       const { text } = renderTree(res.data.tree, this.bounds, undefined, this.labels);
-      this.noteApp(res.data.tree, win.app_name);
+      this.noteApp(res.data.tree, win.app_name, win);
       this.ui.trace?.({
         kind: "guide-step",
         step: i + 1,
@@ -1294,7 +1394,14 @@ export class Brain {
           : `nothing called "${step.target}" is on screen`;
         return `${doneSoFar(i)} At step ${i + 1} ("${step.caption}") ${why}. Point at the right one yourself, then call guide_steps again with the steps that are left. Their window now:\n${text}`;
       }
-      await this.ui.point(match.node.bounds, step.caption);
+      if (this.ui.annotate) {
+        let destination;
+        if (step.annotation?.to_target) destination = findControl(res.data.tree, step.annotation.to_target, step.annotation.to_role);
+        if (step.annotation?.to_target && !destination?.node) return `${doneSoFar(i)} The drawing's destination isn't clear. Read the window again.`;
+        const result = await this.drawAnnotations({ caption: step.caption, items: [{ kind: step.annotation?.kind ?? "highlight", ref: match.node.ref_id,
+          ...(destination?.node ? { to_ref: destination.node.ref_id } : {}), label: step.caption, number: Math.min(99, i + 1) }] });
+        if (!result.startsWith("Annotated.")) return `${doneSoFar(i)} ${result}`;
+      } else await this.ui.point(match.node.bounds, step.caption);
       this.ui.status(`Step ${i + 1} of ${steps.length}: your turn`);
       // Listen for this step and every later one, so a user who works ahead is caught where they are.
       const needles = [];
@@ -1307,13 +1414,19 @@ export class Brain {
           }
         }
       }
-      const r = await waitForProgress({ win, steps: needles, timeoutMs: seconds * 1000, signal, session: this.session });
+      const r = await waitForProgress({ win, steps: needles, timeoutMs: seconds * 1000, signal, session: this.session,
+        onReady: () => this.ui.trace?.({ kind: "guide-ready", step: i + 1 }) });
+      this.ui.clearAnnotations?.();
       if (r.status === "cancelled") return "The user stopped.";
       if (r.status === "timeout") return `${doneSoFar(i)} After ${seconds}s they still haven't done step ${i + 1} ("${step.caption}"); Buddy is pointing at it. Ask in one short line whether they're stuck.`;
       if (r.window && r.window.id !== win.id) win = r.window;
       if (r.status === "appeared") {
         i = stepOf[r.step] + 1;
         continue;
+      }
+      if (needsGuideInspection(step, r)) {
+        const current = r.snapshot ? renderTree(r.snapshot.tree, this.bounds, undefined, this.labels).text : "Read the window again.";
+        return `${doneSoFar(i)} Their screen changed, but the expected result of step ${i + 1} wasn't observed. Check the current window before continuing:\n${current}`;
       }
       // Their window changed in a way no done_when covers. A new selection or typed text means this step was the click
       // or the typing; otherwise they did it if its control has gone, and if it's still there, point at it again.

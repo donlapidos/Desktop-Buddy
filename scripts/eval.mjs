@@ -5,11 +5,14 @@
 //   npm run eval -- --provider anthropic --model claude-haiku-5-5 --set real   the tasks on recorded real windows
 // The key comes from the provider's usual variable (OPENAI_API_KEY, ANTHROPIC_API_KEY, ...) or BUDDY_EVAL_KEY.
 // Each case is a few model calls on that account. --json writes the full results, tool calls included.
+// Recheck saved evidence without model calls: --set workflows --rescore run.json --json rescored.json
 import fs from "node:fs";
+import path from "node:path";
 import { parseArgs } from "node:util";
 import { setBrainDefaults } from "../src/brain.js";
-import { CASES, runEvals } from "../src/evals.js";
+import { CASES, rescoreEvals, runEvals } from "../src/evals.js";
 import { REAL_CASES } from "../evals/real-cases.mjs";
+import { WORKFLOW_CASES } from "../evals/workflow-cases.mjs";
 import { ANTHROPIC_PRICES, aboutMoney, dollars, moneyWords, spendLine, tokenWords } from "../src/costs.js";
 import { PROVIDERS } from "../src/providers.js";
 
@@ -22,11 +25,32 @@ const { values: o } = parseArgs({
     cases: { type: "string" },
     set: { type: "string", default: "made-up" },
     json: { type: "string" },
+    list: { type: "boolean", default: false },
+    rescore: { type: "string" },
   },
 });
 const provider = /** @type {import("../src/providers.js").ProviderId} */ (o.provider);
+const sets = { "made-up": CASES, real: REAL_CASES, workflows: WORKFLOW_CASES, all: [...CASES, ...REAL_CASES, ...WORKFLOW_CASES] };
+if (!Object.hasOwn(sets, o.set)) { console.error(`Unknown set: ${o.set}. Choose made-up, real, workflows or all.`); process.exit(2); }
+const wanted = o.cases !== undefined ? o.cases.split(",").map((id) => id.trim()) : null;
+const set = sets[o.set];
+if (wanted?.some((id) => !set.some((c) => c.id === id))) { console.error("Unknown case ID for this set. Use --list to see the available cases."); process.exit(2); }
+const cases = wanted ? set.filter((c) => wanted.includes(c.id)) : set;
+if (o.list) { for (const c of cases) console.log(`${c.id}  ${c.title} (${1 + (c.followUps?.length ?? 0)} request(s))`); process.exit(0); }
+if (o.rescore) {
+  if (!o.json || path.resolve(o.rescore).toLowerCase() === path.resolve(o.json).toLowerCase()) {
+    console.error("Rescoring needs --json with a different output path, so the original run is preserved."); process.exit(2);
+  }
+  try {
+    const run = rescoreEvals(JSON.parse(fs.readFileSync(o.rescore, "utf8")), cases);
+    fs.writeFileSync(o.json, JSON.stringify({ ...run, rescoredAt: new Date().toISOString(), rescoredFrom: o.rescore }, null, 2), { flag: "wx" });
+    for (const r of run.results) console.log(`${r.passed ? "PASS" : "FAIL"}  ${r.title}${r.problem ? `: ${r.problem}` : ""}`);
+    console.log(`\n${run.passed}/${run.total} passed after rescoring saved replies; no model calls made.`);
+    process.exit(run.passed === run.total ? 0 : 1);
+  } catch (err) { console.error(`Couldn't rescore the saved run: ${err.message}`); process.exit(2); }
+}
 if (!provider || !PROVIDERS[provider] || !o.model) {
-  console.error(`Usage: npm run eval -- --provider <${Object.keys(PROVIDERS).join("|")}> --model <id> [--base-url <url>] [--effort low|medium|high] [--set made-up|real|all] [--cases <ids>] [--json out.json]`);
+  console.error(`Usage: npm run eval -- --provider <${Object.keys(PROVIDERS).join("|")}> --model <id> [--base-url <url>] [--effort low|medium|high] [--set made-up|real|workflows|all] [--cases <ids>] [--json out.json]\nList without a model call: npm run eval -- --set workflows --list\nRescore without a model call: npm run eval -- --set workflows --rescore run.json --json rescored.json`);
   process.exit(2);
 }
 const apiKey = process.env.BUDDY_EVAL_KEY ?? process.env[PROVIDERS[provider].keyEnv ?? ""] ?? "";
@@ -34,10 +58,6 @@ if (PROVIDERS[provider].key === "required" && !apiKey) {
   console.error(`Set ${PROVIDERS[provider].keyEnv} (or BUDDY_EVAL_KEY) to a ${PROVIDERS[provider].label} key.`);
   process.exit(2);
 }
-const wanted = o.cases ? o.cases.split(",") : null;
-// made-up: the windows in evals.js (Settings' Check this model runs these); real: recorded windows (evals/windows).
-const set = o.set === "real" ? REAL_CASES : o.set === "all" ? [...CASES, ...REAL_CASES] : CASES;
-const cases = wanted ? set.filter((c) => wanted.includes(c.id)) : set;
 
 setBrainDefaults({ model: provider === "anthropic" ? o.model : "claude-opus-5-5", effort: o.effort ?? "low", providerModels: { [provider]: o.model } });
 console.log(`${PROVIDERS[provider].label} · ${o.model} · ${cases.length} case(s)\n`);
@@ -46,7 +66,10 @@ const run = await runEvals({
   apiKey,
   baseURL: o["base-url"] ?? PROVIDERS[provider].baseURL,
   cases,
-  onCase: (r, i, n) => console.log(`${r.passed ? "PASS" : "FAIL"}  ${String(i + 1).padStart(2)}/${n}  ${r.title.padEnd(44)} ${(r.ms / 1000).toFixed(1).padStart(5)} s  ${r.turns} turn(s)  ${spendLine(r.spend) ?? ""}${r.problem ? `\n      ${r.problem}\n      reply: ${r.reply.replace(/\s+/g, " ").slice(0, 160)}` : ""}`),
+  onCase: (r, i, n) => {
+    console.log(`${r.passed ? "PASS" : "FAIL"}  ${String(i + 1).padStart(2)}/${n}  ${r.title.padEnd(44)} ${(r.ms / 1000).toFixed(1).padStart(5)} s  ${r.turns} model turn(s)  ${spendLine(r.spend) ?? ""}${r.problem ? `\n      ${r.problem}\n      reply: ${r.reply.replace(/\s+/g, " ").slice(0, 160)}` : ""}`);
+    for (const [j, stage] of r.stages.entries()) console.log(`      request ${j + 1}: first text ${stage.firstTextMs ?? "none"} ms; first guidance ${stage.firstGuidanceMs ?? "none"} ms; total ${stage.ms} ms`);
+  },
 });
 console.log(`\n${run.passed}/${run.total} passed · ${(run.avgMs / 1000).toFixed(1)} s per case on average`);
 
@@ -62,5 +85,5 @@ if (run.results.length) {
     console.log(`  at ${label.padEnd(10)} prices: ${aboutMoney(per(model)).padEnd(14)} an answer, ${moneyWords(per(model) * 300).padStart(7)} for 300 answers a month`);
   }
 }
-if (o.json) fs.writeFileSync(o.json, JSON.stringify({ provider, model: o.model, at: new Date().toISOString(), ...run }, null, 2));
+if (o.json) fs.writeFileSync(o.json, JSON.stringify({ provider, model: o.model, set: o.set, at: new Date().toISOString(), ...run }, null, 2));
 process.exit(run.passed === run.total ? 0 : 1);

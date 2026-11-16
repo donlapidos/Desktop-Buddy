@@ -21,12 +21,14 @@ const shorten = (text, n = 34) => {
  *   currentTarget: () => Promise<any>,   // the user's foreground window, Buddy's own windows excluded
  *   point: (bounds: import("./geometry.js").PhysicalRect, caption: string, owner: string) => Promise<void>, // the shared pointer; each task points as its own owner
  *   release: (owner: string, ms?: number) => void,     // lets go of the pointer if that owner still has it
+ *   annotate?: (items: any[], context: any, owner: string) => Promise<boolean>,
+ *   clearAnnotations?: (owner: string, ms?: number) => void,
  *   explain: (plate: object, observed: any) => void,  // opens a plate seen in `observed` (the task's window)
  *   onChange: (tasks: object[]) => void,               // the island's chips
  *   trace?: (entry: object) => void,                   // timing.log: a refused state change is a bug
  * }} deps
  */
-export function createTasks({ here, icon, makeBrain, currentTarget, point, release, explain, onChange, trace }) {
+export function createTasks({ here, icon, makeBrain, currentTarget, point, release, annotate, clearAnnotations, explain, onChange, trace }) {
   const tasks = new Map();
   let seq = 0;
 
@@ -62,6 +64,8 @@ export function createTasks({ here, icon, makeBrain, currentTarget, point, relea
   function uiFor(t) {
     return {
       point: (bounds, caption) => point(bounds, caption, t.id),
+      ...(annotate ? { annotate: (items, context) => annotate(items, context, t.id) } : {}),
+      clearAnnotations: (ms = 0) => clearAnnotations?.(t.id, ms),
       explain: (plate) => explain(plate, t.target),
       status: (text) => setState(t, "working", text),
       stream: ({ text }) => {

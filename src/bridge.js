@@ -46,7 +46,7 @@ export const BRIDGE_TOOLS = [...TOOLS, GET_MARKS];
 // Tools that only look, read, point or show: they change nothing in the user's apps or files. Claude's apps may run
 // them without stopping to check (ai-apps.js adds Claude Code allow rules for them; readOnlyHint tells the other apps). Everything else (act, window,
 // launch_app, create_document) still goes through Claude's own check and Buddy's approval card.
-export const SAFE_TOOLS = Object.freeze(["look", "read_page", "screenshot", "list_windows", "point_at", "wait_for_user", "guide_steps", "show_explainer", "get_marks"]);
+export const SAFE_TOOLS = Object.freeze(["look", "read_page", "screenshot", "list_windows", "point_at", "annotate", "clear_annotations", "wait_for_user", "guide_steps", "show_explainer", "get_marks"]);
 
 // Rewriting an unchanged file would make every running buddy-mcp tell its Claude session the tools changed.
 function writeIfChanged(file, text) {

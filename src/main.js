@@ -35,6 +35,8 @@ import os from "node:os";
 import { createVoice } from "./voice.js";
 import { createReplyStream } from "./reply-stream.js";
 import { createTurnQueue } from "./turn-queue.js";
+import { centerOf, createAnnotationLayer, insideBox, sameBox } from "./annotations.js";
+import { appKey } from "./policy.js";
 import { appWords, findLocal, localDoor, tourNext, tourTip } from "./welcome.js";
 import { aboutMoney, addCall, capProblem, createLedger, moneyWords, noSpend, priceOf, spendLine, tokenWords } from "./costs.js";
 
@@ -404,6 +406,7 @@ async function refreshModels(/** @type {ProviderId} */ provider = currentProvide
 // ---------- Overlay: one transparent, click-through window per display ----------
 
 function createOverlays() {
+  annotationLayer.clear();
   for (const win of overlays.values()) win.destroy();
   overlays.clear();
   for (const display of screen.getAllDisplays()) {
@@ -483,10 +486,57 @@ function toLocalRect(physical) {
 
 // The pointer belongs to whoever pointed last: the bubble's conversation ("bubble") or a task (its id). `n` counts
 // points, so a release scheduled when one answer ends can't pull the pointer off a newer step.
-const pointer = { owner: null, n: 0 };
+const pointer = { owner: null, n: 0, annotation: false };
+const annotationLayer = createAnnotationLayer({
+  draw: (items, owner) => {
+    pointer.owner = owner;
+    pointer.annotation = true;
+    pointer.n++;
+    const first = toLocalRect(items[0].bounds);
+    for (const win of overlays.values()) win.webContents.send("release");
+    first.win?.webContents.send("point", { rect: first.rect, caption: "", decorate: false });
+    for (const display of screen.getAllDisplays()) {
+      const local = (box) => { const dip = toDipRect(box); return { ...dip, x: dip.x - display.bounds.x, y: dip.y - display.bounds.y }; };
+      const drawings = items.map((item) => ({ ...item, bounds: local(item.bounds), ...(item.to ? { to: local(item.to) } : {}),
+        showLabel: insideBox(centerOf(toDipRect(item.bounds)), display.bounds) }));
+      overlays.get(display.id)?.webContents.send("annotations", drawings);
+    }
+  },
+  erase: () => {
+    broadcast("annotations-clear");
+    if (pointer.annotation) { pointer.annotation = false; pointer.owner = null; pointer.n++; broadcast("release"); }
+  },
+});
+
+async function showAnnotations(items, context, owner = "bubble") {
+  let originalBounds = null;
+  const reject = (reason) => { trace({ kind: "annotation-hidden", reason }); return false; };
+  const validate = async () => {
+    if (context.signal?.aborted) return false;
+    const windows = await listWindows();
+    const target = windows.find((w) => w.id === context.window.id && appKey(w.app_name) === appKey(context.window.app_name) && (!context.window.pid || w.pid === context.window.pid));
+    if (!target || target.minimized || !target.bounds) return reject("window-unavailable");
+    const foreground = windows.find((w) => w.is_focused);
+    if (foreground && foreground.id !== target.id && !ownPids().includes(Number(foreground.pid))) return reject("focus-changed");
+    if (originalBounds && !sameBox(originalBounds, target.bounds)) return reject("window-moved");
+    originalBounds ??= target.bounds;
+    if (items.some((item) => !insideBox(centerOf(item.bounds), target.bounds) || (item.to && !insideBox(centerOf(item.to), target.bounds)))) return reject("anchor-outside-window");
+    return (await context.verify()) || reject("anchor-changed");
+  };
+  const shown = await annotationLayer.show(owner, items, { validate, signal: context.signal });
+  if (shown && annotationLayer.owner() !== owner) return false;
+  if (shown && owner === "bubble") {
+    liveReply.cancel();
+    if (mode === "working" && bubble.isVisible() && !waitingForOk()) hideBubble();
+    if (context.caption && talksBack(turn.spoken)) voice.say(context.caption);
+  }
+  return shown;
+}
 
 /** @param {PhysicalRect} bounds @param {string} caption @param {string} [owner] */
 function point(bounds, caption, owner = "bubble") {
+  annotationLayer.clear();
+  pointer.annotation = false;
   pointer.owner = owner;
   pointer.n++;
   const { win, rect } = toLocalRect(bounds);
@@ -498,6 +548,7 @@ function point(bounds, caption, owner = "bubble") {
 // Lets go of the pointer after a moment, if `owner` still has it and hasn't pointed again.
 /** @param {string} owner @param {number} [ms] */
 function releaseLater(owner, ms = 6000) {
+  annotationLayer.release(owner, ms);
   const n = pointer.n;
   setTimeout(() => {
     if (pointer.owner !== owner || pointer.n !== n) return;
@@ -1196,6 +1247,7 @@ onFrom(fromBubble, "cancel", () => {
   hushReply();
   if (mode === "working") { (answeringBrain ?? brain)?.cancel(); notice("Stopped."); }
   else answerApproval("deny");
+  annotationLayer.clear("bubble");
 });
 onFrom(fromBubble, "reset", () => {
   if (mode === "working") return;
@@ -1500,7 +1552,7 @@ const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvide
 
 function startBrain() {
   brain = providerReady()
-    ? makeEngine({ ...providerUI(), point: guidePoint, confirm, status, stream: (update) => liveReply.receive(update), explain: bubbleExplain, trace, documentsDir: documentsDir(), dataDir: app.getPath("userData"), record: recordChange, reveal: revealMade, isOwnWindow: (w) => ownPids().includes(Number(w.pid)), openFile })
+    ? makeEngine({ ...providerUI(), point: guidePoint, annotate: (items, context) => showAnnotations(items, context), clearAnnotations: (ms = 0) => annotationLayer.release("bubble", ms), confirm, status, stream: (update) => liveReply.receive(update), explain: bubbleExplain, trace, documentsDir: documentsDir(), dataDir: app.getPath("userData"), record: recordChange, reveal: revealMade, isOwnWindow: (w) => ownPids().includes(Number(w.pid)), openFile })
     : null;
 }
 
@@ -1546,6 +1598,8 @@ function makeAppBrain(/** @type {number} */ conn, /** @type {string} */ client) 
   const owner = `app-${conn}`;
   /** @type {Brain} */
   const appBrain = new Brain({
+    annotate: (items, context) => showAnnotations(items, context, owner),
+    clearAnnotations: (ms = 0) => annotationLayer.release(owner, ms),
     screenContext: () => settings.screenContext,
     point: (bounds, caption) => {
       const shown = point(bounds, caption, owner);
@@ -1650,6 +1704,8 @@ function startTasks() {
     },
     currentTarget: () => foregroundWindow(ownPids()),
     point,
+    annotate: showAnnotations,
+    clearAnnotations: (owner, ms = 0) => annotationLayer.release(owner, ms),
     release: releaseLater,
     explain: (plate, observed) => openExplainer(plate, { observed }),
     onChange: (list) => {
@@ -2368,6 +2424,12 @@ app.whenReady().then(() => {
       console.log("EXPLAINER_SHOWN", JSON.stringify({ windows: plates.length, visible: plates.some((w) => w.isVisible()), chars: text.length, title: text.split("\n").find((l) => l.trim()) ?? "" }));
       console.log("EXPLAINER_TEST_DONE");
     }, 4000);
+  } else if (process.env.BUDDY_ANNOTATIONS_TEST) {
+    setTimeout(async () => {
+      const { runAnnotationTest } = await import("./annotation-test.js");
+      await runAnnotationTest({ script: process.env.BUDDY_ANNOTATIONS_SAMPLE ?? path.join(here, "../scripts/samples/context-window.ps1"),
+        out: process.env.BUDDY_ANNOTATIONS_TEST, showAnnotations, annotationLayer, toLocalRect, point, release: releaseLater });
+    }, 2500);
   } else if (process.env.BUDDY_SCREEN_CONTEXT_TEST) {
     // Capture only this test-owned sample. The scripted server checks both image transport and the real tree.
     setTimeout(async () => {

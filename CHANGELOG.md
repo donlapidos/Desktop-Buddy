@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+* Workflow checks recognise smart apostrophes in recovery replies. Saved runs can be rescored without another
+  model call, while preserving the original evidence and execution failures.
+* The saved-key benchmark runner uses a separate runtime profile, avoiding cache contention with an active Buddy.
+
+* A six-workflow model check replays recorded Excel and Edge windows, including corrections, tab changes, missing
+  buttons and unverified progress. It rejects stale refs and absent or ambiguous guide targets, and reports timing
+  for each request. List it with `npm run eval -- --set workflows --list`; running a model uses its API account.
+* Model checks no longer count one control as two ordered steps, or treat a failed model request as a passing
+  no-action case. Unknown case IDs and set names stop before a model call.
+
+* Everyday guidance in the default engine uses a smaller prompt. Illustrated-explanation instructions and tools
+  load on demand; the Explain shortcut starts with them ready.
+* Guidance includes app-specific hints for Excel, Word, browsers, File Explorer and Windows Settings, and gives
+  corrections precedence over the previous route. These hints still require checking the user's actual screen.
+
+* Buddy can draw highlights, circles, arrows, labels and drag paths on your screen, anchored to current controls.
+  Guides use numbered highlights and can choose a different drawing for each step; spoken instructions accompany them.
+* Drawings belong to their conversation and clear on interruption, focus or window changes, and anchor movement.
+  A cancelled pointer flight can no longer bring its caption back after Stop.
+* A guide with an explicit expected result no longer treats an unrelated selection or layout change as completion;
+  it hands the current window back to the model to inspect.
+
 * Buddy's default engine starts each question with a fresh window picture and its accessibility text, when the
   model is known to support images. Reading and capture run together, stop on cancellation, and fall back independently.
 * Window screenshots can be turned off in AI & privacy. Automatic captures stay within the requested window,

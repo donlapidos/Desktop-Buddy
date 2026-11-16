@@ -274,6 +274,14 @@ Unboxed Patrick Hand paragraph in `ink`, signed "— seen in {app}, {date}" righ
 Hairline-topped footer: italic "A Field Guide to Your Screen" left, "Plate N" right, both `ink-3`.
 
 ### Other Buddy surfaces (not yet aligned)
+
+The on-screen annotation layer extends the incumbent pointer language: Buddy blue, Schibsted Grotesk, 3px geometric
+strokes with a white separation stroke, and dark `#0c0d10` labels with white text and an 8px radius. Numbered 24px
+discs use Buddy blue mixed with the existing navy `#0b1a33`. Labels avoid nearby controls and one another where space
+permits. Batches fade in once over 180ms; reduced motion renders them immediately. Drag paths are static dashed
+curves with a source ring and arrowhead, never an animation that could be mistaken for a real drag. Every shape is
+renderer-owned geometry from control bounds; model text is rendered as text. The layer stays click-through and
+disappears while Buddy hides its own visuals for capture.
 The island pill (`src/ui/island.html`), speech bubble (`src/ui/bubble.html`) and pointer overlay (`src/ui/overlay.html`) predate this world and were not redesigned. They use their own local styles (dark pill, translucent bubble, system fonts, rounded corners and shadows). Their only shared commitment with the explainer is Buddy blue (#2f7aff) as the pointer and identity mark. This document does not define tokens for them; treat the field-guide world as the system of record when they are brought into line.
 
 ## Do's and Don'ts
