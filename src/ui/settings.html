@@ -777,7 +777,8 @@
     note.textContent = list.loading ? `Asking ${provider().label} which models your key can use…`
       : list.error ? list.error
       : !provider().ready ? (provider().key === "required" ? "Save a key above to see the models it can use." : "Save the address above to see its models.")
-      : { good: "Works well with Buddy: it can use tools and see your screen.",
+      : { good: "Works well with Buddy: it passed Buddy's checks, and it can use tools and see your screen.",
+          capable: "It can use tools and see your screen, but hasn't been checked with Buddy yet. Check this model to see how it does.",
           no_images: "Can't see images, so Buddy reads your windows as text instead of screenshots. Guiding works; questions about pictures and charts won't.",
           no_tools: "Can't use tools, so it can't read your screen or point. Pick another.",
         }[v(chosen)] ?? (provider().local ? `Buddy doesn't know yet whether this model can use tools and see images; it finds out the first time you ask. Download models in ${provider().label}.` : "Buddy doesn't know yet whether this model can use tools and see images; it finds out the first time you ask.");

@@ -30,6 +30,17 @@ Buddy needs an AI to think with. The first time it starts, it offers three ways 
 3. **With a free model on your own PC.** Run Ollama or LM Studio with a model that can use tools (it needs about
    8 GB of free memory). Nothing leaves your PC.
 
+### How models do with Buddy
+
+Measured with Buddy's own checks (`npm run eval`). Settings marks a model "works well" from 90% of tasks passed,
+here or in your own "Check this model" run.
+
+| Model | Tasks passed | Seconds a task | Cost a task | Checked |
+|---|---|---|---|---|
+| OpenAI gpt-6.1-sol | 6 of 6 (workflows) | 4.4 | not priced yet | 2026-11-16 |
+
+More models (Claude, Gemini's free tier, a model on your PC) are being checked.
+
 ## What you can do
 
 - **Ask:** press **Ctrl+Alt+B** in any app, or hover the island at the top of your screen. Buddy reads the window,

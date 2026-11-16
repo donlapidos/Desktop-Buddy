@@ -53,6 +53,7 @@
     "src/latency.js",
     "src/early-tools.js",
     "src/hold-key.js",
+    "src/model-results.js",
     "src/dev-hooks.js",
     "src/welcome.js",
     "src/costs.js",

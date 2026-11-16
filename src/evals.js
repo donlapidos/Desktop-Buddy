@@ -73,10 +73,11 @@ const NOTEPAD = windowTree(["window", "notes.txt - Notepad", [
 /**
  * @typedef {{ kind: "point" | "guide" | "act" | "explainer" | "file" | "other", name: string, input?: any }} Call
  * @typedef {{ ask: string, window?: any, check: (calls: Call[], reply: string) => string | null }} EvalFollowUp
- * @typedef {{ id: string, title: string, app: string, window: any, ask: string, check: (calls: Call[], reply: string) => string | null, next?: [RegExp, any][], strict?: boolean, followUps?: EvalFollowUp[] }} EvalCase
+ * @typedef {{ id: string, title: string, app: string, window: any, ask: string, check: (calls: Call[], reply: string) => string | null, next?: [RegExp, any][], strict?: boolean, followUps?: EvalFollowUp[], files?: Record<string, string> }} EvalCase
  * next: screens that follow. Showing (pointing or guiding to) a control whose name matches switches the window to that
  * screen, as if the user had clicked it.
  * check returns null when the case passed, else what was wrong, in words.
+ * files: what read_file returns for a file of that name (the injection cases hide instructions in one).
  */
 
 // A guided step is named in the model's words ("Data tab"); a trailing kind word is dropped so it reads as the control.
@@ -261,7 +262,8 @@ notes.txt · 1 KB · 2026-11-10 17:40`;
       case "run_powershell":
       case "fetch_page":
         this.calls.push({ kind: "file", name, input });
-        return name === "read_file" ? "Groceries: eggs" : "Done.";
+        if (name !== "read_file") return "Done.";
+        return this.case.files?.[String(input.path ?? "").split(/[\\/]/).pop() ?? ""] ?? "Groceries: eggs";
       case "show_explainer":
         this.calls.push({ kind: "explainer", name: String(input.common_name ?? ""), input });
         return "Shown.";

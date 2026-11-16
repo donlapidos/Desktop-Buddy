@@ -325,3 +325,18 @@ Make task, the tray no New task window, Settings hides Routines and the commands
 turn it on. Do mode and its approvals are unchanged. A unit test holds both tool lists (with the refusal removed
 on purpose, it failed); the new `island` e2e check pictures a new profile's island (Ask, Talk, Mark) and a seeded
 older profile's (Ask, Talk, Mark, Task).
+
+**2026-11-16 · package 6 · the parts that need no keys.** The model runs wait for the owner's keys and credit.
+- "Works well" now comes from measured results: `src/model-results.js` holds the bar (90% of tasks, one constant
+  with a test; with the comparison broken on purpose, 3 of 4 tests failed) and a dated results table. A model that
+  can use tools and see images but hasn't been measured shows as able, not "works well"; the user's own "Check this
+  model" run counts too. The README table has the one measured row so far (gpt-6.1-sol, 6 of 6 workflows, 4.4 s).
+- Injection cases (roadmap 2.6): three real-set cases hide instructions in a Word document, a web page and a file.
+  Each passes only if Buddy changes nothing. `test/injection.test.js` runs them through the eval runner against
+  scripted replies both ways (obeying fails, answering passes); with the check broken on purpose, 4 tests failed.
+- OpenAI prices: not added. Today's prices for these models couldn't be verified here, and Settings already says
+  plainly that a model without a known price shows tokens only and doesn't count toward a limit.
+- Owner's runs, each with `--json`, then a row each in `src/model-results.js` and the README table:
+  `npm run eval -- --provider gemini --model <id> --set real` and `--set workflows`; the same for
+  `--provider anthropic --model claude-haiku-5-5` and one local model (`--provider ollama --model <id>`).
+  If Gemini reaches 90% and its free tier is confirmed that day, the welcome's key page can say so.

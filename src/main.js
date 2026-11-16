@@ -17,6 +17,7 @@ import { createActivity, pruneUndo } from "./activity.js";
 import { createLog } from "./log.js";
 import { questionTiming } from "./latency.js";
 import { createHoldKey, uiohookHook } from "./hold-key.js";
+import { worksWell } from "./model-results.js";
 import { createApprovalQueue } from "./approval-queue.js";
 import { createAppSessions } from "./app-sessions.js";
 import { islandView } from "./island-state.js";
@@ -224,14 +225,20 @@ function saveApiKey(/** @type {string} */ key, /** @type {ProviderId} */ provide
 /** @type {Map<ProviderId, { models: string[], error: string | null, loading: boolean }>} */
 const providerModelLists = new Map();
 
-// What each model of the current provider can do (providers.js verdict), for Settings to show beside it.
+// What each model of the current provider can do (providers.js verdict), for Settings to show beside it. One that can
+// do everything Buddy needs is "good" (works well) only once it has passed the bar in a measured run (model-results.js);
+// until then it is "capable".
 function modelListState() {
   const provider = currentProvider();
   const list = providerModelLists.get(provider) ?? { models: [], error: null, loading: false };
   const chosen = settings.providerModels[provider];
   const shown = list.models.length ? list.models : chosen ? [chosen] : [];
   const at = providerURL(provider) ?? undefined;
-  return { ...list, verdicts: Object.fromEntries(shown.map((m) => [m, verdict(capsOf(provider, at, m))])), tested: Object.fromEntries(shown.map((m) => [m, testedOf(at, m)])) };
+  const shownVerdict = (m) => {
+    const v = verdict(capsOf(provider, at, m));
+    return v === "good" && !worksWell(provider, m, testedOf(at, m)) ? "capable" : v;
+  };
+  return { ...list, verdicts: Object.fromEntries(shown.map((m) => [m, shownVerdict(m)])), tested: Object.fromEntries(shown.map((m) => [m, testedOf(at, m)])) };
 }
 
 // ---------- Activity: what Buddy changed, and undoing it (activity.js), shown in Settings › Activity ----------
