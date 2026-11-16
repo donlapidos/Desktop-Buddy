@@ -1,6 +1,10 @@
 # Desktop Buddy changelog
 
-## Unreleased
+## 0.4.0 (2026-11-16)
+
+Buddy can now draw on your screen (circles, arrows, labels, drag paths) to show you what goes where.
+Answers appear as Buddy writes them, and you can change your question halfway through, by typing or by talking.
+Buddy sees a fresh picture of the window you ask about, and Mark opens and draws faster.
 
 * Mark prepares its hidden drawing window and captures the screen in parallel. Esc can cancel preparation, and a
   ten-second deadline also covers waiting for the image to load.
