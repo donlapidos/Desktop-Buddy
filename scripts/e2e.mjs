@@ -143,6 +143,18 @@ function keyProblems(k) {
 
 /** @type {Record<string, { interactive?: boolean, run: () => Promise<string[]> }>} each resolves its problems */
 const CHECKS = {
+  async markerRender() {
+    const { markers, timedOut } = await runCopy("marker-render", { BUDDY_MARK_RENDER_TEST: out }, "MARK_RENDER_TEST_DONE", 60000);
+    const r = markers.MARK_RENDER_TEST?.[0];
+    if (!r) return [timedOut ? "timed out" : "no marker renderer result"];
+    return [r.error, r.results?.length !== 2 && "missing standard or high-DPI check",
+      ...(r.results ?? []).flatMap((result, i) => [Math.abs(result.dpr - result.canvasScale) > .01 && "canvas DPI mismatch",
+        Math.abs(result.canvasScale - (i + 1)) > .01 && "requested DPI scale was not exercised",
+        result.frames < 30 && "live frames were not exercised",
+        result.strokeCalls > 100 && "completed marks were repainted during every live frame",
+        ...["cancelDiscarded", "pointerIsolated", "undoWorked", "tipTracked", "pointsBounded", "coalescedFallback", "composed", "composedMarksVisible", "liveVisible", "savedVisible", "activeCleared"].filter((key) => !result[key]).map((key) => `${key} failed at DPI ${result.canvasScale}`)]),
+    ].filter(Boolean);
+  },
   async annotations() {
     const { markers, timedOut } = await runCopy("annotations", { BUDDY_ANNOTATIONS_TEST: out, BUDDY_ANNOTATIONS_SAMPLE: path.join(app, "scripts/samples/context-window.ps1") }, "ANNOTATIONS_TEST_DONE", 120_000);
     const r = markers.ANNOTATIONS_TEST?.[0];

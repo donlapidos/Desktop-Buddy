@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Mark keeps completed strokes on their own drawing layer, so moving the pen no longer repaints every older mark.
+  Long strokes keep following the pen when their point budget fills; empty coalesced events still draw correctly.
+* Cancelled pointer strokes are discarded, another pointer cannot interrupt an active stroke, and pointer-up keeps
+  the exact endpoint. A generated-screen app check verifies drawing, Undo and image composition at standard and high DPI.
+
 * Everyday guidance uses shorter instructions. Follow-ups drop the previous automatic window snapshot while
   retaining the user's requests, Buddy's replies and explicitly chosen Mark or Explain images.
 * Saved-key benchmarks correctly unwrap Electron's async decrypt result, support legacy ciphertext and carry only

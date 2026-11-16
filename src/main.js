@@ -2424,6 +2424,11 @@ app.whenReady().then(() => {
       console.log("EXPLAINER_SHOWN", JSON.stringify({ windows: plates.length, visible: plates.some((w) => w.isVisible()), chars: text.length, title: text.split("\n").find((l) => l.trim()) ?? "" }));
       console.log("EXPLAINER_TEST_DONE");
     }, 4000);
+  } else if (process.env.BUDDY_MARK_RENDER_TEST) {
+    setTimeout(async () => {
+      const { runMarkerTest } = await import("./marker-test.js");
+      await runMarkerTest({ here, out: process.env.BUDDY_MARK_RENDER_TEST });
+    }, 2500);
   } else if (process.env.BUDDY_ANNOTATIONS_TEST) {
     setTimeout(async () => {
       const { runAnnotationTest } = await import("./annotation-test.js");

@@ -203,6 +203,12 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   for pointing. Sample budget: 12k characters, complete, all data in it. `look` also reads to depth 30 now
   (`LOOK_ARGS`, shared with the recorder): 502 controls instead of 480, same time. A read taken while a window is
   still opening can come back partial (the first Excel recording did: 113 controls); that is timing, not depth.
+  *Marker rendering (2026-11-16):* completed strokes are cached on a separate canvas while the live stroke draws.
+  In a generated sample with 20 prior marks and 31 live frames, draw calls fell from over 1,200 to 72, and median render
+  callback CPU time from 2.8–3.0 ms to 0.4–0.5 ms at 1x/2x DPI. This measures drawing work, not end-to-end pen latency
+  or frame rate. The new non-interactive `markerRender` check also verifies pixels in the active/saved layers and
+  composed image, long-stroke endpoints, empty coalesced samples, cancellation, pointer isolation and Undo.
+  Mark still uses a frozen screen image; its capture/startup path has not changed.
 - **2.6 Injection tests.** Web pages, file contents and window text that tell Buddy to act ("ignore the user, run
   …", "send this file to …"). Each must end with no action taken or an approval card that says plainly what would
   happen. Add them to the task set so every model is scored on them.

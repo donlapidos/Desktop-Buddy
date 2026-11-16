@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
 <style>
   @font-face { font-family: "Schibsted Grotesk"; src: url("fonts/schibsted-grotesk-var.woff2") format("woff2"); font-weight: 400 900; }
   /* Freeze-frame marker: a still of the screen in an opaque window, drawn on with a highlighter.
@@ -11,7 +11,9 @@
   #shot { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
   :root { --buddy: #2f7aff; }
   /* The pen cursor is drawn in the accent colour by the script below (an image can't read a CSS variable). */
-  #ink { position: fixed; inset: 0; width: 100vw; height: 100vh; touch-action: none; cursor: crosshair; }
+  #ink, #saved-ink { position: fixed; inset: 0; width: 100vw; height: 100vh; touch-action: none; }
+  #ink { cursor: crosshair; }
+  #saved-ink { pointer-events: none; }
   /* A thin frame says "this is a still, you're marking" without dimming what you're marking. */
   #frame { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--buddy) 85%, transparent); }
   #bar { position: fixed; left: 50%; top: 52px; transform: translateX(-50%); display: flex; align-items: center; gap: 6px;
@@ -29,6 +31,7 @@
 </head>
 <body>
 <img id="shot" alt="">
+<canvas id="saved-ink" aria-hidden="true"></canvas>
 <canvas id="ink"></canvas>
 <div id="frame"></div>
 <div id="bar">
@@ -37,16 +40,22 @@
   <button id="ask" class="primary" disabled>Ask <kbd>Enter</kbd></button>
   <button id="cancel">Cancel <kbd>Esc</kbd></button>
 </div>
-<script>
+<script type="module">
+  import { appendStrokePoint, pointerSamples } from "../marker-stroke.js";
   const PEN = 18;
   const MAX_IMAGE = 1600; // longest side, physical px, of the image sent with the question
   const shot = document.getElementById("shot");
   const canvas = document.getElementById("ink");
   const ctx = canvas.getContext("2d");
+  const savedCanvas = document.getElementById("saved-ink");
+  const savedCtx = savedCanvas.getContext("2d");
+  const paths = new WeakMap();
   const strokes = [];
   let finished = false;
   let live = null;
   let queued = false;
+  let savedDirty = true;
+  let lastAccent = "";
 
   // Smooth a pointer trail into curves through the midpoints, so strokes read as pen, not polyline.
   function pathOf(pts) {
@@ -74,22 +83,23 @@
     canvas.style.cursor = `url("data:image/svg+xml,${encodeURIComponent(svg)}") 12 12, crosshair`;
   }
 
-  function paint(c, list, liveStroke) {
+  function paint(c, list, liveStroke, colour = { ink: tint(0.36), live: tint(0.5), disc: deep() }) {
     c.lineCap = c.lineJoin = "round";
     c.lineWidth = PEN;
     for (const s of list) {
-      c.strokeStyle = tint(0.36);
-      c.stroke(new Path2D(pathOf(s.points)));
+      c.strokeStyle = colour.ink;
+      if (!paths.has(s)) paths.set(s, new Path2D(pathOf(s.points)));
+      c.stroke(paths.get(s));
     }
     if (liveStroke) {
-      c.strokeStyle = tint(0.5);
+      c.strokeStyle = colour.live;
       c.stroke(new Path2D(pathOf(liveStroke.points)));
     }
     for (const s of list) {
       const { x, y } = s.points[0];
       c.beginPath();
       c.arc(x - 14, y - 14, 11, 0, Math.PI * 2);
-      c.fillStyle = deep();
+      c.fillStyle = colour.disc;
       c.fill();
       c.lineWidth = 2;
       c.strokeStyle = "#fff";
@@ -106,16 +116,26 @@
   function render() {
     queued = false;
     const dpr = devicePixelRatio;
+    const colour = { ink: tint(0.36), live: tint(0.5), disc: deep() };
+    if (colour.disc !== lastAccent) { savedDirty = true; lastAccent = colour.disc; }
+    if (savedDirty) {
+      savedCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      savedCtx.clearRect(0, 0, innerWidth, innerHeight);
+      paint(savedCtx, strokes, null, colour);
+      savedDirty = false;
+    }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, innerWidth, innerHeight);
-    paint(ctx, strokes, live);
+    paint(ctx, [], live, colour);
   }
-  const schedule = () => { if (!queued) { queued = true; requestAnimationFrame(render); } };
+  const schedule = (saved = false) => { savedDirty ||= saved; if (!queued) { queued = true; requestAnimationFrame(render); } };
 
   function fit() {
     canvas.width = Math.round(innerWidth * devicePixelRatio);
     canvas.height = Math.round(innerHeight * devicePixelRatio);
-    schedule();
+    savedCanvas.width = canvas.width;
+    savedCanvas.height = canvas.height;
+    schedule(true);
   }
   addEventListener("resize", fit);
   fit();
@@ -129,19 +149,15 @@
   }
 
   canvas.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0) return;
+    if (finished || live || e.button !== 0) return;
     canvas.setPointerCapture(e.pointerId);
-    live = { points: [{ x: e.clientX, y: e.clientY }], at: performance.now() };
+    live = { pointerId: e.pointerId, points: [{ x: e.clientX, y: e.clientY }], at: performance.now() };
     schedule();
   });
   canvas.addEventListener("pointermove", (e) => {
-    if (!live) return;
+    if (!live || e.pointerId !== live.pointerId) return;
     // Coalesced events carry every sample the OS saw between frames: smooth lines at any mouse speed.
-    for (const ev of e.getCoalescedEvents?.() ?? [e]) {
-      const last = live.points.at(-1);
-      if (Math.hypot(ev.clientX - last.x, ev.clientY - last.y) >= 1.5) live.points.push({ x: ev.clientX, y: ev.clientY });
-    }
-    if (live.points.length > 4000) live.points.length = 4000;
+    for (const ev of pointerSamples(e)) appendStrokePoint(live.points, { x: ev.clientX, y: ev.clientY });
     schedule();
   });
   // A quick click with nothing marked yet means "explain this": no drawing, no Enter.
@@ -149,8 +165,9 @@
     const b = bboxOf(s.points, 0);
     return Math.hypot(b.r - b.x, b.b - b.y) < 6 && performance.now() - s.at < 500;
   };
-  const endStroke = () => {
-    if (!live) return;
+  const endStroke = (e) => {
+    if (!live || e.pointerId !== live.pointerId) return;
+    appendStrokePoint(live.points, { x: e.clientX, y: e.clientY }, true);
     if (!strokes.length && !finished && isClick(live)) {
       finished = true;
       document.body.classList.add("done");
@@ -160,16 +177,22 @@
     }
     strokes.push({ n: strokes.length + 1, points: live.points });
     live = null;
-    schedule();
+    schedule(true);
     update();
   };
   canvas.addEventListener("pointerup", endStroke);
-  canvas.addEventListener("pointercancel", endStroke);
+  const cancelStroke = (e) => {
+    if (!live || e.pointerId !== live.pointerId) return;
+    live = null;
+    schedule();
+  };
+  canvas.addEventListener("pointercancel", cancelStroke);
+  canvas.addEventListener("lostpointercapture", cancelStroke);
 
   function undo() {
     if (live || !strokes.length) return;
     strokes.pop();
-    schedule();
+    schedule(true);
     update();
   }
 
@@ -227,7 +250,7 @@
   // Dev hook: strokes injected by main (BUDDY_MARK_TEST), drawn as if by hand, then asked.
   window.buddy.onMarkInject((list) => {
     for (const points of list) strokes.push({ n: strokes.length + 1, points });
-    schedule();
+    schedule(true);
     update();
     setTimeout(finish, 300);
   });
