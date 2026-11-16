@@ -60,7 +60,8 @@ function scriptedOllama() {
 /**
  * Runs Buddy with `env` until it prints `done` (or `timeoutMs` passes), and returns what it printed, by marker.
  * Every copy's own timing.log is read afterwards: a refused mode or task-state change is a bug, whichever check hit it.
- * @returns {Promise<{ markers: Record<string, any[]>, log: string, timedOut: boolean }>}
+ * `devHooks` says whether the copy loaded dev-hooks.js (it writes dev-hooks-loaded to its timing log when it does).
+ * @returns {Promise<{ markers: Record<string, any[]>, log: string, timedOut: boolean, devHooks: boolean }>}
  */
 function runCopy(name, env, done, timeoutMs = 90_000) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), `buddy-e2e-${name}-`));
@@ -82,12 +83,14 @@ function runCopy(name, env, done, timeoutMs = 90_000) {
       clearTimeout(timer);
       spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"], { windowsHide: true });
       fs.writeFileSync(path.join(out, `${name}.log`), log);
+      let timing = "";
       try {
-        for (const line of fs.readFileSync(path.join(data, "timing.log"), "utf8").split(/\r?\n/)) {
+        timing = fs.readFileSync(path.join(data, "timing.log"), "utf8");
+        for (const line of timing.split(/\r?\n/)) {
           if (/"kind":"refused-(mode-change|task-state)"/.test(line)) refusals.push(`${name}: ${line}`);
         }
       } catch {}
-      resolve({ markers, log, timedOut });
+      resolve({ markers, log, timedOut, devHooks: timing.includes('"kind":"dev-hooks-loaded"') });
     };
     const timer = setTimeout(() => finish(true), timeoutMs);
     const read = (chunk) => {
@@ -347,10 +350,10 @@ const CHECKS = {
   },
 
   async explainer() {
-    const { markers, timedOut } = await runCopy("explainer", { BUDDY_EXPLAINER_TEST: path.join(app, "scripts", "samples", "vlookup.json"), BUDDY_EXPLAINER_TEST_OUT: path.join(out, "explainer.png") }, "EXPLAINER_TEST_DONE");
+    const { markers, timedOut, devHooks } = await runCopy("explainer", { BUDDY_EXPLAINER_TEST: path.join(app, "scripts", "samples", "vlookup.json"), BUDDY_EXPLAINER_TEST_OUT: path.join(out, "explainer.png") }, "EXPLAINER_TEST_DONE");
     const r = markers.EXPLAINER_SHOWN?.[0];
     if (!r) return [timedOut ? "timed out" : "nothing printed"];
-    return [!r.windows && "no explainer window opened", !r.visible && "the explainer window isn't visible", r.chars < 100 && `only ${r.chars} characters on the plate`].filter(Boolean);
+    return [!devHooks && "a dev check ran without dev-hooks.js reporting itself loaded", !r.windows && "no explainer window opened", !r.visible && "the explainer window isn't visible", r.chars < 100 && `only ${r.chars} characters on the plate`].filter(Boolean);
   },
 
   async voice() {
@@ -362,12 +365,14 @@ const CHECKS = {
   },
 
   // A plain test copy (no dev hook, its own data folder) must leave the user's PC as it was: no start-with-Windows
-  // entry, no shortcuts. One once did, and would have started a second Buddy at every sign-in.
+  // entry, no shortcuts. One once did, and would have started a second Buddy at every sign-in. It must not load the
+  // dev hooks either: they are for checks only.
   async firstrun() {
     const before = machineState();
-    await runCopy("firstrun", {}, "NEVER", 12_000);
+    const { devHooks } = await runCopy("firstrun", {}, "NEVER", 12_000);
     const after = machineState();
-    return Object.keys({ ...before, ...after }).filter((k) => before[k] !== after[k]).map((k) => `changed ${k}: ${before[k] ?? "(none)"} -> ${after[k] ?? "(none)"}`);
+    return [devHooks && "a Buddy with no test variable loaded dev-hooks.js",
+      ...Object.keys({ ...before, ...after }).filter((k) => before[k] !== after[k]).map((k) => `changed ${k}: ${before[k] ?? "(none)"} -> ${after[k] ?? "(none)"}`)].filter(Boolean);
   },
 
   mark: {
