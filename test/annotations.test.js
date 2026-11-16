@@ -148,3 +148,16 @@ test("a window or anchor change clears the layer and stops polling", { timeout: 
   assert.equal(calls, finishedCalls);
   assert.equal(erased, 1);
 });
+
+test("a best guess is let go when its window closes, minimizes, moves, changes size or loses focus", async () => {
+  const { guessGone } = await import("../src/annotations.js");
+  const win = { id: "w1", bounds: { x: 100, y: 100, width: 800, height: 600 } };
+  const as = (patch = {}, others = []) => [{ id: "w1", bounds: win.bounds, is_focused: true, pid: 50, ...patch }, ...others];
+  assert.equal(guessGone(win, as(), [7]), null, "as it was");
+  assert.equal(guessGone(win, [], [7]), "closed");
+  assert.equal(guessGone(win, as({ minimized: true }), [7]), "minimized");
+  assert.equal(guessGone(win, as({ bounds: { ...win.bounds, x: 140 } }), [7]), "moved");
+  assert.equal(guessGone(win, as({ bounds: { ...win.bounds, width: 700 } }), [7]), "moved");
+  assert.equal(guessGone(win, as({ is_focused: false }, [{ id: "w2", is_focused: true, pid: 60 }]), [7]), "focus");
+  assert.equal(guessGone(win, as({ is_focused: false }, [{ id: "bubble", is_focused: true, pid: 7 }]), [7]), null, "Buddy's own window in front");
+});

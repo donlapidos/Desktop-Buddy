@@ -19,7 +19,7 @@ function render(items) {
   for (const [i, item] of items.entries()) {
     const layout = layouts[i];
     if (!layout) continue;
-    const group = svg("g", { "data-kind": item.kind });
+    const group = svg("g", { "data-kind": item.kind, ...(item.guess ? { class: "guess" } : {}) });
     const b = layout.box;
     const shape = (name, attrs, extra = "") => {
       group.append(svg(name, { ...attrs, class: "annotation-outline" }));

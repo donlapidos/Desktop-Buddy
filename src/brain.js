@@ -10,6 +10,7 @@ import { writeDocx } from "./documents.js";
 import { PROVIDERS, ProviderError, capsOf, chatTurn } from "./providers.js";
 import { PC_TOOL_NAMES, beyondScreen, hideSecrets, pcTools, placesHere, runPcTool } from "./pc-tools.js";
 import { fingerprint } from "./activity.js";
+import { spotRect } from "./geometry.js";
 import { earlyInput } from "./early-tools.js";
 import path from "node:path";
 
@@ -35,6 +36,19 @@ export function setBrainDefaults({ model, effort, providerModels = {} }) {
   startWith = { model: process.env.BUDDY_MODEL ?? model, effort: /** @type {Effort} */ (process.env.BUDDY_EFFORT ?? effort), models: { ...providerModels } };
 }
 const MAX_STEPS = 30;
+// A spot (point_at, annotate) is measured on the latest screenshot while it's this recent.
+const SHOT_FRESH_MS = 5 * 60_000;
+
+/**
+ * What a window's screenshot shows, for measuring spots on it: the window's bounds when captured, and the picture's
+ * size in physical pixels (agent-desktop's width and height, before Buddy shrinks it to send).
+ * @typedef {{ window: any, width: number, height: number, at: number }} Shot
+ * @returns {Shot | null}
+ */
+function shotFacts(/** @type {any} */ win, /** @type {any} */ data) {
+  const width = Number(data?.width), height = Number(data?.height);
+  return win?.bounds && width > 0 && height > 0 ? { window: { ...win, bounds: win.bounds }, width, height, at: Date.now() } : null;
+}
 
 // Buddy's own tools that only come with Settings › Agents › Show advanced features (the PC tools come with it too).
 export const ADVANCED_TOOLS = new Set(["create_document"]);
@@ -229,6 +243,9 @@ Style: you are talking in a small speech bubble. Be warm and brief: one to three
 no long lists. Speak about the UI by its visible labels, never by ref ids.`;
 
 const str = (description) => ({ type: "string", description });
+// A place on the latest screenshot of the window, for something that has no ref (point_at, annotate). act never takes one.
+const SPOT_SCHEMA = { type: "object", description: "Where it is on the latest screenshot of this window, as fractions of the picture's width and height (0 to 1, from the top left). Only for something with no ref.",
+  properties: { x: { type: "number", minimum: 0, maximum: 1 }, y: { type: "number", minimum: 0, maximum: 1 } }, required: ["x", "y"] };
 
 /** @type {Anthropic.Beta.BetaTool[]} */
 export const TOOLS = [
@@ -269,12 +286,13 @@ export const TOOLS = [
   {
     name: "point_at",
     description:
-      "Fly your pointer to an element (by ref) or to something the user highlighted (by mark number) and show a caption next to it. This is how you teach. It does not click. Point at one thing per call; call it again for the next step.",
+      "Fly your pointer to an element (by ref) or to something the user highlighted (by mark number) and show a caption next to it. This is how you teach. It does not click. Point at one thing per call; call it again for the next step. Only when the thing has no ref (a canvas, a picture, a remote desktop) and you have a screenshot of the window, give spot instead: Buddy shows it as a best guess.",
     input_schema: {
       type: "object",
       properties: {
         ref: str("A ref from the latest look."),
         mark: { type: "integer", description: "A mark number the user drew, instead of a ref." },
+        spot: SPOT_SCHEMA,
         caption: str("A few words shown beside the pointer, like 'Click File first'."),
       },
       required: ["caption"],
@@ -282,16 +300,17 @@ export const TOOLS = [
   },
   {
     name: "annotate",
-    description: "Draw on the screen without clicking: highlight, circle, arrow, label or drag path, anchored to real control refs. Up to six in one window. Destinations use to_ref; drag requires one. Previous drawings are replaced. Use caption for the spoken instruction.",
+    description: "Draw on the screen without clicking: highlight, circle, arrow, label or drag path, anchored to real control refs. Up to six in one window. Destinations use to_ref; drag requires one. Previous drawings are replaced. Use caption for the spoken instruction. A highlight, circle or label on something with no ref may use spot instead (a best guess on the latest screenshot); arrows and drags need refs.",
     input_schema: { type: "object", properties: {
       caption: str("One short instruction to say as the drawing appears."),
       items: { type: "array", minItems: 1, maxItems: 6, items: { type: "object", properties: {
         kind: { type: "string", enum: ["highlight", "circle", "arrow", "label", "drag"] },
-        ref: str("A control ref from the latest look. No coordinates."),
+        ref: str("A control ref from the latest look. Use a ref whenever there is one."),
+        spot: SPOT_SCHEMA,
         to_ref: str("Another control ref, for a connecting arrow or drag path."),
         label: str("A short label, up to 120 characters."),
         number: { type: "integer", minimum: 1, maximum: 99 },
-      }, required: ["kind", "ref"] } },
+      }, required: ["kind"] } },
     }, required: ["items"] },
   },
   {
@@ -637,6 +656,7 @@ const spokenNote = (lang) =>
  *   provider?: import("./providers.js").ProviderId,
  *   baseURL?: string,
  *   point: (bounds: import("./geometry.js").PhysicalRect, caption: string) => Promise<void>,
+ *   pointGuess?: (bounds: import("./geometry.js").PhysicalRect, caption: string, window: any) => Promise<void>,
  *   confirm: import("./approvals.js").Ask["confirm"],
  *   status: (text: string) => void,
  *   stream?: (update: { text: string, done: boolean }) => void,
@@ -685,6 +705,10 @@ export class Brain {
     this.preview?.abort?.abort();
     this.preview = null;
     this.contextImages = new WeakSet();
+    /** @type {WeakMap<object, Shot>} what each screenshot image shows (shotFacts), for spots on it */
+    this.shotOf = new WeakMap();
+    /** @type {Shot | null} the latest screenshot the model was given: spots (point_at, annotate) are measured on it */
+    this.shot = null;
     /** @type {Map<string, string>} automatic window prompts -> the same request without its old observation */
     this.contextReadings = new Map();
     this.explainerReady = false;
@@ -801,7 +825,9 @@ export class Brain {
     const data = res.data?.base64 ?? res.data?.png ?? res.data?.image ?? res.data?.data;
     if (typeof data !== "string" || !data) return null;
     const image = /** @type {import("./screen-context.js").ScreenImage} */ ({ type: "image", source: { type: "base64", media_type: "image/png", data } });
-    return this.ui.prepareImage ? this.ui.prepareImage(image) : image;
+    const sent = this.ui.prepareImage ? this.ui.prepareImage(image) : image;
+    this.shotOf.set(sent, shotFacts(target, res.data));
+    return sent;
   }
 
   async initialContext(target, signal) {
@@ -833,6 +859,7 @@ export class Brain {
       if (!this.canObserveTarget(target)) return { reading: null, image: null };
       if (!fresh(context.reading)) context.reading = null;
       if (this.ui.screenContext?.() === false) context.image = null;
+      if (context.image) this.shot = this.shotOf.get(context.image) ?? null;
       this.ui.trace?.({ kind: "screen-context", ms: Date.now() - started, reading: !!context.reading, image: !!context.image, reused });
       return context;
     } finally {
@@ -1314,9 +1341,20 @@ export class Brain {
         if (this.ui.screenContext?.() === false || this.abort?.signal.aborted) return "The screenshot was cancelled.";
         const data = res.ok ? res.data?.base64 ?? res.data?.png ?? res.data?.image ?? res.data?.data : null;
         if (typeof data !== "string") return trimEnvelope(res);
+        // A spot can be measured on this picture only when it's of the conversation's own window, whose bounds are known.
+        this.shot = res.ok && !input.app && !input.window_id && this.target ? shotFacts(this.target, res.data) : null;
         return [{ type: "image", source: { type: "base64", media_type: "image/png", data } }];
       }
       case "point_at": {
+        if (input.spot != null && input.ref == null && input.mark == null) {
+          const rect = this.spotBounds(input.spot);
+          if (typeof rect === "string") return rect;
+          const guess = this.ui.pointGuess ?? ((b, c) => this.ui.point(b, c));
+          await guess(rect, input.caption, /** @type {Shot} */ (this.shot).window);
+          this.notePointer();
+          this.ui.trace?.({ kind: "point-spot", rect });
+          return "Pointed, as a best guess: the user sees it marked \"about here\", and it clears if the window moves.";
+        }
         const bounds = input.mark != null ? this.marks?.get(input.mark) : this.bounds.get(input.ref);
         if (!bounds) {
           return input.mark != null
@@ -1427,7 +1465,14 @@ export class Brain {
     let request;
     try { request = annotationRequest(input); } catch (error) { return error.message; }
     const refs = [...new Set(request.items.flatMap((item) => [item.ref, item.to_ref].filter(Boolean)))];
-    const windows = refs.map((ref) => this.refWindows.get(ref));
+    // Spots (no control to anchor to) are measured on the latest screenshot, and drawn in that screenshot's window.
+    const spotted = new Map();
+    for (const item of request.items.filter((i) => i.spot)) {
+      const rect = this.spotBounds(item.spot);
+      if (typeof rect === "string") return rect;
+      spotted.set(item, rect);
+    }
+    const windows = [...refs.map((ref) => this.refWindows.get(ref)), ...(spotted.size ? [this.shot?.window] : [])];
     if (refs.some((ref) => !this.bounds.has(ref) || this.offscreenRefs.has(ref)) || windows.some((w) => !w?.id)) return "A drawing needs visible control refs from a fresh look. Read the window again.";
     const window = windows[0];
     if (windows.some((w) => w.id !== window.id || appKey(w.app_name) !== appKey(window.app_name))) return "Keep one drawing batch in one window. Read that window and use its refs.";
@@ -1436,8 +1481,8 @@ export class Brain {
     if (signal?.aborted) return "The user stopped.";
     if (boxes.some((box) => !validBox(box))) return "A control moved out of view or couldn't be located. Read the window again before drawing.";
     const anchors = new Map(refs.map((ref, i) => [ref, /** @type {import("./geometry.js").PhysicalRect} */ (boxes[i])]));
-    const items = request.items.map((item) => ({ kind: item.kind, bounds: anchors.get(item.ref),
-      ...(item.to_ref ? { to: anchors.get(item.to_ref) } : {}), label: item.label, ...(item.number ? { number: item.number } : {}) }));
+    const items = request.items.map((item) => ({ kind: item.kind, bounds: spotted.get(item) ?? anchors.get(item.ref),
+      ...(item.to_ref ? { to: anchors.get(item.to_ref) } : {}), label: item.label, ...(item.number ? { number: item.number } : {}), ...(spotted.has(item) ? { guess: true } : {}) }));
     const verify = async () => {
       if (signal?.aborted || !this.canObserveTarget(window)) return false;
       const current = await Promise.all(refs.map((ref) => this.liveBounds(ref)));
@@ -1447,6 +1492,18 @@ export class Brain {
     if (signal?.aborted) return "The user stopped.";
     if (shown) this.notePointer();
     return shown ? "Annotated. The user does the clicking or dragging; nothing was operated." : "The window changed before the drawing could be shown. Read it again.";
+  }
+
+  /**
+   * Where a spot on the latest screenshot is on screen (geometry.js spotRect), or why it can't be used: only a model
+   * that can see, only on a screenshot it was given of a window that is still where it was.
+   * @returns {import("./geometry.js").PhysicalRect | string}
+   */
+  spotBounds(/** @type {any} */ spot) {
+    if (capsOf(this.provider, this.ui.baseURL, this.model).vision !== true) return "A spot needs a model that can see the screenshot. Point at a ref from a look instead.";
+    if (!this.shot || Date.now() - this.shot.at > SHOT_FRESH_MS) return "There's no recent screenshot of this window to measure a spot on. Take a screenshot first.";
+    const rect = spotRect(spot, { window: this.shot.window.bounds, width: this.shot.width, height: this.shot.height });
+    return rect ?? "A spot is two fractions of the screenshot, x and y, each from 0 to 1.";
   }
 
   /** The last whole read of `win`, if it was taken within GUIDE_REUSE_MS; taken either way, so it's used once. */
@@ -1607,6 +1664,8 @@ ${text}` };
   }
 
   async act(input) {
+    // Do mode works on controls the user can see named on the approval card, never on a guessed place on a picture.
+    if (input.spot != null) return "act works only on a control's ref from a look, never on a spot. If what they want has no ref, point at the spot and let them click it themselves.";
     const how = { note: input.summary, status: input.summary };
     if (input.action === "press") {
       if (!input.keys) return "press needs keys.";

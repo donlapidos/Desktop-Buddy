@@ -7,7 +7,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { setBrainDefaults } from "./brain.js";
-import { listWindows, resolveBinary } from "./desktop.js";
+import { listWindows, observe, resolveBinary } from "./desktop.js";
 import { asPhysicalRect } from "./geometry.js";
 import { learnCaps } from "./providers.js";
 
@@ -460,6 +460,7 @@ function screenContextTest(kit) {
         const size = nativeImage.createFromBuffer(Buffer.from(compressed.source.data, "base64")).getSize();
         largeImageBounded = size.width === 1600 && size.height === 1200 && compressed.source.media_type === "image/jpeg";
       }
+      const sight = sentImage ? await pointBySight(kit, target, sentImage, js) : { error: "no screenshot was sent" };
       settingsWindow.open("claude");
       let settingsWin;
       for (let i = 0; i < 100; i++) {
@@ -480,7 +481,7 @@ function screenContextTest(kit) {
       if (process.env.BUDDY_SCREEN_CONTEXT_TEST_OUT) fs.writeFileSync(process.env.BUDDY_SCREEN_CONTEXT_TEST_OUT, (await settingsWin.webContents.capturePage()).toPNG());
       const second = await js(`window.buddy.ask("Read the chart title", {})`);
       const saved = JSON.parse(fs.readFileSync(settingsFile(), "utf8"));
-      console.log("SCREEN_CONTEXT_TEST", JSON.stringify({ first: first.reply, second: second.reply, settingWasOn, settingOff: !kit.settings.screenContext, settingUIOff, savedOff: saved.screenContext === false, largeImageBounded }));
+      console.log("SCREEN_CONTEXT_TEST", JSON.stringify({ first: first.reply, second: second.reply, settingWasOn, settingOff: !kit.settings.screenContext, settingUIOff, savedOff: saved.screenContext === false, largeImageBounded, sight }));
     } catch (err) {
       console.log("SCREEN_CONTEXT_TEST", JSON.stringify({ error: err.message }));
     } finally {
@@ -488,6 +489,67 @@ function screenContextTest(kit) {
       console.log("SCREEN_CONTEXT_TEST_DONE");
     }
   }, 2500);
+}
+
+// Pointing by sight: the sample's chart bars have no control to point at. Playing the model's part, this finds the
+// blue bar by its colour in the picture Buddy sent, asks Buddy to point there by a spot on it (the scripted server
+// echoes the spot back as point_at), and checks that the pointer lands inside the bar as the window's own layout has
+// it, shown as a best guess, and that it's let go again.
+/** @param {DevKit} kit @param {any} target @param {any} sentImage @param {(code: string) => Promise<any>} js */
+async function pointBySight(kit, target, sentImage, js) {
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const picture = nativeImage.createFromBuffer(Buffer.from(sentImage.source.data, "base64"));
+  const { width, height } = picture.getSize();
+  const px = picture.toBitmap(); // BGRA
+  let box = null;
+  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+    const i = (y * width + x) * 4;
+    if (Math.abs(px[i + 2] - 0x2f) < 40 && Math.abs(px[i + 1] - 0x7a) < 40 && px[i] > 215) {
+      box ??= { x0: x, y0: y, x1: x, y1: y };
+      box = { x0: Math.min(box.x0, x), y0: Math.min(box.y0, y), x1: Math.max(box.x1, x), y1: Math.max(box.y1, y) };
+    }
+  }
+  if (!box) return { error: "the blue bar isn't in the picture Buddy sent" };
+  const spot = { x: (box.x0 + box.x1) / 2 / width, y: (box.y0 + box.y1) / 2 / height };
+  // Where the bar really is on screen, from the window's own layout (the bars are unnamed groups a look leaves out).
+  const layout = await observe(["snapshot", "--window-id", target.id, "--include-bounds", "--max-depth", "30"], { timeoutMs: 10_000 });
+  const bars = [];
+  const walk = (n) => { if (n.role === "group" && n.name === "Quarterly sales" && n.bounds) bars.push(n.bounds); (n.children ?? []).forEach(walk); };
+  if (layout.ok) walk(layout.data.tree);
+  const bar = bars.sort((a, b) => b.height - a.height)[0];
+  if (!bar) return { error: "the sample's bars weren't in its layout" };
+  const ui = kit.brain.ui;
+  const original = ui.pointGuess;
+  /** @type {any} */
+  let guessed = null;
+  // What the overlay showing the pointer has on screen: a soft ring, and the caption it shows.
+  const onScreen = async () => {
+    for (const w of BrowserWindow.getAllWindows().filter((w) => w.webContents.getURL().endsWith("overlay.html"))) {
+      const seen = await w.webContents.executeJavaScript(`(() => { const r = document.getElementById("ring"); return r.classList.contains("on") ? { soft: r.classList.contains("guess"), caption: document.getElementById("caption").textContent } : null; })()`);
+      if (seen) return seen;
+    }
+    return { soft: false, caption: "" };
+  };
+  ui.pointGuess = async (bounds, caption, window) => {
+    const shown = await original(bounds, caption, window);
+    guessed = { bounds, ...(await onScreen()) };
+    return shown;
+  };
+  try {
+    const reply = (await js(`window.buddy.ask("Point at the blue bar [spot ${spot.x.toFixed(4)},${spot.y.toFixed(4)}]", {})`)).reply;
+    if (!guessed) return { error: `Buddy didn't point by sight: ${reply}` };
+    const c = { x: guessed.bounds.x + guessed.bounds.width / 2, y: guessed.bounds.y + guessed.bounds.height / 2 };
+    const inside = c.x >= bar.x && c.x <= bar.x + bar.width && c.y >= bar.y && c.y <= bar.y + bar.height;
+    // Let go within GUESS_MS (main.js), whether its window changed, the time ran out, or the answer let go of it.
+    let cleared = false;
+    for (let i = 0; i < 70 && !cleared; i++) {
+      await wait(200);
+      cleared = !(await onScreen()).soft;
+    }
+    return { reply, spot, bar, pointedAt: c, inside, softRing: guessed.soft, caption: guessed.caption, cleared };
+  } finally {
+    ui.pointGuess = original;
+  }
 }
 
 /** BUDDY_CONVERSATION_TEST @param {DevKit} kit */

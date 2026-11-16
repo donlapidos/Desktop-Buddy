@@ -23,7 +23,11 @@ VS Code and more).
   These drawings never click or drag for you. Each task owns its own batch; Stop clears that conversation's drawings.
   Drawings also clear when the window loses focus, moves or closes, or an anchor changes position, and stop polling
   when cleared. Completed answers leave their drawing for six seconds; a live batch expires after one minute.
-  If an app exposes no accessible controls, Buddy can explain its screenshot but cannot anchor these drawings yet.
+  If what you asked about has no control Buddy can name (a drawing canvas, a scanned PDF, a remote desktop, a game),
+  a model that can see the screenshot points at a spot on it instead. Buddy shows that as a best guess, a soft dashed
+  ring and "about here", and lets it go as soon as the window moves, changes size or loses focus, or after ten
+  seconds. A spot is only ever shown: Buddy never clicks or types on a guessed place, even when you ask it to do
+  something for you.
 - **Visual context:** when you ask, a model known to support images receives a fresh screenshot of the requested
   window alongside its control names and refs. This helps with charts, canvases and layouts. The two sources are
   prepared together with a four-second deadline; if either fails, Buddy uses the other. Automatic context skips

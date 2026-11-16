@@ -73,11 +73,12 @@ const NOTEPAD = windowTree(["window", "notes.txt - Notepad", [
 /**
  * @typedef {{ kind: "point" | "guide" | "act" | "explainer" | "file" | "other", name: string, input?: any }} Call
  * @typedef {{ ask: string, window?: any, check: (calls: Call[], reply: string) => string | null }} EvalFollowUp
- * @typedef {{ id: string, title: string, app: string, window: any, ask: string, check: (calls: Call[], reply: string) => string | null, next?: [RegExp, any][], strict?: boolean, followUps?: EvalFollowUp[], files?: Record<string, string> }} EvalCase
+ * @typedef {{ id: string, title: string, app: string, window: any, ask: string, check: (calls: Call[], reply: string) => string | null, next?: [RegExp, any][], strict?: boolean, followUps?: EvalFollowUp[], files?: Record<string, string>, image?: { data: string, width: number, height: number } }} EvalCase
  * next: screens that follow. Showing (pointing or guiding to) a control whose name matches switches the window to that
  * screen, as if the user had clicked it.
  * check returns null when the case passed, else what was wrong, in words.
  * files: what read_file returns for a file of that name (the injection cases hide instructions in one).
+ * image: a screenshot of the window (the sight set), handed over with the first look; spots are measured on it.
  */
 
 // A guided step is named in the model's words ("Data tab"); a trailing kind word is dropped so it reads as the control.
@@ -175,7 +176,18 @@ export const CASES = [
 class EvalBrain extends Brain {
   // Evaluations use recorded windows only. Initial context must never read or capture the evaluator's real PC.
   glance(_target) {}
-  async initialContext() { return { reading: await this.look(), image: null }; }
+  // A case with a picture (the sight set: a canvas, a scan, a remote desktop) hands it over as Buddy would its own
+  // screenshot, and spots are measured on it.
+  async initialContext() {
+    const image = this.sightImage();
+    return { reading: await this.look(), image };
+  }
+  sightImage() {
+    const shot = this.case.image;
+    if (!shot) return null;
+    this.shot = { window: { id: "w-1", app_name: this.case.app, bounds: { x: 0, y: 0, width: shot.width, height: shot.height } }, width: shot.width, height: shot.height, at: Date.now() };
+    return /** @type {import("./screen-context.js").ScreenImage} */ ({ type: "image", source: { type: "base64", media_type: "image/png", data: shot.data } });
+  }
   /** @param {import("./brain.js").BrainUI} ui @param {EvalCase} c @param {Call[]} calls */
   constructor(ui, c, calls) {
     super(ui);
@@ -225,11 +237,19 @@ class EvalBrain extends Brain {
       case "look":
       case "read_page":
         return this.look();
-      case "screenshot":
-        return "(No screenshot in this check; use look.)";
+      case "screenshot": {
+        const image = this.sightImage();
+        return image ? [image] : "(No screenshot in this check; use look.)";
+      }
       case "list_windows":
         return `w-1 · ${this.case.app} · "${this.window.name}" (focused)`;
       case "point_at":
+        if (input.spot != null && input.ref == null) {
+          const rect = this.spotBounds(input.spot);
+          if (typeof rect === "string") return rect;
+          this.calls.push({ kind: "point", name: "spot", input });
+          return "Pointed, as a best guess.";
+        }
         if (!this.names.has(input.ref)) return `No position known for ${input.ref}. Look again and point at a fresh ref.`;
         this.calls.push({ kind: "point", name: named(input.ref), input });
         this.follow(named(input.ref));

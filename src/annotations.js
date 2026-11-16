@@ -1,5 +1,6 @@
 // Model input is a small vocabulary of ref-anchored shapes, never executable markup or arbitrary coordinates.
 export const ANNOTATION_KINDS = Object.freeze(["highlight", "circle", "arrow", "label", "drag"]);
+export const SPOT_KINDS = Object.freeze(["highlight", "circle", "label"]);
 export const validBox = (b) => !!b && [b.x, b.y, b.width, b.height].every(Number.isFinite) && b.width > 0 && b.height > 0;
 export const sameBox = (a, b) => validBox(a) && validBox(b) && ["x", "y", "width", "height"].every((k) => Math.abs(a[k] - b[k]) <= 3);
 export const centerOf = (b) => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 });
@@ -12,13 +13,18 @@ export function annotationRequest(input) {
   if (!Array.isArray(input?.items) || !input.items.length || input.items.length > 6) throw new Error("Use between one and six annotations.");
   if (input.caption != null && (typeof input.caption !== "string" || input.caption.length > 240)) throw new Error("Keep the spoken caption under 240 characters.");
   const items = input.items.map((item) => {
-    if (!item || !ANNOTATION_KINDS.includes(item.kind) || typeof item.ref !== "string" || !item.ref.trim()) throw new Error("Each annotation needs a supported kind and a real control ref.");
+    // Something with no control (a canvas, a picture) may be marked by a spot on the screenshot instead: a highlight,
+    // circle or label only, since an arrow or drag between guesses would look more certain than it is.
+    const ref = typeof item?.ref === "string" && item.ref.trim() ? item.ref : null;
+    const spot = !ref && item?.spot && Number.isFinite(item.spot.x) && Number.isFinite(item.spot.y) ? { x: item.spot.x, y: item.spot.y } : null;
+    if (!item || !ANNOTATION_KINDS.includes(item.kind) || (!ref && !spot)) throw new Error("Each annotation needs a supported kind and a real control ref.");
+    if (spot && !SPOT_KINDS.includes(item.kind)) throw new Error("Arrows and drag paths need real control refs; a spot can only be highlighted, circled or labelled.");
     if (item.to_ref != null && (typeof item.to_ref !== "string" || !item.to_ref.trim())) throw new Error("The destination must be a real control ref.");
     if (item.kind === "drag" && !item.to_ref) throw new Error("A drag path needs both ref and to_ref.");
     if (item.label != null && (typeof item.label !== "string" || item.label.length > 120)) throw new Error("Keep labels under 120 characters.");
     if (item.kind === "label" && !item.label?.trim()) throw new Error("A label needs some text.");
     if (item.number != null && (!Number.isInteger(item.number) || item.number < 1 || item.number > 99)) throw new Error("A step number must be from 1 to 99.");
-    return { kind: item.kind, ref: item.ref, ...(item.to_ref ? { to_ref: item.to_ref } : {}), label: item.label?.trim() ?? "", ...(item.number ? { number: item.number } : {}) };
+    return { kind: item.kind, ...(ref ? { ref } : { spot }), ...(item.to_ref ? { to_ref: item.to_ref } : {}), label: item.label?.trim() ?? "", ...(item.number ? { number: item.number } : {}) };
   });
   return { items, caption: input.caption?.trim() ?? "" };
 }
@@ -128,4 +134,23 @@ export function createAnnotationLayer({ draw, erase, intervalMs = 1000, lifetime
     batch.expiry.unref?.();
   }
   return { show, clear, release, owner: () => active?.owner ?? null };
+}
+
+/**
+ * Why a best-guess pointer or drawing (a spot on a screenshot, which has no control to follow) should be let go now,
+ * or null while its window is as it was: in front, where it was, the same size. Buddy's own windows in front don't
+ * count (the bubble or a card).
+ * @param {{ id: string, bounds: any }} window the window when the guess was made
+ * @param {{ id: string, bounds?: any, minimized?: boolean, is_focused?: boolean, pid?: number | string }[]} windows now
+ * @param {number[]} ownPids
+ * @returns {"closed" | "minimized" | "moved" | "focus" | null}
+ */
+export function guessGone(window, windows, ownPids = []) {
+  const now = windows.find((w) => w.id === window?.id);
+  if (!now) return "closed";
+  if (now.minimized) return "minimized";
+  if (!sameBox(now.bounds, window.bounds)) return "moved";
+  const front = windows.find((w) => w.is_focused);
+  if (front && front.id !== now.id && !ownPids.includes(Number(front.pid))) return "focus";
+  return null;
 }

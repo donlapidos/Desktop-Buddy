@@ -1,0 +1,57 @@
+{
+ "paint-canvas": {
+  "width": 1280,
+  "height": 800,
+  "target": {
+   "x": 236,
+   "y": 14,
+   "width": 44,
+   "height": 44
+  },
+  "ask": "This is a drawing app. Which button is the eraser?"
+ },
+ "pdf-scan": {
+  "width": 1280,
+  "height": 800,
+  "target": {
+   "x": 300,
+   "y": 610,
+   "width": 360,
+   "height": 40
+  },
+  "ask": "This PDF is a scan. Where do I sign it?"
+ },
+ "remote-desktop": {
+  "width": 1280,
+  "height": 800,
+  "target": {
+   "x": 30,
+   "y": 30,
+   "width": 90,
+   "height": 96
+  },
+  "ask": "I'm looking at my office PC over Remote Desktop. Where's the Recycle Bin on it?"
+ },
+ "chart-image": {
+  "width": 1280,
+  "height": 800,
+  "target": {
+   "x": 676,
+   "y": 210,
+   "width": 90,
+   "height": 450
+  },
+  "ask": "This chart is a picture. Which month had the most visitors? Show me its bar."
+ },
+ "game-menu": {
+  "width": 1280,
+  "height": 800,
+  "target": {
+   "x": 490,
+   "y": 470,
+   "width": 300,
+   "height": 64
+  },
+  "ask": "How do I open this game's settings?"
+ }
+}

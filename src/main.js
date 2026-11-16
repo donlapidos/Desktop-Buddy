@@ -38,7 +38,7 @@ import os from "node:os";
 import { createVoice } from "./voice.js";
 import { createReplyStream } from "./reply-stream.js";
 import { createTurnQueue } from "./turn-queue.js";
-import { centerOf, createAnnotationLayer, insideBox, sameBox } from "./annotations.js";
+import { centerOf, createAnnotationLayer, guessGone, insideBox, sameBox } from "./annotations.js";
 import { abortable, prepareMarker } from "./marker-startup.js";
 import { appKey } from "./policy.js";
 import { appWords, findLocal, localDoor, tourNext, tourTip } from "./welcome.js";
@@ -548,16 +548,40 @@ async function showAnnotations(items, context, owner = "bubble") {
   return shown;
 }
 
-/** @param {PhysicalRect} bounds @param {string} caption @param {string} [owner] */
-function point(bounds, caption, owner = "bubble") {
+/** @param {PhysicalRect} bounds @param {string} caption @param {string} [owner] @param {{ guess?: boolean }} [how] */
+function point(bounds, caption, owner = "bubble", { guess = false } = {}) {
   annotationLayer.clear();
   pointer.annotation = false;
   pointer.owner = owner;
   pointer.n++;
   const { win, rect } = toLocalRect(bounds);
   for (const other of overlays.values()) if (other !== win) other.webContents.send("release");
-  win?.webContents.send("point", { rect, caption });
+  win?.webContents.send("point", { rect, caption, guess });
   return new Promise((r) => setTimeout(r, 900));
+}
+
+// A best guess from the screenshot, for something with no control to point at (brain.js spotBounds): a soft ring,
+// "about here". There is no control to follow, so it's let go as soon as the window it's on moves, changes size,
+// is minimized or loses focus, and after GUESS_MS in any case.
+const GUESS_MS = 10_000;
+/** @param {PhysicalRect} bounds @param {string} caption @param {any} window @param {string} [owner] */
+function guessPoint(bounds, caption, window, owner = "bubble") {
+  const flying = point(bounds, caption ? `${caption} (about here)` : "About here", owner, { guess: true });
+  const n = pointer.n;
+  const until = Date.now() + GUESS_MS;
+  const check = async () => {
+    if (pointer.n !== n || pointer.owner !== owner) return; // it pointed somewhere else meanwhile
+    const windows = await listWindows();
+    if (pointer.n !== n || pointer.owner !== owner) return;
+    const gone = guessGone(window, windows, ownPids());
+    if (!gone && Date.now() < until) return setTimeout(check, 700);
+    trace({ kind: "guess-cleared", why: gone ?? "timeout" });
+    pointer.owner = null;
+    pointer.n++;
+    broadcast("release");
+  };
+  setTimeout(check, 1200);
+  return flying;
 }
 
 // Lets go of the pointer after a moment, if `owner` still has it and hasn't pointed again.
@@ -1445,13 +1469,13 @@ function answerApproval(decision) {
 
 // When the bubble's own conversation starts guiding, the bubble folds back into the island: the pointer and its
 // caption carry the step, and the bubble would otherwise sit over the ribbon or dialog they need to click.
-/** @param {PhysicalRect} bounds @param {string} caption */
-function guidePoint(bounds, caption) {
+/** @param {PhysicalRect} bounds @param {string} caption @param {any} [guessIn] the window, when it's a best guess (guessPoint) */
+function guidePoint(bounds, caption, guessIn = null) {
   liveReply.cancel();
   if (mode === "working" && bubble.isVisible() && !waitingForOk()) hideBubble();
   // In a spoken conversation Buddy says each step as it points, the way a person beside you would.
   if (caption && talksBack(turn.spoken)) voice.say(caption);
-  return point(bounds, caption);
+  return guessIn ? guessPoint(bounds, caption, guessIn) : point(bounds, caption);
 }
 
 // ---------- Voice: talk to Buddy, and hear it talk back ----------
@@ -1736,7 +1760,7 @@ const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvide
 
 function startBrain() {
   brain = providerReady()
-    ? makeEngine({ ...providerUI(), point: guidePoint, annotate: (items, context) => showAnnotations(items, context), clearAnnotations: (ms = 0) => annotationLayer.release("bubble", ms), confirm, status, stream: (update) => liveReply.receive(update), explain: bubbleExplain, trace, documentsDir: documentsDir(), dataDir: app.getPath("userData"), record: recordChange, reveal: revealMade, isOwnWindow: (w) => ownPids().includes(Number(w.pid)), openFile })
+    ? makeEngine({ ...providerUI(), point: guidePoint, pointGuess: (bounds, caption, window) => guidePoint(bounds, caption, window), annotate: (items, context) => showAnnotations(items, context), clearAnnotations: (ms = 0) => annotationLayer.release("bubble", ms), confirm, status, stream: (update) => liveReply.receive(update), explain: bubbleExplain, trace, documentsDir: documentsDir(), dataDir: app.getPath("userData"), record: recordChange, reveal: revealMade, isOwnWindow: (w) => ownPids().includes(Number(w.pid)), openFile })
     : null;
 }
 
@@ -1790,6 +1814,7 @@ function makeAppBrain(/** @type {number} */ conn, /** @type {string} */ client) 
       releaseLater(owner, 60_000);
       return shown;
     },
+    pointGuess: (bounds, caption, window) => guessPoint(bounds, caption, window, owner),
     confirm,
     status: (text) => {
       islandFacts.appCall = oneLine(`${client}: ${text}`);

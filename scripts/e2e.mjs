@@ -188,9 +188,18 @@ const CHECKS = {
       const messages = JSON.parse(body || "{}").messages ?? [];
       const images = messages.flatMap((m) => Array.isArray(m.content) ? m.content.filter((c) => c.type === "image_url") : []);
       const text = messages.map((m) => typeof m.content === "string" ? m.content : (m.content ?? []).map((c) => c.text ?? "").join("\n")).join("\n");
+      res.setHeader("content-type", "text/event-stream");
+      // Pointing by sight: the question carries the spot the check found in the picture; point there.
+      const lastUser = messages.filter((m) => m.role === "user").at(-1);
+      const asked = typeof lastUser?.content === "string" ? lastUser.content : (lastUser?.content ?? []).map((c) => c.text ?? "").join("\n");
+      const spot = asked.match(/\[spot ([\d.]+),([\d.]+)\]/);
+      if (spot) {
+        if (messages.at(-1)?.role === "tool") return res.end(`data: ${JSON.stringify({ choices: [{ delta: { content: "That's the blue bar." }, finish_reason: "stop" }] })}\n\ndata: [DONE]\n\n`);
+        const args = { spot: { x: Number(spot[1]), y: Number(spot[2]) }, caption: "The blue bar", then_say: "That's the blue bar." };
+        return res.end(`data: ${JSON.stringify({ choices: [{ delta: { tool_calls: [{ index: 0, id: "spot_1", type: "function", function: { name: "point_at", arguments: JSON.stringify(args) } }] }, finish_reason: "tool_calls" }] })}\n\ndata: [DONE]\n\n`);
+      }
       observations.push({ images: images.length, jpeg: images.some((i) => /^data:image\/jpeg;base64,/.test(i.image_url?.url ?? "") && i.image_url.url.length > 1000), tree: text.includes("Quarterly sales") && /@s[a-z0-9]+:e\d+/i.test(text) });
       const content = images.length ? "Visual context received." : "Text-only context received.";
-      res.setHeader("content-type", "text/event-stream");
       res.end(`data: ${JSON.stringify({ choices: [{ delta: { content }, finish_reason: "stop" }] })}\n\ndata: [DONE]\n\n`);
     });
     await new Promise((r) => server.listen(0, "127.0.0.1", r));
@@ -204,6 +213,11 @@ const CHECKS = {
         !observations[0]?.tree && "the first question didn't carry the sample's real accessibility refs",
         !r.largeImageBounded && "a large screenshot wasn't resized within the image budget",
         r.second !== "Text-only context received." && "turning screenshots off didn't remove old and new images",
+        r.sight?.error && `pointing by sight: ${r.sight.error}`,
+        r.sight && !r.sight.error && !r.sight.inside && `pointing by sight landed at ${JSON.stringify(r.sight.pointedAt)}, outside the blue bar ${JSON.stringify(r.sight.bar)}`,
+        r.sight && !r.sight.error && !r.sight.softRing && "a pointer by sight wasn't shown as a best guess",
+        r.sight && !r.sight.error && !/about here/.test(r.sight.caption ?? "") && `a pointer by sight said ${JSON.stringify(r.sight.caption)}, not "about here"`,
+        r.sight && !r.sight.error && !r.sight.cleared && "a pointer by sight stayed up: it wasn't let go",
         !r.settingWasOn && "the screenshot setting wasn't initially on", !r.settingOff && "the setting didn't switch off", !r.settingUIOff && "the switch didn't display its saved off state", !r.savedOff && "the setting wasn't saved",
       ].filter(Boolean);
     } finally { server.closeAllConnections(); server.close(); }

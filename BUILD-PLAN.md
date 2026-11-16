@@ -340,3 +340,20 @@ older profile's (Ask, Talk, Mark, Task).
   `npm run eval -- --provider gemini --model <id> --set real` and `--set workflows`; the same for
   `--provider anthropic --model claude-haiku-5-5` and one local model (`--provider ollama --model <id>`).
   If Gemini reaches 90% and its free tier is confirmed that day, the welcome's key page can say so.
+
+**2026-11-17 · package 7 · point by sight.** `point_at`, and `annotate`'s highlight, circle and label, take a spot
+(fractions of the latest screenshot of the window) when the thing has no ref and the model can see. The conversion
+lives in `geometry.js` (`spotRect`). It measures from the picture's own edges, because agent-desktop's capture
+leaves out Windows' invisible resize borders (the sample window: bounds 1020 x 799, picture 1002 x 790). A spot
+shows as a soft dashed ring, "about here". It is let go when its window moves, resizes, minimizes, closes or
+loses focus (`guessGone`, unit-tested), or after 10 s.
+- Not done: clearing on scroll. Seeing scroll input needs the keyboard and mouse hook while Buddy is idle, which
+  package 4 rules out. The 10 s limit and the focus check cover it in part.
+- Protection: `act` refuses a spot before anything else, with or without a ref, and shows no card. With the rule
+  removed on purpose, the test failed.
+- `context` e2e: the check finds the blue bar by its colour in the picture Buddy sent, asks Buddy to point at that
+  spot, and the pointer landed at (634, 521) inside the bar as the window's layout has it ((548, 371), 175 x 300),
+  with the soft ring and "(about here)", and was let go.
+- Eval: `npm run eval -- --set sight` runs five screens with nothing named in their tree (a paint canvas, a scanned
+  PDF, a remote desktop, a chart picture, a game menu; `scripts/make-sight-screens.cjs`), each passing only for a
+  spot inside the target box. The share passed is the model's hit rate. Hit rates per model are the owner's runs.
