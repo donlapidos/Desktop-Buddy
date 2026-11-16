@@ -15,6 +15,7 @@ import { PROVIDERS, ProviderError, addressProblem, capsOf, describeModels, keyFi
 import { CASES, runEvals } from "./evals.js";
 import { createActivity, pruneUndo } from "./activity.js";
 import { createLog } from "./log.js";
+import { questionTiming } from "./latency.js";
 import { createApprovalQueue } from "./approval-queue.js";
 import { createAppSessions } from "./app-sessions.js";
 import { islandView } from "./island-state.js";
@@ -86,6 +87,9 @@ app.on("second-instance", () => summon());
 let tray, bubble, island, brain, tasks, voice, updates;
 let answeringBrain = null;
 let heardLang = "en"; // the language of the last thing heard, waiting for the bubble to send it as a question
+let heardTiming = null; // when that speech ended and how long hearing it took, for the ask-to-pointer timing
+/** @type {import("./latency.js").QuestionTiming | null} the bubble question being answered's ask-to-pointer clock */
+let questionClock = null;
 
 // The answer running (or the last one): whether its question was said out loud and in what language (spoken
 // answers are read back, in that language), when it started, and whether it showed a plate. Each answer replaces it
@@ -1140,6 +1144,10 @@ async function answerQuestion(text, opts, isCurrent) {
   const engine = brain;
   answeringBrain = engine;
   startTurn({ spoken: !!opts?.spoken, lang: opts?.spoken ? heardLang : "en" });
+  const heard = turn.spoken ? heardTiming : null;
+  heardTiming = null;
+  const clock = questionTiming({ write: trace, voice: turn.spoken, at: heard?.at, heardMs: heard?.heardMs, provider: engine.provider, model: engine.model });
+  questionClock = clock;
   hushReply();
   replyMuted = false;
   releaseFocus();
@@ -1150,7 +1158,7 @@ async function answerQuestion(text, opts, isCurrent) {
   try {
     const withMarks = pendingMarks;
     pendingMarks = null;
-    const how = { spoken: turn.spoken, lang: turn.lang };
+    const how = { spoken: turn.spoken, lang: turn.lang, timing: clock };
     reply = withMarks ? await engine.askWithMarks(text, withMarks, how) : await engine.ask(text, about.window, how);
   } catch (err) {
     hushReply();
@@ -1160,6 +1168,7 @@ async function answerQuestion(text, opts, isCurrent) {
     answeringBrain = null;
     enter("idle");
     releaseLater("bubble");
+    clock.finish({ waitForAudio: !replyMuted && talksBack(turn.spoken) });
   }
   if (!isCurrent()) return { reply: null, superseded: true };
   notice(oneLine(reply));
@@ -1405,8 +1414,9 @@ async function talk() {
   else await summon();
   bubble.webContents.send("listening", true);
   progress("Listening…");
-  const { text, error, lang } = await voice.listen();
+  const { text, error, lang, heardMs, endedAt } = await voice.listen();
   heardLang = lang ?? "en";
+  heardTiming = text && endedAt ? { at: endedAt, heardMs } : null;
   bubble.webContents.send("listening", false);
   // Something else took over meanwhile (they typed the question instead): leave it be.
   if (currentMode() !== "listening") return;
@@ -1502,6 +1512,7 @@ function startVoice() {
     getLanguage: () => settings.language,
     onState: onVoiceState,
     onLevel: (level) => island?.isDestroyed() || island?.webContents.send("voice-level", level),
+    onSound: () => questionClock?.audio(),
     trace,
   });
   setTimeout(() => voice.prepare(), 4000);
@@ -2532,6 +2543,7 @@ app.whenReady().then(() => {
   } else if (process.env.BUDDY_CONVERSATION_TEST) {
     // Real renderer + IPC + streamed model: show a partial answer, then steer it while it is still running.
     setTimeout(async () => {
+      let sample;
       const js = (code) => bubble.webContents.executeJavaScript(code);
       const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       const until = async (code) => {
@@ -2547,9 +2559,27 @@ app.whenReady().then(() => {
         if (process.env.BUDDY_CONVERSATION_TEST_OUT) fs.writeFileSync(process.env.BUDDY_CONVERSATION_TEST_OUT, (await bubble.webContents.capturePage()).toPNG());
         await js(`document.getElementById("input").value = "Change direction"; document.getElementById("form").requestSubmit();`);
         const corrected = await until(`document.getElementById("reply").textContent === "Here is the corrected answer." && document.getElementById("stop").hidden`);
-        console.log("CONVERSATION_TEST", JSON.stringify({ partial, editable, corrected }));
+        // A guided answer, in a test-owned sample window: it must leave one ask-to-pointer entry in the timing log.
+        let guided = null;
+        let firstPointer = null;
+        if (process.env.BUDDY_CONVERSATION_SAMPLE) {
+          sample = spawn("powershell.exe", ["-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", process.env.BUDDY_CONVERSATION_SAMPLE], { windowsHide: false });
+          let target;
+          for (let i = 0; i < 50 && !target; i++) {
+            target = (await listWindows()).find((w) => w.title === "Buddy visual context sample" && Number(w.pid) === sample.pid);
+            if (!target) await wait(200);
+          }
+          if (!target) throw new Error("The sample window wasn't found.");
+          about = { window: target, point: null };
+          guided = (await js(`window.buddy.ask("Where are the details?", {})`)).reply;
+          const lines = fs.readFileSync(timingLog(), "utf8").split(/\r?\n/).filter((l) => l.includes('"kind":"first-pointer"'));
+          firstPointer = lines.length ? JSON.parse(lines.at(-1)) : null;
+        }
+        console.log("CONVERSATION_TEST", JSON.stringify({ partial, editable, corrected, guided, firstPointer }));
       } catch (err) {
         console.log("CONVERSATION_TEST", JSON.stringify({ error: err.message }));
+      } finally {
+        sample?.kill();
       }
       console.log("CONVERSATION_TEST_DONE");
     }, 2500);

@@ -815,22 +815,25 @@ export class Brain {
   }
 
   // `spoken` marks a question said out loud; `lang` is the language it was said in (two letters), when not English.
-  async ask(text, target, { spoken = false, lang = "en" } = {}) {
+  // `timing` is the question's ask-to-pointer clock (latency.js), when the caller keeps one.
+  async ask(text, target, { spoken = false, lang = "en", timing = null } = {}) {
     this.log.push({ role: "user", text });
     this.clearContextImages({ readings: true });
     return this.run(target, "", async (signal) => {
+      const contextStart = Date.now();
       const { reading, image } = await this.initialContext(target, signal);
+      this.timing?.add("contextMs", Date.now() - contextStart);
       const window = reading ? `\n\nTheir window when they asked (already looked; its refs work, so skip your first look):\n${reading}` : "";
       const visual = image ? "\n\nThe attached image shows this window when they asked. Use it for visual context; use the tree's refs for controls." : "\n\nNo fresh screenshot is attached. Don't assume an older image shows the current screen.";
       const content = `${describeTarget(target)}${window}${visual}\n\n${text}${spoken ? spokenNote(lang) : ""}`;
       if (reading || image) this.contextReadings.set(content, `${describeTarget(target)}\n\n[Earlier automatic window observation omitted; use current observations and refs.]\n\n${text}${spoken ? spokenNote(lang) : ""}`);
       if (image) this.contextImages.add(image);
       return image ? [image, { type: "text", text: content }] : content;
-    });
+    }, { timing });
   }
 
   // The user highlighted things on screen with the marker and asked about them.
-  askWithMarks(text, { image, marks, target }, { spoken = false, lang = "en" } = {}) {
+  askWithMarks(text, { image, marks, target }, { spoken = false, lang = "en", timing = null } = {}) {
     this.clearContextImages({ readings: true });
     this.log.push({ role: "user", text: `${text} (about ${marks.length === 1 ? "1 mark" : `${marks.length} marks`})` });
     this.marks = new Map(marks.map((m) => [m.n, m.bounds]));
@@ -849,7 +852,7 @@ export class Brain {
     return this.run(target, [
       { type: "image", source: { type: "base64", media_type: "image/png", data: image } },
       { type: "text", text: content },
-    ]);
+    ], null, { timing });
   }
 
   // The user pointed at something on screen and wants it explained.
@@ -871,8 +874,10 @@ export class Brain {
     ], null, { explainer: true });
   }
 
-  async run(target, content, prepare = null, { explainer = false } = {}) {
+  /** `timing`: the question's ask-to-pointer clock, if it has one. */
+  async run(target, content, prepare = null, { explainer = false, timing = null } = {}) {
     this.ui.clearAnnotations?.();
+    this.timing = timing;
     this.standing = new Set();
     this.target = target;
     this.explainerReady = explainer;
@@ -941,6 +946,7 @@ export class Brain {
       const offeredExplainer = this.explainerReady;
       const response = await this.turn();
       this.ui.usage?.(this.provider, this.model, response.usage);
+      this.timing?.add("modelMs", Date.now() - callStart);
 
       this.ui.trace?.({ kind: "model", ms: Date.now() - callStart, in: response.usage?.input_tokens, cached: response.usage?.cache_read_input_tokens, out: response.usage?.output_tokens, tools: response.content.filter((b) => b.type === "tool_use").map((b) => b.name) });
       if (response.stop_reason === "refusal") return "Sorry, I can't help with that one.";
@@ -960,6 +966,7 @@ export class Brain {
       for (const use of toolUses) {
         if (this.abort.signal.aborted) break;
         const toolStart = Date.now();
+        this.toolStart = toolStart;
         const content = use.name === "show_explainer" && !offeredExplainer
           ? "Call prepare_explainer first, then use show_explainer with the loaded instructions on your next turn."
           : await this.runTool(use.name, use.input ?? {});
@@ -1248,11 +1255,12 @@ export class Brain {
         }
         if (input.mark != null) {
           await this.ui.point(bounds, input.caption);
+          this.notePointer();
           return "Pointed.";
         }
         // The window may have moved or scrolled since it was read. Point at once where the control was, and in the
         // meantime ask where it is now: if it moved, the pointer follows; if it's gone, the model is told to look again.
-        const pointing = this.ui.point(bounds, input.caption);
+        const pointing = Promise.resolve(this.ui.point(bounds, input.caption)).then(() => this.notePointer());
         const now = await this.liveBounds(input.ref);
         if (now === "gone") {
           await pointing;
@@ -1365,7 +1373,13 @@ export class Brain {
     };
     const shown = await this.ui.annotate(items, { window, caption: request.caption, verify, signal });
     if (signal?.aborted) return "The user stopped.";
+    if (shown) this.notePointer();
     return shown ? "Annotated. The user does the clicking or dragging; nothing was operated." : "The window changed before the drawing could be shown. Read it again.";
+  }
+
+  // The question's first pointer or highlight is on screen: its clock (latency.js) stops here.
+  notePointer() {
+    this.timing?.pointed(Date.now() - (this.toolStart ?? Date.now()));
   }
 
   // guide_steps: points at each step's control and follows the user, locally, until they finish or Buddy needs Claude.
@@ -1424,7 +1438,10 @@ export class Brain {
         const result = await this.drawAnnotations({ caption: step.caption, items: [{ kind: step.annotation?.kind ?? "highlight", ref: match.node.ref_id,
           ...(destination?.node ? { to_ref: destination.node.ref_id } : {}), label: step.caption, number: Math.min(99, i + 1) }] });
         if (!result.startsWith("Annotated.")) return `${doneSoFar(i)} ${result}`;
-      } else await this.ui.point(match.node.bounds, step.caption);
+      } else {
+        await this.ui.point(match.node.bounds, step.caption);
+        this.notePointer();
+      }
       this.ui.status(`Step ${i + 1} of ${steps.length}: your turn`);
       // Listen for this step and every later one, so a user who works ahead is caught where they are.
       const needles = [];

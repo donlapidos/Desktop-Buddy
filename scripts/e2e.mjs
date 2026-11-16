@@ -210,10 +210,19 @@ const CHECKS = {
       if (req.url?.endsWith("/models")) return res.end(JSON.stringify({ data: [{ id: "scripted" }] }));
       if (req.url === "/api/show") return res.end(JSON.stringify({ capabilities: ["completion", "tools"] }));
       const messages = JSON.parse(body || "{}").messages ?? [];
-      const last = String(messages.filter((m) => m.role === "user").at(-1)?.content ?? "");
+      const textOf = (m) => (typeof m?.content === "string" ? m.content : (m?.content ?? []).map((c) => c.text ?? "").join("\n"));
+      const last = textOf(messages.filter((m) => m.role === "user").at(-1));
       res.setHeader("content-type", "text/event-stream");
       const chunk = (text, finish = null) => `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: text }, finish_reason: finish }] })}\n\n`;
       if (last.includes("Change direction")) return res.end(chunk("Here is the corrected answer.", "stop"));
+      // The guided question: point at the sample's details button, by the ref Buddy read from the window.
+      if (last.includes("Where are the details?")) {
+        if (messages.at(-1)?.role === "tool") return res.end(chunk("There they are.", "stop"));
+        const ref = last.match(/(@\S+) button "Quarterly sales details"/)?.[1];
+        if (!ref) return res.end(chunk("I couldn't read the window.", "stop"));
+        const call = { index: 0, id: "call_point", type: "function", function: { name: "point_at", arguments: JSON.stringify({ ref, caption: "The details are here", then_say: "There they are." }) } };
+        return res.end(`data: ${JSON.stringify({ choices: [{ index: 0, delta: { tool_calls: [call] }, finish_reason: "tool_calls" }] })}\n\ndata: [DONE]\n\n`);
+      }
       res.write(chunk("The first sentence is visible. "));
       const timer = setTimeout(() => res.end(chunk("The old answer finished.", "stop")), 15_000);
       res.on("close", () => clearTimeout(timer));
@@ -221,10 +230,18 @@ const CHECKS = {
     await new Promise((r) => server.listen(0, "127.0.0.1", r));
     try {
       const url = `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`;
-      const { markers, timedOut } = await runCopy("conversation", { BUDDY_CONVERSATION_TEST: url, BUDDY_CONVERSATION_TEST_OUT: path.join(out, "conversation.png") }, "CONVERSATION_TEST_DONE");
+      const { markers, timedOut } = await runCopy("conversation", { BUDDY_CONVERSATION_TEST: url, BUDDY_CONVERSATION_TEST_OUT: path.join(out, "conversation.png"),
+        BUDDY_CONVERSATION_SAMPLE: path.join(app, "scripts/samples/context-window.ps1") }, "CONVERSATION_TEST_DONE");
       const r = markers.CONVERSATION_TEST?.[0];
       if (!r) return [timedOut ? "timed out" : "no conversation result"];
-      return [!r.partial && "text wasn't visible before completion", !r.editable && "the input was disabled while answering", !r.corrected && "the correction didn't replace the old answer", r.error].filter(Boolean);
+      const fp = r.firstPointer;
+      return [!r.partial && "text wasn't visible before completion", !r.editable && "the input was disabled while answering", !r.corrected && "the correction didn't replace the old answer", r.error,
+        r.guided !== "There they are." && `the guided answer said ${JSON.stringify(r.guided)}`,
+        !fp && "a guided answer left no first-pointer entry in the timing log",
+        fp && !["ms", "contextMs", "modelMs", "pointMs"].every((k) => Number.isFinite(fp[k])) && `the first-pointer entry is missing a part: ${JSON.stringify(fp)}`,
+        fp && (fp.voice !== false || fp.provider !== "ollama" || fp.model !== "scripted") && `the first-pointer entry has the wrong question facts: ${JSON.stringify(fp)}`,
+        fp && fp.ms < fp.pointMs && `the first-pointer total is less than its pointing part: ${JSON.stringify(fp)}`,
+      ].filter(Boolean);
     } finally {
       server.closeAllConnections();
       server.close();

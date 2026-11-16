@@ -8,6 +8,7 @@
     "start": "electron .",
     "smoke": "node scripts/smoke.js",
     "check": "tsc -p .",
+    "measure:latency": "node scripts/measure-latency.mjs",
     "measure:idle": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/measure-idle.ps1",
     "test": "node --test \"test/*.test.js\"",
     "dist": "npm run setup && electron-builder --win --publish never",
