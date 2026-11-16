@@ -19,6 +19,9 @@ jobs:
     timeout-minutes: 45
     permissions:
       contents: write # create the draft release and upload the installer
+    env:
+      # 'true' only when the signing certificate secret exists (a step's `if` can't read secrets directly).
+      HAS_CERT: ${{ secrets.WIN_CSC_LINK != '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -60,7 +63,33 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Code signing, only when the certificate is there. With the WIN_CSC_LINK secret (the .pfx, base64 encoded)
+      # and WIN_CSC_KEY_PASSWORD set, electron-builder signs Buddy's exe, the uninstaller and the installer while it
+      # builds, and only then works out latest.yml and the blockmap, so their SHA-512 and size describe the signed
+      # installer that installed copies download. Nothing has to be rebuilt afterwards. Without the secrets the
+      # variables are never set and the build is unsigned, as before (an empty CSC_LINK is not passed on, so it
+      # can't be mistaken for a certificate).
       - name: Build the installer and upload it to the draft release
-        run: npx electron-builder --win --publish always
+        shell: bash
+        run: |
+          if [ -n "$SIGN_LINK" ]; then
+            export CSC_LINK="$SIGN_LINK" CSC_KEY_PASSWORD="$SIGN_PASSWORD"
+            echo "Signing with the certificate from WIN_CSC_LINK"
+          else
+            echo "No WIN_CSC_LINK secret: building unsigned"
+          fi
+          npx electron-builder --win --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SIGN_LINK: ${{ secrets.WIN_CSC_LINK }}
+          SIGN_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+
+      # When a certificate was given, a build that came out unsigned must not look like a good release.
+      - name: The installer is signed
+        if: ${{ env.HAS_CERT == 'true' }}
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          $sig = Get-AuthenticodeSignature "dist/Desktop-Buddy-Setup-$version.exe"
+          "$($sig.Status): $($sig.SignerCertificate.Subject)"
+          if ($sig.Status -ne 'Valid') { throw "The installer is not validly signed ($($sig.Status))" }
