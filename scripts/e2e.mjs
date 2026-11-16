@@ -1,7 +1,7 @@
 // End-to-end checks: the real app, run as separate test copies (each with its own data folder, so the user's Buddy,
 // settings and files are left alone), each driven by one of main.js's BUDDY_*_TEST hooks. The runner reads what each
 // copy prints, checks it, and keeps the screenshots.
-//   npm run e2e                  context, conversation, files, welcome, tasks, settings, explainer, voice, firstrun
+//   npm run e2e                  context, conversation, files, welcome, tasks, settings, explainer, voice, island, firstrun
 //   npm run e2e -- tasks voice   only those
 //   npm run e2e -- --exe "<path to Desktop Buddy.exe>"   against a built or installed copy
 //   npm run e2e -- --interactive also the marker (a full-screen freeze frame) and approval clicks (moves the mouse)
@@ -63,8 +63,10 @@ function scriptedOllama() {
  * `devHooks` says whether the copy loaded dev-hooks.js (it writes dev-hooks-loaded to its timing log when it does).
  * @returns {Promise<{ markers: Record<string, any[]>, log: string, timedOut: boolean, devHooks: boolean }>}
  */
-function runCopy(name, env, done, timeoutMs = 90_000) {
+function runCopy(name, env, done, timeoutMs = 90_000, seed = {}) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), `buddy-e2e-${name}-`));
+  // `seed`: files the copy's data folder starts with (an existing profile's settings.json, say).
+  for (const [file, text] of Object.entries(seed)) fs.writeFileSync(path.join(data, file), text);
   const clean = Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^(ANTHROPIC|OPENAI|OPENROUTER|GEMINI|DEEPSEEK)_|^BUDDY_/.test(k)));
   // The source tree on Electron, or (--exe) a built or installed Buddy.
   const child = spawn(installed ?? electron, [...(installed ? [] : ["."]), `--user-data-dir=${data}`], {
@@ -379,6 +381,26 @@ const CHECKS = {
       hold && hold.timedOut !== "listen,hold,finish" && `a release that never came did ${hold.timedOut}, not listen, hold, finish`,
       hold && !hold.idleAfterTimeout && "after the release timed out, the hook stayed or Buddy kept listening",
     ].filter(Boolean);
+  },
+
+  // A new profile's island offers the core actions only (Ask, Talk, Mark), and Settings no routines; a profile from
+  // before the switch keeps everything.
+  async island() {
+    const problems = [];
+    for (const [name, seed, advanced] of [["island-new", {}, false], ["island-existing", { "settings.json": JSON.stringify({ voice: 2 }) }, true]]) {
+      // With an AI set up (a key that is never used), so the bubble opens as it does day to day, not on the welcome.
+      const { markers, timedOut } = await runCopy(name, { BUDDY_ISLAND_TEST: path.join(out, `${name}.png`), ANTHROPIC_API_KEY: "sk-ant-e2e-not-used-0000000000" }, "ISLAND_TEST_DONE", 60_000, seed);
+      const r = markers.ISLAND_TEST?.[0];
+      if (!r) { problems.push(`${name}: ${timedOut ? "timed out" : "nothing printed"}`); continue; }
+      const want = advanced ? ["ask", "talk", "mark", "task"] : ["ask", "talk", "mark"];
+      if (r.error) problems.push(`${name}: ${r.error}`);
+      if (JSON.stringify(r.actions) !== JSON.stringify(want)) problems.push(`${name}: the island offered ${JSON.stringify(r.actions)}, not ${JSON.stringify(want)}`);
+      if (r.routines !== advanced) problems.push(`${name}: Settings ${r.routines ? "showed" : "hid"} Routines`);
+      if (r.makeTask !== advanced) problems.push(`${name}: the bubble ${r.makeTask ? "showed" : "hid"} Make task`);
+      if (r.advanced !== advanced) problems.push(`${name}: the advanced setting was ${r.advanced}`);
+      if (!fs.existsSync(path.join(out, `${name}.png`))) problems.push(`${name}: no picture of the island`);
+    }
+    return problems;
   },
 
   // A plain test copy (no dev hook, its own data folder) must leave the user's PC as it was: no start-with-Windows

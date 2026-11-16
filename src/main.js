@@ -648,7 +648,7 @@ function showIsland({ force = false } = {}) {
       saying,
       bubbleOpen: !!bubble && !bubble.isDestroyed() && bubble.isVisible(),
     });
-    const message = { ...view, hotkey: keyLabel(hotkey("ask")), talkKey: keyLabel(hotkey("talk")) };
+    const message = { ...view, hotkey: keyLabel(hotkey("ask")), talkKey: keyLabel(hotkey("talk")), advanced: settings.advanced };
     const key = JSON.stringify(message);
     if (key === islandShown) return;
     islandShown = key;
@@ -779,6 +779,7 @@ async function summon() {
     needsKey: !brain,
     tip: tourTipNow(),
     voiceOffer: voiceOfferNow(),
+    advanced: settings.advanced,
   });
   showBubble();
 }
@@ -1724,7 +1725,7 @@ function prepareScreenImage(image) {
   return /** @type {import("./screen-context.js").ScreenImage} */ ({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: resized.toJPEG(82).toString("base64") } });
 }
 const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, commands: () => settings.commands,
-  screenContext: () => settings.screenContext, prepareImage: prepareScreenImage, ...spendUI() });
+  screenContext: () => settings.screenContext, advanced: () => settings.advanced, prepareImage: prepareScreenImage, ...spendUI() });
 
 function startBrain() {
   brain = providerReady()
@@ -1997,6 +1998,7 @@ function changeSettings(patch) {
   setAgentPolicy(settings);
   if (next.language !== before.language) voice?.prepare();
   if (next.talkBack === "never" && before.talkBack !== "never") hushReply();
+  if (next.advanced !== before.advanced) bubble?.webContents.send("advanced", next.advanced);
   buildTrayMenu();
   showIsland({ force: true });
   settingsWindow?.refresh();
@@ -2079,7 +2081,7 @@ function buildTrayMenu() {
       { label: `Talk to Buddy  (${keyLabel(hotkey("talk"))})`, click: () => talkByClick() },
       { label: `Mark or explain something  (${keyLabel(hotkey("mark"))})`, click: () => startMarking() },
       { label: "New conversation", click: () => brain?.reset() },
-      { label: "New task window", click: () => newTask() },
+      ...(settings.advanced ? [{ label: "New task window", click: () => newTask() }] : []),
       { type: "separator" },
       ...(updates?.state().status === "ready" ? [{ label: `Restart to update to ${updates.state().next}`, click: () => updates.install() }] : []),
       ...(appStatus().code !== "missing" ? [{ label: "Quick chat in Claude Code", click: () => openQuickChat() }] : []),

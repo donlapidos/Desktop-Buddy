@@ -85,6 +85,7 @@
   #welcome .lede { color: var(--muted); font-size: 13px; }
   /* Before an AI is set up, there's no conversation to move or restart, and nothing to say out loud. */
   body.welcoming #totask, body.welcoming #new, body.welcoming #mic { display: none; }
+  body.basic #totask { display: none; }
   .door { display: flex; flex-direction: column; align-items: flex-start; gap: 0; width: 100%; flex: none; text-align: left; border: 0; border-radius: 11px; padding: 6px 11px; background: var(--field); color: var(--fg); font: inherit; line-height: 1.35; cursor: pointer; }
   .door:hover { background: var(--field-hover); }
   .door b { font-weight: 600; }
@@ -194,7 +195,10 @@
   $("voice-no").addEventListener("click", () => window.buddy.voiceOffer("no"));
   window.buddy.onVoiceOffer((o) => showVoiceOffer(o));
 
-  window.buddy.onSummon(({ target, needsKey: nk, tip: t, voiceOffer }) => {
+  // Without the advanced features there are no task windows to move a conversation into.
+  window.buddy.onAdvanced((on) => document.body.classList.toggle("basic", !on));
+  window.buddy.onSummon(({ target, needsKey: nk, tip: t, voiceOffer, advanced = true }) => {
+    document.body.classList.toggle("basic", !advanced);
     needsKey = nk;
     showTip(t);
     showVoiceOffer(voiceOffer);

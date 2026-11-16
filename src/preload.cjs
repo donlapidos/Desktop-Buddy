@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld("buddy", {
   onTour: on("tour"),
   voiceOffer: (answer) => ipcRenderer.send("voice-offer", answer),
   onVoiceOffer: on("voice-offer"),
+  onAdvanced: on("advanced"),
   cancel: () => ipcRenderer.send("cancel"),
   reset: () => ipcRenderer.send("reset"),
   hide: () => ipcRenderer.send("hide"),

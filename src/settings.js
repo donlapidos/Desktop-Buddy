@@ -84,6 +84,10 @@ export const DEFAULTS = Object.freeze({
   // fetches them, "no" waits for the first time the user talks. Profiles from before the offer existed fetched them
   // without asking, and keep doing so ("yes"); a new profile starts at "ask" (load).
   voiceSetup: "yes",
+  // "Show advanced features": task windows, routines, and Buddy's file, PowerShell, web page and document tools.
+  // Off, Buddy is the core loop (ask or talk, guide, Mark, do it with approval). On for profiles from before the
+  // switch existed, so nobody loses what they use; a new profile starts with it off (load).
+  advanced: true,
 });
 
 export const VOICE_SETUP = Object.freeze(["ask", "yes", "no"]);
@@ -99,7 +103,7 @@ export const CAP = Object.freeze({ max: 10_000 });
  *   hotkeys: Record<HotkeyName, string>, provider: string, model: string, providerModels: Record<string, string>, providerURLs: Record<string, string>, effort: string, dictateStop: string, language: string,
  *   rope: string, trustedApps: string[], blockedApps: string[], routines: Routine[], autoUpdate: boolean,
  *   launchSetupDone: boolean, tour: string, monthlyCap: number, commands: boolean, screenContext: boolean,
- *   holdToTalk: boolean, voiceSetup: string,
+ *   holdToTalk: boolean, voiceSetup: string, advanced: boolean,
  * }} Settings
  */
 
@@ -239,6 +243,7 @@ export function normalize(raw) {
     screenContext: typeof r.screenContext === "boolean" ? r.screenContext : DEFAULTS.screenContext,
     holdToTalk: typeof r.holdToTalk === "boolean" ? r.holdToTalk : DEFAULTS.holdToTalk,
     voiceSetup: pick(r.voiceSetup, VOICE_SETUP, DEFAULTS.voiceSetup),
+    advanced: typeof r.advanced === "boolean" ? r.advanced : DEFAULTS.advanced,
   };
 }
 
@@ -286,8 +291,8 @@ export function load(file) {
   try {
     text = fs.readFileSync(file, "utf8");
   } catch {
-    // First run: the voice download is offered, not started.
-    return { settings: normalize({ voiceSetup: "ask" }), recovered: false };
+    // First run: the voice download is offered, not started, and the advanced features are tucked away.
+    return { settings: normalize({ voiceSetup: "ask", advanced: false }), recovered: false };
   }
   try {
     return { settings: normalize(JSON.parse(text)), recovered: false };

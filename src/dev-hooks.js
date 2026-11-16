@@ -551,7 +551,8 @@ function filesTest(kit) {
   // the file is made, shown, listed in Activity, and undone. Files go to BUDDY_DOCUMENTS_DIR.
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   setTimeout(async () => {
-    changeSettings({ provider: "custom", providerURLs: { custom: process.env.BUDDY_FILES_TEST }, providerModels: { custom: "scripted" } });
+    // Files are an advanced feature: a new profile starts without them (Settings › Agents › Show advanced features).
+    changeSettings({ advanced: true, provider: "custom", providerURLs: { custom: process.env.BUDDY_FILES_TEST }, providerModels: { custom: "scripted" } });
     setBrainDefaults(kit.settings);
     startBrain();
     await wait(500);
@@ -699,7 +700,45 @@ function welcomeTest(kit) {
   }, 2500);
 }
 
+/** BUDDY_ISLAND_TEST=<png path>: what this profile's island, bubble and Settings offer, and a picture of the island. @param {DevKit} kit */
+function islandTest(kit) {
+  const { island, bubble, summon, settingsWindow } = kit;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const shown = (wc, selector) => wc.executeJavaScript(`(() => { const e = document.querySelector(${JSON.stringify(selector)}); return !!e && getComputedStyle(e).display !== "none"; })()`);
+  setTimeout(async () => {
+    const r = {};
+    try {
+      r.advanced = kit.settings.advanced;
+      // The actions show when the pointer is over the island; open it as hovering would.
+      await island.webContents.executeJavaScript(`document.getElementById("pill").classList.add("open")`);
+      await wait(600);
+      r.actions = [];
+      for (const id of ["ask", "talk", "mark", "task"]) if (await shown(island.webContents, `#${id}`)) r.actions.push(id);
+      island.webContents.invalidate();
+      await wait(150);
+      fs.writeFileSync(process.env.BUDDY_ISLAND_TEST ?? "", (await island.webContents.capturePage()).toPNG());
+      await summon();
+      await wait(800);
+      r.makeTask = await shown(bubble.webContents, "#totask");
+      settingsWindow.open();
+      let win;
+      for (let i = 0; i < 50 && !win; i++) {
+        await wait(100);
+        win = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("settings.html") && !w.webContents.isLoading());
+      }
+      if (!win) throw new Error("Settings didn't open.");
+      await wait(500);
+      r.routines = await shown(win.webContents, '[data-page="routines"]');
+    } catch (err) {
+      r.error = err.message;
+    }
+    console.log("ISLAND_TEST", JSON.stringify(r));
+    console.log("ISLAND_TEST_DONE");
+  }, 2500);
+}
+
 const HOOKS = {
+  BUDDY_ISLAND_TEST: islandTest,
   BUDDY_POINT_TEST: pointTest,
   BUDDY_MARK_TEST: markTest,
   BUDDY_TASK_TEST: taskTest,

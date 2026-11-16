@@ -51,7 +51,9 @@ VS Code and more).
 - **Island:** a pill at the top center that stays on screen whenever Buddy is running, so it doubles as the "on"
   light. A dim dot means idle, a bright dot means active; **Ctrl+Alt+B** switches between them. It also shows
   what Buddy is doing (looking, drawing, waiting for your OK).
-  Hover it for **Ask**, **Talk**, **Mark** and **Task**.
+  Hover it for **Ask**, **Talk**, **Mark** and **Task**. A new Buddy starts with the essentials (Ask, Talk and
+  Mark); task windows, routines and working with files, web pages and Word documents come with Settings › Agents ›
+  **Show advanced features**.
 - **Voice:** hold **Ctrl+Alt+B** (or **Ctrl+Alt+T**), say what you need, and let go. A quick press of Ctrl+Alt+B
   still opens the bubble to type; a quick press of Ctrl+Alt+T (or the mic in the bubble, or **Talk** on the island)
   listens until you pause. To see when you let go, Buddy watches the keyboard only while the key is down, never

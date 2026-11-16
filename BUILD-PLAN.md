@@ -317,3 +317,11 @@ app archive, with the notice and source link in `THIRD_PARTY_NOTICES.md`.
 - 4.4 What was heard: the bubble already showed the heard sentence at once; checked, unchanged.
 - Still to measure: median speech-end-to-first-pointer under 3.5 s, from `npm run measure:latency` (spoken rows)
   after the owner has used this build.
+
+**2026-11-16 · package 5 · a narrower first screen.** One setting, Settings › Agents › Show advanced features: off
+for a new profile, on for one from before. Off, the island offers Ask, Talk and Mark (no Task), the bubble has no
+Make task, the tray no New task window, Settings hides Routines and the commands switch, and the model is offered
+13 tools instead of 19 (no `create_document`, files or web pages); one it calls anyway is refused with where to
+turn it on. Do mode and its approvals are unchanged. A unit test holds both tool lists (with the refusal removed
+on purpose, it failed); the new `island` e2e check pictures a new profile's island (Ask, Talk, Mark) and a seeded
+older profile's (Ask, Talk, Mark, Task).

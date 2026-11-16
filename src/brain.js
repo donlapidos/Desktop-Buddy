@@ -36,6 +36,11 @@ export function setBrainDefaults({ model, effort, providerModels = {} }) {
 }
 const MAX_STEPS = 30;
 
+// Buddy's own tools that only come with Settings › Agents › Show advanced features (the PC tools come with it too).
+export const ADVANCED_TOOLS = new Set(["create_document"]);
+// What the model is told, and answered, without them.
+const BASIC = "Making documents and working with files, PowerShell or web pages are switched off. If the user asks for one of those, tell them it needs Settings › Agents › Show advanced features, then help on screen instead.";
+
 // A control counts as moved when its box shifted or changed size by more than a few pixels.
 const moved = (/** @type {{ x: number, y: number, width: number, height: number }} */ a, /** @type {typeof a} */ b) =>
   Math.abs(a.x - b.x) > 4 || Math.abs(a.y - b.y) > 4 || Math.abs(a.width - b.width) > 4 || Math.abs(a.height - b.height) > 4;
@@ -638,6 +643,7 @@ const spokenNote = (lang) =>
  *   annotate?: (items: import("./annotations.js").Annotation[], context: { window: import("./desktop.js").DesktopWindow, caption: string, verify: () => Promise<boolean>, signal?: AbortSignal }) => Promise<boolean>,
  *   clearAnnotations?: (ms?: number) => void,
  *   screenContext?: () => boolean,
+ *   advanced?: () => boolean,
  *   prepareImage?: (image: import("./screen-context.js").ScreenImage) => import("./screen-context.js").ScreenImage,
  *   explain?: (plate: object) => void | Promise<void>,
  *   trace?: (entry: object) => void,
@@ -1027,23 +1033,30 @@ export class Brain {
   }
 
   // Buddy's own conversations also get the PC tools (files, PowerShell, web pages) when they have a working folder
-  // and a data folder to keep undo copies in. A Brain serving Claude's apps over the bridge has neither.
+  // and a data folder to keep undo copies in, and the user shows the advanced features. A Brain serving Claude's apps
+  // over the bridge has neither folder.
   get pcReady() {
-    return !!(this.ui.documentsDir && this.ui.dataDir);
+    return !!(this.ui.documentsDir && this.ui.dataDir) && this.advanced;
+  }
+  // Settings › Agents › Show advanced features. Off, the model gets the core tools only: no documents, files,
+  // PowerShell or web pages (a shorter list is a faster first answer, too). Read each time, so the switch works at once.
+  get advanced() {
+    return this.ui.advanced?.() !== false;
   }
   // Whether the user lets Buddy run commands (Settings › Agents). Read each time, so the switch works at once.
   get commands() {
     return this.ui.commands?.() === true;
   }
   tools() {
-    const own = this.explainerReady ? OWN_TOOLS : [...OWN_TOOLS.filter((t) => t.name !== "show_explainer"), PREPARE_EXPLAINER];
+    const offered = this.advanced ? OWN_TOOLS : OWN_TOOLS.filter((t) => !ADVANCED_TOOLS.has(t.name));
+    const own = this.explainerReady ? offered : [...offered.filter((t) => t.name !== "show_explainer"), PREPARE_EXPLAINER];
     const tools = this.pcReady ? [...own, ...pcTools(this.commands)] : own;
     return this.ui.screenContext?.() === false ? tools.filter((t) => t.name !== "screenshot") : tools;
   }
   system() {
     const instructions = this.explainerReady ? SYSTEM : GUIDANCE_SYSTEM;
     const pack = guidanceFor(this.target?.app_name);
-    const base = `${instructions}\n\n${CLOSING}\n\n${FOLLOW_UP_GUIDANCE}${pack ? `\n\nActive-app guidance (confirm against the current screen): ${pack.text}` : ""}${this.pcReady ? `\n\n${beyondScreen(this.commands)}` : ""}`;
+    const base = `${instructions}\n\n${CLOSING}\n\n${FOLLOW_UP_GUIDANCE}${pack ? `\n\nActive-app guidance (confirm against the current screen): ${pack.text}` : ""}${this.pcReady ? `\n\n${beyondScreen(this.commands)}` : ""}${this.advanced ? "" : `\n\n${BASIC}`}`;
     return this.ui.screenContext?.() === false ? `${base}\nWindow screenshots are turned off. Read text with look or read_page instead. Mark and Explain can still carry an image the user explicitly chose.` : base;
   }
 
@@ -1270,6 +1283,7 @@ export class Brain {
   }
 
   async runTool(name, input) {
+    if (!this.advanced && (ADVANCED_TOOLS.has(name) || PC_TOOL_NAMES.has(name))) return BASIC;
     if (PC_TOOL_NAMES.has(name)) return this.pcTool(name, input);
     switch (name) {
       case "prepare_explainer":

@@ -96,6 +96,7 @@
   #peek .close:hover { background: #3a1e1a; color: #ff8a5c; }
   #peek:not([data-state="confirm"]) .ask-only { display: none; }
   @media (prefers-reduced-motion: reduce) { #pill, #peek { transition: none; } #dot, .chip i, #meter i { animation: none !important; } }
+  body.basic #task { display: none; }
 </style>
 </head>
 <body data-state="idle">
@@ -222,7 +223,9 @@
     bars.forEach((b, i) => (b.style.height = `${4 + Math.round(level * [7, 10, 9, 6][i] * (0.75 + Math.random() * 0.5))}px`));
   });
 
-  window.buddy.onIsland(({ state: s, text, hotkey = "", talkKey = "" }) => {
+  window.buddy.onIsland(({ state: s, text, hotkey = "", talkKey = "", advanced = true }) => {
+    // Without the advanced features, the island offers the core: Ask, Talk and Mark.
+    document.body.classList.toggle("basic", !advanced);
     $("ask").title = hotkey;
     $("talk").title = `${talkKey}: say it instead of typing. Pause when you're done.`;
     state = s;
