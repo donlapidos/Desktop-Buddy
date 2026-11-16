@@ -4,6 +4,9 @@ Written 2026-11-11, after 0.2.0. This is a work plan for an agent (Claude Opus i
 the owner. Each task says why it matters, what to do, and how to tell it's done. Do the phases in order; inside a
 phase, tasks are independent unless one names another.
 
+**What to build next (2026-11-16):** `BUILD-PLAN.md` orders the next packages (speed, voice first, pointing without
+an accessibility tree, shipping) after a comparison with heyclicky. This file stays the long list.
+
 **Direction (decided 2026-11-12):** Buddy stays free and open source, and may earn its keep through **Buddy Plus**, a
 monthly plan with the AI included (no key: Buddy relays to a provider on the owner's own API account). It is built
 only if people show they want it (task 1.6). Rules for it: never resell or route through anyone's Claude or ChatGPT
