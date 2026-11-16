@@ -537,9 +537,10 @@ const refused = new Map();
  * One model turn on a provider other than Anthropic, streamed: OpenAI through Responses, the rest through Chat
  * Completions. Resolves the Anthropic-shaped reply. Images go only to a model not known to be blind; one that refuses
  * them is remembered as blind and the turn retried without them. One that refuses tools throws "no_tools".
- * @param {{ provider: ProviderId, key: string, model: string, effort: string, system: string, tools: any[], messages: any[], maxTokens: number, baseURL?: string, signal?: AbortSignal, fetchImpl?: typeof fetch, onText?: (delta: string) => void }} o
+ * @param {{ provider: ProviderId, key: string, model: string, effort: string, system: string, tools: any[], messages: any[], maxTokens: number, baseURL?: string, signal?: AbortSignal, fetchImpl?: typeof fetch, onText?: (delta: string) => void, onToolInput?: ToolInput }} o
+ * `onToolInput` hears each tool call's arguments as they're written (early-tools.js).
  */
-export async function chatTurn({ provider, key, model, signal, baseURL = PROVIDERS[provider].baseURL, fetchImpl = fetch, messages, onText, ...rest }) {
+export async function chatTurn({ provider, key, model, signal, baseURL = PROVIDERS[provider].baseURL, fetchImpl = fetch, messages, onText, onToolInput, ...rest }) {
   const responses = provider === "openai";
   const memo = `${baseURL}|${model}`;
   const drop = refused.get(memo) ?? new Set();
@@ -556,7 +557,9 @@ export async function chatTurn({ provider, key, model, signal, baseURL = PROVIDE
     );
     if (res.ok) {
       const emit = (delta) => { if (!signal?.aborted) onText?.(delta); };
-      const reply = await (responses ? readResponses(res, emit) : readStream(res, emit));
+      /** @type {ToolInput} */
+      const hear = (i, name, raw) => { if (!signal?.aborted) onToolInput?.(i, name, raw); };
+      const reply = await (responses ? readResponses(res, emit, hear) : readStream(res, emit, hear));
       if (reply.content.some((b) => b.type === "tool_use")) learnCaps(baseURL, model, { tools: true }, "use");
       return reply;
     }
@@ -601,9 +604,19 @@ function failed(/** @type {any} */ error) {
   return new ProviderError(kind, 500, message);
 }
 
-async function readResponses(/** @type {Response} */ res, onText) {
+/** @typedef {(index: number, name: string, raw: string) => void} ToolInput */
+
+async function readResponses(/** @type {Response} */ res, onText, /** @type {ToolInput} */ onToolInput) {
+  /** @type {Map<number, { name: string, raw: string }>} */
+  const calls = new Map();
   for await (const e of events(res)) {
     if (e.type === "response.output_text.delta" && typeof e.delta === "string") onText?.(e.delta);
+    if (e.type === "response.output_item.added" && e.item?.type === "function_call") calls.set(e.output_index, { name: e.item.name ?? "", raw: "" });
+    const call = e.type === "response.function_call_arguments.delta" && typeof e.delta === "string" ? calls.get(e.output_index) : null;
+    if (call) {
+      call.raw += e.delta;
+      onToolInput?.(e.output_index, call.name, call.raw);
+    }
     if (e.type === "response.completed" || e.type === "response.incomplete") return fromResponses(e.response);
     if (e.type === "response.failed") throw failed(e.response?.error);
     if (e.type === "error") throw failed(e.error ?? e);
@@ -611,12 +624,24 @@ async function readResponses(/** @type {Response} */ res, onText) {
   throw new ProviderError("server_error", 500, "The reply stopped before it finished.");
 }
 
-async function readStream(/** @type {Response} */ res, onText) {
+async function readStream(/** @type {Response} */ res, onText, /** @type {ToolInput} */ onToolInput) {
   const chunks = [];
+  /** @type {{ name: string, raw: string }[]} */
+  const calls = [];
   for await (const chunk of events(res)) {
     if (chunk.error) throw failed(chunk.error);
-    const delta = chunk.choices?.find((c) => (c.index ?? 0) === 0)?.delta?.content;
+    const choice = chunk.choices?.find((c) => (c.index ?? 0) === 0);
+    const delta = choice?.delta?.content;
     if (typeof delta === "string") onText?.(delta);
+    for (const t of choice?.delta?.tool_calls ?? []) {
+      const i = t.index ?? calls.length;
+      const call = (calls[i] ??= { name: "", raw: "" });
+      if (t.function?.name) call.name += t.function.name;
+      if (t.function?.arguments) {
+        call.raw += t.function.arguments;
+        onToolInput?.(i, call.name, call.raw);
+      }
+    }
     chunks.push(chunk);
   }
   const { message, finish, usage } = foldChunks(chunks);

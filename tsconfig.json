@@ -51,6 +51,7 @@
     "src/keys.js",
     "src/log.js",
     "src/latency.js",
+    "src/early-tools.js",
     "src/dev-hooks.js",
     "src/welcome.js",
     "src/costs.js",

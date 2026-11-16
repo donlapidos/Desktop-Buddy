@@ -244,6 +244,7 @@ const CHECKS = {
         fp && !["ms", "contextMs", "modelMs", "pointMs"].every((k) => Number.isFinite(fp[k])) && `the first-pointer entry is missing a part: ${JSON.stringify(fp)}`,
         fp && (fp.voice !== false || fp.provider !== "ollama" || fp.model !== "scripted") && `the first-pointer entry has the wrong question facts: ${JSON.stringify(fp)}`,
         fp && fp.ms < fp.pointMs && `the first-pointer total is less than its pointing part: ${JSON.stringify(fp)}`,
+        !r.glanceReused && "a question asked while the bubble kept focus read the window again instead of using the glance",
       ].filter(Boolean);
     } finally {
       server.closeAllConnections();

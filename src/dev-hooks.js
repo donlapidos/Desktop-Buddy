@@ -463,6 +463,7 @@ function conversationTest(kit) {
       // A guided answer, in a test-owned sample window: it must leave one ask-to-pointer entry in the timing log.
       let guided = null;
       let firstPointer = null;
+      let glanceReused = false;
       if (process.env.BUDDY_CONVERSATION_SAMPLE) {
         sample = spawn("powershell.exe", ["-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", process.env.BUDDY_CONVERSATION_SAMPLE], { windowsHide: false });
         let target;
@@ -472,11 +473,16 @@ function conversationTest(kit) {
         }
         if (!target) throw new Error("The sample window wasn't found.");
         kit.about = { window: target, point: null };
+        // As when the bubble opens on their window and they type for a few seconds: the glance is the first read.
+        kit.brain.glance(target);
+        await wait(3000);
         guided = (await js(`window.buddy.ask("Where are the details?", {})`)).reply;
-        const lines = fs.readFileSync(timingLog(), "utf8").split(/\r?\n/).filter((l) => l.includes('"kind":"first-pointer"'));
+        const log = fs.readFileSync(timingLog(), "utf8").split(/\r?\n/);
+        const lines = log.filter((l) => l.includes('"kind":"first-pointer"'));
         firstPointer = lines.length ? JSON.parse(lines.at(-1)) : null;
+        glanceReused = JSON.parse(log.filter((l) => l.includes('"kind":"screen-context"')).at(-1) ?? "{}").reused === true;
       }
-      console.log("CONVERSATION_TEST", JSON.stringify({ partial, editable, corrected, guided, firstPointer }));
+      console.log("CONVERSATION_TEST", JSON.stringify({ partial, editable, corrected, guided, firstPointer, glanceReused }));
     } catch (err) {
       console.log("CONVERSATION_TEST", JSON.stringify({ error: err.message }));
     } finally {

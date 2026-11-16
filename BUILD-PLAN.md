@@ -271,3 +271,33 @@ pointer flight. 8 of 28 questions in the log pointed.
 Measured, not rebuilt, from here on: `npm run measure:latency` after the owner has used this build for a while.
 The `conversation` e2e check fails if a guided answer leaves no `first-pointer` entry (checked by switching the clock
 off: it failed with "a guided answer left no first-pointer entry in the timing log").
+
+**2026-11-16 · package 3 · speed, steps 1 to 3.** Measured with the `conversation` e2e check: a guided question in
+a test-owned sample window, answered by a scripted model that replies at once, so the numbers are Buddy's own share
+of the wait (the model's share comes on top).
+
+| | Window read before the model (`contextMs`) | Ask to pointer (`ms`) |
+|---|---|---|
+| Before (question re-read the window) | 1.34 s | 2.26 s |
+| After (glance reused) | 0.02 s | 0.95 s (0.91 s of it is the pointer's flight) |
+
+- Step 1, reuse the glance: the glance was used only for a question asked within 2 s of the bubble opening, so
+  nearly every typed question read the window twice. It is now used for 30 s unless the bubble loses focus (the
+  user went back to their window), it also takes the screenshot for models that can see, and Talk starts one when
+  listening starts with the bubble already open. Kept.
+- Step 2, process starts: a bare `agent-desktop version` costs about 0.2 s from Node here, `list-windows` about
+  0.65 s. The calls on the ask-to-pointer path don't come in fixed pairs (the window list runs when the bubble
+  opens, before the question), so a batch saves nothing there. What did: `guide_steps` read the window again
+  before its first step; it now starts from the model's last read when it is under 15 s old, and the highlight
+  still checks the control's live position before it is drawn. Kept.
+- Step 3, point while the model writes: `guide_steps` shows its first step, and `point_at` its pointer, as soon
+  as that part of the call is complete, for Anthropic, OpenAI and Chat Completions streams. Nothing that acts
+  starts early: a unit test streams an `act` call, cuts it short and sees no card and no action (with the rule
+  broken on purpose it failed). The gain grows with route length, so it can't show up in the instant scripted
+  model above; it will in the owner's log. Kept.
+- Step 4, a quick model for guiding: not done. It is to be offered only for models that pass package 6's bar,
+  and package 6 needs the owner's keys.
+
+Still to do for "done": median `first-pointer` under 3 s on the owner's model, from `npm run measure:latency`
+after real use, and `npm run eval -- --set real` / `--set workflows` pass rates unchanged. Both spend the owner's
+model credit, so they are the owner's to run.

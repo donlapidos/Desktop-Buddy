@@ -163,8 +163,8 @@ test("text-only and unknown models get text without attempting an automatic capt
   assert.equal(captures.length, 1, "a verified custom model can use automatic visual context");
 });
 
-test("old, wrong-window and wrong-app previews are cancelled and replaced with a fresh read", { timeout: 2000 }, async () => {
-  for (const overrides of [{ at: Date.now() - 3000 }, { id: "other-window" }, { app: "WINWORD.EXE" }]) {
+test("old, stale, wrong-window and wrong-app previews are cancelled and replaced with a fresh read", { timeout: 2000 }, async () => {
+  for (const overrides of [{ at: Date.now() - 31_000 }, { stale: true }, { id: "other-window" }, { app: "WINWORD.EXE" }]) {
     const { b, reads, seen } = fixture();
     const abort = new AbortController();
     b.preview = { id: target.id, app: target.app_name, at: Date.now(), text: Promise.resolve("window: stale"), abort, ...overrides };

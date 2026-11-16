@@ -695,6 +695,8 @@ function createBubble() {
     if (e.message.startsWith("TRACE ")) trace({ kind: "bubble", note: e.message.slice(6) });
   });
   bubble.on("blur", () => {
+    // Out of the bubble and (likely) back in their window: what Buddy glanced at may have changed.
+    if (mode !== "working") brain?.staleGlance?.();
     if (mode === "idle") hideBubble();
   });
   // Closing the bubble ends the conversation about what was marked.
@@ -1410,8 +1412,11 @@ async function talk() {
   if (mode !== "idle") return wasSpeaking || progress(BUSY[mode]);
   if (!brain) return summon();
   enter("listening");
-  if (bubble.isVisible()) showBubble();
-  else await summon();
+  if (bubble.isVisible()) {
+    showBubble();
+    // Read their window while they speak, so the answer doesn't wait for it after they finish.
+    brain.glance?.(about.window, { keep: true });
+  } else await summon();
   bubble.webContents.send("listening", true);
   progress("Listening…");
   const { text, error, lang, heardMs, endedAt } = await voice.listen();

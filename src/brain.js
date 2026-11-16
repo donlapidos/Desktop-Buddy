@@ -10,6 +10,7 @@ import { writeDocx } from "./documents.js";
 import { PROVIDERS, ProviderError, capsOf, chatTurn } from "./providers.js";
 import { PC_TOOL_NAMES, beyondScreen, hideSecrets, pcTools, placesHere, runPcTool } from "./pc-tools.js";
 import { fingerprint } from "./activity.js";
+import { earlyInput } from "./early-tools.js";
 import path from "node:path";
 
 /** @typedef {"low" | "medium" | "high" | "xhigh" | "max"} Effort */
@@ -68,12 +69,15 @@ export function failureFor(/** @type {string} */ kind, /** @type {import("./prov
   if (kind === "authentication_failed" && p.key !== "required") return `${p.label} refused my request. Check the key under Settings › AI & privacy.`;
   return FAILURES[kind]?.replaceAll("Claude", p.label);
 }
-// A look taken when the bubble opened is used for a question asked within this long, and waited on at most this long.
-const PREVIEW_FRESH_MS = 2_000;
+// A look taken when the bubble opened is used for a question asked within this long (unless the user went back to
+// their window meanwhile: staleGlance), and waited on at most this long.
+const PREVIEW_FRESH_MS = 30_000;
 const PREVIEW_WAIT_MS = 4_000;
 // guide_steps reads windows as deep as wait_for_user does, and gives a just-opened menu this long to draw.
 const GUIDE_SNAPSHOT = ["-i", "--compact", "--include-bounds", "--max-depth", "25", "--timeout-ms", "3000"];
 const MENU_SETTLE_MS = 400;
+// guide_steps' first step uses the model's last read of the window when it's this recent.
+const GUIDE_REUSE_MS = 15_000;
 // An unrelated selection or layout change is not proof that an explicitly expected result happened.
 export const needsGuideInspection = (step, result) => result.status === "changed" && [].concat(step.done_when ?? []).some((text) => typeof text === "string" && text.trim());
 
@@ -724,41 +728,61 @@ export class Brain {
     const app = input.root ? this.refApps.get(input.root) : res.data.app ?? input.app ?? this.target?.app_name;
     const observed = input.root ? this.refWindows.get(input.root) : { ...this.target, ...res.data.window,
       id: input.window_id ?? res.data.window?.id ?? this.target?.id, app_name: app };
+    // A whole window, read as deep as guide_steps reads: its first step can start from this instead of reading again.
+    if (!input.root && !input.skeleton && observed?.id) this.lastRead = { id: String(observed.id), at: Date.now(), res };
     this.noteApp(res.data.tree, app, observed);
     const unreadable = res.data.unreadable_regions ? ` · ${res.data.unreadable_regions} region(s) unreadable, take a screenshot if what you need isn't here` : "";
     const head = `window: ${res.data.window?.title ?? res.data.app ?? "?"} · ${res.data.ref_count ?? 0} refs${res.data.complete === false ? " · partial" : ""}${unreadable}`;
     return `${head}\n${text}`;
   }
 
-  // Reads the user's window while they type their question, so the answer can start from it instead of spending
-  // its first rounds looking. Called when the bubble opens; ask() uses it if it's for the same window and fresh.
-  glance(target) {
+  // Reads (and, for a model that can see, captures) the user's window while they type or say their question, so the
+  // answer can start from it instead of reading it again. Called when the bubble opens; ask() uses it if it's for the
+  // same window, still current (staleGlance) and not too old.
+  // `keep` leaves a glance of the same window that is still usable in place rather than reading again.
+  glance(target, { keep = false } = {}) {
+    const p = this.preview;
+    if (keep && p && !p.stale && p.id === target?.id && p.app === target?.app_name && Date.now() - p.at < PREVIEW_FRESH_MS / 2) return;
     this.preview?.abort?.abort();
     this.preview = null;
     if (!this.canObserveTarget(target)) return;
     const abort = new AbortController();
-    this.preview = { id: target.id, app: target.app_name, at: Date.now(), abort,
+    const capture = this.wantsImage() ? this.screenImage(target, abort.signal).catch(() => null) : null;
+    this.preview = { id: target.id, app: target.app_name, at: Date.now(), abort, stale: false, image: capture,
       text: this.look({ app: target.app_name, window_id: target.id }, { signal: abort.signal, windowOnly: true }).catch(() => null) };
   }
 
-  async previewFor(target, signal) {
+  // The user may have changed their window since the glance (they went back to it): the next question reads it again.
+  staleGlance() {
+    if (this.preview) this.preview.stale = true;
+  }
+
+  // Whether the first look at a window should carry a screenshot: the model can see, and Settings allows it.
+  wantsImage() {
+    return capsOf(this.provider, this.ui.baseURL, this.model).vision === true && this.ui.screenContext?.() !== false;
+  }
+
+  /** The glance, if it can stand in for a fresh read of `target`; it is taken either way, so it's used once. */
+  takeGlance(target) {
     const p = this.preview;
     this.preview = null;
     if (!p) return null;
-    if (!target || p.id !== target.id || p.app !== target.app_name || Date.now() - p.at > PREVIEW_FRESH_MS) {
+    if (p.stale || !target || p.id !== target.id || p.app !== target.app_name || Date.now() - p.at > PREVIEW_FRESH_MS) {
       p.abort.abort();
       return null;
     }
+    return p;
+  }
+
+  /** What a glance's read or capture came to, waited on at most PREVIEW_WAIT_MS. @template T @param {Promise<T> | null} work @param {AbortSignal} signal @returns {Promise<T | null>} */
+  async glanced(work, signal) {
+    if (!work || signal?.aborted) return null;
     let timer;
-    const stop = () => p.abort.abort();
-    signal?.addEventListener("abort", stop, { once: true });
     try {
-      const text = await Promise.race([p.text, new Promise((r) => { timer = setTimeout(() => r(null), PREVIEW_WAIT_MS); })]);
-      return !signal?.aborted && typeof text === "string" && text.startsWith("window:") ? text : null;
+      const value = await Promise.race([work, new Promise((r) => { timer = setTimeout(() => r(null), PREVIEW_WAIT_MS); })]);
+      return signal?.aborted ? null : value;
     } finally {
       clearTimeout(timer);
-      signal?.removeEventListener("abort", stop);
-      p.abort.abort();
     }
   }
 
@@ -781,19 +805,33 @@ export class Brain {
       this.preview = null;
       return { reading: null, image: null };
     }
-    const vision = capsOf(this.provider, this.ui.baseURL, this.model).vision === true;
-    this.ui.status(vision && this.ui.screenContext?.() !== false ? "Looking at your window…" : "Reading your window…");
-    const context = await collectScreenContext({
-      signal,
-      includeImage: vision && this.ui.screenContext?.() !== false,
-      read: async (signal) => (await this.previewFor(target, signal)) ?? (signal.aborted ? null : this.look({ app: target.app_name, window_id: target.id }, { signal, windowOnly: true })),
-      capture: (signal) => this.screenImage(target, signal),
-    });
-    if (!this.canObserveTarget(target)) return { reading: null, image: null };
-    if (!context.reading?.startsWith("window:")) context.reading = null;
-    if (this.ui.screenContext?.() === false) context.image = null;
-    this.ui.trace?.({ kind: "screen-context", ms: Date.now() - started, reading: !!context.reading, image: !!context.image });
-    return context;
+    const includeImage = this.wantsImage();
+    this.ui.status(includeImage ? "Looking at your window…" : "Reading your window…");
+    const glance = this.takeGlance(target);
+    let reused = false;
+    const fresh = (text) => typeof text === "string" && text.startsWith("window:");
+    try {
+      const context = await collectScreenContext({
+        signal,
+        includeImage,
+        read: async (signal) => {
+          const text = await this.glanced(glance?.text ?? null, signal);
+          if (fresh(text)) {
+            reused = true;
+            return text;
+          }
+          return signal.aborted ? null : this.look({ app: target.app_name, window_id: target.id }, { signal, windowOnly: true });
+        },
+        capture: async (signal) => (await this.glanced(glance?.image ?? null, signal)) ?? (signal.aborted ? null : this.screenImage(target, signal)),
+      });
+      if (!this.canObserveTarget(target)) return { reading: null, image: null };
+      if (!fresh(context.reading)) context.reading = null;
+      if (this.ui.screenContext?.() === false) context.image = null;
+      this.ui.trace?.({ kind: "screen-context", ms: Date.now() - started, reading: !!context.reading, image: !!context.image, reused });
+      return context;
+    } finally {
+      glance?.abort.abort();
+    }
   }
 
   canObserveTarget(target) {
@@ -966,7 +1004,8 @@ export class Brain {
       for (const use of toolUses) {
         if (this.abort.signal.aborted) break;
         const toolStart = Date.now();
-        this.toolStart = toolStart;
+        // A call started early (startEarly) is timed from when it started.
+        this.toolStart = this.early?.name === use.name ? this.early.at : toolStart;
         const content = use.name === "show_explainer" && !offeredExplainer
           ? "Call prepare_explainer first, then use show_explainer with the loaded instructions on your next turn."
           : await this.runTool(use.name, use.input ?? {});
@@ -1039,6 +1078,13 @@ export class Brain {
       this.ui.stream?.({ text, done: false });
     };
     this.ui.stream?.({ text: "", done: false });
+    // Pointing and guiding start as soon as their first target is written (early-tools.js); nothing else does.
+    this.early = null;
+    const hear = (/** @type {number} */ index, /** @type {string} */ name, /** @type {string} */ raw) => {
+      if (signal.aborted || this.early) return;
+      const input = earlyInput(name, raw);
+      if (input) this.startEarly(name, input);
+    };
     /** @type {{ content: any[], stop_reason: string | null, usage?: any }} */
     let response;
     if (this.provider !== "anthropic") {
@@ -1061,8 +1107,11 @@ export class Brain {
         maxTokens: 32000,
         signal: this.abort.signal,
         onText: emit,
+        onToolInput: hear,
       });
     } else {
+      /** @type {Map<number, { name: string, raw: string }>} */
+      const calls = new Map();
       response = await this.client.beta.messages
         .stream(
           {
@@ -1079,6 +1128,13 @@ export class Brain {
           { signal: this.abort.signal },
         )
         .on("text", emit)
+        .on("streamEvent", (event) => {
+          if (event.type === "content_block_start" && event.content_block.type === "tool_use") calls.set(event.index, { name: event.content_block.name, raw: "" });
+          const call = event.type === "content_block_delta" && event.delta.type === "input_json_delta" ? calls.get(event.index) : null;
+          if (!call || event.type !== "content_block_delta" || event.delta.type !== "input_json_delta") return;
+          call.raw += event.delta.partial_json;
+          hear(event.index, call.name, call.raw);
+        })
         .finalMessage();
     }
     if (!signal.aborted) {
@@ -1253,14 +1309,16 @@ export class Brain {
             ? `There is no mark ${input.mark}.`
             : `No position known for ${input.ref}. Look again and point at a fresh ref.`;
         }
+        // The pointer may already be on its way: started while the model was still writing this call.
+        const early = this.takeEarly("point_at", input.mark != null ? `mark:${input.mark}` : input.ref, input.caption);
         if (input.mark != null) {
-          await this.ui.point(bounds, input.caption);
+          await (early ?? this.ui.point(bounds, input.caption));
           this.notePointer();
           return "Pointed.";
         }
         // The window may have moved or scrolled since it was read. Point at once where the control was, and in the
         // meantime ask where it is now: if it moved, the pointer follows; if it's gone, the model is told to look again.
-        const pointing = Promise.resolve(this.ui.point(bounds, input.caption)).then(() => this.notePointer());
+        const pointing = early ?? Promise.resolve(this.ui.point(bounds, input.caption)).then(() => this.notePointer());
         const now = await this.liveBounds(input.ref);
         if (now === "gone") {
           await pointing;
@@ -1377,9 +1435,109 @@ export class Brain {
     return shown ? "Annotated. The user does the clicking or dragging; nothing was operated." : "The window changed before the drawing could be shown. Read it again.";
   }
 
+  /** The last whole read of `win`, if it was taken within GUIDE_REUSE_MS; taken either way, so it's used once. */
+  recentRead(win) {
+    const last = this.lastRead;
+    this.lastRead = null;
+    return last && win?.id != null && last.id === String(win.id) && Date.now() - last.at < GUIDE_REUSE_MS && last.res?.ok ? last.res : null;
+  }
+
   // The question's first pointer or highlight is on screen: its clock (latency.js) stops here.
   notePointer() {
     this.timing?.pointed(Date.now() - (this.toolStart ?? Date.now()));
+  }
+
+  /**
+   * One guide step put on screen: read the window, find the step's control, highlight it (or point). Resolves the
+   * window it was found in, or `stop`: what to tell the model instead. Used by guide_steps for each step, and for the
+   * first one while the model is still writing the rest (startEarly).
+   * @param {any} win @param {any} step @param {number} i @param {{ of?: number, doneSoFar: string }} o
+   * @returns {Promise<{ win: any } | { stop: string }>}
+   */
+  async showStep(win, step, i, { of, doneSoFar }) {
+    const signal = this.abort?.signal;
+    // As deep as the waits read: menus and their items sit far down in apps like Excel.
+    const read = (w) => snapshotResilient(["--window-id", w.id], GUIDE_SNAPSHOT, { timeoutMs: 20_000, session: this.session, signal });
+    // The first step starts from the window as the model last read it, when that's recent, rather than waiting on a
+    // second read; the drawing checks the control's live position before it's shown.
+    const recent = i === 0 ? this.recentRead(win) : null;
+    // A step can open a dialog; once it closes, the steps carry on in their own window.
+    let res = recent ?? (await read(win));
+    if (!res.ok && win !== this.target) {
+      win = this.target;
+      res = await read(win);
+    }
+    if (signal?.aborted) return { stop: "The user stopped." };
+    if (!res.ok) return { stop: `${doneSoFar} Couldn't read their window at step ${i + 1}: ${trimEnvelope(res)}` };
+    let match = findControl(res.data.tree, step.target, step.role);
+    // A menu the last step opened may still be drawing: one more look a moment later before asking Claude. A step
+    // that isn't in the earlier read is looked for in a fresh one straight away.
+    if (!match) {
+      if (!recent) await new Promise((r) => setTimeout(r, MENU_SETTLE_MS));
+      const again = await read(win);
+      if (again.ok) {
+        res = again;
+        match = findControl(res.data.tree, step.target, step.role);
+      }
+    }
+    const { text } = renderTree(res.data.tree, this.bounds, undefined, this.labels);
+    this.noteApp(res.data.tree, win.app_name, win);
+    this.ui.trace?.({
+      kind: "guide-step",
+      step: i + 1,
+      of,
+      match: match?.node ? (match.near ? "near" : "one") : match ? "several" : "none",
+      target: String(step.target).slice(0, 60),
+      ...(match?.node?.name && match.near ? { chose: String(match.node.name).slice(0, 60) } : {}),
+      ...(!match ? { nearest: nearestNames(res.data.tree, step.target) } : {}),
+    });
+    if (!match?.node) {
+      const why = match
+        ? `several controls are called "${step.target}" (${match.candidates.map((c) => c.ref_id).join(", ")})`
+        : `nothing called "${step.target}" is on screen`;
+      return { stop: `${doneSoFar} At step ${i + 1} ("${step.caption}") ${why}. Point at the right one yourself, then call guide_steps again with the steps that are left. Their window now:
+${text}` };
+    }
+    if (this.ui.annotate) {
+      let destination;
+      if (step.annotation?.to_target) destination = findControl(res.data.tree, step.annotation.to_target, step.annotation.to_role);
+      if (step.annotation?.to_target && !destination?.node) return { stop: `${doneSoFar} The drawing's destination isn't clear. Read the window again.` };
+      const result = await this.drawAnnotations({ caption: step.caption, items: [{ kind: step.annotation?.kind ?? "highlight", ref: match.node.ref_id,
+        ...(destination?.node ? { to_ref: destination.node.ref_id } : {}), label: step.caption, number: Math.min(99, i + 1) }] });
+      if (!result.startsWith("Annotated.")) return { stop: `${doneSoFar} ${result}` };
+    } else {
+      await this.ui.point(match.node.bounds, step.caption);
+      this.notePointer();
+    }
+    return { win };
+  }
+
+  /**
+   * Starts a point_at or guide_steps call whose first target the model has written, while it writes the rest. Only
+   * these two: nothing that acts is ever started from a partial call (early-tools.js).
+   * @param {string} name @param {any} input
+   */
+  startEarly(name, input) {
+    const at = Date.now();
+    if (name === "point_at") {
+      const bounds = input.mark != null ? this.marks?.get(input.mark) : this.bounds.get(input.ref);
+      if (!bounds) return;
+      this.toolStart = at;
+      this.early = { name, key: input.mark != null ? `mark:${input.mark}` : input.ref, caption: input.caption, at,
+        done: Promise.resolve(this.ui.point(bounds, input.caption)).then(() => this.notePointer()) };
+    } else if (name === "guide_steps" && this.target) {
+      this.toolStart = at;
+      this.early = { name, key: input.step.target, caption: input.step.caption, at,
+        done: this.showStep(this.target, input.step, 0, { doneSoFar: "They haven't started yet." }).catch((err) => ({ stop: `Couldn't show the first step: ${err.message}` })) };
+    } else return;
+    this.ui.trace?.({ kind: "early-start", tool: name });
+  }
+
+  /** What startEarly began for this call, if it was the same target and caption; taken either way. */
+  takeEarly(/** @type {string} */ name, /** @type {string} */ key, /** @type {string} */ caption) {
+    const e = this.early;
+    this.early = null;
+    return e && e.name === name && e.key === key && e.caption === caption ? e.done : null;
   }
 
   // guide_steps: points at each step's control and follows the user, locally, until they finish or Buddy needs Claude.
@@ -1390,58 +1548,16 @@ export class Brain {
     const seconds = Math.min(120, Math.max(10, Number(input.seconds_per_step) || 60));
     const signal = this.abort?.signal;
     const doneSoFar = (i) => (i ? `They did steps 1-${i} of ${steps.length}.` : `They haven't started yet.`);
-    // As deep as the waits read: menus and their items sit far down in apps like Excel.
-    const read = (w) => snapshotResilient(["--window-id", w.id], GUIDE_SNAPSHOT, { timeoutMs: 20_000, session: this.session, signal });
     let win = this.target;
     let i = 0;
     while (i < steps.length) {
       if (signal?.aborted) return "The user stopped.";
       const step = steps[i];
-      // A step can open a dialog; once it closes, the steps carry on in their own window.
-      let res = await read(win);
-      if (!res.ok && win !== this.target) {
-        win = this.target;
-        res = await read(win);
-      }
-      if (!res.ok) return `${doneSoFar(i)} Couldn't read their window at step ${i + 1}: ${trimEnvelope(res)}`;
-      let match = findControl(res.data.tree, step.target, step.role);
-      // A menu the last step opened may still be drawing: one more look a moment later before asking Claude.
-      if (!match) {
-        await new Promise((r) => setTimeout(r, MENU_SETTLE_MS));
-        const again = await read(win);
-        if (again.ok) {
-          res = again;
-          match = findControl(res.data.tree, step.target, step.role);
-        }
-      }
-      const { text } = renderTree(res.data.tree, this.bounds, undefined, this.labels);
-      this.noteApp(res.data.tree, win.app_name, win);
-      this.ui.trace?.({
-        kind: "guide-step",
-        step: i + 1,
-        of: steps.length,
-        match: match?.node ? (match.near ? "near" : "one") : match ? "several" : "none",
-        target: String(step.target).slice(0, 60),
-        ...(match?.node?.name && match.near ? { chose: String(match.node.name).slice(0, 60) } : {}),
-        ...(!match ? { nearest: nearestNames(res.data.tree, step.target) } : {}),
-      });
-      if (!match?.node) {
-        const why = match
-          ? `several controls are called "${step.target}" (${match.candidates.map((c) => c.ref_id).join(", ")})`
-          : `nothing called "${step.target}" is on screen`;
-        return `${doneSoFar(i)} At step ${i + 1} ("${step.caption}") ${why}. Point at the right one yourself, then call guide_steps again with the steps that are left. Their window now:\n${text}`;
-      }
-      if (this.ui.annotate) {
-        let destination;
-        if (step.annotation?.to_target) destination = findControl(res.data.tree, step.annotation.to_target, step.annotation.to_role);
-        if (step.annotation?.to_target && !destination?.node) return `${doneSoFar(i)} The drawing's destination isn't clear. Read the window again.`;
-        const result = await this.drawAnnotations({ caption: step.caption, items: [{ kind: step.annotation?.kind ?? "highlight", ref: match.node.ref_id,
-          ...(destination?.node ? { to_ref: destination.node.ref_id } : {}), label: step.caption, number: Math.min(99, i + 1) }] });
-        if (!result.startsWith("Annotated.")) return `${doneSoFar(i)} ${result}`;
-      } else {
-        await this.ui.point(match.node.bounds, step.caption);
-        this.notePointer();
-      }
+      // The first step may already be on screen: it was started while the model was still writing the route.
+      const early = i === 0 ? this.takeEarly("guide_steps", step.target, step.caption) : null;
+      const shown = /** @type {{ win: any } | { stop: string }} */ (await (early ?? this.showStep(win, step, i, { of: steps.length, doneSoFar: doneSoFar(i) })));
+      if ("stop" in shown) return shown.stop;
+      win = shown.win;
       this.ui.status(`Step ${i + 1} of ${steps.length}: your turn`);
       // Listen for this step and every later one, so a user who works ahead is caught where they are.
       const needles = [];
