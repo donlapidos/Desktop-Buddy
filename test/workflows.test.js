@@ -52,6 +52,8 @@ test("the strict recorded workflow suite passes valid routes, corrections and ho
     "It hasn't opened yet. Are you stuck on the Sort button?",
   ], WORKFLOW_CASES, {}, (sent) => {
     assert.match(sent[2].messages.at(-1).content, /Actually, I meant the Formula Bar/);
+    assert.doesNotMatch(sent[2].messages[1].content, /@s126uxwam51g4g:e116/, "the first request's automatic refs were retired");
+    assert.match(sent[2].messages[1].content, /Point out the Name Box/, "the original request survives");
     assert.match(sent[4].messages.at(-1).content, /Sort Z to A/);
     assert.match(sent[8].messages.at(-1).content, /timed out/);
   });

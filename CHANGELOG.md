@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* Everyday guidance uses shorter instructions. Follow-ups drop the previous automatic window snapshot while
+  retaining the user's requests, Buddy's replies and explicitly chosen Mark or Explain images.
+* Saved-key benchmarks correctly unwrap Electron's async decrypt result, support legacy ciphertext and carry only
+  OS-encrypted key metadata into the isolated runtime. Saved keys are never rewritten by the benchmark.
+
 * Workflow checks recognise smart apostrophes in recovery replies. Saved runs can be rescored without another
   model call, while preserving the original evidence and execution failures.
 * The saved-key benchmark runner uses a separate runtime profile, avoiding cache contention with an active Buddy.

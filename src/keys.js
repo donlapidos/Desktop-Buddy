@@ -24,6 +24,38 @@ export function keyRecord(stored) {
 }
 
 /**
+ * Electron's asynchronous API returns { result, shouldReEncrypt }, not a string.
+ * Existing synchronous ciphertext may still need the legacy decryptor. Reading a
+ * key for a benchmark must never rotate or rewrite the owner's saved key.
+ * @param {{ decryptStringAsync?: (encrypted: Buffer) => Promise<{ result: string } | string>, decryptString: (encrypted: Buffer) => string }} storage
+ * @param {Buffer} encrypted
+ */
+export async function decryptKeyRecord(storage, encrypted) {
+  let text;
+  if (storage.decryptStringAsync) {
+    try {
+      const decoded = await storage.decryptStringAsync(encrypted);
+      text = typeof decoded === "string" ? decoded : decoded?.result;
+    } catch { /* Older ciphertext can require the synchronous path. */ }
+  }
+  if (typeof text !== "string") text = storage.decryptString(encrypted);
+  if (!text) throw new Error("The saved key could not be unlocked.");
+  return keyRecord(text);
+}
+
+/** Only OS-encrypted key metadata may accompany an isolated benchmark profile. */
+export function keyProfileState(state) {
+  const crypt = state?.os_crypt;
+  const encrypted = {};
+  for (const name of ["encrypted_key", "app_bound_encrypted_key"]) {
+    if (typeof crypt?.[name] === "string") encrypted[name] = crypt[name];
+  }
+  if (!Object.keys(encrypted).length) return null;
+  if (typeof crypt.audit_enabled === "boolean") encrypted.audit_enabled = crypt.audit_enabled;
+  return { os_crypt: encrypted };
+}
+
+/**
  * The key to send to `url`: the saved one when it was saved for that origin (or before keys knew their address),
  * else none.
  * @param {{ key: string, origin: string | null }} saved @param {string | null | undefined} url

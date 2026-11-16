@@ -182,6 +182,11 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   were rescored without a second API run. Eight user requests used nine model turns; first guidance was 2.3–6.7 s
   (median 3.1 s), and average total time was 4.1 s per request. This is one small text-replay sample, not a claim
   about drawing smoothness or broad app reliability. Response latency remains a visible gap.
+  *Leaner guidance (2026-11-16):* shortened ordinary instructions and removed superseded automatic initial-window
+  observations on follow-ups, retaining requests, replies and explicit images. The same six workflows on the same
+  model and effort still passed: median first guidance 3.1 to 2.6 s, average total time per request 4.1 to 3.3 s,
+  input tokens 82,201 to 68,069, with nine model turns in both runs. These are two small runs, not a controlled
+  latency study; API timing varies and the replay excludes actual screen capture and drawing time.
 - **2.3 Run every provider and publish the table.** `npm run eval` across at least: two Claude models, two OpenAI,
   one Gemini, one DeepSeek, two OpenRouter, three local models of different sizes. Publish pass rate, seconds and
   cost per task in the README; make Settings' "works well" come from this table, not from the model's family name.

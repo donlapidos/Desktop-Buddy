@@ -8,7 +8,7 @@ const names = (b) => b.tools().map((t) => t.name);
 
 test("ordinary guidance omits the illustrated-figure payload without changing external tools", async () => {
   const b = brain();
-  assert.ok(GUIDANCE_SYSTEM.length < SYSTEM.length * 0.65);
+  assert.ok(GUIDANCE_SYSTEM.length < SYSTEM.length * 0.25, "everyday instructions stay within a quarter of the full illustrated prompt");
   assert.doesNotMatch(b.system(), /\n\nExplaining:/);
   assert.match(b.system(), /latest request takes precedence/);
   assert.ok(names(b).includes("prepare_explainer"));

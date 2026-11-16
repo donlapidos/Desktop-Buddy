@@ -187,3 +187,52 @@ test("fresh same-window previews are reused, and earlier automatic images leave 
   assert.equal(images.length, 1);
   assert.match(b.messages[0].content[0].text, /Earlier window screenshot omitted/);
 });
+
+test("follow-ups discard obsolete automatic trees but retain requests, replies and the fresh observation", async () => {
+  for (const screenContext of [true, false]) {
+    const { b } = fixture({ screenContext: () => screenContext });
+    let current = "window: First\n@old-tree button Old target\n" + "old snapshot detail ".repeat(1000);
+    b.look = async () => current;
+    await b.ask("Help me sort by Budget", target);
+    const first = JSON.stringify(b.messages[0]);
+    assert.match(first, /@old-tree/);
+    const reply = { role: "assistant", content: [{ type: "text", text: "We were sorting the whole table, keeping each row together." }] };
+    b.messages.push(reply);
+    current = "window: Now\n@fresh-tree button Spent";
+    await b.ask("Actually, by Spent", target);
+    const earlier = JSON.stringify(b.messages[0]);
+    assert.match(earlier, /Help me sort by Budget/);
+    assert.match(earlier, /Earlier automatic window observation omitted/);
+    assert.doesNotMatch(earlier, /@old-tree|old snapshot detail/);
+    assert.ok(earlier.length < first.length / 10, "old snapshot payload is removed");
+    assert.deepEqual(b.messages[1], reply, "the prior answer and decisions stay in the conversation");
+    assert.match(JSON.stringify(b.messages.at(-1)), /@fresh-tree/);
+    assert.match(JSON.stringify(b.messages.at(-1)), /Actually, by Spent/);
+    assert.equal(b.contextReadings.size, 1, "only the current automatic prompt is tracked");
+    b.reset();
+    assert.equal(b.contextReadings.size, 0);
+  }
+});
+
+test("disabling images does not strip the current tree before the model sees it", async () => {
+  const { b } = fixture({ screenContext: () => false });
+  b.loop = async () => {
+    b.clearContextImages(); // turn() does this whenever screenshots are disabled
+    assert.match(b.messages.at(-1).content, /@s1:e1 button Sort/);
+    return "Here.";
+  };
+  await b.ask("Point to Sort", target);
+});
+
+test("Mark and Explain replace previous automatic context while their explicit images stay in history", async () => {
+  for (const entry of ["mark", "explain"]) {
+    const { b } = fixture();
+    await b.ask("First question", target);
+    if (entry === "mark") await b.askWithMarks("What about this?", { image: "explicit-choice", marks: [], target });
+    else await b.explain({ image: "explicit-choice", tip: { x: 1, y: 2 }, element: null, target, question: "What is this?" });
+    assert.doesNotMatch(JSON.stringify(b.messages[0]), /@s1:e1/);
+    assert.match(JSON.stringify(b.messages[0]), /First question/);
+    await b.ask("Continue", target);
+    assert.ok(b.messages[1].content.some((block) => block.type === "image" && block.source.data === "explicit-choice"));
+  }
+});

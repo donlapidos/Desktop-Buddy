@@ -103,6 +103,8 @@ VS Code and more).
   follows you when you work ahead, and matches controls by meaning when the app words them differently.
   The default engine keeps everyday guidance instructions small and loads illustrated explanations when needed.
   It also includes hints for Excel, Word, browsers, File Explorer and Windows Settings, checked against your current screen.
+  Follow-ups replace the previous automatic window snapshot with the current observation, keeping your questions,
+  Buddy's replies and images you explicitly supplied through Mark or Explain.
 
 ## Install
 
@@ -215,8 +217,9 @@ those passes are not a live model score.
 
 To apply corrected checks to saved replies without another API call, use
 `npm run eval -- --set workflows --rescore workflow-results.json --json workflow-rescored.json`.
-Choose a new output file: existing files cannot be overwritten. Transport failures and cancellations remain failures. The saved-key runner uses its own
-temporary runtime profile and only reads the saved key from Buddy's profile.
+Choose a new output file: existing files cannot be overwritten. Transport failures and cancellations remain failures.
+The saved-key runner uses a temporary runtime profile. It reads the saved key and the OS-encrypted key metadata
+needed to unlock it, without rewriting Buddy's saved key or copying unrelated profile data.
 
 `BUDDY_APPROVAL_TEST=cycle npm start` checks, with a real mouse click (the pointer moves; keep your hands off the
 mouse), that an approval card takes a click and that the keyboard goes back to your app afterwards. Cases: `plain`,
