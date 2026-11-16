@@ -1,7 +1,7 @@
 {
   "name": "desktop-buddy",
-  "version": "0.3.0",
-  "description": "A Clicky-style desktop buddy: points at your screen to teach, and drives your apps when you ask. Built on agent-desktop.",
+  "version": "0.4.0",
+  "description": "Shows you where to click, in any Windows app, with the AI you choose. Built on agent-desktop.",
   "main": "src/main.js",
   "type": "module",
   "scripts": {
