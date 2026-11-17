@@ -58,6 +58,7 @@ contextBridge.exposeInMainWorld("buddy", {
   taskMinimize: () => ipcRenderer.send("task-minimize"),
   taskClose: () => ipcRenderer.send("task-close"),
   newTask: () => ipcRenderer.send("new-task"),
+  saveLesson: () => ipcRenderer.invoke("save-lesson"),
   onBubbleOpen: on("bubble-open"),
   onBubbleClose: on("bubble-close"),
   // Settings: opened from the bubble or island; the rest is answered only for the settings window itself
@@ -72,6 +73,8 @@ contextBridge.exposeInMainWorld("buddy", {
   settingsClear: (what) => ipcRenderer.invoke("settings-clear", what),
   settingsOpenData: () => ipcRenderer.invoke("settings-open-data"),
   settingsAddFolder: () => ipcRenderer.invoke("settings-folder-add"),
+  settingsLesson: (action, id) => ipcRenderer.invoke("settings-lesson", action, id),
+  settingsLessonImport: () => ipcRenderer.invoke("settings-lesson-import"),
   settingsCheckModel: () => ipcRenderer.invoke("settings-check-model"),
   settingsAddress: (url) => ipcRenderer.invoke("settings-address", url),
   settingsClaude: (which, on) => ipcRenderer.invoke("settings-claude", which, on),

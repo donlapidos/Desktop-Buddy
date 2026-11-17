@@ -121,6 +121,11 @@
   #voice-offer button { flex: none; border: 0; border-radius: 8px; padding: 5px 9px; background: color-mix(in srgb, var(--buddy) 28%, var(--field)); color: var(--fg); font: inherit; font-weight: 600; cursor: pointer; }
   #voice-offer button.quiet { background: transparent; font-weight: 500; }
   #voice-offer button:hover { background: color-mix(in srgb, var(--buddy) 40%, var(--field)); }
+  /* After a route they went all the way through: keep it as a lesson to play again or share. */
+  #lesson { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: -4px; font-size: 12px; color: var(--muted); }
+  #lesson[hidden], #lesson button[hidden] { display: none; }
+  #lesson button { border: 0; border-radius: 8px; padding: 4px 9px; background: var(--field); color: var(--fg); font: inherit; font-weight: 600; cursor: pointer; }
+  #lesson button:hover { background: color-mix(in srgb, var(--buddy) 22%, var(--field)); }
   #welcome::-webkit-scrollbar { width: 8px; }
   #welcome::-webkit-scrollbar-thumb { background: #2a2d34; border-radius: 4px; }
 </style>
@@ -139,6 +144,7 @@
   <div id="welcome" hidden></div>
   <div id="reply" role="log" aria-live="polite" aria-label="Buddy's answer"></div>
   <div id="spend"></div>
+  <div id="lesson" hidden><span id="lesson-said" role="status"></span><button id="lesson-save" type="button" title="Keep these steps to play again later, or to share">Save as a lesson</button></div>
   <div id="confirm" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="why" tabindex="-1">
     <div id="confirm-title">Can I do this? <span class="what" id="what"></span></div>
     <div class="why" id="why"></div>

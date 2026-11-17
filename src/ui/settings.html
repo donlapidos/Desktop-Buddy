@@ -212,6 +212,7 @@
     <button data-page="look"><svg class="i" viewBox="0 0 16 16"><path d="M8 1.8C5.5 5 4 7.3 4 9.6a4 4 0 0 0 8 0C12 7.3 10.5 5 8 1.8z"/></svg>Look</button>
     <button data-page="keys"><svg class="i" viewBox="0 0 16 16"><rect x="1.8" y="4" width="12.4" height="8.5" rx="1.6"/><path d="M4.5 6.8h.01M7 6.8h.01M9.5 6.8h.01M12 6.8h.01M5 9.8h6"/></svg>Shortcuts</button>
     <button data-page="agents"><svg class="i" viewBox="0 0 16 16"><path d="M3 2.5 13 7.2 8.2 8.4 6.4 13z"/></svg>Agents</button>
+    <button data-page="lessons"><svg class="i" viewBox="0 0 16 16"><path d="M2.5 3.2h4a1.5 1.5 0 0 1 1.5 1.5v8.5a1.2 1.2 0 0 0-1.2-1.2H2.5zM13.5 3.2h-4A1.5 1.5 0 0 0 8 4.7v8.5a1.2 1.2 0 0 1 1.2-1.2h4.3z"/></svg>Lessons</button>
     <button data-page="routines"><svg class="i" viewBox="0 0 16 16"><circle cx="8" cy="8.5" r="5.7"/><path d="M8 5.3v3.4l2.2 1.4M6 1.5h4"/></svg>Routines</button>
     <button data-page="claude"><svg class="i" viewBox="0 0 16 16"><path d="M8 1.8 13 3.8v4c0 3-2.2 5.3-5 6.4C5.2 13.1 3 10.8 3 7.8v-4z"/><path d="m6 8 1.5 1.5L10.3 6.6"/></svg>AI &amp; privacy</button>
     <button data-page="activity"><svg class="i" viewBox="0 0 16 16"><path d="M2.5 8a5.5 5.5 0 1 0 1.7-4"/><path d="M2.3 1.8v2.6h2.6M8 5v3.2l2 1.3"/></svg>Activity</button>
@@ -325,6 +326,16 @@
         <div id="routine-editor"></div>
         <div class="row" style="margin-top:12px"><button class="btn primary" id="routine-new">New routine</button></div>
         <p class="note">Routines run while Buddy is running. One missed by less than six hours (the PC was asleep) runs when Buddy next can; older ones are skipped.</p>
+      </div>
+    </section>
+
+    <section id="page-lessons" hidden>
+      <h2>Lessons</h2>
+      <p class="lede">When Buddy walks you through something all the way, it offers to keep the steps as a lesson. Play one to be shown again, in the app it's for: Buddy points at each step and follows you, without asking the AI, so it costs nothing. A lesson only points: it never clicks or types. Share one as a file, and import lessons people share with you.</p>
+      <div class="group">
+        <div id="lessons"></div>
+        <p class="problem" id="lesson-problem" role="status"></p>
+        <div class="row" style="margin-top:12px"><button class="btn" id="lesson-import">Import a lesson…</button></div>
       </div>
     </section>
 

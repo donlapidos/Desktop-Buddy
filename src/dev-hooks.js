@@ -8,7 +8,7 @@ import fs from "node:fs";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
-import { setBrainDefaults } from "./brain.js";
+import { Brain, setBrainDefaults } from "./brain.js";
 import { listWindows, observe, resolveBinary } from "./desktop.js";
 import { asPhysicalRect } from "./geometry.js";
 import { learnCaps } from "./providers.js";
@@ -29,6 +29,7 @@ import { learnCaps } from "./providers.js";
  *   typeText: (text: string) => Promise<void>, saveApiKey: Function, loadApiKey: Function, providerURL: Function,
  *   prepareScreenImage: Function, timingLog: () => string, documentsDir: () => string, startBrain: Function, spendState: Function,
  *   pressHotkey: (name: any) => void, sendVoiceOffer: () => void, useKeyHook: (hook: import("./hold-key.js").KeyHook) => void,
+ *   lessons: ReturnType<typeof import("./lessons.js").createLessons> | null, playLesson: (id: string, opts?: { window?: any }) => Promise<any>,
  * }} DevKit
  */
 
@@ -300,7 +301,7 @@ function settingsTest(kit) {
       await wait(400);
       fs.writeFileSync(path.join(out, `${name}.png`), (await win.webContents.capturePage()).toPNG());
     };
-    for (const page of ["voice", "look", "keys", "claude"]) await shoot(page, `settings-${page}`);
+    for (const page of ["voice", "look", "keys", "lessons", "claude"]) await shoot(page, `settings-${page}`);
     await win.webContents.executeJavaScript(`document.querySelector("main").scrollTop = 9999`);
     await wait(300);
     fs.writeFileSync(path.join(out, "settings-claude-bottom.png"), (await win.webContents.capturePage()).toPNG());
@@ -938,7 +939,70 @@ function restoreTest(kit) {
   }, 2500);
 }
 
+/** BUDDY_LESSONS_TEST=<path to the sample window script> @param {DevKit} kit */
+function lessonsTest(kit) {
+  // A lesson played in a test-owned native window (scripts/samples/context-window.ps1): Buddy points at the step and
+  // follows it to its expected result with no model (this copy has none set up). A separate Brain, allowed to act
+  // only in the sample, does the user's click. A lesson for a control that isn't there says so; one shared as a file
+  // comes back the same.
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const until = async (check, ms = 15_000) => { for (const end = Date.now() + ms; Date.now() < end; await wait(100)) if (await check()) return true; return false; };
+  setTimeout(async () => {
+    const r = {};
+    let sample;
+    try {
+      const title = "Buddy lesson sample";
+      sample = spawn("powershell.exe", ["-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", String(process.env.BUDDY_LESSONS_TEST), "-Focus", "-Title", title], { windowsHide: false });
+      sample.stdout?.resume();
+      sample.stderr?.resume();
+      /** @type {any} */
+      let target;
+      if (!(await until(async () => (target = (await listWindows()).find((w) => w.title === title && w.pid === sample.pid))))) throw new Error("The sample window didn't open.");
+      const { lessons, playLesson } = kit;
+      if (!lessons) throw new Error("No lessons store.");
+      // The user's hands: a Brain of the check's own, allowed to act only in the sample. It also waits until the
+      // sample's controls can be read, so the lesson doesn't start on a window still drawing.
+      const helper = new Brain({ status() {}, point: async () => {}, confirm: async () => "allow" });
+      helper.target = target;
+      helper.abort = new AbortController();
+      const findRef = async () => {
+        await helper.look({ app: target.app_name, window_id: target.id }, { windowOnly: true });
+        return [...helper.labels].reverse().find(([, label]) => label.includes("Quarterly sales details"))?.[0];
+      };
+      if (!(await until(findRef))) throw new Error("The sample's control couldn't be read.");
+      const added = /** @type {any} */ (lessons.add({ title: "Open the quarterly details", app: target.app_name, steps: [{ caption: "Open the details", target: "Quarterly sales details", done_when: ["Details opened"] }] }));
+      const readyBefore = (fs.readFileSync(kit.timingLog(), "utf8").match(/"kind":"guide-ready"/g) ?? []).length;
+      const playing = playLesson(added.lesson.id, { window: target });
+      // Where the check is, so a stall shows where it stopped.
+      const stage = (name) => console.log("LESSONS_STAGE", JSON.stringify({ name, mode: kit.currentMode() }));
+      stage("playing");
+      r.waited = await until(() => (fs.readFileSync(kit.timingLog(), "utf8").match(/"kind":"guide-ready"/g) ?? []).length > readyBefore);
+      // The user's click.
+      const ref = await findRef();
+      r.clicked = ref ? (await helper.act({ action: "click", ref })).includes('"ok":true') : false;
+      stage(`clicked ${r.clicked}`);
+      r.played = await playing;
+      stage("played");
+      // A control that isn't there: the lesson says so and stops.
+      const missing = /** @type {any} */ (lessons.add({ title: "Export the report", app: target.app_name, steps: [{ caption: "Export it", target: "Export to PDF", done_when: ["Exported"] }] }));
+      r.missing = await playLesson(missing.lesson.id, { window: target });
+      stage("missing played");
+      // Shared as a file and imported again, it's the same lesson.
+      const shared = /** @type {any} */ (lessons.importText(lessons.exportText(added.lesson.id) ?? ""));
+      r.roundTrip = JSON.stringify(shared.lesson?.steps) === JSON.stringify(added.lesson.steps);
+      r.listed = kit.settingsState().lessons.map((l) => l.title);
+    } catch (err) {
+      r.error = String(err?.message ?? err);
+    } finally {
+      sample?.kill();
+    }
+    console.log("LESSONS_TEST", JSON.stringify(r));
+    console.log("LESSONS_TEST_DONE");
+  }, 2500);
+}
+
 const HOOKS = {
+  BUDDY_LESSONS_TEST: lessonsTest,
   BUDDY_RESTORE_TEST: restoreTest,
   BUDDY_BRIDGE_TEST: bridgeTest,
   BUDDY_ISLAND_TEST: islandTest,

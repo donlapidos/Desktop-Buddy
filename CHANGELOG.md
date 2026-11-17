@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* **Lessons:** when Buddy has walked you through something, keep it as a lesson. Play it again from the tray or
+  Settings › Lessons: Buddy points at each step and follows you, without asking the AI, so it's free. Share a lesson as
+  a file, and import ones others share. A lesson only points; it never clicks or types.
 * **Conversations carry on after a restart.** Task windows you haven't closed come back as chips on the island, and
   a follow-up picks up where you left off; the bubble does too if Buddy restarts within a few minutes. Only the words
   are kept, on your PC (no screenshots, secret keys hidden). Closing a task forgets it, and Settings › AI & privacy ›

@@ -23,6 +23,8 @@ const SIZE = { width: 640, height: 600 };
  *   clear: (what: "explainers" | "log" | "conversations") => void,
  *   openData: () => void,
  *   addFolder: (win: BrowserWindow) => Promise<string | null>, // Agents › Add a folder; why it can't be added, or null
+ *   lesson: (action: "play" | "export" | "delete", id: string, win: BrowserWindow) => Promise<{ error?: string, saved?: boolean }>, // Settings › Lessons
+ *   importLesson: (win: BrowserWindow) => Promise<{ error?: string, title?: string }>,
  *   runRoutine: (id: string) => Promise<string | null>,    // start a routine now; returns an error message, or null
  *   apps: () => Promise<string[]>,                          // apps with a window open, for suggestions
  *   plusInterest: () => void,                               // open the Buddy Plus interest form
@@ -98,6 +100,11 @@ export function createSettingsWindow(deps) {
   });
   handle("settings-open-data", () => deps.openData());
   handle("settings-folder-add", async () => ({ error: win ? await deps.addFolder(win) : null, state: deps.state() }));
+  handle("settings-lesson", async (action, id) => {
+    if (!["play", "export", "delete"].includes(action) || !win) throw new Error("Not a lesson action");
+    return { ...(await deps.lesson(action, String(id ?? ""), win)), state: deps.state() };
+  });
+  handle("settings-lesson-import", async () => ({ ...(win ? await deps.importLesson(win) : {}), state: deps.state() }));
   handle("settings-run-routine", async (id) => ({ error: await deps.runRoutine(String(id)), state: deps.state() }));
   handle("settings-apps", () => deps.apps());
   handle("settings-feature", () => deps.requestFeature());

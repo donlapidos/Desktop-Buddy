@@ -14,7 +14,7 @@ let recording = null; // the shortcut being recorded
 const problems = {};
 
 // ---------- Navigation: one section at a time; the last one is remembered ----------
-const pages = ["voice", "dictation", "look", "keys", "agents", "routines", "claude", "activity", "about"];
+const pages = ["voice", "dictation", "look", "keys", "agents", "lessons", "routines", "claude", "activity", "about"];
 const navButtons = () => /** @type {NodeListOf<HTMLButtonElement>} */ (document.querySelectorAll("nav button"));
 function show(page) {
   for (const p of pages) $(`page-${p}`).hidden = p !== page;
@@ -694,8 +694,53 @@ function render(state) {
   renderClaude();
   renderSpend();
   renderActivity();
+  renderLessons();
   renderAbout();
 }
+
+// ---------- Lessons ----------
+let deletingLesson = null;
+function renderLessons() {
+  const list = S.lessons ?? [];
+  if (!list.length) {
+    $("lessons").replaceChildren(el("p", { className: "empty", textContent: "None yet. Ask Buddy how to do something; when it has walked you all the way through, choose Save as a lesson under its answer." }));
+    return;
+  }
+  $("lessons").replaceChildren(...list.map((l) => {
+    const info = el("div", {}, el("b", { textContent: l.title }), el("span", { className: "when", textContent: ` ${l.app} · ${l.steps === 1 ? "1 step" : `${l.steps} steps`}` }));
+    const actions = el("div", { className: "row" });
+    if (deletingLesson === l.id) {
+      const yes = el("button", { className: "btn danger", textContent: "Delete" });
+      const no = el("button", { className: "btn", textContent: "Keep" });
+      yes.addEventListener("click", async () => { deletingLesson = null; render((await window.buddy.settingsLesson("delete", l.id)).state); });
+      no.addEventListener("click", () => { deletingLesson = null; renderLessons(); });
+      actions.append(yes, no);
+    } else {
+      const play = el("button", { className: "btn primary", textContent: "Play" });
+      play.setAttribute("aria-label", `Play ${l.title}`);
+      play.addEventListener("click", async () => {
+        const r = await window.buddy.settingsLesson("play", l.id);
+        $("lesson-problem").textContent = r.error ?? "";
+      });
+      const share = el("button", { className: "btn", textContent: "Share…" });
+      share.setAttribute("aria-label", `Share ${l.title} as a file`);
+      share.addEventListener("click", async () => {
+        const r = await window.buddy.settingsLesson("export", l.id);
+        $("lesson-problem").textContent = r.error ?? (r.saved ? "Saved. Send that file to whoever you'd like to show." : "");
+      });
+      const del = el("button", { className: "btn", textContent: "Delete…" });
+      del.setAttribute("aria-label", `Delete ${l.title}`);
+      del.addEventListener("click", () => { deletingLesson = l.id; renderLessons(); });
+      actions.append(play, share, del);
+    }
+    return el("div", { className: "routine" }, info, actions);
+  }));
+}
+$("lesson-import").addEventListener("click", async () => {
+  const r = await window.buddy.settingsLessonImport();
+  $("lesson-problem").textContent = r.error ?? (r.title ? `Imported "${r.title}".` : "");
+  render(r.state);
+});
 
 // ---------- Spending: the month so far, and the limit ----------
 function renderSpend() {

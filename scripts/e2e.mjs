@@ -465,6 +465,24 @@ const CHECKS = {
       ...Object.keys({ ...before, ...after }).filter((k) => before[k] !== after[k]).map((k) => `changed ${k}: ${before[k] ?? "(none)"} -> ${after[k] ?? "(none)"}`)].filter(Boolean);
   },
 
+  // A lesson played in a test-owned window, with no model: it follows the step to its result, says when a control
+  // isn't there, and comes back the same from a shared file.
+  async lessons() {
+    const { markers, timedOut } = await runCopy("lessons", { BUDDY_LESSONS_TEST: path.join(app, "scripts", "samples", "context-window.ps1") }, "LESSONS_TEST_DONE", 120_000);
+    const r = markers.LESSONS_TEST?.[0];
+    if (!r) return [timedOut ? "timed out" : "nothing printed"];
+    if (r.error) return [r.error];
+    return [
+      !r.waited && "the lesson never started waiting on its step",
+      !r.clicked && "the check couldn't click the sample's control",
+      !r.played?.done && `the lesson ended "${r.played?.text}", not done`,
+      !/"Export to PDF" isn't on screen/.test(r.missing?.text ?? "") && `a missing control was told as ${JSON.stringify(r.missing?.text)}`,
+      r.missing?.done && "a lesson with a missing control said it was done",
+      !r.roundTrip && "a shared lesson didn't come back the same",
+      !(r.listed ?? []).includes("Open the quarterly details") && `Settings listed ${JSON.stringify(r.listed)}`,
+    ].filter(Boolean);
+  },
+
   // Conversations surviving a restart: two runs on one data folder. The first answers a task and the bubble and quits
   // (closing every window); the second finds the task back as a chip, shows it, carries it into a follow-up, and
   // forgets it when it's closed.

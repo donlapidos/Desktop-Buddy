@@ -50,6 +50,8 @@ More models (Claude, Gemini's free tier, a model on your PC) are being checked.
 - **Explain:** hover over anything and press **Ctrl+Alt+E** for an illustrated one-page explanation.
 - **Do it for me:** say "do it for me" and Buddy works the app itself, asking before each click, keystroke or file
   change. **Settings › Activity** lists what it changed and can undo it.
+- **Lessons:** when Buddy has walked you through something, keep it as a lesson to be shown again (free: no AI call)
+  or to share as a file.
 
 Everything else (dictation, task windows, routines, Word documents, settings) is in the [guide](docs/GUIDE.md).
 
