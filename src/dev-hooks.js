@@ -195,11 +195,13 @@ async function holdToTalkCheck(kit) {
   Object.defineProperty(voice, "listening", { get: () => !!finishListen, configurable: true });
   const idle = async () => { for (let i = 0; i < 50 && kit.currentMode() !== "idle"; i++) await wait(100); return kit.currentMode() === "idle"; };
   const r = { idleBefore: !hook.installed };
-  // Held for a second, then let go.
+  // Held until listening has started and a moment more, then let go. (A fixed second wasn't enough on a busy PC:
+  // listening began after the release, and Buddy rightly ended it at once.)
   kit.pressHotkey("talk");
   await wait(150);
   r.installedWhileDown = hook.installed;
-  await wait(850);
+  for (let i = 0; i < 50 && !calls.includes("listen"); i++) await wait(100);
+  await wait(500);
   hook.onKeyUp?.(T);
   await wait(300);
   r.held = calls.join(",");
