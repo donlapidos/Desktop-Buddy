@@ -1,5 +1,12 @@
 # Desktop Buddy changelog
 
+## Unreleased
+
+* **Conversations carry on after a restart.** Task windows you haven't closed come back as chips on the island, and
+  a follow-up picks up where you left off; the bubble does too if Buddy restarts within a few minutes. Only the words
+  are kept, on your PC (no screenshots, secret keys hidden). Closing a task forgets it, and Settings › AI & privacy ›
+  Conversations › Forget clears them all.
+
 ## 0.4.0 (2026-11-16)
 
 Buddy can now draw on your screen (circles, arrows, labels, drag paths) to show you what goes where.

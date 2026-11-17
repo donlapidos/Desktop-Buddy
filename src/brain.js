@@ -579,6 +579,25 @@ const describeTarget = (target) =>
     ? `The user is looking at ${target.app_name} — "${target.title}" (window_id ${target.id}).`
     : "Could not tell which window the user is looking at; use list_windows.";
 
+const EARLIER_CHARS = 8000; // the latest of a resumed conversation that goes with its first new question
+
+/**
+ * A resumed conversation's transcript put ahead of its first new question, as context only.
+ * @param {{ role: string, text: string }[]} earlier @param {string | any[]} content
+ */
+export function withEarlier(earlier, content) {
+  const lines = [];
+  let size = 0;
+  for (const l of [...earlier].reverse()) {
+    const line = `${l.role === "user" ? "User" : "Buddy"}: ${l.text}`;
+    if (size + line.length > EARLIER_CHARS) break;
+    lines.unshift(line);
+    size += line.length;
+  }
+  const note = `Earlier in this conversation, before Buddy restarted (context only: their screen has likely changed and the earlier refs are gone, so look again before pointing or acting):\n${lines.join("\n")}`;
+  return typeof content === "string" ? `${note}\n\n${content}` : [{ type: "text", text: note }, ...content];
+}
+
 const trimEnvelope = (res) =>
   JSON.stringify(res.ok ? { ok: true, data: res.data } : { ok: false, error: res.error }).slice(0, 4000);
 
@@ -733,10 +752,22 @@ export class Brain {
     this.made = [];
     // What the user said and what Buddy answered, in plain words, for task windows to show.
     this.log = [];
+    /** @type {{ role: "user" | "buddy", text: string }[] | null} a conversation from before a restart (resume) */
+    this.earlier = null;
   }
 
   transcript() {
     return this.log.slice();
+  }
+
+  /**
+   * Picks up a conversation from before Buddy restarted (conversations.js): its transcript shows again, and the next
+   * question carries it as context. Only words: the earlier windows and refs are gone.
+   * @param {{ role: "user" | "buddy", text: string }[]} transcript
+   */
+  resume(transcript) {
+    this.log = transcript.slice();
+    this.earlier = transcript.length ? transcript.slice() : null;
   }
 
   cancel() {
@@ -958,6 +989,9 @@ export class Brain {
     try {
       if (prepare) content = await prepare(this.abort.signal);
       if (this.abort.signal.aborted) return "Okay, stopped.";
+      // The first question after a restart carries what was said before it.
+      if (this.earlier && !this.messages.length) content = withEarlier(this.earlier, content);
+      this.earlier = null;
       this.messages.push({ role: "user", content });
       const reply = await this.loop();
       this.log.push({ role: "buddy", text: reply });

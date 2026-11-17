@@ -296,6 +296,11 @@ Only after Phases 0-3; pick by what users ask for.
 
 - **5.1 Conversations that survive.** Task windows and the bubble's history are lost on restart. Save them (on the
   PC, clearable), and let a task be resumed.
+  **Done (2026-11-17).** `src/conversations.js` keeps each task's and the bubble's transcript (words only, keys hidden,
+  40 lines, a week) in `conversations.json`. Unclosed tasks come back as island chips whose window is made only when
+  opened; the bubble's comes back within its 15-minute memory. `Brain.resume` puts the transcript ahead of the first
+  new question as context, never the old refs or screenshots. Closing a task forgets it; quitting keeps it. Settings ›
+  AI & privacy › Conversations › Forget. The `restore` e2e check restarts Buddy on one data folder.
 - **5.2 "Teach me this app" lessons** built from guide routes: a saved, replayable walkthrough is the artifact people
   share.
 - **5.3 Integrations:** let Buddy use other MCP servers the user adds (calendar, mail), under the same approvals.

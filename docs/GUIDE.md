@@ -81,7 +81,9 @@ VS Code and more).
   each shows the steps it takes and asks for approval in its own window. **–** tucks a task into a numbered chip on
   the island (its dot shows working, needs your OK, or finished). **Hover a chip** for a live preview of that task's
   window with its latest line, and answer an approval (**Allow** / **Don't**) right there; click the chip or the
-  preview to bring the window back. **×** closes the task and stops its agent. Anything that clicks or types takes
+  preview to bring the window back. **×** closes the task, stops its agent and forgets it. Tasks you haven't closed come
+  back as chips after Buddy restarts (for a week), and a follow-up picks up where the conversation left off; the bubble
+  does too if Buddy restarts within a few minutes. Anything that clicks or types takes
   turns, so two tasks never fight over the mouse. Up to six at once; tasks don't survive a restart.
 - **Dictation:** press **Ctrl+Alt+D** in any app and talk; Buddy types what you say where your cursor is (through
   the clipboard and one paste, then puts back what you had copied). It stops when you pause, or, if you choose, keeps
@@ -195,4 +197,7 @@ Buddy has no server and no account of its own. What leaves your PC depends on ho
 Keys are stored encrypted with Windows (DPAPI), one per provider, and only ever sent to their provider; Settings never
 sees them. PowerShell runs without them in its environment, and anything shaped like a secret key in what Buddy reads
 is hidden from the model. The timing log (`%APPDATA%\desktop-buddy\timing.log`, about 10 MB at most, text cut short)
-and Activity stay on your PC.
+and Activity stay on your PC. So do your conversations (`conversations.json`), kept so they carry on after a restart:
+your questions and Buddy's replies in words only (no screenshots or window contents, secret keys hidden), the bubble's
+for 15 minutes and each task's until you close it or for a week. **Settings › AI & privacy › Conversations › Forget**
+clears them.
