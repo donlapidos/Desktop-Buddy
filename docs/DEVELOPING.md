@@ -40,7 +40,8 @@ guided step with its expected result, interruption and focus/anchor cleanup), **
 refs; turning screenshots off removes images from the next request), **conversation** (streaming and mid-answer
 corrections), **files** (a scripted model asks for a file; the approval card is clicked; the file
 is made, listed in Activity and undone; another window can't answer the card), **tasks**, **settings** (including a
-key that must stay with its server), **explainer**, **voice**, and **firstrun** (a plain test copy must leave your
+key that must stay with its server), **explainer**, **voice**, **bridge** (an AI app's calls over its own pipe: answered
+with the token, refused without), and **firstrun** (a plain test copy must leave your
 startup entries and shortcuts as they were). Any check whose copy logged a refused mode or task-state change fails.
 `npm run e2e -- --exe "<path to Desktop Buddy.exe>"` runs them against a built or installed copy. `npm run e2e -- --interactive` adds the marker (a full-screen freeze frame) and the approval
 clicks below (it moves the mouse). `--no-voice` is for a PC without the voice models: it leaves out the voice check
@@ -81,7 +82,9 @@ bubble now never switches; it steps back and hands the keyboard to your window i
 `npm run measure:idle` starts a separate copy of Buddy and reports its CPU use and memory while idle, per process
 type (keep the mouse still; add `-- -Budget 1.0` or `-- -MemoryMB 200` to fail above a limit). Buddy should sit near
 1% of one core: the overlay draws only while the pointer moves, and the cursor check slows to 20 times a second once
-the mouse is still. On 2026-11-17 it read 4-5% and about 700 MB (ROADMAP.md 4.6).
+the mouse is still. Judge memory by its private column (`-MemoryMB` does): working set counts the libraries every
+process shares once per process. On 2026-11-17 it read 2-5% of one core and about 190 MB private (ROADMAP.md 4.6);
+CI fails above 250 MB.
 
 `npm run check` type-checks every main-process module (TypeScript reading the JSDoc types; nothing is compiled). It
 holds three rules in place:

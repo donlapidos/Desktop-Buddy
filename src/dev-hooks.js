@@ -5,6 +5,7 @@
 import { app, BrowserWindow, clipboard, desktopCapturer, globalShortcut, nativeImage, screen } from "electron";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { setBrainDefaults } from "./brain.js";
@@ -194,11 +195,13 @@ async function holdToTalkCheck(kit) {
   Object.defineProperty(voice, "listening", { get: () => !!finishListen, configurable: true });
   const idle = async () => { for (let i = 0; i < 50 && kit.currentMode() !== "idle"; i++) await wait(100); return kit.currentMode() === "idle"; };
   const r = { idleBefore: !hook.installed };
-  // Held for a second, then let go.
+  // Held until listening has started and a moment more, then let go. (A fixed second wasn't enough on a busy PC:
+  // listening began after the release, and Buddy rightly ended it at once.)
   kit.pressHotkey("talk");
   await wait(150);
   r.installedWhileDown = hook.installed;
-  await wait(850);
+  for (let i = 0; i < 50 && !calls.includes("listen"); i++) await wait(100);
+  await wait(500);
   hook.onKeyUp?.(T);
   await wait(300);
   r.held = calls.join(",");
@@ -336,6 +339,17 @@ function settingsTest(kit) {
     await win.webContents.executeJavaScript(`show("agents"), document.getElementById("folders").scrollIntoView({ block: "center" })`);
     await wait(400);
     fs.writeFileSync(path.join(out, "settings-agents-folders.png"), (await win.webContents.capturePage()).toPNG());
+    // Windows high contrast, emulated: the same page as someone using it sees it (switches, chips, focus).
+    try {
+      win.webContents.debugger.attach("1.3");
+      await win.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [{ name: "forced-colors", value: "active" }] });
+      await wait(400);
+      fs.writeFileSync(path.join(out, "settings-agents-contrast.png"), (await win.webContents.capturePage()).toPNG());
+      await win.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [] });
+      win.webContents.debugger.detach();
+    } catch (err) {
+      console.log("SETTINGS_CONTRAST", JSON.stringify({ skipped: String(err) }));
+    }
     changeSettings({ readFolders: null });
     // Routines: one saved, shown with its next run, and run now (no API key here, so it must say so, not call Claude).
     changeSettings({ routines: [{ id: "rtest1", name: "Inbox check", prompt: "Summarise my unread email.", schedule: { every: "weekday", time: "09:00", days: [], hours: 4 } }] });
@@ -832,7 +846,46 @@ function islandTest(kit) {
   }, 2500);
 }
 
+/** BUDDY_BRIDGE_TEST */
+function bridgeTest() {
+  // An AI app's calls, end to end: over the pipe named in bridge.json, with its token, to a session's Brain, the way
+  // buddy-mcp (mcp-server.js) makes them. A wrong token gets no answer at all.
+  /** Sends `messages` on one connection; resolves the replies that came back before it closed. */
+  const talk = (/** @type {string} */ pipe, /** @type {object[]} */ messages) =>
+    new Promise((resolve) => {
+      const replies = [];
+      let buf = "";
+      const socket = net.connect(pipe);
+      const timer = setTimeout(() => socket.destroy(), 20_000);
+      socket.setEncoding("utf8");
+      socket.on("connect", () => messages.forEach((m) => socket.write(`${JSON.stringify(m)}\n`)));
+      socket.on("data", (chunk) => {
+        buf += chunk;
+        for (let nl = buf.indexOf("\n"); nl >= 0; nl = buf.indexOf("\n")) {
+          replies.push(JSON.parse(buf.slice(0, nl)));
+          buf = buf.slice(nl + 1);
+          if (replies.length === messages.length) socket.end();
+        }
+      });
+      socket.on("error", () => {});
+      socket.on("close", () => (clearTimeout(timer), resolve(replies)));
+    });
+  setTimeout(async () => {
+    const { pipe, token } = JSON.parse(fs.readFileSync(path.join(app.getPath("userData"), "bridge.json"), "utf8"));
+    const replies = await talk(pipe, [
+      { id: 1, method: "hello", token, client: "E2E" },
+      { id: 2, method: "tool", name: "list_windows", input: {} },
+      { id: 3, method: "tool", name: "get_marks", input: {} },
+    ]);
+    const refused = await talk(pipe, [{ id: 1, method: "hello", token: "not-the-token" }, { id: 2, method: "tool", name: "list_windows", input: {} }]);
+    const text = (r) => (typeof r?.result === "string" ? r.result : JSON.stringify(r?.result ?? null)).slice(0, 300);
+    console.log("BRIDGE_TEST", JSON.stringify({ hello: replies[0]?.result ?? null, windows: text(replies[1]), marks: text(replies[2]), refusedReplies: refused.length }));
+    console.log("BRIDGE_TEST_DONE");
+  }, 2500);
+}
+
 const HOOKS = {
+  BUDDY_BRIDGE_TEST: bridgeTest,
   BUDDY_ISLAND_TEST: islandTest,
   BUDDY_POINT_TEST: pointTest,
   BUDDY_MARK_TEST: markTest,

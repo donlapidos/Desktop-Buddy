@@ -251,10 +251,11 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
 - **4.1 Split `main.js`.** Move the 323 lines of `BUDDY_*_TEST` hooks to `src/dev-hooks.js`, loaded only when one is
   set. Then split by area: windows (overlay, island, bubble), marking, voice wiring, AI-app bridge wiring, settings
   wiring, startup. No behaviour change; e2e must pass after each move.
-  **Under way (2026-11-17): 2,454 lines → 1,982.** The test hooks are in dev-hooks.js; provider-state.js (keys,
-  addresses, model lists, the model check), explainer-window.js, launch.js, feedback.js and marker.js are out, each
-  given what it needs as functions and moved with the e2e checks passing. Left: the overlay, island and bubble windows,
-  voice and dictation wiring, the AI-app bridge wiring, first-run setup in the bubble, and startup.
+  **Under way (2026-11-17): 2,454 lines → 1,866.** The test hooks are in dev-hooks.js; provider-state.js (keys,
+  addresses, model lists, the model check), explainer-window.js, launch.js, feedback.js, marker.js, ai-app-setup.js
+  and app-bridge.js are out, each given what it needs as functions and moved with the e2e checks passing (a new
+  `bridge` check covers AI apps' calls). Left: the overlay, island and bubble windows, voice and dictation wiring, and
+  startup, which share most of main.js's state.
 - **4.2 Type the pages.** Move each page's script out of the HTML into a checked `.js` file. Start with
   `settings.html`.
   **Done (2026-11-17):** every page's script is its own file beside it (`src/ui/settings.js`, `bubble.js`, `island.js`,
@@ -272,14 +273,22 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   electron-builder's own `minimatch`, at build time only, fixed upstream only by a major downgrade.
 - **4.5 Buddy's own windows for everyone.** Keyboard-only use of the bubble, cards and Settings; labels for screen
   readers (the bubble has one `aria` attribute today); Windows high-contrast; reduced motion everywhere.
+  **Done in part (2026-11-17):** every button and place to type has a spoken name; the bubble's and task windows'
+  answers are a polite live region (announced once complete, not word by word); approval cards are dialogs that take
+  focus themselves, never handing it to Allow; buttons show keyboard focus; every window has Windows high-contrast
+  rules and reduced motion. `test/pages.test.js` holds these, each rule broken once to see it fail, and the settings
+  e2e check saves a high-contrast screenshot. Not done: a pass with Narrator by hand, and the island, which never takes
+  the keyboard (its shortcuts are the keyboard route).
 - **4.6 Memory budget.** Idle under 200 MB, voice unloaded when unused (done), no growth over a day; add a check like
   `measure:idle` for memory.
-  **Measured (2026-11-17):** `npm run measure:idle -- -MemoryMB 200` now reports memory too. Idle, a fresh copy holds
-  about 700 MB of working set (shared pages counted once per process): three windows (overlay, island, bubble) at
-  ~100 MB each, the main process ~160 MB, the GPU process ~145 MB even with software compositing, a utility process
-  ~90 MB. It didn't grow over the window. Main-process CPU read 4-5% of one core with the mouse still, above the 2-3%
-  noted in main.js. Under 200 MB would mean fewer always-open windows (one overlay window shared by the island and
-  bubble, or creating the bubble on first use): a design change for the owner to weigh, not a tidy-up.
+  **Measured, and within the goal (2026-11-17):** `npm run measure:idle` reports each process type's CPU, working set
+  and private memory. Idle, a fresh copy uses **about 190 MB of private memory** (main ~55-65, the three windows ~87
+  together, GPU ~30, network ~17) and doesn't grow over the window. Working set reads ~700 MB, but it counts the
+  Chromium libraries every process maps once per process; a first reading quoted that figure and overstated the
+  problem. CI's e2e job now fails above 250 MB private (`-MemoryMB 250`), a regression guard with room for the runner.
+  The margin under 200 MB is thin; the next saving would be creating the bubble on first use (~30 MB), at the cost of
+  a slower first summon. Idle CPU read 2-5% of one core across runs, above the ~1% DEVELOPING.md expects. Not
+  measured: memory after a day of use.
 
 ## Phase 5: what makes people stay
 

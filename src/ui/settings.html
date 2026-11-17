@@ -183,6 +183,19 @@
   .fixed { color: var(--faint); font-size: 12px; }
 
   @media (prefers-reduced-motion: reduce) { *, *::after { transition: none !important; animation: none !important; } }
+  /* Windows high contrast: the system's colours. Switches, choices and segments show what is on by shape and the
+     system's highlight colour, since their own fills are gone. */
+  @media (forced-colors: active) {
+    .switch, .model, .seg button, .btn, .field, .app-chip { border: 1px solid CanvasText; }
+    .switch, .model .radio { forced-color-adjust: none; background: Canvas; }
+    .switch::after { background: CanvasText; }
+    .switch[aria-checked="true"] { background: Highlight; }
+    .switch[aria-checked="true"]::after { background: HighlightText; }
+    .model[aria-checked="true"], .seg button[aria-pressed="true"] { border: 2px solid Highlight; }
+    .model[aria-checked="true"] .radio { background: Highlight; }
+    nav button[aria-current="page"] { outline: 2px solid Highlight; outline-offset: -2px; }
+    :focus-visible { outline: 2px solid Highlight; }
+  }
 </style>
 </head>
 <body>

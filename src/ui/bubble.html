@@ -59,6 +59,14 @@
   .btn.deny { background: var(--field); color: var(--danger); font-weight: 500; }
   #confirm { display: none; flex-direction: column; gap: 8px; padding: 10px; border-radius: 12px; background: var(--field); }
   #confirm.on { display: flex; }
+  #confirm:focus { outline: none; }
+  button:focus-visible, #confirm:focus-visible { outline: 2px solid color-mix(in srgb, var(--buddy) 80%, transparent); outline-offset: 2px; }
+  /* Windows high contrast: the system's colours, with edges where the design relies on fills. */
+  @media (forced-colors: active) {
+    .card, #confirm, input, .btn, header button { border: 1px solid CanvasText; }
+    .btn { forced-color-adjust: none; background: ButtonFace; color: ButtonText; }
+    button:focus-visible, input:focus { outline: 2px solid Highlight; }
+  }
   #confirm .what { font-weight: 600; overflow-wrap: anywhere; }
   #confirm .why { font-size: 12.5px; color: var(--muted); }
   #confirm .why:empty { display: none; }
@@ -120,7 +128,7 @@
 <body>
 <div class="card">
   <header>
-    <span class="dot" id="dot"></span>
+    <span class="dot" id="dot" aria-hidden="true"></span>
     <span class="where" id="where">Buddy</span>
     <button id="totask" title="Move this conversation into its own task window. It keeps working there, and the bubble is free again.">Make task</button>
     <button id="new" title="Start a new conversation">New</button>
@@ -129,10 +137,10 @@
   </header>
   <div id="marks"></div>
   <div id="welcome" hidden></div>
-  <div id="reply"></div>
+  <div id="reply" role="log" aria-live="polite" aria-label="Buddy's answer"></div>
   <div id="spend"></div>
-  <div id="confirm">
-    <div>Can I do this? <span class="what" id="what"></span></div>
+  <div id="confirm" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="why" tabindex="-1">
+    <div id="confirm-title">Can I do this? <span class="what" id="what"></span></div>
     <div class="why" id="why"></div>
     <div class="row">
       <button class="btn" data-d="allow">Allow</button>
@@ -143,8 +151,8 @@
   <div id="tip" hidden><span id="tip-text"></span><button id="tip-do" type="button"></button></div>
   <div id="voice-offer" hidden role="status"><span id="voice-offer-text"></span><button id="voice-yes" type="button">Set up talking</button><button id="voice-no" class="quiet" type="button">Not now</button></div>
   <form id="form">
-    <input id="input" autocomplete="off" spellcheck="false" placeholder="How do I…?  or  Do it for me">
-    <button class="btn ghost" id="mic" type="button" title="Say it (Ctrl+Alt+T). Pause when you're done."><svg viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg></button>
+    <input id="input" autocomplete="off" spellcheck="false" aria-label="Ask Buddy" placeholder="How do I…?  or  Do it for me">
+    <button class="btn ghost" id="mic" type="button" aria-label="Talk" title="Say it (Ctrl+Alt+T). Pause when you're done."><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg></button>
     <button class="btn" id="submit" type="submit">Ask</button>
   </form>
 </div>

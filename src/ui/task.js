@@ -22,6 +22,7 @@ function setBusy(on) {
   busy = on;
   $("send").textContent = on ? "Stop" : "Ask";
   $("send").classList.toggle("ghost", on);
+  $("log").setAttribute("aria-busy", String(on));
   $input().placeholder = on ? "Working… (you can keep using your computer)" : "Give this task a job…";
 }
 
@@ -60,6 +61,7 @@ window.buddy.onTaskConfirm(({ summary, note }) => {
   $("why").textContent = note && note.toLowerCase() !== summary.toLowerCase() ? note : "";
   $("confirm").classList.add("on");
   confirmAt = performance.now();
+  $("confirm").focus();
 });
 // A routine starts its task with a prompt, submitted as if typed.
 window.buddy.onTaskPrompt((text) => {

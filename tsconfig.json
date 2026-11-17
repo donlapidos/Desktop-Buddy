@@ -36,6 +36,8 @@
     "src/launch.js",
     "src/feedback.js",
     "src/marker.js",
+    "src/ai-app-setup.js",
+    "src/app-bridge.js",
     "src/updates.js",
     "src/speakable.js",
     "src/reply-stream.js",
