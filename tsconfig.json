@@ -11,7 +11,10 @@
     "lib": ["es2023", "dom", "dom.iterable"],
     "types": ["node"],
     "skipLibCheck": true,
-    "strict": false
+    "strict": false,
+    // Buddy's pages are classic scripts, each in its own window: checked as if each were a module, so their top-level
+    // names (every page has a $) don't collide.
+    "moduleDetection": "force"
   },
   "files": [
     "src/main.js",
@@ -65,6 +68,12 @@
     "src/costs.js",
     "src/scrub.js",
     "src/ui/pages.d.ts",
-    "src/ui/settings.js"
+    "src/ui/settings.js",
+    "src/ui/bubble.js",
+    "src/ui/island.js",
+    "src/ui/task.js",
+    "src/ui/voice.js",
+    "src/ui/marker.js",
+    "src/ui/overlay.js"
   ]
 }
