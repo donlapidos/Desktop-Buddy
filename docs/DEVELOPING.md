@@ -78,9 +78,10 @@ mouse), that an approval card takes a click and that the keyboard goes back to y
 after it had been closed and reopened left it deaf to every click, so approval cards and Stop stopped working. The
 bubble now never switches; it steps back and hands the keyboard to your window instead.
 
-`npm run measure:idle` starts a separate copy of Buddy and reports its CPU use while idle, per process (keep the
-mouse still; add `-- -Budget 1.0` to fail above a limit). Buddy should sit near 1% of one core: the overlay draws
-only while the pointer moves, and the cursor check slows to 20 times a second once the mouse is still.
+`npm run measure:idle` starts a separate copy of Buddy and reports its CPU use and memory while idle, per process
+type (keep the mouse still; add `-- -Budget 1.0` or `-- -MemoryMB 200` to fail above a limit). Buddy should sit near
+1% of one core: the overlay draws only while the pointer moves, and the cursor check slows to 20 times a second once
+the mouse is still. On 2026-11-17 it read 4-5% and about 700 MB (ROADMAP.md 4.6).
 
 `npm run check` type-checks every main-process module (TypeScript reading the JSDoc types; nothing is compiled). It
 holds three rules in place:
