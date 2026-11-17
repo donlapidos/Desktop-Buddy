@@ -281,12 +281,14 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   the keyboard (its shortcuts are the keyboard route).
 - **4.6 Memory budget.** Idle under 200 MB, voice unloaded when unused (done), no growth over a day; add a check like
   `measure:idle` for memory.
-  **Measured (2026-11-17):** `npm run measure:idle -- -MemoryMB 200` now reports memory too. Idle, a fresh copy holds
-  about 700 MB of working set (shared pages counted once per process): three windows (overlay, island, bubble) at
-  ~100 MB each, the main process ~160 MB, the GPU process ~145 MB even with software compositing, a utility process
-  ~90 MB. It didn't grow over the window. Main-process CPU read 4-5% of one core with the mouse still, above the 2-3%
-  noted in main.js. Under 200 MB would mean fewer always-open windows (one overlay window shared by the island and
-  bubble, or creating the bubble on first use): a design change for the owner to weigh, not a tidy-up.
+  **Measured, and within the goal (2026-11-17):** `npm run measure:idle` reports each process type's CPU, working set
+  and private memory. Idle, a fresh copy uses **about 190 MB of private memory** (main ~55-65, the three windows ~87
+  together, GPU ~30, network ~17) and doesn't grow over the window. Working set reads ~700 MB, but it counts the
+  Chromium libraries every process maps once per process; a first reading quoted that figure and overstated the
+  problem. CI's e2e job now fails above 250 MB private (`-MemoryMB 250`), a regression guard with room for the runner.
+  The margin under 200 MB is thin; the next saving would be creating the bubble on first use (~30 MB), at the cost of
+  a slower first summon. Idle CPU read 2-5% of one core across runs, above the ~1% DEVELOPING.md expects. Not
+  measured: memory after a day of use.
 
 ## Phase 5: what makes people stay
 

@@ -72,6 +72,11 @@ jobs:
       - name: End-to-end checks
         run: npm run e2e -- --no-voice
 
+      # Idle private memory, against a limit with room above the ~190 MB measured on a laptop: a regression guard, not
+      # a benchmark. CPU isn't judged here; a shared runner is too noisy for it.
+      - name: Idle memory
+        run: npm run measure:idle -- -Seconds 20 -MemoryMB 250
+
       - name: Keep the screenshots and logs
         if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
