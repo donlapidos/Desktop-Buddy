@@ -1,7 +1,7 @@
 // Desktop Buddy: tray app, island, global hotkeys, pointer overlay, speech bubble and explainers around the Brain.
 import {
   app, BrowserWindow, clipboard, ClipboardItem, desktopCapturer, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, screen,
-  session, shell, systemPreferences, Tray, webContents,
+  session, shell, Tray, webContents,
 } from "electron";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -18,14 +18,11 @@ import { grantProblem, placesHere } from "./pc-tools.js";
 import { createLog } from "./log.js";
 import { questionTiming } from "./latency.js";
 import { createHoldKey, uiohookHook } from "./hold-key.js";
-import { buildReport, issueLink } from "./problem-report.js";
-import { namesToHide } from "./scrub.js";
 import { createApprovalQueue } from "./approval-queue.js";
 import { createAppSessions } from "./app-sessions.js";
 import { islandView } from "./island-state.js";
 import { dictationPaste, returnFocus } from "./approvals.js";
 import { elementAt, elementsAt, foregroundWindow, listWindows, perform, resolveBinary, windowAt, windowsAt } from "./desktop.js";
-import { renderExplainer } from "./explainer.js";
 import { createTasks } from "./tasks.js";
 import { asDipPoint, asDipRect, asPhysicalPoint, asPhysicalRect } from "./geometry.js";
 import { BUSY, canMove } from "./modes.js";
@@ -34,6 +31,9 @@ import {
   save as saveSettings, update as updateSettings,
 } from "./settings.js";
 import { createSettingsWindow } from "./settings-window.js";
+import { lockExplainerSession, openExplainer as openPlate } from "./explainer-window.js";
+import { setStartsWithWindows, startsWithWindows, writeShortcuts as writeLaunchShortcuts } from "./launch.js";
+import { PLUS_INTEREST, RELEASES, problemReport, requestFeature, sendProblemReport } from "./feedback.js";
 import { createUpdates } from "./updates.js";
 import { describe as describeSchedule, nextRun, verdict as routineVerdict } from "./routines.js";
 import os from "node:os";
@@ -65,7 +65,6 @@ const BUBBLE_FOLD_MS = 300; // matches the close transition in bubble.html
 // click-through unless a preview is showing.
 const ISLAND = { width: 460, height: 440 };
 const PEEK_EVERY_MS = 800;
-const EXPLAINER = { width: 640, height: 760 };
 const CROP = { width: 1200, height: 800 }; // physical px around the pointer sent with an explain request
 
 // The installed app's shortcuts carry the installer's app ID (electron-builder's appId), so the taskbar groups Buddy's
@@ -967,63 +966,9 @@ ipcMain.on("mark-click", (e, local) => {
   setTimeout(() => runExplain(dip), 120);
 });
 
-// Model-written plates run with JavaScript off, a strict CSP, and a session that refuses every network request.
-const EXPLAINER_PARTITION = "explainer";
-
-function lockExplainerSession() {
-  const plates = session.fromPartition(EXPLAINER_PARTITION);
-  plates.webRequest.onBeforeRequest((details, done) => {
-    done({ cancel: !/^(file|data):/.test(details.url) });
-  });
-  plates.setPermissionRequestHandler((_wc, _permission, done) => done(false));
-  // Only Buddy's voice page may open the microphone.
-  session.defaultSession.setPermissionRequestHandler((wc, permission, done) => {
-    done(permission !== "media" || wc.getURL().endsWith("/ui/voice.html"));
-  });
-}
-
-const appLabel = (win) => win?.app_name?.replace(/\.exe$/i, "") || null;
-
-// `near` is where the plate opens beside; `observed` is the window the subject was seen in. Callers pass their own,
-// so a task's plate doesn't borrow the bubble's place or app.
-/** @param {any} explainer @param {{ near?: DipPoint, observed?: { app_name?: string } | null }} [where] */
-function openExplainer(explainer, { near = cursor(), observed = null } = {}) {
-  const dir = path.join(app.getPath("userData"), "explainers");
-  fs.mkdirSync(dir, { recursive: true });
-  const plateNo = fs.readdirSync(dir).filter((f) => f.endsWith(".html")).length + 1;
-  const date = new Date().toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-  const reducedMotion = process.platform === "win32" && systemPreferences.getAnimationSettings().prefersReducedMotion;
-  const page = renderExplainer(explainer, { plateNo, observedIn: appLabel(observed), date, reducedMotion });
-  const file = path.join(dir, `${Date.now()}.html`);
-  fs.writeFileSync(file, page);
-  const title = explainer.common_name ?? "Explainer";
-
-  const anchor = near;
-  const { workArea } = screen.getDisplayNearestPoint(anchor);
-  const w = Math.min(EXPLAINER.width, workArea.width - 32);
-  const h = Math.min(EXPLAINER.height, workArea.height - 32);
-  const right = anchor.x + 40 + w <= workArea.x + workArea.width;
-  const dark = nativeTheme.shouldUseDarkColors;
-  const win = new BrowserWindow({
-    width: w,
-    height: h,
-    x: Math.round(right ? anchor.x + 40 : Math.max(workArea.x + 16, anchor.x - 40 - w)),
-    y: Math.round(Math.min(Math.max(anchor.y - h / 3, workArea.y + 16), workArea.y + workArea.height - h - 16)),
-    title,
-    show: false,
-    titleBarStyle: "hidden",
-    titleBarOverlay: { color: dark ? "#131815" : "#f2f4f0", symbolColor: dark ? "#aab5ad" : "#4c5650", height: 40 },
-    backgroundColor: dark ? "#131815" : "#f2f4f0",
-    icon: ICON,
-    // JavaScript is on only for the motion player: each plate's CSP admits that one script by hash, the model's
-    // SVG is sanitized, and the partition still refuses every network request.
-    webPreferences: { javascript: true, sandbox: true, contextIsolation: true, nodeIntegration: false, partition: EXPLAINER_PARTITION, spellcheck: false },
-  });
-  win.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
-  win.webContents.on("will-navigate", (e) => e.preventDefault());
-  win.loadFile(file);
-  win.once("ready-to-show", () => win.showInactive());
-}
+// Explainer plates open in a window of their own (explainer-window.js), beside where the user was looking.
+/** @param {any} plate @param {{ near?: DipPoint, observed?: { app_name?: string } | null }} [where] */
+const openExplainer = (plate, { near = cursor(), observed = null } = {}) => openPlate(plate, { near, observed, dir: explainersDir(), icon: ICON });
 
 // ---------- IPC ----------
 
@@ -1800,33 +1745,9 @@ const trayIcon = () => nativeImage.createFromPath(path.join(here, "../assets/tra
 
 const pretty = (accel) => accel.replaceAll("+", " + ");
 
-// ---------- Launching without a terminal: shortcuts and start-with-Windows ----------
+// ---------- Launching without a terminal (launch.js): shortcuts and start-with-Windows ----------
 
-// Installed, Buddy is its own "Desktop Buddy.exe" and the installer makes its shortcuts. From a source checkout it runs
-// as `electron <app dir>`, so every launcher passes the app directory to the Electron binary.
-const LAUNCH = app.isPackaged ? { path: process.execPath, args: [] } : { path: process.execPath, args: [app.getAppPath()] };
-
-const startsWithWindows = () => app.getLoginItemSettings(LAUNCH).openAtLogin;
-const setStartsWithWindows = (on) => app.setLoginItemSettings({ openAtLogin: on, ...LAUNCH });
-
-function writeShortcuts() {
-  const link = {
-    target: LAUNCH.path,
-    args: `"${LAUNCH.args[0]}"`,
-    icon: ICON,
-    iconIndex: 0,
-    appUserModelId: APP_ID,
-    description: `Desktop Buddy: ask about anything on your screen (${keyLabel(hotkey("ask"))})`,
-  };
-  const startMenu = path.join(app.getPath("appData"), "Microsoft", "Windows", "Start Menu", "Programs", "Desktop Buddy.lnk");
-  const desktop = path.join(app.getPath("desktop"), "Desktop Buddy.lnk");
-  // "create" writes or overwrites; "replace" only overwrites an existing link, so it silently made nothing.
-  return [startMenu, desktop].map((file) => {
-    const ok = shell.writeShortcutLink(file, "create", link);
-    if (!ok) console.error(`Could not write ${file}`);
-    return ok;
-  });
-}
+const writeShortcuts = () => writeLaunchShortcuts({ icon: ICON, appId: APP_ID, description: `Desktop Buddy: ask about anything on your screen (${keyLabel(hotkey("ask"))})` });
 
 // Once per install: put Buddy in Start and on the desktop, and start it at sign-in. Later Settings owns both.
 function firstRunSetup() {
@@ -2080,60 +2001,9 @@ function checkRoutines() {
   }
 }
 
-// ---------- Request a feature: a pre-filled GitHub issue, opened in the browser for the user to edit and send ----------
+// ---------- Request a feature, report a problem, Buddy Plus (feedback.js) ----------
 
-const ISSUES = "https://github.com/donlapidos/desktop-buddy/issues/new";
-// Where people say they'd want Buddy Plus (the AI included, no key). One place, so a form without a GitHub account
-// can replace it.
-const PLUS_INTEREST = `${ISSUES}?template=buddy-plus.yml`;
 onFrom(fromBubble, "plus-interest", () => (trace({ kind: "plus-interest", from: "bubble" }), shell.openExternal(PLUS_INTEREST)));
-// "Report a problem" (problem-report.js): built for the user to read in Settings, and sent only when they press a
-// button there, exactly as they saw it.
-const AGENT_DESKTOP = (() => {
-  try {
-    return JSON.parse(fs.readFileSync(path.join(here, "../package.json"), "utf8")).agentDesktop?.version ?? "?";
-  } catch {
-    return "?";
-  }
-})();
-function problemReport() {
-  let timing = [];
-  try {
-    const text = fs.readFileSync(timingLog(), "utf8");
-    timing = text.slice(-200_000).split(/\r?\n/);
-  } catch {}
-  const user = os.userInfo().username;
-  return buildReport({ version: app.getVersion(), windows: os.release(), electron: process.versions.electron, agentDesktop: AGENT_DESKTOP,
-    settings, timing, home: os.homedir(), names: namesToHide([user]), pc: os.hostname() });
-}
-
-/** Sends the report the user read: opens a pre-filled issue (copying it too, if it's too long for a link), or copies it. */
-async function sendProblemReport(/** @type {string} */ how, /** @type {string} */ body) {
-  const report = { title: "Problem: ", body: String(body).slice(0, 200_000) };
-  trace({ kind: "problem-report", how });
-  if (how === "copy") {
-    await clipboard.writeText(report.body);
-    return { copied: true, opened: false };
-  }
-  const link = issueLink(ISSUES, report);
-  if (link.copy) await clipboard.writeText(report.body);
-  await shell.openExternal(link.url);
-  return { copied: link.copy, opened: true };
-}
-
-function requestFeature() {
-  const body = [
-    "**What would you like Buddy to do?**",
-    "",
-    "",
-    "**How would it help you?**",
-    "",
-    "",
-    "---",
-    `Desktop Buddy ${app.getVersion()} · Windows ${os.release()}`,
-  ].join("\n");
-  shell.openExternal(`${ISSUES}?${new URLSearchParams({ title: "Feature request: ", body, labels: "enhancement" })}`);
-}
 
 const settingsWindow = createSettingsWindow({
   here,
@@ -2172,8 +2042,8 @@ const settingsWindow = createSettingsWindow({
   // Apps with a window open now, as suggestions for the Agents lists.
   apps: async () => [...new Set((await listWindows()).map((w) => w.app_name).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
   requestFeature,
-  report: () => problemReport(),
-  sendReport: (how, body) => sendProblemReport(how, body),
+  report: () => problemReport({ timingLog: timingLog(), settings }),
+  sendReport: (how, body) => (trace({ kind: "problem-report", how }), sendProblemReport(how, body)),
   plusInterest: () => (trace({ kind: "plus-interest", from: "settings" }), shell.openExternal(PLUS_INTEREST)),
   checkUpdates: () => updates?.check(),
   installUpdate: () => updates?.install(),
@@ -2184,7 +2054,6 @@ const settingsWindow = createSettingsWindow({
 
 // ---------- App updates (updates.js) ----------
 
-const RELEASES = "https://github.com/donlapidos/desktop-buddy/releases";
 let announcedUpdate = null;
 function startUpdates() {
   updates = createUpdates({
