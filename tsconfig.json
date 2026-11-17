@@ -32,6 +32,7 @@
     "src/explainer-window.js",
     "src/launch.js",
     "src/feedback.js",
+    "src/marker.js",
     "src/updates.js",
     "src/speakable.js",
     "src/reply-stream.js",

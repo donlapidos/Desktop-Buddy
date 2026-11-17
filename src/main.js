@@ -22,7 +22,7 @@ import { createApprovalQueue } from "./approval-queue.js";
 import { createAppSessions } from "./app-sessions.js";
 import { islandView } from "./island-state.js";
 import { dictationPaste, returnFocus } from "./approvals.js";
-import { elementAt, elementsAt, foregroundWindow, listWindows, perform, resolveBinary, windowAt, windowsAt } from "./desktop.js";
+import { elementAt, foregroundWindow, listWindows, perform, resolveBinary, windowAt } from "./desktop.js";
 import { createTasks } from "./tasks.js";
 import { asDipPoint, asDipRect, asPhysicalPoint, asPhysicalRect } from "./geometry.js";
 import { BUSY, canMove } from "./modes.js";
@@ -41,7 +41,8 @@ import { createVoice } from "./voice.js";
 import { createReplyStream } from "./reply-stream.js";
 import { createTurnQueue } from "./turn-queue.js";
 import { centerOf, createAnnotationLayer, guessGone, insideBox, sameBox } from "./annotations.js";
-import { abortable, prepareMarker } from "./marker-startup.js";
+import { abortable } from "./marker-startup.js";
+import { createMarker } from "./marker.js";
 import { appKey } from "./policy.js";
 import { appWords, findLocal, localDoor, tourNext, tourTip } from "./welcome.js";
 import { aboutMoney, addCall, capProblem, createLedger, moneyWords, noSpend, priceOf, spendLine, tokenWords } from "./costs.js";
@@ -165,12 +166,6 @@ function enter(next) {
   showIsland();
   return true;
 }
-/** @type {{ n: number, displayId: number, points: DipPoint[], bbox: DipRect }[]} */
-let marks = [];
-let pendingMarks = null; // what the user highlighted, waiting for their question
-let markWin = null; // the freeze-frame of the screen the user draws on
-let markDisplay = null;
-let markStartup = null;
 let displayCaptures = 0;
 let bubbleHideTimer = null;
 
@@ -751,171 +746,41 @@ async function runExplain(dipPoint, question) {
   }
 }
 
-// ---------- Marker: highlight things on screen with a pen, then ask about them ----------
+// ---------- Marker (marker.js): highlight things on screen with a pen, then ask about them ----------
 
-/** @param {DipPoint[]} points @returns {DipRect} */
-function bboxOf(points, pad = 10) {
-  const xs = points.map((p) => p.x);
-  const ys = points.map((p) => p.y);
-  const x = Math.min(...xs) - pad;
-  const y = Math.min(...ys) - pad;
-  return asDipRect({ x, y, width: Math.max(...xs) + pad - x, height: Math.max(...ys) + pad - y });
-}
-
-// Marking draws on a still of the screen in an opaque window (like the Snipping Tool). Drawing straight on the
-// transparent overlay meant Windows repainted the whole screen for every stroke segment, which lagged.
-async function startMarking({ capture = grabDisplay, display = screen.getDisplayNearestPoint(cursor()), timeoutMs = 10000 } = {}) {
-  if (mode !== "idle") return;
-  if (!brain) return summon();
-  clearMarks();
-  enter("marking");
-  tourEvent("marked");
-  hideBubble({ now: true });
-  progress("Getting the screen ready…");
-  markDisplay = display;
-  const job = { abort: new AbortController(), started: Date.now(), display, ready: false, readyTimer: null };
-  markStartup = job;
-  globalShortcut.register("Escape", cancelMarking);
-  try {
-    const win = new BrowserWindow({
-      ...display.bounds,
-      frame: false,
-      resizable: false,
-      movable: false,
-      minimizable: false,
-      maximizable: false,
-      fullscreenable: false,
-      skipTaskbar: true,
-      hasShadow: false,
-      show: false,
-      backgroundColor: "#000000",
-      webPreferences: { preload: path.join(here, "preload.cjs"), backgroundThrottling: false },
-    });
-    markWin = win;
-    win.setAlwaysOnTop(true, "screen-saver");
-    win.on("closed", () => {
-      if (markWin === win) cancelMarking();
-    });
-    const prepared = await prepareMarker({
-      capture: async (signal) => { const shot = await capture(display, signal); if (signal.aborted) throw signal.reason; return shot.toPNG(); },
-      load: () => win.loadFile(path.join(here, "ui/marker.html")),
-      signal: job.abort.signal,
-      timeoutMs,
-    });
-    if (markStartup !== job || job.abort.signal.aborted || currentMode() !== "marking" || win.isDestroyed()) return;
-    trace({ kind: "mark-startup", captureMs: prepared.captureMs, loadMs: prepared.loadMs, totalMs: prepared.totalMs });
-    job.readyTimer = setTimeout(() => {
-      if (markStartup !== job || job.ready) return;
-      stopMarkMode(); enter("idle"); notice("The screen took too long. Try Mark again.");
-    }, Math.max(1, timeoutMs - (Date.now() - job.started)));
-    win.webContents.send("mark-start", { png: prepared.image });
-  } catch (err) {
-    if (markStartup !== job || job.abort.signal.aborted) return;
-    stopMarkMode();
-    enter("idle");
-    notice(`Couldn't start marking: ${err.message}`);
-  }
-}
-
-// Takes the still down; the caller decides what mode comes next.
-// `delay` keeps the still up a moment so the overlay can paint the finished marks underneath first.
-function stopMarkMode(delay = 0) {
-  const startup = markStartup;
-  markStartup = null;
-  clearTimeout(startup?.readyTimer);
-  startup?.abort.abort();
-  globalShortcut.unregister("Return");
-  globalShortcut.unregister("Escape");
-  const win = markWin;
-  markWin = null;
-  if (win && !win.isDestroyed()) setTimeout(() => win.isDestroyed() || win.destroy(), delay);
-}
-
-function clearMarks() {
-  marks = [];
-  pendingMarks = null;
-  broadcast("marks-clear");
-  brain?.marks?.clear();
-}
-
-function cancelMarking() {
-  if (mode !== "marking") return;
-  stopMarkMode();
-  clearMarks();
-  enter("idle");
-  showIsland();
-}
-
-const dedupe = (els) => [...new Map(els.map((e) => [e.path, e])).values()];
-const markLabel = (m) => {
-  const e = m.elements.find((x) => x.name) ?? m.elements[0];
-  const text = String(e?.name || e?.value || e?.role || "an area");
-  return text.length > 28 ? text.slice(0, 26) + "…" : text;
-};
-
-/** @param {{ image?: unknown, strokes?: unknown }} [result] what marker.html sent: untrusted, checked below */
-async function finishMarking({ image, strokes } = {}) {
-  if (mode !== "marking" || !markDisplay) return;
-  const display = markDisplay;
-  const valid = (Array.isArray(strokes) ? strokes : []).filter((s) => Array.isArray(s?.points) && s.points.length).slice(0, 50);
-  if (!valid.length || typeof image !== "string") return cancelMarking();
-
-  // Hand the marks to the overlay so they stay on screen, then let the still go.
-  const overlay = overlays.get(display.id);
-  marks = valid.map((s, i) => {
-    const local = s.points.slice(0, 4000).map((p) => ({ x: Number(p.x), y: Number(p.y) }));
-    overlay?.webContents.send("mark-drawn", { points: local, n: i + 1 });
-    const points = local.map((p) => asDipPoint({ x: display.bounds.x + p.x, y: display.bounds.y + p.y }));
-    return { n: i + 1, displayId: display.id, points, bbox: bboxOf(points) };
-  });
-  stopMarkMode(90);
-  enter("reading-marks");
-  progress("Reading what you marked…");
-  try {
-    // Sample each stroke at its start, middle and end, and read the elements under those points.
-    const samples = marks
-      .flatMap((m) => [m.points[0], m.points[Math.floor(m.points.length / 2)], m.points.at(-1)])
-      .map(toPhysicalPoint);
-    const wins = await windowsAt(samples, ownPids());
-    const groups = new Map();
-    samples.forEach((p, i) => {
-      if (!wins[i]) return;
-      if (!groups.has(wins[i].id)) groups.set(wins[i].id, { win: wins[i], idx: [] });
-      groups.get(wins[i].id).idx.push(i);
-    });
-    const found = new Array(samples.length).fill(null);
-    await Promise.all(
-      [...groups.values()].map(async ({ win, idx }) => {
-        const els = await elementsAt(win, idx.map((i) => samples[i]));
-        idx.forEach((i, j) => (found[i] = els[j]));
-      }),
-    );
-
-    pendingMarks = {
-      image,
-      target: wins.find(Boolean) ?? null,
-      marks: marks.map((m, i) => ({
-        n: m.n,
-        bounds: toPhysicalRect(m.bbox),
-        elements: dedupe(found.slice(i * 3, i * 3 + 3).filter(Boolean)),
-      })),
-    };
-    const last = marks.at(-1).bbox;
-    about = { window: pendingMarks.target, point: asDipPoint({ x: last.x + last.width, y: last.y + last.height }) };
+const marker = createMarker({
+  here,
+  mode: () => mode,
+  enter,
+  ready: () => !!brain,
+  summon: () => summon(),
+  marked: () => tourEvent("marked"),
+  hideBubble: () => hideBubble({ now: true }),
+  showAsk: (where, list) => {
+    about = where;
     const win = about.window;
     bubble.webContents.send("summon", { target: win ? win.app_name + " — " + win.title : null, needsKey: !brain });
-    bubble.webContents.send("marks", pendingMarks.marks.map((m) => ({ n: m.n, label: markLabel(m) })));
-    enter("idle");
+    bubble.webContents.send("marks", list);
     showBubble();
     showIsland();
-  } catch (err) {
-    enter("idle");
-    clearMarks();
-    notice("Couldn't read the marks: " + err.message);
-  }
-}
-
-const fromMarker = (e) => markWin && e.sender === markWin.webContents;
+  },
+  progress: (text) => progress(text),
+  notice: (text) => notice(text),
+  keepIsland: () => keepIsland(),
+  grabDisplay: (display, signal) => grabDisplay(display, signal),
+  cursor,
+  overlay: (id) => overlays.get(id),
+  cleared: () => {
+    broadcast("marks-clear");
+    brain?.marks?.clear();
+  },
+  toPhysicalPoint,
+  toPhysicalRect,
+  ownPids,
+  explain: (at) => runExplain(at),
+  trace: (entry) => trace(entry),
+});
+const { start: startMarking, stop: stopMarkMode, clear: clearMarks, cancel: cancelMarking } = marker;
 
 // Each window's messages are taken only from that window: every Buddy page shares one preload (and so could call any
 // of them), but only the bubble answers its approval card or asks a question, only the island acts for the island.
@@ -934,38 +799,6 @@ function handleFrom(check, channel, fn) {
     throw new Error(`${channel} isn't taken from this window`);
   });
 }
-ipcMain.on("mark-ready", (e) => {
-  if (!fromMarker(e) || mode !== "marking" || !markStartup || markStartup.abort.signal.aborted) return;
-  markStartup.ready = true;
-  clearTimeout(markStartup.readyTimer);
-  trace({ kind: "mark-ready", ms: Date.now() - markStartup.started });
-  markWin.show();
-  markWin.setBounds(markDisplay.bounds); // Windows clamps oversized windows to the work area on create
-  markWin.focus();
-  keepIsland();
-  progress("Click to explain · draw to ask");
-  // Backups in case Windows refuses the still keyboard focus.
-  globalShortcut.register("Return", () => markWin?.webContents.send("mark-command", "done"));
-  globalShortcut.register("Escape", cancelMarking);
-});
-ipcMain.on("mark-count", (e, n) => {
-  if (fromMarker(e)) progress(n ? `${n} marked · Enter to ask` : "Click to explain · draw to ask");
-});
-ipcMain.on("mark-finish", (e, result) => {
-  if (fromMarker(e)) finishMarking(result);
-});
-ipcMain.on("mark-cancel", (e) => fromMarker(e) && cancelMarking());
-// A single click in mark mode (before anything is drawn) explains the thing clicked.
-ipcMain.on("mark-click", (e, local) => {
-  if (!fromMarker(e) || !local) return;
-  const dip = asDipPoint({ x: markDisplay.bounds.x + Number(local.x), y: markDisplay.bounds.y + Number(local.y) });
-  stopMarkMode();
-  enter("working");
-  progress("Looking at that…");
-  // Let the still close before the screen is captured for the explainer.
-  setTimeout(() => runExplain(dip), 120);
-});
-
 // Explainer plates open in a window of their own (explainer-window.js), beside where the user was looking.
 /** @param {any} plate @param {{ near?: DipPoint, observed?: { app_name?: string } | null }} [where] */
 const openExplainer = (plate, { near = cursor(), observed = null } = {}) => openPlate(plate, { near, observed, dir: explainersDir(), icon: ICON });
@@ -1004,8 +837,7 @@ async function answerQuestion(text, opts, isCurrent) {
   const tally = engine.ui.spend;
   if (tally) tally.now = noSpend();
   try {
-    const withMarks = pendingMarks;
-    pendingMarks = null;
+    const withMarks = marker.takePending();
     const how = { spoken: turn.spoken, lang: turn.lang, timing: clock };
     reply = withMarks ? await engine.askWithMarks(text, withMarks, how) : await engine.ask(text, about.window, how);
   } catch (err) {
@@ -1577,6 +1409,7 @@ async function userWindow() {
 }
 
 function marksForClaude(/** @type {Brain} */ appBrain) {
+  const pendingMarks = marker.pending();
   if (!pendingMarks) return "The user hasn't marked anything yet. They can press Ctrl+Alt+M and draw over what they mean.";
   appBrain.marks = new Map(pendingMarks.marks.map((m) => [m.n, m.bounds]));
   appBrain.target = pendingMarks.target ?? appBrain.target;
@@ -2088,9 +1921,9 @@ const devKit = () => ({
   set brain(b) { brain = b; },
   get about() { return about; },
   set about(a) { about = a; },
-  get markDisplay() { return markDisplay; },
-  get markWin() { return markWin; },
-  get pendingMarks() { return pendingMarks; },
+  get markDisplay() { return marker.display(); },
+  get markWin() { return marker.window(); },
+  get pendingMarks() { return marker.pending(); },
   get displayCaptures() { return displayCaptures; },
 });
 
