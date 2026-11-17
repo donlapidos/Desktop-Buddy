@@ -1,13 +1,5 @@
 # Desktop Buddy changelog
 
-## Unreleased
-
-* **Folders Buddy reads without asking** (Settings › Agents): Documents, Desktop and Downloads to start, and you
-  choose the rest. Pictures, Music, Videos and OneDrive folders now ask first unless you add them. A drive, your whole
-  user folder, AppData and other people's folders can't be added.
-* A [security page](SECURITY.md): what Buddy can and can't touch, what your approval means, the limits we know about,
-  and how to report a security problem privately.
-
 ## 0.4.0 (2026-11-16)
 
 Buddy can now draw on your screen (circles, arrows, labels, drag paths) to show you what goes where.
@@ -29,6 +21,11 @@ Hold one key to talk, and Buddy points sooner, even in apps with nothing it can 
   web pages and Word documents come with Settings › Agents › Show advanced features (on for existing users).
 * **Report a problem** (tray, and Settings › About): shows you the whole report, without keys or your files' paths,
   before anything is sent.
+* **Folders Buddy reads without asking** (Settings › Agents): Documents, Desktop and Downloads to start, and you
+  choose the rest. Pictures, Music, Videos and OneDrive folders now ask first unless you add them. A drive, your whole
+  user folder, AppData and other people's folders can't be added.
+* A [security page](SECURITY.md): what Buddy can and can't touch, what your approval means, the limits we know about,
+  and how to report a security problem privately.
 * "Works well" beside a model now means it passed Buddy's own checks, not just that it can use tools and see images.
 * Each guided question records how long it took to put the pointer up (`npm run measure:latency`).
 

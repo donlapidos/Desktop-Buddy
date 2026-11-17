@@ -244,7 +244,7 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
 - **3.4 A security page.** `SECURITY.md`: what Buddy can touch, what it can't, what approval means, how to report a
   vulnerability. The README's "AI and privacy" section is the start.
   **Done (2026-11-17):** [SECURITY.md](SECURITY.md), linked from the README. Reports go through GitHub's private
-  vulnerability reporting, which the owner turns on for the repository.
+  vulnerability reporting, turned on for the repository the same day.
 
 ## Phase 4: the code can carry more work
 
@@ -257,6 +257,10 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   voice and dictation wiring, the AI-app bridge wiring, first-run setup in the bubble, and startup.
 - **4.2 Type the pages.** Move each page's script out of the HTML into a checked `.js` file. Start with
   `settings.html`.
+  **Done (2026-11-17):** every page's script is its own file beside it (`src/ui/settings.js`, `bubble.js`, `island.js`,
+  `task.js`, `voice.js`, `marker.js`, `overlay.js`), all in `npm run check` (`src/ui/pages.d.ts` types the preload's
+  `window.buddy` loosely; `moduleDetection: "force"` keeps each page's names apart). No page allows inline script any
+  more: every CSP is `script-src 'self'`. Next step if wanted: type `window.buddy` from preload.cjs itself.
 - **4.3 e2e in CI.** Run `files`, `settings`, `tasks`, `explainer` and `firstrun` on `windows-latest` (voice needs
   the models; keep it local). Fail the build on a refused state change.
   **Done (2026-11-17):** the `e2e` job in ci.yml runs every check but voice (`--no-voice`); all twelve passed on
