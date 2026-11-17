@@ -1,5 +1,11 @@
 # Desktop Buddy changelog
 
+## Unreleased
+
+* **Folders Buddy reads without asking** (Settings › Agents): Documents, Desktop and Downloads to start, and you
+  choose the rest. Pictures, Music, Videos and OneDrive folders now ask first unless you add them. A drive, your whole
+  user folder, AppData and other people's folders can't be added.
+
 ## 0.4.0 (2026-11-16)
 
 Buddy can now draw on your screen (circles, arrows, labels, drag paths) to show you what goes where.

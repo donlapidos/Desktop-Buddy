@@ -1,6 +1,6 @@
 // Desktop Buddy: tray app, island, global hotkeys, pointer overlay, speech bubble and explainers around the Brain.
 import {
-  app, BrowserWindow, clipboard, ClipboardItem, desktopCapturer, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, screen,
+  app, BrowserWindow, clipboard, ClipboardItem, desktopCapturer, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, screen,
   session, shell, systemPreferences, Tray, webContents,
 } from "electron";
 import { spawn } from "node:child_process";
@@ -14,6 +14,7 @@ import { keyFor, keyRecord, originOf } from "./keys.js";
 import { PROVIDERS, ProviderError, addressProblem, capsOf, describeModels, keyFits, listModels, noteTested, providerForKey, providerOfKey, testedOf, useCapsStore, verdict } from "./providers.js";
 import { CASES, runEvals } from "./evals.js";
 import { createActivity, pruneUndo } from "./activity.js";
+import { grantProblem, placesHere } from "./pc-tools.js";
 import { createLog } from "./log.js";
 import { questionTiming } from "./latency.js";
 import { createHoldKey, uiohookHook } from "./hold-key.js";
@@ -1732,6 +1733,22 @@ function clearOldSessions() {
 // Where create_document saves, and how it opens the result (Word, or whatever opens .docx here).
 // BUDDY_DOCUMENTS_DIR moves it (end-to-end checks keep their files out of the user's Documents).
 const documentsDir = () => process.env.BUDDY_DOCUMENTS_DIR ?? path.join(app.getPath("documents"), "Buddy");
+// The folders Buddy reads without asking (pc-tools.js): the user's list, or Documents, Desktop and Downloads wherever
+// Windows keeps them (OneDrive may hold them).
+const usualFolders = () => /** @type {const} */ (["documents", "desktop", "downloads"]).map((n) => app.getPath(n));
+const readFolders = () => settings.readFolders ?? usualFolders();
+const herePlaces = () => placesHere(documentsDir(), app.getPath("userData"), readFolders());
+
+/** Settings › Agents › Add a folder: the user picks one; a reason it can't be added, or null. @param {BrowserWindow} win */
+async function addReadFolder(win) {
+  const picked = await dialog.showOpenDialog(win, { title: "Choose a folder Buddy can read without asking", properties: ["openDirectory"] });
+  const dir = picked.canceled ? null : picked.filePaths[0];
+  if (!dir) return null;
+  const problem = grantProblem(dir, herePlaces());
+  if (problem) return problem;
+  if (readFolders().some((x) => x.toLowerCase() === dir.toLowerCase())) return null;
+  return changeSettings({ readFolders: [...readFolders(), dir] }).readFolders ?? null;
+}
 // Spike: BUDDY_ENGINE=sdk runs conversations on the Claude Agent SDK (src/agent-brain.js).
 /** @typedef {import("./providers.js").ProviderId} ProviderId */
 // The Agent SDK engine runs Claude Code, so it only works with an Anthropic key.
@@ -1757,7 +1774,7 @@ function prepareScreenImage(image) {
   const resized = scale < 1 ? original.resize({ width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)), quality: "good" }) : original;
   return /** @type {import("./screen-context.js").ScreenImage} */ ({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: resized.toJPEG(82).toString("base64") } });
 }
-const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, commands: () => settings.commands,
+const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, commands: () => settings.commands, readFolders,
   screenContext: () => settings.screenContext, advanced: () => settings.advanced, prepareImage: prepareScreenImage, ...spendUI() });
 
 function startBrain() {
@@ -2019,6 +2036,12 @@ function changeSettings(patch) {
       problems[`hotkeys.${name}`] = "Another app already uses this shortcut";
     }
   }
+  // A folder Buddy may not read without asking stays off the list, whoever asked for it.
+  if (Array.isArray(patch?.readFolders) && next.readFolders) {
+    const kept = next.readFolders.filter((dir) => !grantProblem(dir, herePlaces()));
+    if (kept.length < next.readFolders.length) problems.readFolders = grantProblem(next.readFolders.find((dir) => !kept.includes(dir)) ?? "", herePlaces()) ?? "That folder isn't allowed";
+    next.readFolders = kept;
+  }
   settings = next;
   saveSettings(settingsFile(), settings);
   if (!hotkeysSuspended && JSON.stringify(next.hotkeys) !== JSON.stringify(before.hotkeys)) registerHotkeys();
@@ -2164,6 +2187,7 @@ function settingsState() {
       appearance: !!process.env.BUDDY_THEME,
     },
     taken: takenHotkeys(),
+    folders: { list: readFolders(), usual: !settings.readFolders, home: os.homedir() },
     key: (() => {
       const saved = savedKey(currentProvider());
       const usable = !!loadApiKey();
@@ -2312,6 +2336,7 @@ const settingsWindow = createSettingsWindow({
     for (const f of fs.readdirSync(explainersDir()).filter((x) => x.endsWith(".html"))) fs.rmSync(path.join(explainersDir(), f), { force: true });
   },
   openData: () => shell.openPath(app.getPath("userData")),
+  addFolder: addReadFolder,
   runRoutine: (id) => {
     const r = settings.routines.find((x) => x.id === id);
     return r ? runRoutine(r, "now").then((res) => res.error ?? null) : Promise.resolve("That routine no longer exists.");

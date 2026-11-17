@@ -6,7 +6,8 @@
 // - Places: the file tools never touch some, whatever the model asks or the user approves (Windows, Program Files,
 //   other users, saved passwords and keys, browser profiles, the AI apps' own settings, Buddy's own data with its API
 //   keys).
-//   The user's everyday folders are read without asking; anywhere else asks first.
+//   The folders the user lists in Settings › Agents (Documents, Desktop and Downloads to start) are read without
+//   asking; anywhere else asks first.
 // - Changes: writing, editing, running PowerShell and opening a web page all ask on Buddy's card, in plain words
 //   ("Allow for this task" covers the rest of the answer). A file that is replaced or edited is copied to Buddy's undo
 //   folder first and kept for a week.
@@ -108,15 +109,17 @@ const inside = (child, parent) => {
 };
 
 /**
- * Where things are on this PC. `buddyData` is Buddy's own data folder (API keys, settings), never touched.
- * @typedef {{ home: string, workDir: string, buddyData: string, systemRoot: string, programFiles: string[], programData: string, usersDir: string }} Places
+ * Where things are on this PC. `buddyData` is Buddy's own data folder (API keys, settings), never touched. `granted`
+ * are the folders the user lets Buddy read without asking (Settings › Agents); the working folder always is.
+ * @typedef {{ home: string, workDir: string, buddyData: string, systemRoot: string, programFiles: string[], programData: string, usersDir: string, granted?: string[] }} Places
  */
-export function placesHere(/** @type {string} */ workDir, /** @type {string} */ buddyData) {
+export function placesHere(/** @type {string} */ workDir, /** @type {string} */ buddyData, /** @type {string[]} */ granted = defaultFolders(os.homedir())) {
   const home = os.homedir();
   return {
     home,
     workDir,
     buddyData,
+    granted,
     systemRoot: process.env.SystemRoot ?? "C:\\Windows",
     programFiles: [process.env.ProgramFiles, process.env["ProgramFiles(x86)"], process.env.ProgramW6432].filter(Boolean).map(String),
     programData: process.env.ProgramData ?? "C:\\ProgramData",
@@ -141,14 +144,30 @@ function forbidden(/** @type {Places} */ p) {
   ];
 }
 
-/** The user's everyday folders: read without asking. */
+/** The folders read without asking until the user changes the list: Documents, Desktop and Downloads. */
+export function defaultFolders(/** @type {string} */ home) {
+  return ["Documents", "Desktop", "Downloads"].map((n) => path.join(home, n));
+}
+
+/**
+ * Why a folder can't be one Buddy reads without asking, or null. Never a place Buddy never touches, another person's
+ * folder, a network location, apps' settings (AppData), or one so wide it would cover them (a drive, the home folder).
+ * @param {string} dir @param {Places} places
+ */
+export function grantProblem(dir, places) {
+  const p = realPlaces(places);
+  if (typeof dir !== "string" || !path.isAbsolute(dir) || /^\\\\/.test(dir)) return "Pick a folder on this PC.";
+  const full = realPlace(path.resolve(dir));
+  if (/^\\\\/.test(full)) return "Pick a folder on this PC.";
+  if (path.dirname(full) === full || inside(p.home, full)) return "That covers too much. Pick a folder inside it.";
+  if (forbidden(p).some((f) => inside(full, f) || inside(f, full)) || inside(full, path.join(p.home, "AppData"))) return "That folder holds Windows, apps' settings, passwords or keys. Buddy never reads it without asking.";
+  if (inside(full, p.usersDir) && !inside(full, p.home)) return "That's another person's folder on this PC.";
+  return null;
+}
+
+/** The folders read without asking: the working folder, and each granted folder that is allowed to be one. */
 function everyday(/** @type {Places} */ p) {
-  const names = ["Documents", "Desktop", "Downloads", "Pictures", "Music", "Videos"];
-  let onedrive = [];
-  try {
-    onedrive = fs.readdirSync(p.home).filter((n) => /^OneDrive/i.test(n)).map((n) => path.join(p.home, n));
-  } catch {}
-  return [p.workDir, path.dirname(p.workDir), ...names.map((n) => path.join(p.home, n)), ...onedrive];
+  return [p.workDir, ...(p.granted ?? []).filter((g) => !grantProblem(g, p))];
 }
 
 /** The real place a path names: links followed for the part that exists, so a link can't lead somewhere forbidden. */
@@ -193,7 +212,7 @@ export function judgePath(given, places) {
  */
 export function realPlaces(p) {
   const r = (x) => realPlace(path.resolve(x));
-  return { home: r(p.home), workDir: r(p.workDir), buddyData: r(p.buddyData), systemRoot: r(p.systemRoot), programFiles: p.programFiles.map(r), programData: r(p.programData), usersDir: r(p.usersDir) };
+  return { home: r(p.home), workDir: r(p.workDir), buddyData: r(p.buddyData), systemRoot: r(p.systemRoot), programFiles: p.programFiles.map(r), programData: r(p.programData), usersDir: r(p.usersDir), granted: p.granted?.map(r) };
 }
 
 /** A place in words: "budget.csv in Documents\Buddy". */

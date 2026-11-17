@@ -71,6 +71,7 @@ contextBridge.exposeInMainWorld("buddy", {
   settingsStartup: (on) => ipcRenderer.invoke("settings-startup", on),
   settingsClear: (what) => ipcRenderer.invoke("settings-clear", what),
   settingsOpenData: () => ipcRenderer.invoke("settings-open-data"),
+  settingsAddFolder: () => ipcRenderer.invoke("settings-folder-add"),
   settingsCheckModel: () => ipcRenderer.invoke("settings-check-model"),
   settingsAddress: (url) => ipcRenderer.invoke("settings-address", url),
   settingsClaude: (which, on) => ipcRenderer.invoke("settings-claude", which, on),

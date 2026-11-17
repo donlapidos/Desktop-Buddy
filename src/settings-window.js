@@ -22,6 +22,7 @@ const SIZE = { width: 640, height: 600 };
  *   setStartup: (on: boolean) => void,
  *   clear: (what: "explainers" | "log") => void,
  *   openData: () => void,
+ *   addFolder: (win: BrowserWindow) => Promise<string | null>, // Agents › Add a folder; why it can't be added, or null
  *   runRoutine: (id: string) => Promise<string | null>,    // start a routine now; returns an error message, or null
  *   apps: () => Promise<string[]>,                          // apps with a window open, for suggestions
  *   plusInterest: () => void,                               // open the Buddy Plus interest form
@@ -96,6 +97,7 @@ export function createSettingsWindow(deps) {
     return deps.state();
   });
   handle("settings-open-data", () => deps.openData());
+  handle("settings-folder-add", async () => ({ error: win ? await deps.addFolder(win) : null, state: deps.state() }));
   handle("settings-run-routine", async (id) => ({ error: await deps.runRoutine(String(id)), state: deps.state() }));
   handle("settings-apps", () => deps.apps());
   handle("settings-feature", () => deps.requestFeature());

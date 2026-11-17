@@ -673,6 +673,7 @@ const spokenNote = (lang) =>
  *   usage?: (provider: string, model: string, usage: any) => void,
  *   mayCall?: () => string | null,
  *   commands?: () => boolean,
+ *   readFolders?: () => string[],   // the folders Buddy reads without asking (Settings › Agents)
  *   spend?: { now: import("./costs.js").Spend },
  *   source?: string,
  *   reveal?: (files: string[]) => Promise<void> | void,
@@ -1092,7 +1093,7 @@ export class Brain {
     if (!this.pcReady) return `${name} isn't available here.`;
     const dataDir = /** @type {string} */ (this.ui.dataDir);
     return runPcTool(name, input, {
-      places: placesHere(/** @type {string} */ (this.ui.documentsDir), dataDir),
+      places: placesHere(/** @type {string} */ (this.ui.documentsDir), dataDir, this.ui.readFolders?.()),
       undoDir: path.join(dataDir, "undo"),
       ask: (summary, note, scope) => askUser(summary, { ...this.asking({ note }), scope }),
       status: (text) => this.ui.status(text),

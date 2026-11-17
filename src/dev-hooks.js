@@ -322,6 +322,21 @@ function settingsTest(kit) {
       wordType: decide(kit.settings, { kind: "type", app: "WINWORD.EXE" }),
       keepass: decide(kit.settings, { kind: "scroll_to", app: "KeePass.exe" }),
     }));
+    // Folders read without asking: one Buddy may never read freely stays off the list, whoever asks, and the Agents
+    // page shows what is on it.
+    const projects = path.join(os.homedir(), "Projects");
+    const folders = changeSettings({ advanced: true, readFolders: [projects, path.join(os.homedir(), "AppData")] });
+    await wait(300);
+    console.log("SETTINGS_FOLDERS", JSON.stringify({
+      problem: folders.readFolders ?? null,
+      list: kit.settings.readFolders,
+      projects,
+      chips: await win.webContents.executeJavaScript(`[...document.querySelectorAll("#folders .app-chip")].map((c) => c.title)`),
+    }));
+    await win.webContents.executeJavaScript(`show("agents"), document.getElementById("folders").scrollIntoView({ block: "center" })`);
+    await wait(400);
+    fs.writeFileSync(path.join(out, "settings-agents-folders.png"), (await win.webContents.capturePage()).toPNG());
+    changeSettings({ readFolders: null });
     // Routines: one saved, shown with its next run, and run now (no API key here, so it must say so, not call Claude).
     changeSettings({ routines: [{ id: "rtest1", name: "Inbox check", prompt: "Summarise my unread email.", schedule: { every: "weekday", time: "09:00", days: [], hours: 4 } }] });
     const started = await runRoutine(kit.settings.routines[0], "now");

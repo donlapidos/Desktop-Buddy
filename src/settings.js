@@ -48,7 +48,7 @@ export const TOUR_STEPS = Object.freeze(["none", "ask", "mark", "done"]);
 // trusted apps.
 export const ROPES = Object.freeze(["ask", "safe", "trusted"]);
 export const ROUTINE_EVERY = Object.freeze(["day", "weekday", "week", "hours"]);
-export const LIMITS = Object.freeze({ apps: 30, appName: 80, routines: 20, routineName: 60, prompt: 2000 });
+export const LIMITS = Object.freeze({ folders: 20, folder: 260, apps: 30, appName: 80, routines: 20, routineName: 60, prompt: 2000 });
 
 // Password managers: agents never act in these unless the user removes them from the list.
 const DEFAULT_BLOCKED = Object.freeze(["1Password", "Bitwarden", "Dashlane", "KeePass", "KeePassXC", "LastPass", "Keeper"]);
@@ -88,6 +88,9 @@ export const DEFAULTS = Object.freeze({
   // Off, Buddy is the core loop (ask or talk, guide, Mark, do it with approval). On for profiles from before the
   // switch existed, so nobody loses what they use; a new profile starts with it off (load).
   advanced: true,
+  // The folders Buddy reads without asking (pc-tools.js). null is the usual ones (Documents, Desktop, Downloads), worked
+  // out on the PC; a list is what the user chose in Settings › Agents.
+  readFolders: null,
 });
 
 export const VOICE_SETUP = Object.freeze(["ask", "yes", "no"]);
@@ -103,7 +106,7 @@ export const CAP = Object.freeze({ max: 10_000 });
  *   hotkeys: Record<HotkeyName, string>, provider: string, model: string, providerModels: Record<string, string>, providerURLs: Record<string, string>, effort: string, dictateStop: string, language: string,
  *   rope: string, trustedApps: string[], blockedApps: string[], routines: Routine[], autoUpdate: boolean,
  *   launchSetupDone: boolean, tour: string, monthlyCap: number, commands: boolean, screenContext: boolean,
- *   holdToTalk: boolean, voiceSetup: string, advanced: boolean,
+ *   holdToTalk: boolean, voiceSetup: string, advanced: boolean, readFolders: string[] | null,
  * }} Settings
  */
 
@@ -117,6 +120,22 @@ function appList(value, fallback) {
     if (out.some((x) => x.toLowerCase() === name.toLowerCase())) continue;
     out.push(name);
     if (out.length === LIMITS.apps) break;
+  }
+  return out;
+}
+
+// Folders as full paths on a drive ("C:\Users\sam\Documents"); compared without case. Which ones may be on the list at
+// all is pc-tools.js grantProblem's call, made where the PC's places are known.
+function folderList(value) {
+  if (value === null || value === undefined) return null;
+  if (!Array.isArray(value)) return null;
+  const out = [];
+  for (const v of value) {
+    const dir = typeof v === "string" ? v.trim().replace(/[\\/]+$/, "") : "";
+    if (!/^[A-Za-z]:\\[^\u0000-\u001f<>"|?*]*$/.test(dir) || dir.length > LIMITS.folder) continue;
+    if (out.some((x) => x.toLowerCase() === dir.toLowerCase())) continue;
+    out.push(dir);
+    if (out.length === LIMITS.folders) break;
   }
   return out;
 }
@@ -244,6 +263,7 @@ export function normalize(raw) {
     holdToTalk: typeof r.holdToTalk === "boolean" ? r.holdToTalk : DEFAULTS.holdToTalk,
     voiceSetup: pick(r.voiceSetup, VOICE_SETUP, DEFAULTS.voiceSetup),
     advanced: typeof r.advanced === "boolean" ? r.advanced : DEFAULTS.advanced,
+    readFolders: folderList(r.readFolders),
   };
 }
 

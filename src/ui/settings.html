@@ -286,6 +286,13 @@
         <div class="chips" id="blocked"></div>
         <div class="row"><input class="field" id="blocked-input" list="running-apps" placeholder="App name, e.g. KeePass" autocomplete="off" spellcheck="false"><button class="btn" id="blocked-add">Add</button></div>
       </div>
+      <div class="group advanced-only">
+        <h3>Folders Buddy reads without asking</h3>
+        <p class="help">Buddy can look in these folders and read the files in them without asking you first. Anywhere else, it asks each time. Making or changing a file always asks. Its own Documents › Buddy folder is always on the list.</p>
+        <div class="chips" id="folders"></div>
+        <p class="problem" id="folder-problem"></p>
+        <div class="row"><button class="btn" id="folder-add">Add a folder…</button><button class="link" id="folders-usual">Go back to the usual folders</button></div>
+      </div>
       <div class="group switch-row advanced-only">
         <div>
           <h3>Let Buddy run commands</h3>
@@ -949,7 +956,34 @@
       : "Used only with “Act freely in apps I trust”.";
     appChips($("trusted"), "trustedApps");
     appChips($("blocked"), "blockedApps");
+    renderFolders();
   }
+
+  // Folders read without asking: shown by their name in the home folder ("Documents"), in full elsewhere.
+  function folderName(dir) {
+    const home = S.folders.home.toLowerCase();
+    return dir.toLowerCase().startsWith(`${home}\\`) ? dir.slice(home.length + 1) : dir;
+  }
+  function renderFolders() {
+    const { list, usual } = S.folders;
+    $("folders").replaceChildren(...list.map((dir) => {
+      const name = folderName(dir);
+      const remove = el("button", { title: `Remove ${name}` }, X());
+      remove.setAttribute("aria-label", `Remove ${name}`);
+      remove.addEventListener("click", () => set({ readFolders: list.filter((x) => x !== dir) }));
+      return el("span", { className: "app-chip", title: dir }, name, remove);
+    }));
+    $("folders-usual").hidden = usual;
+  }
+  $("folder-add").addEventListener("click", async () => {
+    const { error, state } = await window.buddy.settingsAddFolder();
+    render(state);
+    $("folder-problem").textContent = error ?? "";
+  });
+  $("folders-usual").addEventListener("click", () => {
+    $("folder-problem").textContent = "";
+    set({ readFolders: null });
+  });
   // Suggest the apps open right now.
   window.buddy.settingsApps().then((apps) => $("running-apps").replaceChildren(...apps.map((a) => el("option", { value: a.replace(/\.exe$/i, "") })))).catch(() => {});
 

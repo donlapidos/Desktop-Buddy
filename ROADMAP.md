@@ -236,6 +236,9 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   once. Each layer has a test that fails without it. The wall (restricted token or AppContainer) is still to do.
 - **3.2 Places the user grants.** Replace "everyday folders are read freely" with a short list the user sees and can
   edit (Documents, Desktop, Downloads to start), shown in Settings.
+  **Done (2026-11-17).** `settings.readFolders` (null is the usual three, where Windows keeps them), Settings › Agents
+  › Folders Buddy reads without asking. `grantProblem` in pc-tools.js keeps drives, the home folder, AppData, private
+  places and other users' folders off the list, both when added and when written into the settings by hand.
 - **3.3 A problem report the user can send.** "Report a problem" gathers the timing log (already short and bounded),
   the version and settings without keys, shows it, and opens an issue or copies it. No silent telemetry.
 - **3.4 A security page.** `SECURITY.md`: what Buddy can touch, what it can't, what approval means, how to report a

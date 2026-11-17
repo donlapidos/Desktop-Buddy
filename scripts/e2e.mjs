@@ -363,6 +363,15 @@ const CHECKS = {
       policy.wordType !== "ask" && `Word typing: ${policy.wordType}`,
       policy.keepass !== "block" && `KeePass: ${policy.keepass}`,
       !markers.SETTINGS_ROUTINE?.[0]?.started && "the routine didn't report anything",
+      ...(() => {
+        const f = markers.SETTINGS_FOLDERS?.[0];
+        if (!f) return ["no folders result printed"];
+        return [
+          !f.problem && "AppData was put on the folders Buddy reads without asking",
+          JSON.stringify(f.list) !== JSON.stringify([f.projects]) && `folders kept: ${JSON.stringify(f.list)}`,
+          JSON.stringify(f.chips) !== JSON.stringify([f.projects]) && `Settings shows folders: ${JSON.stringify(f.chips)}`,
+        ];
+      })(),
       lang.lang && lang.lang !== "es" && `Spanish heard as ${lang.lang}`,
       !lang.text && "nothing heard in the language check (are the voice models downloaded?)",
       !fs.existsSync(path.join(out, "settings-claude.png")) && "no Settings screenshots",

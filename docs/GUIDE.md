@@ -102,8 +102,10 @@ VS Code and more).
   the same kind only: screen actions, file changes, PowerShell, and each website, separately.
 - **Beyond the screen:** Buddy can list, read, write and edit your files and read web pages, with every model, when
   that's the quickest way to get something done (making a list or a budget sheet, looking something up). It works in
-  **Documents › Buddy** unless you name another place, and a file it makes opens when the answer is done. Your
-  everyday folders are read without asking; anything else, and every change, asks first. Passwords and keys, browser
+  **Documents › Buddy** unless you name another place, and a file it makes opens when the answer is done. It reads
+  the folders listed in Settings › Agents › **Folders Buddy reads without asking** (Documents, Desktop and Downloads
+  to start; add or remove any) without asking; anything else, and every change, asks first. A drive, your whole
+  user folder, AppData and other people's folders can't be added. Passwords and keys, browser
   profiles, the AI apps' settings and Buddy's own data are off limits to the file tools whatever is asked, and
   anything shaped like a secret key is hidden from the model.
 - **Running commands is off until you turn it on** (Settings › Agents › **Let Buddy run commands**). On, Buddy can

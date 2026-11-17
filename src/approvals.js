@@ -34,7 +34,7 @@ const issued = new WeakSet();
  * How to ask. `standing` is the answer's "Allow for this task", kept per scope: the user's "Allow for this task" on a
  * request lets later requests of the same scope in the same answer pass unasked, and nothing else. Scopes:
  *   screen        clicks, typing, moving windows, opening apps (every input action)
- *   read          reading files outside the user's everyday folders
+ *   read          reading files outside the folders the user lets Buddy read without asking
  *   files         making or changing files and documents
  *   powershell    running PowerShell
  *   web:<host>    reading pages on one site
