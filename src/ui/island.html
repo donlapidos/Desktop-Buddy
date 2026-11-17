@@ -110,28 +110,29 @@
     <span id="hint"></span>
     <span id="chips"></span>
     <span id="actions">
-      <button id="ask">Ask</button>
-      <button id="talk" title="Ctrl+Alt+T: say it instead of typing. Pause when you're done.">Talk</button>
-      <button id="mark" title="Ctrl+Alt+M: click something to explain it, or draw over things to ask about them">Mark</button>
-      <button id="task" title="Open a task window: an agent with its own conversation that works while you do other things">Task</button>
-      <button id="settings" class="icon" title="Settings" aria-label="Settings"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 5h7M12.5 5H14M2 11h2M7.5 11H14"/><circle cx="10.75" cy="5" r="1.75"/><circle cx="5.75" cy="11" r="1.75"/></svg></button>
+      <button id="ask" data-t>Ask</button>
+      <button id="talk" data-t title="Ctrl+Alt+T: say it instead of typing. Pause when you're done.">Talk</button>
+      <button id="mark" data-t data-t-attrs="title" title="Ctrl+Alt+M: click something to explain it, or draw over things to ask about them">Mark</button>
+      <button id="task" data-t data-t-attrs="title" title="Open a task window: an agent with its own conversation that works while you do other things">Task</button>
+      <button id="settings" class="icon" data-t-attrs="title,aria-label" title="Settings" aria-label="Settings"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 5h7M12.5 5H14M2 11h2M7.5 11H14"/><circle cx="10.75" cy="5" r="1.75"/><circle cx="5.75" cy="11" r="1.75"/></svg></button>
     </span>
   </div>
   <div id="peek">
     <div class="card">
-      <button class="shot" id="peek-open" aria-label="Open this task" title="Open this task"><img id="peek-img" alt=""></button>
+      <button class="shot" id="peek-open" data-t-attrs="aria-label,title" aria-label="Open this task" title="Open this task"><img id="peek-img" alt=""></button>
       <div class="meta"><i></i><span class="title" id="peek-title"></span><span class="state" id="peek-state"></span></div>
       <div class="line" id="peek-line"></div>
       <div class="row">
-        <button class="allow ask-only" id="peek-allow">Allow</button>
-        <button class="deny ask-only" id="peek-deny">Don't</button>
-        <button id="peek-show">Open</button>
+        <button class="allow ask-only" id="peek-allow" data-t>Allow</button>
+        <button class="deny ask-only" id="peek-deny" data-t>Don't</button>
+        <button id="peek-show" data-t>Open</button>
         <span class="grow"></span>
-        <button class="close" id="peek-close" title="Close and stop this task">Close</button>
+        <button class="close" id="peek-close" data-t data-t-attrs="title" title="Close and stop this task">Close</button>
       </div>
     </div>
   </div>
 </div>
+<script src="strings.js"></script>
 <script src="island.js"></script>
 </body>
 </html>

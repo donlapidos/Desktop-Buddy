@@ -105,6 +105,8 @@ function renderLook() {
     return b;
   }));
   segmented($("appearance"), [["system", "Match Windows"], ["light", "Light"], ["dark", "Dark"]], s.appearance, (v) => set({ appearance: v }), S.fixed.appearance);
+  // Each language by its own name, so someone who can't read the current one can still find theirs.
+  segmented($("ui-language"), [["auto", "Match Windows"], ...Object.entries(S.uiLanguages)], s.uiLanguage, (v) => set({ uiLanguage: v }));
   $("appearance-fixed").hidden = !S.fixed.appearance;
 }
 

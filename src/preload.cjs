@@ -4,6 +4,8 @@ const on = (channel) => (fn) => ipcRenderer.on(channel, (_e, payload) => fn(payl
 
 contextBridge.exposeInMainWorld("buddy", {
   ask: (text, opts) => ipcRenderer.invoke("ask", text, opts),
+  strings: () => ipcRenderer.invoke("strings"),
+  onStrings: on("strings"),
   setKey: (key) => ipcRenderer.invoke("set-key", key),
   welcomeState: () => ipcRenderer.invoke("welcome-state"),
   welcomeApp: (id) => ipcRenderer.invoke("welcome-app", id),

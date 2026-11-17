@@ -44,6 +44,7 @@ import { createAiAppSetup } from "./ai-app-setup.js";
 import { createAppBridge } from "./app-bridge.js";
 import { createConversations } from "./conversations.js";
 import { appName, createLessons } from "./lessons.js";
+import { LANGUAGES, N, language, pickLanguage, setLanguage, t, table } from "./i18n.js";
 import { appKey } from "./policy.js";
 import { appWords, tourNext, tourTip } from "./welcome.js";
 import { aboutMoney, addCall, capProblem, createLedger, moneyWords, noSpend, priceOf, spendLine, tokenWords } from "./costs.js";
@@ -488,7 +489,7 @@ function createIsland() {
   island.once("ready-to-show", () => island.showInactive());
   island.webContents.on("did-finish-load", () => {
     const taken = takenHotkeys();
-    if (taken.length) notice(`${taken.map((n) => keyLabel(hotkey(n))).join(", ")} is used by another app: change it in Settings`);
+    if (taken.length) notice(t("{keys} is used by another app: change it in Settings", { keys: taken.map((n) => keyLabel(hotkey(n))).join(", ") }));
     showIsland({ force: true });
     if (tasks) island.webContents.send("tasks", tasks.list());
   });
@@ -735,7 +736,7 @@ function explainAt(dipPoint, question) {
 /** @param {DipPoint} dipPoint @param {string} [question] */
 async function runExplain(dipPoint, question) {
   startTurn();
-  progress("Looking at that…");
+  progress(t("Looking at that…"));
   try {
     const physical = toPhysicalPoint(dipPoint);
     const [win, shot] = await Promise.all([windowAt(physical, ownPids()), captureAround(dipPoint)]);
@@ -745,13 +746,13 @@ async function runExplain(dipPoint, question) {
     if (turn.explainerShown) {
       notice(oneLine(reply));
     } else {
-      notice("Answered");
+      notice(t("Answered"));
       bubble.webContents.send("status", "");
       bubble.webContents.send("reply", reply);
       showBubble({ focus: false });
     }
   } catch (err) {
-    notice(`Couldn't explain that: ${err.message}`);
+    notice(t("Couldn't explain that: {why}", { why: err.message }));
   } finally {
     enter("idle");
     releaseLater("bubble");
@@ -819,7 +820,7 @@ const openExplainer = (plate, { near = cursor(), observed = null } = {}) => open
 
 handleFrom(fromBubble, "ask", async (_e, text, opts = {}) => {
   if (typeof text !== "string" || !text.trim()) return { reply: null };
-  if (!["idle", "working", "listening"].includes(mode)) return { reply: BUSY[mode] };
+  if (!["idle", "working", "listening"].includes(mode)) return { reply: t(BUSY[mode]) };
   return bubbleTurns.run((isCurrent) => answerQuestion(text, opts, isCurrent));
 });
 
@@ -827,7 +828,7 @@ async function answerQuestion(text, opts, isCurrent) {
   if (!brain) return { reply: "Choose how I think first, in Settings › AI & privacy: an API key (Anthropic, OpenAI, OpenRouter, Gemini, DeepSeek), or a free model on this PC with Ollama or LM Studio. Or ask me from the AI app you already use (Claude, Codex, Gemini, Copilot): Use with your AI app, in the same place." };
   // Typed while the mic was open: the typing wins.
   if (mode === "listening") voice.cancelListening();
-  else if (mode !== "idle") return { reply: BUSY[mode] };
+  else if (mode !== "idle") return { reply: t(BUSY[mode]) };
   enter("working");
   // "Talking is ready" (or why it isn't) has been read by now; the tour's tip can have the space back.
   if (voiceFetched) {
@@ -844,7 +845,7 @@ async function answerQuestion(text, opts, isCurrent) {
   hushReply();
   replyMuted = false;
   releaseFocus();
-  progress("Thinking…");
+  progress(t("Thinking…"));
   let reply;
   const tally = engine.ui.spend;
   if (tally) tally.now = noSpend();
@@ -854,7 +855,7 @@ async function answerQuestion(text, opts, isCurrent) {
     reply = withMarks ? await engine.askWithMarks(text, withMarks, how) : await engine.ask(text, about.window, how);
   } catch (err) {
     hushReply();
-    notice("Something broke");
+    notice(t("Something broke"));
     return { reply: `Something broke: ${err.message}` };
   } finally {
     answeringBrain = null;
@@ -907,15 +908,15 @@ let lessonBrain = null;
  */
 async function playLesson(/** @type {string} */ id, { window = null } = {}) {
   const lesson = lessons?.get(id);
-  if (!lesson) return notice("That lesson is gone.");
-  if (mode !== "idle") return progress(BUSY[mode]);
+  if (!lesson) return notice(t("That lesson is gone."));
+  if (mode !== "idle") return progress(t(BUSY[mode]));
   const own = ownPids();
   const open = (await listWindows()).filter((w) => !own.includes(w.pid) && String(w.app_name).toLowerCase() === lesson.app.toLowerCase());
   const win = (window && open.find((w) => w.id === window.id)) ?? open.find((w) => w.is_focused) ?? open[0];
-  if (!win) return notice(`Open ${appName(lesson.app)} first, then play the lesson again.`);
+  if (!win) return notice(t("Open {app} first, then play the lesson again.", { app: appName(lesson.app) }));
   enter("working");
   hideBubble({ now: true });
-  progress(`Lesson: ${lesson.title}`);
+  progress(t("Lesson: {title}", { title: lesson.title }));
   trace({ kind: "lesson-play", steps: lesson.steps.length });
   lessonBrain = new Brain({
     point: (bounds, caption) => point(bounds, caption),
@@ -1042,7 +1043,7 @@ onFrom(fromBubble, "cancel", () => {
   bubbleTurns.cancel();
   voice?.cancelListening();
   hushReply();
-  if (mode === "working") { (answeringBrain ?? brain)?.cancel(); notice("Stopped."); }
+  if (mode === "working") { (answeringBrain ?? brain)?.cancel(); notice(t("Stopped.")); }
   else answerApproval("deny");
   annotationLayer.clear("bubble");
 });
@@ -1113,7 +1114,7 @@ const approvals = createApprovalQueue({
   },
   clear: () => {
     bubble.webContents.send("confirm-clear");
-    if (mode === "working") islandFacts.progress = "Working…";
+    if (mode === "working") islandFacts.progress = t("Working…");
     showIsland();
   },
   trace,
@@ -1152,10 +1153,12 @@ function guidePoint(bounds, caption, guessIn = null) {
 const talksBack = (spoken) => !!voice && (settings.talkBack === "always" || (settings.talkBack === "spoken" && spoken));
 
 const HEARD_ERRORS = {
-  silence: "Didn't hear anything",
-  "mic-blocked": "Microphone blocked: Settings › Privacy › Microphone",
-  "no-mic": "No microphone found",
+  silence: N("Didn't hear anything"),
+  "mic-blocked": N("Microphone blocked: Settings › Privacy › Microphone"),
+  "no-mic": N("No microphone found"),
 };
+/** Why Buddy heard nothing, in words. @param {string} error */
+const heardError = (error) => (HEARD_ERRORS[error] ? t(HEARD_ERRORS[error]) : t("Couldn't hear you: {why}", { why: error }));
 
 // The talk hotkey: start listening; pressed again while listening, stop and use what was said. It also cuts
 // Buddy off mid-sentence.
@@ -1170,7 +1173,7 @@ async function talk() {
   }
   const wasSpeaking = voice.speaking;
   hushReply();
-  if (mode !== "idle") return wasSpeaking || progress(BUSY[mode]);
+  if (mode !== "idle") return wasSpeaking || progress(t(BUSY[mode]));
   if (!brain) return summon();
   enter("listening");
   if (bubble.isVisible()) {
@@ -1179,7 +1182,7 @@ async function talk() {
     brain.glance?.(about.window, { keep: true });
   } else await summon();
   bubble.webContents.send("listening", true);
-  progress(talkHold ? "Listening… let go when you're done" : "Listening…");
+  progress(talkHold ? t("Listening… let go when you're done") : t("Listening…"));
   const listening = voice.listen();
   // The Talk key may have been held, or already let go, while the bubble was opening.
   if (talkHold === "held") voice.holdListening();
@@ -1196,7 +1199,7 @@ async function talk() {
   enter("idle");
   if (text) return bubble.webContents.send("voice-text", text);
   if (error === "cancelled") return showIsland();
-  notice(HEARD_ERRORS[error] ?? `Couldn't hear you: ${error}`);
+  notice(heardError(error));
 }
 
 // ---------- Hold to talk: one key, tapped to type or held to talk ----------
@@ -1269,24 +1272,24 @@ async function dictate() {
   if (mode === "dictating") return voice.finishListening();
   const wasSpeaking = voice.speaking;
   hushReply();
-  if (mode !== "idle") return wasSpeaking || progress(BUSY[mode]);
+  if (mode !== "idle") return wasSpeaking || progress(t(BUSY[mode]));
   enter("dictating");
   const continuous = settings.dictateStop === "press";
   const key = keyLabel(hotkey("dictate"));
-  progress(continuous ? `Dictating… ${key} to stop` : "Dictating… pause when you're done");
+  progress(continuous ? t("Dictating… {key} to stop", { key }) : t("Dictating… pause when you're done"));
   let words = 0;
   const result = await voice.dictate({
     continuous,
     onText: async (text) => {
       await typeText(words ? ` ${text}` : text);
       words += text.split(/\s+/).filter(Boolean).length;
-      if (continuous && currentMode() === "dictating") progress(`Dictating… ${words} words · ${key} to stop`);
+      if (continuous && currentMode() === "dictating") progress(t("Dictating… {n} words · {key} to stop", { n: words, key }));
     },
   });
   enter("idle");
-  if (result.pieces) notice(`Typed ${words} word${words === 1 ? "" : "s"}`);
+  if (result.pieces) notice(words === 1 ? t("Typed 1 word") : t("Typed {n} words", { n: words }));
   else if (result.error === "cancelled") showIsland();
-  else notice(HEARD_ERRORS[result.error] ?? `Couldn't hear you: ${result.error}`);
+  else notice(heardError(result.error));
 }
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -1322,13 +1325,14 @@ onFrom(fromBubble, "talk", () => talkByClick());
 
 let downloadSettle = null; // returns the island to rest once download progress stops coming
 function onVoiceState(state, info) {
-  if (state === "listening" && mode === "listening") progress("Listening… pause when you're done");
+  if (state === "listening" && mode === "listening") progress(t("Listening… pause when you're done"));
   else if (state === "transcribing" && mode === "listening") {
     islandFacts.transcribing = true;
     showIsland();
   } else if (state === "downloading") {
     voiceFetchProgress(/** @type {any} */ (info));
-    islandFacts.download = `Getting Buddy's ${info.what === "speaking" ? "voice" : "ears"} ready… ${Math.round((100 * info.loaded) / info.total)}%`;
+    const pct = Math.round((100 * info.loaded) / info.total);
+    islandFacts.download = info.what === "speaking" ? t("Getting Buddy's voice ready… {pct}%", { pct }) : t("Getting Buddy's ears ready… {pct}%", { pct });
     showIsland();
     clearTimeout(downloadSettle);
     downloadSettle = setTimeout(() => {
@@ -1514,7 +1518,7 @@ function startTasks() {
 // while the bubble is free for something else.
 async function newTask({ fromBubble = false } = {}) {
   if (!brain) return summon();
-  if (fromBubble && mode !== "idle") return progress("Let Buddy finish this answer, then make it a task");
+  if (fromBubble && mode !== "idle") return progress(t("Let Buddy finish this answer, then make it a task"));
   let result;
   if (fromBubble && brain.transcript().length) {
     result = await tasks.create({ brain, target: about.window });
@@ -1591,6 +1595,7 @@ function changeSettings(patch) {
   if (!hotkeysSuspended && JSON.stringify(next.hotkeys) !== JSON.stringify(before.hotkeys)) registerHotkeys();
   if (next.accent !== before.accent) paintAccentEverywhere();
   if (next.appearance !== before.appearance) applyAppearance();
+  if (next.uiLanguage !== before.uiLanguage) applyLanguage();
   if (next.model !== before.model || next.effort !== before.effort || JSON.stringify(next.providerModels) !== JSON.stringify(before.providerModels)) setBrainDefaults(settings);
   if (next.provider !== before.provider || JSON.stringify(next.providerURLs) !== JSON.stringify(before.providerURLs)) {
     startBrain();
@@ -1605,6 +1610,16 @@ function changeSettings(patch) {
   settingsWindow?.refresh();
   return problems;
 }
+
+// The language of Buddy's windows (i18n.js): the one chosen in Settings, or Windows' own. Every open page gets the new
+// words at once; the tray is rebuilt by changeSettings.
+const stringsNow = () => ({ lang: language(), table: table() });
+function applyLanguage() {
+  setLanguage(pickLanguage(settings.uiLanguage, app.getPreferredSystemLanguages()));
+  for (const wc of webContents.getAllWebContents()) if (!wc.isDestroyed()) wc.send("strings", stringsNow());
+}
+// Any of Buddy's pages may ask: the words aren't private.
+ipcMain.handle("strings", () => stringsNow());
 
 function applyAppearance() {
   nativeTheme.themeSource = /** @type {"system" | "light" | "dark"} */ (process.env.BUDDY_THEME ?? settings.appearance);
@@ -1678,22 +1693,22 @@ function buildTrayMenu() {
   tray.setToolTip(`Desktop Buddy — ask: ${pretty(keyLabel(hotkey("ask")))} · talk: ${pretty(keyLabel(hotkey("talk")))}`);
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: `Ask Buddy  (${keyLabel(hotkey("ask"))})`, click: () => summon() },
-      { label: `Talk to Buddy  (${keyLabel(hotkey("talk"))})`, click: () => talkByClick() },
-      { label: `Mark or explain something  (${keyLabel(hotkey("mark"))})`, click: () => startMarking() },
-      { label: "New conversation", click: () => resetBubble() },
-      ...(lessons?.list().length ? [{ label: "Play a lesson", submenu: lessons.list().slice(-15).reverse().map((l) => ({ label: `${l.title}  (${appName(l.app)})`, click: () => playLesson(l.id) })) }] : []),
-      ...(settings.advanced ? [{ label: "New task window", click: () => newTask() }] : []),
+      { label: `${t("Ask Buddy")}  (${keyLabel(hotkey("ask"))})`, click: () => summon() },
+      { label: `${t("Talk to Buddy")}  (${keyLabel(hotkey("talk"))})`, click: () => talkByClick() },
+      { label: `${t("Mark or explain something")}  (${keyLabel(hotkey("mark"))})`, click: () => startMarking() },
+      { label: t("New conversation"), click: () => resetBubble() },
+      ...(lessons?.list().length ? [{ label: t("Play a lesson"), submenu: lessons.list().slice(-15).reverse().map((l) => ({ label: `${l.title}  (${appName(l.app)})`, click: () => playLesson(l.id) })) }] : []),
+      ...(settings.advanced ? [{ label: t("New task window"), click: () => newTask() }] : []),
       { type: "separator" },
-      ...(updates?.state().status === "ready" ? [{ label: `Restart to update to ${updates.state().next}`, click: () => updates.install() }] : []),
-      ...(appStatus().code !== "missing" ? [{ label: "Quick chat in Claude Code", click: () => openQuickChat() }] : []),
-      { label: "Recent changes…", click: () => settingsWindow.open("activity") },
-      { label: "Report a problem…", click: () => settingsWindow.open("report") },
-      { label: "Settings…", click: () => settingsWindow.open() },
+      ...(updates?.state().status === "ready" ? [{ label: t("Restart to update to {version}", { version: updates.state().next }), click: () => updates.install() }] : []),
+      ...(appStatus().code !== "missing" ? [{ label: t("Quick chat in Claude Code"), click: () => openQuickChat() }] : []),
+      { label: t("Recent changes…"), click: () => settingsWindow.open("activity") },
+      { label: t("Report a problem…"), click: () => settingsWindow.open("report") },
+      { label: t("Settings…"), click: () => settingsWindow.open() },
       { label: "Recreate shortcuts", visible: process.platform === "win32" && !app.isPackaged, click: writeShortcuts },
       { type: "separator" },
       { label: `agent-desktop: ${path.basename(resolveBinary())}`, enabled: false },
-      { label: "Quit", click: () => app.quit() },
+      { label: t("Quit"), click: () => app.quit() },
     ]),
   );
 }
@@ -1749,6 +1764,7 @@ function settingsState() {
     spend: spendState(),
     startsWithWindows: process.platform === "win32" && startsWithWindows(),
     data: { explainers, logBytes, conversations: conversations?.count() ?? 0 },
+    uiLanguages: LANGUAGES,
     lessons: (lessons?.list() ?? []).slice().reverse().map((l) => ({ id: l.id, title: l.title, app: appName(l.app), steps: l.steps.length })),
     claude: appStatus(),
     aiApps: APP_IDS.map((id) => ({ id, label: APPS[id].label, after: APPS[id].after })),
@@ -1894,7 +1910,7 @@ function startUpdates() {
       // Say so once, on the island; the tray and Settings keep offering the restart.
       if (state.status === "ready" && announcedUpdate !== state.next) {
         announcedUpdate = state.next;
-        notice(`Buddy ${state.next} is ready: restart from the tray to update`);
+        notice(t("Buddy {version} is ready: restart from the tray to update", { version: state.next }));
       }
     },
     trace,
@@ -1931,6 +1947,7 @@ app.whenReady().then(() => {
   settings = loaded.settings;
   if (loaded.recovered) trace({ kind: "settings-recovered", note: "settings.json couldn't be read; kept as settings.json.bad" });
   applyAppearance();
+  applyLanguage();
   setBrainDefaults(settings);
   loadModelCaps();
   startActivity();

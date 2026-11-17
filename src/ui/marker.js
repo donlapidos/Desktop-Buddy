@@ -101,7 +101,7 @@ fit();
 
 function update() {
   const n = strokes.length;
-  document.getElementById("count").textContent = n ? `${n} marked · keep going or ask` : "Click something to explain it, or draw over things to ask";
+  document.getElementById("count").textContent = n ? t("{n} marked · keep going or ask", { n }) : t("Click something to explain it, or draw over things to ask");
   /** @type {HTMLButtonElement} */ (document.getElementById("undo")).disabled = !n;
   /** @type {HTMLButtonElement} */ (document.getElementById("ask")).disabled = !n;
   window.buddy.markCount(n);
@@ -213,3 +213,6 @@ window.buddy.onMarkInject((list) => {
   update();
   setTimeout(finish, 300);
 });
+
+// The words in this window's language, now and whenever it changes.
+whenStrings(update);

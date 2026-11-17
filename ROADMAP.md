@@ -310,6 +310,12 @@ Only after Phases 0-3; pick by what users ask for.
   Known limit: with several windows of the lesson's app open, it plays in the one in front.
 - **5.3 Integrations:** let Buddy use other MCP servers the user adds (calendar, mail), under the same approvals.
 - **5.4 Languages:** the interface in the user's language (replies already are).
+  **First half done (2026-11-18).** `src/i18n.js` and `src/ui/strings.js`: English text as the key, `src/locales/es.json`
+  for Spanish (148 strings, written by Claude: have a native speaker read it before release). Settings › Look ›
+  Language (follows Windows by default), switching live. Translated: bubble (with first-run setup), island, task
+  windows, marker, tray, island status lines. `test/strings.test.js` holds completeness and placeholders; the
+  `language` e2e check switches live. Left: the Settings page itself, the tour tips and voice offer (welcome.js),
+  approval card summaries ("Click Save", brain.js) and error messages that come from the main process.
 - **5.5 A cheap-then-smart mode:** a small model for guiding, the big one for explaining and building.
 
 ## Decisions for the owner

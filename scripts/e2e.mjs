@@ -465,6 +465,20 @@ const CHECKS = {
       ...Object.keys({ ...before, ...after }).filter((k) => before[k] !== after[k]).map((k) => `changed ${k}: ${before[k] ?? "(none)"} -> ${after[k] ?? "(none)"}`)].filter(Boolean);
   },
 
+  // Buddy's windows in Spanish, and back to English live.
+  async language() {
+    const seed = { "settings.json": JSON.stringify({ uiLanguage: "es", launchSetupDone: true, voiceSetup: "no" }) };
+    const { markers, timedOut } = await runCopy("language", { BUDDY_LANGUAGE_TEST: out }, "LANGUAGE_TEST_DONE", 90_000, seed);
+    const r = markers.LANGUAGE_TEST?.[0];
+    if (!r) return [timedOut ? "timed out" : "nothing printed"];
+    const want = { spanish: { ask: "Preguntar", allow: "Permitir", placeholder: "¿Cómo hago…?  o  Hazlo por mí", lang: "es", talk: "Hablar" }, english: { ask: "Ask", allow: "Allow", placeholder: "How do I…?  or  Do it for me", lang: "en", talk: "Talk" } };
+    return [
+      ...["spanish", "english"].flatMap((which) => Object.entries(want[which]).filter(([k, v]) => r[which]?.[k] !== v).map(([k, v]) => `${which} ${k} was ${JSON.stringify(r[which]?.[k])}, not ${JSON.stringify(v)}`)),
+      r.setupSpanish !== "Buddy necesita una IA para pensar. Elige una forma de empezar:" && `setup in Spanish said ${JSON.stringify(r.setupSpanish)}`,
+      r.setupEnglish !== "Buddy needs an AI to think with. Pick one way in:" && `setup switched to English said ${JSON.stringify(r.setupEnglish)}`,
+    ].filter(Boolean);
+  },
+
   // A lesson played in a test-owned window, with no model: it follows the step to its result, says when a control
   // isn't there, and comes back the same from a shared file.
   async lessons() {

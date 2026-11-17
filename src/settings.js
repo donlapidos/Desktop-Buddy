@@ -2,6 +2,7 @@
 // hand-edited, half-written or out-of-date file can never put Buddy in a state it can't handle: anything invalid
 // falls back to its default. Writes go to a temporary file first and replace the old one in a single step.
 import fs from "node:fs";
+import { LANGUAGES as UI_LANGUAGES } from "./i18n.js";
 import { addressProblem } from "./providers.js";
 
 /** Accent colours for the pointer, island, bubble and task windows. Each reads on both light and dark apps. */
@@ -91,6 +92,8 @@ export const DEFAULTS = Object.freeze({
   // The folders Buddy reads without asking (pc-tools.js). null is the usual ones (Documents, Desktop, Downloads), worked
   // out on the PC; a list is what the user chose in Settings › Agents.
   readFolders: null,
+  // The language of Buddy's windows: "auto" follows Windows (i18n.js pickLanguage), or a language code.
+  uiLanguage: "auto",
 });
 
 export const VOICE_SETUP = Object.freeze(["ask", "yes", "no"]);
@@ -106,7 +109,7 @@ export const CAP = Object.freeze({ max: 10_000 });
  *   hotkeys: Record<HotkeyName, string>, provider: string, model: string, providerModels: Record<string, string>, providerURLs: Record<string, string>, effort: string, dictateStop: string, language: string,
  *   rope: string, trustedApps: string[], blockedApps: string[], routines: Routine[], autoUpdate: boolean,
  *   launchSetupDone: boolean, tour: string, monthlyCap: number, commands: boolean, screenContext: boolean,
- *   holdToTalk: boolean, voiceSetup: string, advanced: boolean, readFolders: string[] | null,
+ *   holdToTalk: boolean, voiceSetup: string, advanced: boolean, readFolders: string[] | null, uiLanguage: string,
  * }} Settings
  */
 
@@ -264,6 +267,7 @@ export function normalize(raw) {
     voiceSetup: pick(r.voiceSetup, VOICE_SETUP, DEFAULTS.voiceSetup),
     advanced: typeof r.advanced === "boolean" ? r.advanced : DEFAULTS.advanced,
     readFolders: folderList(r.readFolders),
+    uiLanguage: pick(r.uiLanguage, ["auto", ...Object.keys(UI_LANGUAGES)], DEFAULTS.uiLanguage),
   };
 }
 

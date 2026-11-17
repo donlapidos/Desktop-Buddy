@@ -20,15 +20,15 @@ const addBuddy = (text) => { log.append(el("div", "buddy", text)); scrollDown();
 
 function setBusy(on) {
   busy = on;
-  $("send").textContent = on ? "Stop" : "Ask";
+  $("send").textContent = on ? t("Stop") : t("Ask");
   $("send").classList.toggle("ghost", on);
   $("log").setAttribute("aria-busy", String(on));
-  $input().placeholder = on ? "Working… (you can keep using your computer)" : "Give this task a job…";
+  $input().placeholder = on ? t("Working… (you can keep using your computer)") : t("Give this task a job…");
 }
 
 window.buddy.onTaskInit(({ n, title, target, transcript }) => {
   $("title").textContent = title;
-  $("where").textContent = target ? `Started in ${target}` : "Started from the island";
+  $("where").textContent = target ? t("Started in {window}", { window: target }) : t("Started from the island");
   for (const m of transcript) (m.role === "user" ? addUser : addBuddy)(m.text);
   $input().focus();
 });
@@ -122,3 +122,6 @@ addEventListener("keydown", (e) => {
 });
 $("min").addEventListener("click", () => window.buddy.taskMinimize());
 $("close").addEventListener("click", () => window.buddy.taskClose());
+
+// The words in this window's language, now and whenever it changes.
+whenStrings(() => setBusy(busy));

@@ -78,23 +78,24 @@
 <header>
   <span class="dot" aria-hidden="true"></span>
   <div class="titles"><div id="title">Task</div><div id="where"></div></div>
-  <button class="win" id="min" aria-label="Tuck into the island" title="Tuck into the island (it keeps working)"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5 H10"/></svg></button>
-  <button class="win close" id="close" aria-label="Close and stop this task" title="Close and stop this task"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5"/></svg></button>
+  <button class="win" id="min" data-t-attrs="aria-label,title" aria-label="Tuck into the island" title="Tuck into the island (it keeps working)"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5 H10"/></svg></button>
+  <button class="win close" id="close" data-t-attrs="aria-label,title" aria-label="Close and stop this task" title="Close and stop this task"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5"/></svg></button>
 </header>
-<div id="log" role="log" aria-live="polite" aria-label="What the task did"></div>
+<div id="log" role="log" aria-live="polite" data-t-attrs="aria-label" aria-label="What the task did"></div>
 <div id="confirm" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="why" tabindex="-1">
-  <div id="confirm-title">Can I do this? <span class="what" id="what"></span></div>
+  <div id="confirm-title"><span data-t>Can I do this?</span> <span class="what" id="what"></span></div>
   <div class="why" id="why"></div>
   <div class="row">
-    <button class="btn" data-d="allow">Allow</button>
-    <button class="btn ghost" data-d="always">Allow for this task</button>
-    <button class="btn deny" data-d="deny">Don't</button>
+    <button class="btn" data-d="allow" data-t>Allow</button>
+    <button class="btn ghost" data-d="always" data-t>Allow for this task</button>
+    <button class="btn deny" data-d="deny" data-t>Don't</button>
   </div>
 </div>
 <form id="form">
-  <textarea id="input" rows="1" spellcheck="false" aria-label="Give this task a job" placeholder="Give this task a job…"></textarea>
+  <textarea id="input" rows="1" spellcheck="false" data-t-attrs="aria-label" aria-label="Give this task a job" placeholder="Give this task a job…"></textarea>
   <button class="btn" id="send" type="submit">Ask</button>
 </form>
+<script src="strings.js"></script>
 <script src="task.js"></script>
 </body>
 </html>

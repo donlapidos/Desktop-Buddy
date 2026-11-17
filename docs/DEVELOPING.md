@@ -41,7 +41,8 @@ refs; turning screenshots off removes images from the next request), **conversat
 corrections), **files** (a scripted model asks for a file; the approval card is clicked; the file
 is made, listed in Activity and undone; another window can't answer the card), **tasks**, **settings** (including a
 key that must stay with its server), **explainer**, **voice**, **bridge** (an AI app's calls over its own pipe: answered
-with the token, refused without), **lessons** (a lesson played in a test-owned window with no model, a missing control
+with the token, refused without), **language** (the windows in Spanish, then switched to English while open),
+**lessons** (a lesson played in a test-owned window with no model, a missing control
 told, a shared file round-tripped), **restore** (Buddy quit and restarted on one data folder: tasks and the bubble's
 conversation come back, closing a task forgets it), and **firstrun** (a plain test copy must leave your
 startup entries and shortcuts as they were). Any check whose copy logged a refused mode or task-state change fails.
@@ -119,6 +120,17 @@ These environment variables override Settings (useful for development):
 | `AGENT_DESKTOP_BIN` | `bin/agent-desktop.exe` | CLI to drive (a local agent-desktop build, for instance) |
 | `BUDDY_DOCUMENTS_DIR` | `Documents\Buddy` | Buddy's working folder |
 | `BUDDY_ENGINE` | unset | `sdk` runs Anthropic conversations on the Claude Agent SDK (needs the SDK, which installers leave out) |
+
+## Languages
+
+Buddy's windows show their words through `src/i18n.js` (main process) and `src/ui/strings.js` (pages). The English is
+the key: `t("Thinking…")`, `t("Typed {n} words", { n })` in code (`tr` in tasks.js, where `t` is a task), `N("…")`
+where words are defined in a table and translated where they're shown, and `data-t` / `data-t-attrs="title"` on
+fixed words in a page. Words a script changes on the fly are translated in the script, not marked in the page.
+
+Translations are `src/locales/<code>.json`. `test/strings.test.js` fails when a marked string has no translation,
+placeholders differ, or a translation is left over. To add a language: add it to `LANGUAGES` in i18n.js, list what
+it needs with `node test/strings-scan.js`, and write `src/locales/<code>.json`. Have a native speaker read it.
 
 ## How it fits together
 

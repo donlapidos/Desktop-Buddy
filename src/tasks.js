@@ -5,6 +5,7 @@
 // chip on the island; its window is made only when it's first shown.
 import { app, BrowserWindow, ipcMain, screen } from "electron";
 import path from "node:path";
+import { t as tr } from "./i18n.js";
 import { canMoveTask, taskBusy } from "./modes.js";
 
 const TASK = { width: 420, height: 560 };
@@ -89,7 +90,7 @@ export function createTasks({ here, icon, makeBrain, currentTarget, point, relea
         if (bounds) point(bounds, summaryText, t.id);
         const win = windowFor(t, { show: false });
         if (!win.isVisible()) win.showInactive();
-        setState(t, "confirm", `Waiting for your OK: ${summaryText}`);
+        setState(t, "confirm", tr("Waiting for your OK: {what}", { what: summaryText }));
         t.confirmAt = Date.now();
         send(t, "task-confirm", { summary: summaryText, note });
         return new Promise((resolve) => (t.pendingConfirm = resolve));
@@ -145,9 +146,9 @@ export function createTasks({ here, icon, makeBrain, currentTarget, point, relea
    * @param {{ brain?: any, target?: any, title?: string, prompt?: string, tucked?: boolean }} [opts]
    */
   async function create({ brain = null, target, title, prompt, tucked = false } = {}) {
-    if (tasks.size >= MAX_TASKS) return { error: `You can have ${MAX_TASKS} tasks open at once. Close one first.` };
+    if (tasks.size >= MAX_TASKS) return { error: tr("You can have {n} tasks open at once. Close one first.", { n: MAX_TASKS }) };
     const n = ++seq;
-    const t = { id: `t${n}`, n, title: title ? shorten(title) : `Task ${n}`, state: "idle", target: target === undefined ? await currentTarget() : target, pendingConfirm: null, win: null };
+    const t = { id: `t${n}`, n, title: title ? shorten(title) : tr("Task {n}", { n }), state: "idle", target: target === undefined ? await currentTarget() : target, pendingConfirm: null, win: null };
     t.where = t.target ? { app: t.target.app_name, title: t.target.title } : null;
     const ui = uiFor(t);
     if (brain) {
@@ -157,7 +158,7 @@ export function createTasks({ here, icon, makeBrain, currentTarget, point, relea
       if (first) t.title = shorten(first.text);
     } else {
       t.brain = makeBrain(ui);
-      if (!t.brain) return { error: "Choose how Buddy thinks first, in Settings › AI & privacy." };
+      if (!t.brain) return { error: tr("Choose how Buddy thinks first, in Settings › AI & privacy.") };
     }
     windowFor(t, { show: !tucked, prompt });
     tasks.set(t.id, t);
@@ -176,7 +177,7 @@ export function createTasks({ here, icon, makeBrain, currentTarget, point, relea
       if (tasks.size >= MAX_TASKS || tasks.has(kept.id)) continue;
       const n = kept.n || Number(kept.id.slice(1));
       // The window it was about may be gone or renumbered: the conversation names it, and the model looks again.
-      const t = { id: kept.id, n, title: kept.title || `Task ${n}`, state: "idle", target: null, where: kept.target ? { app: kept.target.app_name, title: kept.target.title } : null, pendingConfirm: null, win: null };
+      const t = { id: kept.id, n, title: kept.title || tr("Task {n}", { n }), state: "idle", target: null, where: kept.target ? { app: kept.target.app_name, title: kept.target.title } : null, pendingConfirm: null, win: null };
       t.brain = makeBrain(uiFor(t));
       if (!t.brain) continue;
       t.brain.resume(kept.transcript);
@@ -229,7 +230,7 @@ export function createTasks({ here, icon, makeBrain, currentTarget, point, relea
     t.pendingConfirm(decision);
     t.pendingConfirm = null;
     send(t, "task-confirm-done");
-    setState(t, "working", decision === "deny" ? "Okay, not doing that." : "Working…");
+    setState(t, "working", decision === "deny" ? tr("Okay, not doing that.") : tr("Working…"));
   }
 
   // The island's preview of a task: a live picture of its window, taken even while the window is tucked away
@@ -250,18 +251,18 @@ export function createTasks({ here, icon, makeBrain, currentTarget, point, relea
   ipcMain.handle("task-ask", async (e, text) => {
     const t = fromSender(e.sender);
     if (!t || taskBusy(t.state) || !String(text).trim()) return { reply: null };
-    if (t.title === `Task ${t.n}`) {
+    if (t.title === tr("Task {n}", { n: t.n })) {
       t.title = shorten(text);
       t.win.setTitle(`Buddy · ${t.title}`);
     }
-    setState(t, "working", "Thinking…");
+    setState(t, "working", tr("Thinking…"));
     try {
       const reply = await t.brain.ask(text, t.target);
       if (tasks.has(t.id)) setState(t, alive(t) && t.win.isFocused() ? "idle" : "done");
       return { reply, title: t.title };
     } catch (err) {
       if (tasks.has(t.id)) setState(t, "error", err.message);
-      return { reply: `Something broke: ${err.message}`, title: t.title };
+      return { reply: tr("Something broke: {why}", { why: err.message }), title: t.title };
     } finally {
       release(t.id);
       if (tasks.has(t.id)) save(t);

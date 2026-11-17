@@ -1001,7 +1001,51 @@ function lessonsTest(kit) {
   }, 2500);
 }
 
+/** BUDDY_LANGUAGE_TEST @param {DevKit} kit */
+function languageTest(kit) {
+  // Buddy's windows in Spanish (this copy starts with uiLanguage "es"), then switched to English while they're open.
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  setTimeout(async () => {
+    const { bubble, island, changeSettings } = kit;
+    const read = async () => ({
+      ask: await bubble.webContents.executeJavaScript(`document.getElementById("submit").textContent`),
+      allow: await bubble.webContents.executeJavaScript(`document.querySelector('[data-d="allow"]').textContent`),
+      placeholder: await bubble.webContents.executeJavaScript(`document.getElementById("input").placeholder`),
+      lang: await bubble.webContents.executeJavaScript(`document.documentElement.lang`),
+      talk: await island.webContents.executeJavaScript(`document.getElementById("talk").textContent`),
+      // For a failure: how many words the page holds, and whether setup was showing.
+      page: await bubble.webContents.executeJavaScript(`({ strings: Object.keys(STRINGS).length, classes: document.body.className, busy })`),
+    });
+    // Each page applies its words when they arrive: wait for them rather than a fixed time.
+    const inLanguage = async (lang) => {
+      for (let i = 0; i < 50 && (await bubble.webContents.executeJavaScript(`document.documentElement.lang`)) !== lang; i++) await wait(100);
+      await wait(200);
+    };
+    await inLanguage("es");
+    const spanish = await read();
+    changeSettings({ uiLanguage: "en" });
+    await inLanguage("en");
+    const english = await read();
+    // Setup (no AI chosen in this copy) in Spanish, with the approval card up where longer words could crowd the
+    // buttons; then switched while it's showing.
+    changeSettings({ uiLanguage: "es" });
+    await inLanguage("es");
+    await kit.summon();
+    await bubble.webContents.executeJavaScript(`document.getElementById("what").textContent = "Haz clic en Guardar"; document.getElementById("confirm").classList.add("on")`);
+    await wait(700);
+    fs.writeFileSync(path.join(process.env.BUDDY_LANGUAGE_TEST, "bubble-es.png"), (await bubble.webContents.capturePage()).toPNG());
+    const setupSpanish = await bubble.webContents.executeJavaScript(`document.querySelector("#welcome .lede")?.textContent ?? null`);
+    changeSettings({ uiLanguage: "en" });
+    await inLanguage("en");
+    await wait(500);
+    const setupEnglish = await bubble.webContents.executeJavaScript(`document.querySelector("#welcome .lede")?.textContent ?? null`);
+    console.log("LANGUAGE_TEST", JSON.stringify({ spanish, english, setupSpanish, setupEnglish }));
+    console.log("LANGUAGE_TEST_DONE");
+  }, 2500);
+}
+
 const HOOKS = {
+  BUDDY_LANGUAGE_TEST: languageTest,
   BUDDY_LESSONS_TEST: lessonsTest,
   BUDDY_RESTORE_TEST: restoreTest,
   BUDDY_BRIDGE_TEST: bridgeTest,

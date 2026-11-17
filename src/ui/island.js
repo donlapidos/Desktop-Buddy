@@ -30,7 +30,9 @@ $("mark").addEventListener("click", () => act("mark"));
 $("task").addEventListener("click", () => act("task"));
 $("settings").addEventListener("click", () => act("settings"));
 
-const STATE_WORDS = { idle: "ready", working: "working", confirm: "needs your OK", done: "finished", error: "hit a problem" };
+// A task chip's state, in words (translated where shown).
+const STATE_WORDS = { idle: N("ready"), working: N("working"), confirm: N("needs your OK"), done: N("finished"), error: N("hit a problem") };
+const stateWords = (state) => (STATE_WORDS[state] ? t(STATE_WORDS[state]) : state);
 
 function showPeek(id) {
   clearTimeout(peekTimer);
@@ -45,13 +47,13 @@ function showPeek(id) {
 }
 
 function fillPeek() {
-  const t = tasks.find((x) => x.id === peekId);
-  if (!t) return showPeek(null);
-  peek.dataset.state = t.state;
-  $("peek-title").textContent = `${t.n} · ${t.title}`;
-  $("peek-state").textContent = STATE_WORDS[t.state] ?? t.state;
-  $("peek-line").textContent = t.line ?? "";
-  $("peek-show").textContent = t.open ? "Tuck away" : "Open";
+  const task = tasks.find((x) => x.id === peekId);
+  if (!task) return showPeek(null);
+  peek.dataset.state = task.state;
+  $("peek-title").textContent = `${task.n} · ${task.title}`;
+  $("peek-state").textContent = stateWords(task.state);
+  $("peek-line").textContent = task.line ?? "";
+  $("peek-show").textContent = task.open ? t("Tuck away") : t("Open");
 }
 
 window.buddy.onTaskPeek(({ id, src }) => {
@@ -67,15 +69,15 @@ $("peek-close").addEventListener("click", () => { onPeek("task-close")(); showPe
 window.buddy.onTasks((list) => {
   tasks = list;
   const box = $("chips");
-  box.replaceChildren(...list.map((t) => {
+  box.replaceChildren(...list.map((task) => {
     const chip = document.createElement("button");
-    chip.className = "chip" + (t.open ? " open" : "") + (t.id === peekId ? " peeking" : "");
-    chip.dataset.state = t.state;
-    chip.dataset.id = t.id;
-    chip.setAttribute("aria-label", `${t.title}: ${STATE_WORDS[t.state] ?? t.state}`);
-    chip.append(document.createElement("i"), String(t.n));
-    chip.addEventListener("click", () => act("task:" + t.id));
-    chip.addEventListener("mouseenter", () => { clearTimeout(peekTimer); peekTimer = setTimeout(() => showPeek(t.id), peekId ? 0 : 140); });
+    chip.className = "chip" + (task.open ? " open" : "") + (task.id === peekId ? " peeking" : "");
+    chip.dataset.state = task.state;
+    chip.dataset.id = task.id;
+    chip.setAttribute("aria-label", `${task.title}: ${stateWords(task.state)}`);
+    chip.append(document.createElement("i"), String(task.n));
+    chip.addEventListener("click", () => act("task:" + task.id));
+    chip.addEventListener("mouseenter", () => { clearTimeout(peekTimer); peekTimer = setTimeout(() => showPeek(task.id), peekId ? 0 : 140); });
     return chip;
   }));
   box.classList.toggle("on", list.length > 0);
@@ -96,11 +98,11 @@ window.buddy.onIsland(({ state: s, text, hotkey = "", talkKey = "", advanced = t
   // Without the advanced features, the island offers the core: Ask, Talk and Mark.
   document.body.classList.toggle("basic", !advanced);
   $("ask").title = hotkey;
-  $("talk").title = `${talkKey}: say it instead of typing. Pause when you're done.`;
+  $("talk").title = t("{key}: say it instead of typing. Pause when you're done.", { key: talkKey });
   state = s;
   document.body.dataset.state = s;
   label.textContent = text || "Buddy";
-  hint.textContent = s === "active" ? `${talkKey} to talk` : s === "listening" ? `${talkKey} to send` : s === "speaking" ? "click to stop" : hotkey;
+  hint.textContent = s === "active" ? t("{key} to talk", { key: talkKey }) : s === "listening" ? t("{key} to send", { key: talkKey }) : s === "speaking" ? t("click to stop") : hotkey;
   if (s !== "listening") bars.forEach((b) => (b.style.height = ""));
   if (s !== "idle") pill.classList.remove("open");
   clearTimeout(idleTimer);
