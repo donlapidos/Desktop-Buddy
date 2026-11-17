@@ -44,6 +44,14 @@
 
   #confirm { display: none; margin: 0 16px 10px; padding: 10px 12px; border-radius: 12px; background: var(--field); box-shadow: inset 0 0 0 1px rgba(245,165,36,.35); flex-direction: column; gap: 8px; }
   #confirm.on { display: flex; }
+  #confirm:focus { outline: none; }
+  #confirm:focus-visible { outline: 2px solid color-mix(in srgb, var(--buddy) 80%, transparent); outline-offset: 2px; }
+  /* Windows high contrast: the system's colours, with edges where the design relies on fills. */
+  @media (forced-colors: active) {
+    #confirm, textarea, .btn { border: 1px solid CanvasText; }
+    .btn { forced-color-adjust: none; background: ButtonFace; color: ButtonText; }
+    button:focus-visible, textarea:focus { outline: 2px solid Highlight; }
+  }
   #confirm .what { font-weight: 600; overflow-wrap: anywhere; }
   #confirm .why { font-size: 12.5px; color: var(--muted); }
   #confirm .why:empty { display: none; }
@@ -68,14 +76,14 @@
 </head>
 <body data-state="idle">
 <header>
-  <span class="dot"></span>
+  <span class="dot" aria-hidden="true"></span>
   <div class="titles"><div id="title">Task</div><div id="where"></div></div>
-  <button class="win" id="min" title="Tuck into the island (it keeps working)"><svg viewBox="0 0 12 12"><path d="M2 6.5 H10"/></svg></button>
-  <button class="win close" id="close" title="Close and stop this task"><svg viewBox="0 0 12 12"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5"/></svg></button>
+  <button class="win" id="min" aria-label="Tuck into the island" title="Tuck into the island (it keeps working)"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5 H10"/></svg></button>
+  <button class="win close" id="close" aria-label="Close and stop this task" title="Close and stop this task"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5"/></svg></button>
 </header>
-<div id="log"></div>
-<div id="confirm">
-  <div>Can I do this? <span class="what" id="what"></span></div>
+<div id="log" role="log" aria-live="polite" aria-label="What the task did"></div>
+<div id="confirm" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="why" tabindex="-1">
+  <div id="confirm-title">Can I do this? <span class="what" id="what"></span></div>
   <div class="why" id="why"></div>
   <div class="row">
     <button class="btn" data-d="allow">Allow</button>
@@ -84,7 +92,7 @@
   </div>
 </div>
 <form id="form">
-  <textarea id="input" rows="1" spellcheck="false" placeholder="Give this task a job…"></textarea>
+  <textarea id="input" rows="1" spellcheck="false" aria-label="Give this task a job" placeholder="Give this task a job…"></textarea>
   <button class="btn" id="send" type="submit">Ask</button>
 </form>
 <script src="task.js"></script>

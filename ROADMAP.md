@@ -272,6 +272,12 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   electron-builder's own `minimatch`, at build time only, fixed upstream only by a major downgrade.
 - **4.5 Buddy's own windows for everyone.** Keyboard-only use of the bubble, cards and Settings; labels for screen
   readers (the bubble has one `aria` attribute today); Windows high-contrast; reduced motion everywhere.
+  **Done in part (2026-11-17):** every button and place to type has a spoken name; the bubble's and task windows'
+  answers are a polite live region (announced once complete, not word by word); approval cards are dialogs that take
+  focus themselves, never handing it to Allow; buttons show keyboard focus; every window has Windows high-contrast
+  rules and reduced motion. `test/pages.test.js` holds these, each rule broken once to see it fail, and the settings
+  e2e check saves a high-contrast screenshot. Not done: a pass with Narrator by hand, and the island, which never takes
+  the keyboard (its shortcuts are the keyboard route).
 - **4.6 Memory budget.** Idle under 200 MB, voice unloaded when unused (done), no growth over a day; add a check like
   `measure:idle` for memory.
   **Measured (2026-11-17):** `npm run measure:idle -- -MemoryMB 200` now reports memory too. Idle, a fresh copy holds

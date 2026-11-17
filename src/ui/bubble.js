@@ -11,6 +11,7 @@ let askSequence = 0;
 function setBusy(on) {
   busy = on;
   $("dot").classList.toggle("busy", on);
+  $("reply").setAttribute("aria-busy", String(on));
   $("stop").hidden = !on;
   $input().disabled = false;
   $("submit").textContent = on ? "Send" : "Ask";
@@ -223,6 +224,7 @@ window.buddy.onConfirm(({ summary, note }) => {
   $("why").textContent = note && note.toLowerCase() !== summary.toLowerCase() ? note : "";
   $("confirm").classList.add("on");
   confirmAt = performance.now();
+  $("confirm").focus();
 });
 
 // Nothing waits any more (answered elsewhere, or the asker stopped): the card comes down.

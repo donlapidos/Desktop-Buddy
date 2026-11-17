@@ -24,6 +24,9 @@ Hold one key to talk, and Buddy points sooner, even in apps with nothing it can 
 * **Folders Buddy reads without asking** (Settings › Agents): Documents, Desktop and Downloads to start, and you
   choose the rest. Pictures, Music, Videos and OneDrive folders now ask first unless you add them. A drive, your whole
   user folder, AppData and other people's folders can't be added.
+* **For keyboards, screen readers and high contrast:** every button and box in Buddy's windows has a name a screen
+  reader says, answers are read out once they're complete, an approval card takes the keyboard itself (so a stray
+  Enter can't approve), and Buddy's windows follow Windows high contrast and reduced motion.
 * A [security page](SECURITY.md): what Buddy can and can't touch, what your approval means, the limits we know about,
   and how to report a security problem privately.
 * "Works well" beside a model now means it passed Buddy's own checks, not just that it can use tools and see images.

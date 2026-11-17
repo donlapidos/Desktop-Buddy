@@ -336,6 +336,17 @@ function settingsTest(kit) {
     await win.webContents.executeJavaScript(`show("agents"), document.getElementById("folders").scrollIntoView({ block: "center" })`);
     await wait(400);
     fs.writeFileSync(path.join(out, "settings-agents-folders.png"), (await win.webContents.capturePage()).toPNG());
+    // Windows high contrast, emulated: the same page as someone using it sees it (switches, chips, focus).
+    try {
+      win.webContents.debugger.attach("1.3");
+      await win.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [{ name: "forced-colors", value: "active" }] });
+      await wait(400);
+      fs.writeFileSync(path.join(out, "settings-agents-contrast.png"), (await win.webContents.capturePage()).toPNG());
+      await win.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [] });
+      win.webContents.debugger.detach();
+    } catch (err) {
+      console.log("SETTINGS_CONTRAST", JSON.stringify({ skipped: String(err) }));
+    }
     changeSettings({ readFolders: null });
     // Routines: one saved, shown with its next run, and run now (no API key here, so it must say so, not call Claude).
     changeSettings({ routines: [{ id: "rtest1", name: "Inbox check", prompt: "Summarise my unread email.", schedule: { every: "weekday", time: "09:00", days: [], hours: 4 } }] });

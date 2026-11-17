@@ -27,6 +27,10 @@
   button:disabled { opacity: .4; cursor: default; }
   kbd { font: 10.5px "Schibsted Grotesk", sans-serif; opacity: .7; }
   body.done #bar, body.done #frame { display: none; }
+  button:focus-visible { outline: 2px solid color-mix(in srgb, var(--buddy) 80%, white); outline-offset: 2px; }
+  /* Windows high contrast: the system's colours, with an edge round the toolbar and its buttons. The still of the
+     screen keeps its own colours: it is what the user is marking. */
+  @media (forced-colors: active) { #bar, button { border: 1px solid CanvasText; } button:focus-visible { outline: 2px solid Highlight; } #shot { forced-color-adjust: none; } }
 </style>
 </head>
 <body>

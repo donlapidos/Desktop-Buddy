@@ -97,14 +97,16 @@
   #peek:not([data-state="confirm"]) .ask-only { display: none; }
   @media (prefers-reduced-motion: reduce) { #pill, #peek { transition: none; } #dot, .chip i, #meter i { animation: none !important; } }
   body.basic #task { display: none; }
+  /* Windows high contrast: the system's colours, with an edge round the pill and its buttons. */
+  @media (forced-colors: active) { #pill, #peek, #actions button, .chip { border: 1px solid CanvasText; } button:focus-visible { outline: 2px solid Highlight; } }
 </style>
 </head>
 <body data-state="idle">
 <div id="zone">
   <div id="pill">
-    <span id="dot"></span>
-    <span id="meter"><i></i><i></i><i></i><i></i></span>
-    <span id="label">Buddy</span>
+    <span id="dot" aria-hidden="true"></span>
+    <span id="meter" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    <span id="label" role="status" aria-live="polite">Buddy</span>
     <span id="hint"></span>
     <span id="chips"></span>
     <span id="actions">
@@ -117,7 +119,7 @@
   </div>
   <div id="peek">
     <div class="card">
-      <button class="shot" id="peek-open" title="Open this task"><img id="peek-img" alt=""></button>
+      <button class="shot" id="peek-open" aria-label="Open this task" title="Open this task"><img id="peek-img" alt=""></button>
       <div class="meta"><i></i><span class="title" id="peek-title"></span><span class="state" id="peek-state"></span></div>
       <div class="line" id="peek-line"></div>
       <div class="row">
