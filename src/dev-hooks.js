@@ -365,14 +365,18 @@ function settingsTest(kit) {
     } else console.log("SETTINGS_DICTATION", JSON.stringify({ skipped: "the test window didn't get the keyboard" }));
     pad.destroy();
     } else console.log("SETTINGS_DICTATION", JSON.stringify({ skipped: "not asked for (BUDDY_SETTINGS_TEST_DICTATION)" }));
-    // Language: Spanish spoken by the voice, heard through Buddy's own speech process with detection on.
+    // Language: Spanish spoken by the voice, heard through Buddy's own speech process with detection on. Skipped where
+    // the voice models aren't downloaded (BUDDY_E2E_NO_VOICE, set by `npm run e2e -- --no-voice` in CI).
     changeSettings({ language: "auto" });
-    voice.mute();
-    const clip = await voice.synthesize("Haz clic en la pestaña Fórmulas y luego elige Insertar función.", { lang: "es" });
-    const ratio = clip.rate / 16000;
-    const pcm = Float32Array.from({ length: Math.floor(clip.audio.length / ratio) }, (_, i) => clip.audio[Math.floor(i * ratio)]);
-    const t0 = Date.now();
-    console.log("SETTINGS_LANGUAGE", JSON.stringify({ ...(await voice.transcribe(pcm)), ms: Date.now() - t0 }));
+    if (process.env.BUDDY_E2E_NO_VOICE) console.log("SETTINGS_LANGUAGE", JSON.stringify({ skipped: "no voice models" }));
+    else {
+      voice.mute();
+      const clip = await voice.synthesize("Haz clic en la pestaña Fórmulas y luego elige Insertar función.", { lang: "es" });
+      const ratio = clip.rate / 16000;
+      const pcm = Float32Array.from({ length: Math.floor(clip.audio.length / ratio) }, (_, i) => clip.audio[Math.floor(i * ratio)]);
+      const t0 = Date.now();
+      console.log("SETTINGS_LANGUAGE", JSON.stringify({ ...(await voice.transcribe(pcm)), ms: Date.now() - t0 }));
+    }
     // A key for "Other server" goes only to the address it was saved for.
     changeSettings({ provider: "custom", providerURLs: { custom: "https://a.example/v1" } });
     saveApiKey("key-for-server-a-0123456789", "custom");

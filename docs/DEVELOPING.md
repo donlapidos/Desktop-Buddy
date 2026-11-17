@@ -29,7 +29,8 @@ read-only command path, the mode and task-state tables, the island's state, the 
 do, the file tools' places and the PowerShell guard, undo, keys bound to their address, sessions from AI apps, history
 trimming, the SVG sanitizer and escaping in explainers, the reading view, spoken text, and never overwriting a
 document. CI (`.github/workflows/ci.yml`) runs `npm run check`, `npm test` and `npm audit` on Windows for every push
-and pull request.
+to `main` and every pull request, and, beside them, `npm run e2e -- --no-voice` (every check below but voice; a failed
+run keeps `e2e-out/` as a download for a week).
 
 `npm run e2e` runs the real app end to end, each check in a separate test copy with its own data folder (your Buddy,
 settings and files are left alone): **markerStartup** (generated captures, parallel preparation, cancellation,
@@ -42,7 +43,8 @@ is made, listed in Activity and undone; another window can't answer the card), *
 key that must stay with its server), **explainer**, **voice**, and **firstrun** (a plain test copy must leave your
 startup entries and shortcuts as they were). Any check whose copy logged a refused mode or task-state change fails.
 `npm run e2e -- --exe "<path to Desktop Buddy.exe>"` runs them against a built or installed copy. `npm run e2e -- --interactive` adds the marker (a full-screen freeze frame) and the approval
-clicks below (it moves the mouse). Screenshots and logs go to `e2e-out/`.
+clicks below (it moves the mouse). `--no-voice` is for a PC without the voice models: it leaves out the voice check
+and the settings check's language part. Screenshots and logs go to `e2e-out/`.
 
 `npm run eval -- --provider openai --model <id>` runs the model check (seven sample Buddy tasks, scored) from the
 command line, with the key from the provider's usual variable; Settings › AI & privacy › **Check this model** runs the

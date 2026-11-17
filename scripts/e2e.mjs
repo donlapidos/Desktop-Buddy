@@ -4,6 +4,7 @@
 //   npm run e2e                  context, conversation, files, welcome, tasks, settings, explainer, voice, island, firstrun
 //   npm run e2e -- tasks voice   only those
 //   npm run e2e -- --exe "<path to Desktop Buddy.exe>"   against a built or installed copy
+//   npm run e2e -- --no-voice    without the voice models (CI): the voice check and hearing a language are left out
 //   npm run e2e -- --interactive also the marker (a full-screen freeze frame) and approval clicks (moves the mouse)
 // Windows appear briefly while it runs. Nothing touches the clipboard, real files or the mouse unless --interactive.
 import { spawn, spawnSync } from "node:child_process";
@@ -21,6 +22,9 @@ fs.mkdirSync(out, { recursive: true });
 const exeArg = process.argv.indexOf("--exe");
 const installed = exeArg >= 0 ? path.resolve(process.argv[exeArg + 1]) : null;
 const realModels = path.join(process.env.APPDATA ?? "", "desktop-buddy", "models");
+// --no-voice: where the voice models aren't downloaded (CI). The settings check skips hearing Spanish, and the voice
+// check is left out even when named.
+const noVoice = process.argv.includes("--no-voice");
 
 // ---------- A scripted OpenAI-style model, for the files check ----------
 
@@ -71,7 +75,7 @@ function runCopy(name, env, done, timeoutMs = 90_000, seed = {}) {
   // The source tree on Electron, or (--exe) a built or installed Buddy.
   const child = spawn(installed ?? electron, [...(installed ? [] : ["."]), `--user-data-dir=${data}`], {
     cwd: installed ? path.dirname(installed) : app,
-    env: { ...clean, BUDDY_E2E: "1", ...(fs.existsSync(realModels) ? { BUDDY_MODELS_DIR: realModels } : {}), ...env },
+    env: { ...clean, BUDDY_E2E: "1", ...(fs.existsSync(realModels) ? { BUDDY_MODELS_DIR: realModels } : {}), ...(noVoice ? { BUDDY_E2E_NO_VOICE: "1" } : {}), ...env },
     windowsHide: false,
   });
   let log = "";
@@ -373,7 +377,7 @@ const CHECKS = {
         ];
       })(),
       lang.lang && lang.lang !== "es" && `Spanish heard as ${lang.lang}`,
-      !lang.text && "nothing heard in the language check (are the voice models downloaded?)",
+      !lang.text && !(noVoice && lang.skipped) && "nothing heard in the language check (are the voice models downloaded?)",
       !fs.existsSync(path.join(out, "settings-claude.png")) && "no Settings screenshots",
       !markers.SETTINGS_REPORT?.[0]?.shown && "Report a problem didn't show its preview",
       markers.SETTINGS_REPORT?.[0]?.shown && !markers.SETTINGS_REPORT[0].version && "the problem report didn't say Buddy's version",
@@ -477,7 +481,7 @@ const exeAt = args.indexOf("--exe");
 if (exeAt >= 0) args.splice(exeAt, 2);
 const interactive = args.includes("--interactive");
 const named = args.filter((a) => !a.startsWith("--"));
-const chosen = Object.entries(CHECKS).filter(([name, c]) => (named.length ? named.includes(name) : typeof c === "function" || (interactive && c.interactive)));
+const chosen = Object.entries(CHECKS).filter(([name, c]) => (named.length ? named.includes(name) : typeof c === "function" || (interactive && c.interactive)) && !(noVoice && name === "voice"));
 if (!chosen.length) {
   console.error(`No such check. Checks: ${Object.keys(CHECKS).join(", ")}`);
   process.exit(2);
