@@ -28,6 +28,7 @@
     "src/policy.js",
     "src/routines.js",
     "src/settings-window.js",
+    "src/provider-state.js",
     "src/updates.js",
     "src/speakable.js",
     "src/reply-stream.js",
