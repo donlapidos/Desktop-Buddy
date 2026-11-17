@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.9.0.schema.json
+
+PackageIdentifier: donlapidos.DesktopBuddy
+PackageVersion: 0.4.0
+PackageLocale: en-US
+Publisher: donlapidos
+PublisherUrl: https://github.com/donlapidos
+PublisherSupportUrl: https://github.com/donlapidos/desktop-buddy/issues
+PackageName: Desktop Buddy
+PackageUrl: https://donlapidos.github.io/desktop-buddy/
+License: Apache-2.0
+LicenseUrl: https://github.com/donlapidos/desktop-buddy/blob/main/LICENSE
+Copyright: Copyright (c) 2026 donlapidos
+ShortDescription: Shows you where to click, in any Windows app, with the AI you choose.
+Description: |-
+  Ask Desktop Buddy how to do something in the app in front of you. Its pointer flies to the button you need and
+  says what to do, one step at a time, while you do the clicking. It works with the AI app you already use, a key
+  from an AI company, or a free model on your own PC. It does things for you only when you ask, and asks before
+  each one unless you tell it otherwise.
+Moniker: desktop-buddy
+Tags:
+  - accessibility
+  - ai
+  - assistant
+  - guide
+  - help
+  - tutorial
+ReleaseNotesUrl: https://github.com/donlapidos/desktop-buddy/releases/tag/v0.4.0
+ManifestType: defaultLocale
+ManifestVersion: 1.9.0

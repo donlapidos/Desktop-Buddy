@@ -22,10 +22,13 @@ const SIZE = { width: 640, height: 600 };
  *   setStartup: (on: boolean) => void,
  *   clear: (what: "explainers" | "log") => void,
  *   openData: () => void,
+ *   addFolder: (win: BrowserWindow) => Promise<string | null>, // Agents › Add a folder; why it can't be added, or null
  *   runRoutine: (id: string) => Promise<string | null>,    // start a routine now; returns an error message, or null
  *   apps: () => Promise<string[]>,                          // apps with a window open, for suggestions
  *   plusInterest: () => void,                               // open the Buddy Plus interest form
  *   requestFeature: () => void,                             // open a pre-filled feature request in the browser
+ *   report: () => { title: string, body: string },          // Report a problem: the report, for the user to read first
+ *   sendReport: (how: string, body: string) => Promise<{ copied: boolean, opened: boolean }>, // only on their button
  *   checkUpdates: () => void,
  *   installUpdate: () => void,                              // restart into a downloaded update
  *   openReleases: () => void,
@@ -94,9 +97,12 @@ export function createSettingsWindow(deps) {
     return deps.state();
   });
   handle("settings-open-data", () => deps.openData());
+  handle("settings-folder-add", async () => ({ error: win ? await deps.addFolder(win) : null, state: deps.state() }));
   handle("settings-run-routine", async (id) => ({ error: await deps.runRoutine(String(id)), state: deps.state() }));
   handle("settings-apps", () => deps.apps());
   handle("settings-feature", () => deps.requestFeature());
+  handle("settings-report", () => deps.report());
+  handle("settings-report-send", (how, body) => deps.sendReport(how === "copy" ? "copy" : "issue", String(body ?? "")));
   handle("settings-plus", () => deps.plusInterest());
   handle("settings-update-check", () => deps.checkUpdates());
   handle("settings-update-install", () => deps.installUpdate());

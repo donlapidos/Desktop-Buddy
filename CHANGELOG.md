@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+* **Folders Buddy reads without asking** (Settings › Agents): Documents, Desktop and Downloads to start, and you
+  choose the rest. Pictures, Music, Videos and OneDrive folders now ask first unless you add them. A drive, your whole
+  user folder, AppData and other people's folders can't be added.
+* A [security page](SECURITY.md): what Buddy can and can't touch, what your approval means, the limits we know about,
+  and how to report a security problem privately.
+
+## 0.4.0 (2026-11-16)
+
+Buddy can now draw on your screen (circles, arrows, labels, drag paths) to show you what goes where.
+Answers appear as Buddy writes them, and you can change your question halfway through, by typing or by talking.
+Buddy sees a fresh picture of the window you ask about, and Mark opens and draws faster.
+Hold one key to talk, and Buddy points sooner, even in apps with nothing it can name.
+
+* **Hold to talk:** hold Ctrl+Alt+B (or Ctrl+Alt+T), say your question, and let go; a quick press works as before.
+  Buddy watches the keyboard only while the key is down. Settings › Shortcuts › Hold to talk turns it off.
+* **Voice at setup:** a new Buddy offers its 275 MB voice download once setup is done, instead of starting it
+  unasked.
+* **Faster pointing:** the window read taken when the bubble opens is used for your question instead of reading the
+  window again, a guided route starts from that read, and the first step is shown while the AI is still writing the
+  rest.
+* **Pointing by sight:** where an app has no control Buddy can name (a drawing canvas, a scanned PDF, a remote
+  desktop), an AI that can see points at a spot on the screenshot, shown as a soft "about here" ring. Buddy never
+  clicks or types on a guessed spot.
+* **The essentials first:** a new Buddy starts with Ask, Talk and Mark. Task windows, routines, and working with files,
+  web pages and Word documents come with Settings › Agents › Show advanced features (on for existing users).
+* **Report a problem** (tray, and Settings › About): shows you the whole report, without keys or your files' paths,
+  before anything is sent.
+* "Works well" beside a model now means it passed Buddy's own checks, not just that it can use tools and see images.
+* Each guided question records how long it took to put the pointer up (`npm run measure:latency`).
+
 * Mark prepares its hidden drawing window and captures the screen in parallel. Esc can cancel preparation, and a
   ten-second deadline also covers waiting for the image to load.
 * Late captures and retired windows cannot cancel or reopen a newer Mark session. Overlapping captures keep

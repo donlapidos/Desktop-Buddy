@@ -1,7 +1,7 @@
 // Desktop Buddy: tray app, island, global hotkeys, pointer overlay, speech bubble and explainers around the Brain.
 import {
-  app, BrowserWindow, clipboard, ClipboardItem, desktopCapturer, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, screen,
-  session, shell, systemPreferences, Tray, webContents,
+  app, BrowserWindow, clipboard, ClipboardItem, desktopCapturer, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, screen,
+  session, shell, Tray, webContents,
 } from "electron";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
@@ -9,34 +9,40 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SAFE_TOOLS, startBridge } from "./bridge.js";
 import { APPS, APP_IDS, allowRules, appStatus, claudeCodeExe, launchSpec, quickChatArgs, quickChatConfig, setApp, setCodeAllowed, staleApps } from "./ai-apps.js";
-import { Brain, SESSION_PREFIX, failureFor, setAgentPolicy, setBrainDefaults, takeTurn } from "./brain.js";
-import { keyFor, keyRecord, originOf } from "./keys.js";
-import { PROVIDERS, ProviderError, addressProblem, capsOf, describeModels, keyFits, learnCaps, listModels, noteTested, providerForKey, providerOfKey, testedOf, useCapsStore, verdict } from "./providers.js";
-import { CASES, runEvals } from "./evals.js";
+import { Brain, SESSION_PREFIX, setAgentPolicy, setBrainDefaults, takeTurn } from "./brain.js";
+import { PROVIDERS, testedOf, verdict } from "./providers.js";
+import { CASES } from "./evals.js";
 import { createActivity, pruneUndo } from "./activity.js";
+import { createProviderState } from "./provider-state.js";
+import { grantProblem, placesHere } from "./pc-tools.js";
 import { createLog } from "./log.js";
+import { questionTiming } from "./latency.js";
+import { createHoldKey, uiohookHook } from "./hold-key.js";
 import { createApprovalQueue } from "./approval-queue.js";
 import { createAppSessions } from "./app-sessions.js";
 import { islandView } from "./island-state.js";
 import { dictationPaste, returnFocus } from "./approvals.js";
-import { elementAt, elementsAt, foregroundWindow, listWindows, perform, resolveBinary, windowAt, windowsAt } from "./desktop.js";
-import { renderExplainer } from "./explainer.js";
+import { elementAt, foregroundWindow, listWindows, perform, resolveBinary, windowAt } from "./desktop.js";
 import { createTasks } from "./tasks.js";
 import { asDipPoint, asDipRect, asPhysicalPoint, asPhysicalRect } from "./geometry.js";
 import { BUSY, canMove } from "./modes.js";
 import {
-  ACCENTS, ADDRESS_PROVIDERS, DEFAULTS, EFFORTS, HOTKEY_NAMES, MODELS, SPEED, VOICES, load as loadSettings, normalize as normalizeSettings,
+  ACCENTS, DEFAULTS, EFFORTS, HOTKEY_NAMES, MODELS, SPEED, VOICES, load as loadSettings, normalize as normalizeSettings,
   save as saveSettings, update as updateSettings,
 } from "./settings.js";
 import { createSettingsWindow } from "./settings-window.js";
+import { lockExplainerSession, openExplainer as openPlate } from "./explainer-window.js";
+import { setStartsWithWindows, startsWithWindows, writeShortcuts as writeLaunchShortcuts } from "./launch.js";
+import { PLUS_INTEREST, RELEASES, problemReport, requestFeature, sendProblemReport } from "./feedback.js";
 import { createUpdates } from "./updates.js";
 import { describe as describeSchedule, nextRun, verdict as routineVerdict } from "./routines.js";
 import os from "node:os";
 import { createVoice } from "./voice.js";
 import { createReplyStream } from "./reply-stream.js";
 import { createTurnQueue } from "./turn-queue.js";
-import { centerOf, createAnnotationLayer, insideBox, sameBox } from "./annotations.js";
-import { abortable, prepareMarker } from "./marker-startup.js";
+import { centerOf, createAnnotationLayer, guessGone, insideBox, sameBox } from "./annotations.js";
+import { abortable } from "./marker-startup.js";
+import { createMarker } from "./marker.js";
 import { appKey } from "./policy.js";
 import { appWords, findLocal, localDoor, tourNext, tourTip } from "./welcome.js";
 import { aboutMoney, addCall, capProblem, createLedger, moneyWords, noSpend, priceOf, spendLine, tokenWords } from "./costs.js";
@@ -60,7 +66,6 @@ const BUBBLE_FOLD_MS = 300; // matches the close transition in bubble.html
 // click-through unless a preview is showing.
 const ISLAND = { width: 460, height: 440 };
 const PEEK_EVERY_MS = 800;
-const EXPLAINER = { width: 640, height: 760 };
 const CROP = { width: 1200, height: 800 }; // physical px around the pointer sent with an explain request
 
 // The installed app's shortcuts carry the installer's app ID (electron-builder's appId), so the taskbar groups Buddy's
@@ -86,6 +91,9 @@ app.on("second-instance", () => summon());
 let tray, bubble, island, brain, tasks, voice, updates;
 let answeringBrain = null;
 let heardLang = "en"; // the language of the last thing heard, waiting for the bubble to send it as a question
+let heardTiming = null; // when that speech ended and how long hearing it took, for the ask-to-pointer timing
+/** @type {import("./latency.js").QuestionTiming | null} the bubble question being answered's ask-to-pointer clock */
+let questionClock = null;
 
 // The answer running (or the last one): whether its question was said out loud and in what language (spoken
 // answers are read back, in that language), when it started, and whether it showed a plate. Each answer replaces it
@@ -158,12 +166,6 @@ function enter(next) {
   showIsland();
   return true;
 }
-/** @type {{ n: number, displayId: number, points: DipPoint[], bbox: DipRect }[]} */
-let marks = [];
-let pendingMarks = null; // what the user highlighted, waiting for their question
-let markWin = null; // the freeze-frame of the screen the user draws on
-let markDisplay = null;
-let markStartup = null;
 let displayCaptures = 0;
 let bubbleHideTimer = null;
 
@@ -178,56 +180,21 @@ const toPhysicalRect = (r) => asPhysicalRect(process.platform === "win32" ? scre
 const toDipRect = (r) => asDipRect(process.platform === "win32" ? screen.screenToDipRect(null, r) : r);
 const cursor = () => asDipPoint(screen.getCursorScreenPoint());
 
-// ---------- API keys (encrypted at rest with the OS keychain), one per provider ----------
+// ---------- Who Buddy thinks with (provider-state.js): keys, addresses, model lists, the model check ----------
 
-// Anthropic's key keeps the file name it had before Buddy knew other providers.
-const keyFile = (/** @type {ProviderId} */ provider = currentProvider()) => path.join(app.getPath("userData"), provider === "anthropic" ? "api-key.bin" : `api-key-${provider}.bin`);
-const currentProvider = () => /** @type {ProviderId} */ (settings?.provider ?? "anthropic");
-const envKey = (/** @type {ProviderId} */ provider = currentProvider()) => process.env[PROVIDERS[provider].keyEnv ?? ""] || null;
-
-// A key for a server at an address the user chose ("Other server") is kept with that address, and only ever sent
-// there: change the address to another host and the saved key stays home until a key is entered for the new one.
-// (keys.js: keyRecord, keyFor.) Keys of providers at fixed addresses are kept as they are.
-const boundToAddress = (/** @type {ProviderId} */ provider) => ADDRESS_PROVIDERS.includes(provider);
-
-/** The saved key as stored: the key, and the address it was entered for (null for fixed-address providers). */
-function savedKey(/** @type {ProviderId} */ provider) {
-  try {
-    return keyRecord(safeStorage.decryptString(fs.readFileSync(keyFile(provider))));
-  } catch {
-    return null;
-  }
-}
-
-function loadApiKey(/** @type {ProviderId} */ provider = currentProvider()) {
-  if (envKey(provider)) return envKey(provider);
-  const saved = savedKey(provider);
-  if (!saved || !boundToAddress(provider)) return saved?.key ?? null;
-  // Saved before keys knew their address: it's tied to where it's used now, once.
-  if (!saved.origin) saveApiKey(saved.key, provider);
-  return keyFor(saved, providerURL(provider));
-}
-
-function saveApiKey(/** @type {string} */ key, /** @type {ProviderId} */ provider) {
-  fs.mkdirSync(path.dirname(keyFile(provider)), { recursive: true });
-  const stored = boundToAddress(provider) ? JSON.stringify({ key, origin: originOf(providerURL(provider)) }) : key;
-  fs.writeFileSync(keyFile(provider), safeStorage.encryptString(stored));
-}
-
-// The chat models each provider offers for the saved key (providers.js listModels), fetched when a key is saved or
-// the provider changes. Anthropic's are the fixed list in settings.js.
-/** @type {Map<ProviderId, { models: string[], error: string | null, loading: boolean }>} */
-const providerModelLists = new Map();
-
-// What each model of the current provider can do (providers.js verdict), for Settings to show beside it.
-function modelListState() {
-  const provider = currentProvider();
-  const list = providerModelLists.get(provider) ?? { models: [], error: null, loading: false };
-  const chosen = settings.providerModels[provider];
-  const shown = list.models.length ? list.models : chosen ? [chosen] : [];
-  const at = providerURL(provider) ?? undefined;
-  return { ...list, verdicts: Object.fromEntries(shown.map((m) => [m, verdict(capsOf(provider, at, m))])), tested: Object.fromEntries(shown.map((m) => [m, testedOf(at, m)])) };
-}
+const providerState = createProviderState({
+  dataDir: () => app.getPath("userData"),
+  safeStorage,
+  settings: () => settings,
+  change: (patch) => changeSettings(patch),
+  restart: () => startBrain(),
+  refresh: () => settingsWindow?.refresh(),
+  trace: (entry) => trace(entry),
+});
+const {
+  keyFile, currentProvider, envKey, boundToAddress, savedKey, loadApiKey, saveApiKey, setApiKey, providerURL, providerReady, setAddress,
+  providerModelLists, modelListState, refreshModels, loadModelCaps, chosenModel, checkModel,
+} = providerState;
 
 // ---------- Activity: what Buddy changed, and undoing it (activity.js), shown in Settings › Activity ----------
 
@@ -306,105 +273,6 @@ const recordChange = (/** @type {Omit<import("./activity.js").Change, "id" | "at
   activity?.add(change);
   trace({ kind: "activity", what: change.kind });
 };
-
-// ---------- Model check (evals.js), run from Settings on the chosen model with the saved key ----------
-
-/** @type {{ provider: ProviderId, model: string, running: boolean, stopped?: boolean, done: number, total: number, passed: number, missed: string[], abort: AbortController } | null} */
-let modelCheck = null;
-const chosenModel = () => (currentProvider() === "anthropic" ? settings.model : settings.providerModels[currentProvider()]);
-
-/** Starts a check of the chosen model, or stops the one running. Resolves an error message, or null. */
-function checkModel() {
-  if (modelCheck?.running) {
-    modelCheck.abort.abort();
-    return null;
-  }
-  const provider = currentProvider();
-  const model = chosenModel();
-  if (!providerReady() || !model) return "Choose a provider and a model first.";
-  const baseURL = providerURL(provider) ?? undefined;
-  const check = { provider, model, running: true, done: 0, total: CASES.length, passed: 0, missed: /** @type {string[]} */ ([]), abort: new AbortController() };
-  modelCheck = check;
-  runEvals({
-    provider,
-    apiKey: loadApiKey() ?? "",
-    baseURL,
-    signal: check.abort.signal,
-    onCase: (r) => {
-      trace({ kind: "model-check-case", model, id: r.id, passed: r.passed, problem: r.problem, ms: r.ms, turns: r.turns, shown: r.calls.map((c) => `${c.kind}:${c.name}`).slice(0, 12), reply: r.reply.slice(0, 300) });
-      check.done++;
-      if (r.passed) check.passed++;
-      else check.missed.push(r.title);
-      settingsWindow?.refresh();
-    },
-  })
-    .then((run) => {
-      trace({ kind: "model-check", provider, model, passed: run.passed, total: run.total, avgMs: run.avgMs, stopped: check.abort.signal.aborted });
-      if (!check.abort.signal.aborted && run.total === CASES.length) noteTested(baseURL, model, { passed: run.passed, total: run.total, avgMs: run.avgMs, at: new Date().toISOString() });
-    })
-    .catch((err) => trace({ kind: "model-check", provider, model, error: String(err) }))
-    .finally(() => {
-      check.running = false;
-      check.stopped = check.abort.signal.aborted;
-      settingsWindow?.refresh();
-    });
-  settingsWindow?.refresh();
-  return null;
-}
-
-// What Buddy has learned about models' abilities, kept between runs.
-const capsFile = () => path.join(app.getPath("userData"), "model-caps.json");
-function loadModelCaps() {
-  let saved = {};
-  try {
-    saved = JSON.parse(fs.readFileSync(capsFile(), "utf8"));
-  } catch {}
-  useCapsStore(saved, (entries) => {
-    try {
-      // Through a temporary file, so a crash mid-write can't leave half a file.
-      const tmp = `${capsFile()}.tmp`;
-      fs.writeFileSync(tmp, JSON.stringify(entries, null, 1));
-      fs.renameSync(tmp, capsFile());
-    } catch (err) {
-      trace({ kind: "model-caps-save-failed", message: String(err) });
-    }
-    settingsWindow?.refresh();
-  });
-}
-
-// Where a provider is: its fixed address, or the one the user gave (Ollama and LM Studio default to their usual one).
-const providerURL = (/** @type {ProviderId} */ provider = currentProvider()) => settings.providerURLs[provider] ?? PROVIDERS[provider].baseURL ?? null;
-
-// Whether Buddy can think with this provider: it has a key, or needs none and has an address.
-function providerReady(/** @type {ProviderId} */ provider = currentProvider()) {
-  if (PROVIDERS[provider].key === "required") return !!loadApiKey(provider);
-  return !!providerURL(provider);
-}
-
-/** Fetches the provider's models; picks the best one if none is chosen yet. Resolves an error message, or null. */
-async function refreshModels(/** @type {ProviderId} */ provider = currentProvider(), key = loadApiKey(provider) ?? "") {
-  const baseURL = providerURL(provider);
-  if (provider === "anthropic" || !baseURL || (PROVIDERS[provider].key === "required" && !key)) return null;
-  providerModelLists.set(provider, { models: providerModelLists.get(provider)?.models ?? [], error: null, loading: true });
-  settingsWindow?.refresh();
-  let error = null;
-  let models = [];
-  try {
-    models = await listModels(provider, key, { baseURL });
-    await describeModels(provider, key, models, { baseURL });
-    if (!models.length) error = PROVIDERS[provider].local ? `${PROVIDERS[provider].label} has no models yet. Download one in ${PROVIDERS[provider].label}, then come back.` : `${PROVIDERS[provider].label} didn't list any chat models for this key.`;
-  } catch (err) {
-    error = err instanceof ProviderError ? (failureFor(err.kind, provider) ?? err.message) : `Couldn't reach ${PROVIDERS[provider].label}: ${err?.message ?? err}`;
-  }
-  providerModelLists.set(provider, { models, error, loading: false });
-  const chosen = settings.providerModels[provider];
-  // The default is the best-placed model known to work well, else the first that isn't known to lack tools.
-  const fit = (want) => models.find((m) => want.includes(verdict(capsOf(provider, baseURL, m))));
-  const pick = fit(["good"]) ?? fit(["unknown", "no_images"]) ?? models[0];
-  if (models.length && (!chosen || !models.includes(chosen))) changeSettings({ providerModels: { [provider]: pick } });
-  else settingsWindow?.refresh();
-  return error;
-}
 
 // ---------- Overlay: one transparent, click-through window per display ----------
 
@@ -536,16 +404,40 @@ async function showAnnotations(items, context, owner = "bubble") {
   return shown;
 }
 
-/** @param {PhysicalRect} bounds @param {string} caption @param {string} [owner] */
-function point(bounds, caption, owner = "bubble") {
+/** @param {PhysicalRect} bounds @param {string} caption @param {string} [owner] @param {{ guess?: boolean }} [how] */
+function point(bounds, caption, owner = "bubble", { guess = false } = {}) {
   annotationLayer.clear();
   pointer.annotation = false;
   pointer.owner = owner;
   pointer.n++;
   const { win, rect } = toLocalRect(bounds);
   for (const other of overlays.values()) if (other !== win) other.webContents.send("release");
-  win?.webContents.send("point", { rect, caption });
+  win?.webContents.send("point", { rect, caption, guess });
   return new Promise((r) => setTimeout(r, 900));
+}
+
+// A best guess from the screenshot, for something with no control to point at (brain.js spotBounds): a soft ring,
+// "about here". There is no control to follow, so it's let go as soon as the window it's on moves, changes size,
+// is minimized or loses focus, and after GUESS_MS in any case.
+const GUESS_MS = 10_000;
+/** @param {PhysicalRect} bounds @param {string} caption @param {any} window @param {string} [owner] */
+function guessPoint(bounds, caption, window, owner = "bubble") {
+  const flying = point(bounds, caption ? `${caption} (about here)` : "About here", owner, { guess: true });
+  const n = pointer.n;
+  const until = Date.now() + GUESS_MS;
+  const check = async () => {
+    if (pointer.n !== n || pointer.owner !== owner) return; // it pointed somewhere else meanwhile
+    const windows = await listWindows();
+    if (pointer.n !== n || pointer.owner !== owner) return;
+    const gone = guessGone(window, windows, ownPids());
+    if (!gone && Date.now() < until) return setTimeout(check, 700);
+    trace({ kind: "guess-cleared", why: gone ?? "timeout" });
+    pointer.owner = null;
+    pointer.n++;
+    broadcast("release");
+  };
+  setTimeout(check, 1200);
+  return flying;
 }
 
 // Lets go of the pointer after a moment, if `owner` still has it and hasn't pointed again.
@@ -643,7 +535,7 @@ function showIsland({ force = false } = {}) {
       saying,
       bubbleOpen: !!bubble && !bubble.isDestroyed() && bubble.isVisible(),
     });
-    const message = { ...view, hotkey: keyLabel(hotkey("ask")), talkKey: keyLabel(hotkey("talk")) };
+    const message = { ...view, hotkey: keyLabel(hotkey("ask")), talkKey: keyLabel(hotkey("talk")), advanced: settings.advanced };
     const key = JSON.stringify(message);
     if (key === islandShown) return;
     islandShown = key;
@@ -691,6 +583,8 @@ function createBubble() {
     if (e.message.startsWith("TRACE ")) trace({ kind: "bubble", note: e.message.slice(6) });
   });
   bubble.on("blur", () => {
+    // Out of the bubble and (likely) back in their window: what Buddy glanced at may have changed.
+    if (mode !== "working") brain?.staleGlance?.();
     if (mode === "idle") hideBubble();
   });
   // Closing the bubble ends the conversation about what was marked.
@@ -771,6 +665,8 @@ async function summon() {
     target: win ? `${win.app_name} — ${win.title}` : null,
     needsKey: !brain,
     tip: tourTipNow(),
+    voiceOffer: voiceOfferNow(),
+    advanced: settings.advanced,
   });
   showBubble();
 }
@@ -850,171 +746,41 @@ async function runExplain(dipPoint, question) {
   }
 }
 
-// ---------- Marker: highlight things on screen with a pen, then ask about them ----------
+// ---------- Marker (marker.js): highlight things on screen with a pen, then ask about them ----------
 
-/** @param {DipPoint[]} points @returns {DipRect} */
-function bboxOf(points, pad = 10) {
-  const xs = points.map((p) => p.x);
-  const ys = points.map((p) => p.y);
-  const x = Math.min(...xs) - pad;
-  const y = Math.min(...ys) - pad;
-  return asDipRect({ x, y, width: Math.max(...xs) + pad - x, height: Math.max(...ys) + pad - y });
-}
-
-// Marking draws on a still of the screen in an opaque window (like the Snipping Tool). Drawing straight on the
-// transparent overlay meant Windows repainted the whole screen for every stroke segment, which lagged.
-async function startMarking({ capture = grabDisplay, display = screen.getDisplayNearestPoint(cursor()), timeoutMs = 10000 } = {}) {
-  if (mode !== "idle") return;
-  if (!brain) return summon();
-  clearMarks();
-  enter("marking");
-  tourEvent("marked");
-  hideBubble({ now: true });
-  progress("Getting the screen ready…");
-  markDisplay = display;
-  const job = { abort: new AbortController(), started: Date.now(), display, ready: false, readyTimer: null };
-  markStartup = job;
-  globalShortcut.register("Escape", cancelMarking);
-  try {
-    const win = new BrowserWindow({
-      ...display.bounds,
-      frame: false,
-      resizable: false,
-      movable: false,
-      minimizable: false,
-      maximizable: false,
-      fullscreenable: false,
-      skipTaskbar: true,
-      hasShadow: false,
-      show: false,
-      backgroundColor: "#000000",
-      webPreferences: { preload: path.join(here, "preload.cjs"), backgroundThrottling: false },
-    });
-    markWin = win;
-    win.setAlwaysOnTop(true, "screen-saver");
-    win.on("closed", () => {
-      if (markWin === win) cancelMarking();
-    });
-    const prepared = await prepareMarker({
-      capture: async (signal) => { const shot = await capture(display, signal); if (signal.aborted) throw signal.reason; return shot.toPNG(); },
-      load: () => win.loadFile(path.join(here, "ui/marker.html")),
-      signal: job.abort.signal,
-      timeoutMs,
-    });
-    if (markStartup !== job || job.abort.signal.aborted || currentMode() !== "marking" || win.isDestroyed()) return;
-    trace({ kind: "mark-startup", captureMs: prepared.captureMs, loadMs: prepared.loadMs, totalMs: prepared.totalMs });
-    job.readyTimer = setTimeout(() => {
-      if (markStartup !== job || job.ready) return;
-      stopMarkMode(); enter("idle"); notice("The screen took too long. Try Mark again.");
-    }, Math.max(1, timeoutMs - (Date.now() - job.started)));
-    win.webContents.send("mark-start", { png: prepared.image });
-  } catch (err) {
-    if (markStartup !== job || job.abort.signal.aborted) return;
-    stopMarkMode();
-    enter("idle");
-    notice(`Couldn't start marking: ${err.message}`);
-  }
-}
-
-// Takes the still down; the caller decides what mode comes next.
-// `delay` keeps the still up a moment so the overlay can paint the finished marks underneath first.
-function stopMarkMode(delay = 0) {
-  const startup = markStartup;
-  markStartup = null;
-  clearTimeout(startup?.readyTimer);
-  startup?.abort.abort();
-  globalShortcut.unregister("Return");
-  globalShortcut.unregister("Escape");
-  const win = markWin;
-  markWin = null;
-  if (win && !win.isDestroyed()) setTimeout(() => win.isDestroyed() || win.destroy(), delay);
-}
-
-function clearMarks() {
-  marks = [];
-  pendingMarks = null;
-  broadcast("marks-clear");
-  brain?.marks?.clear();
-}
-
-function cancelMarking() {
-  if (mode !== "marking") return;
-  stopMarkMode();
-  clearMarks();
-  enter("idle");
-  showIsland();
-}
-
-const dedupe = (els) => [...new Map(els.map((e) => [e.path, e])).values()];
-const markLabel = (m) => {
-  const e = m.elements.find((x) => x.name) ?? m.elements[0];
-  const text = String(e?.name || e?.value || e?.role || "an area");
-  return text.length > 28 ? text.slice(0, 26) + "…" : text;
-};
-
-/** @param {{ image?: unknown, strokes?: unknown }} [result] what marker.html sent: untrusted, checked below */
-async function finishMarking({ image, strokes } = {}) {
-  if (mode !== "marking" || !markDisplay) return;
-  const display = markDisplay;
-  const valid = (Array.isArray(strokes) ? strokes : []).filter((s) => Array.isArray(s?.points) && s.points.length).slice(0, 50);
-  if (!valid.length || typeof image !== "string") return cancelMarking();
-
-  // Hand the marks to the overlay so they stay on screen, then let the still go.
-  const overlay = overlays.get(display.id);
-  marks = valid.map((s, i) => {
-    const local = s.points.slice(0, 4000).map((p) => ({ x: Number(p.x), y: Number(p.y) }));
-    overlay?.webContents.send("mark-drawn", { points: local, n: i + 1 });
-    const points = local.map((p) => asDipPoint({ x: display.bounds.x + p.x, y: display.bounds.y + p.y }));
-    return { n: i + 1, displayId: display.id, points, bbox: bboxOf(points) };
-  });
-  stopMarkMode(90);
-  enter("reading-marks");
-  progress("Reading what you marked…");
-  try {
-    // Sample each stroke at its start, middle and end, and read the elements under those points.
-    const samples = marks
-      .flatMap((m) => [m.points[0], m.points[Math.floor(m.points.length / 2)], m.points.at(-1)])
-      .map(toPhysicalPoint);
-    const wins = await windowsAt(samples, ownPids());
-    const groups = new Map();
-    samples.forEach((p, i) => {
-      if (!wins[i]) return;
-      if (!groups.has(wins[i].id)) groups.set(wins[i].id, { win: wins[i], idx: [] });
-      groups.get(wins[i].id).idx.push(i);
-    });
-    const found = new Array(samples.length).fill(null);
-    await Promise.all(
-      [...groups.values()].map(async ({ win, idx }) => {
-        const els = await elementsAt(win, idx.map((i) => samples[i]));
-        idx.forEach((i, j) => (found[i] = els[j]));
-      }),
-    );
-
-    pendingMarks = {
-      image,
-      target: wins.find(Boolean) ?? null,
-      marks: marks.map((m, i) => ({
-        n: m.n,
-        bounds: toPhysicalRect(m.bbox),
-        elements: dedupe(found.slice(i * 3, i * 3 + 3).filter(Boolean)),
-      })),
-    };
-    const last = marks.at(-1).bbox;
-    about = { window: pendingMarks.target, point: asDipPoint({ x: last.x + last.width, y: last.y + last.height }) };
+const marker = createMarker({
+  here,
+  mode: () => mode,
+  enter,
+  ready: () => !!brain,
+  summon: () => summon(),
+  marked: () => tourEvent("marked"),
+  hideBubble: () => hideBubble({ now: true }),
+  showAsk: (where, list) => {
+    about = where;
     const win = about.window;
     bubble.webContents.send("summon", { target: win ? win.app_name + " — " + win.title : null, needsKey: !brain });
-    bubble.webContents.send("marks", pendingMarks.marks.map((m) => ({ n: m.n, label: markLabel(m) })));
-    enter("idle");
+    bubble.webContents.send("marks", list);
     showBubble();
     showIsland();
-  } catch (err) {
-    enter("idle");
-    clearMarks();
-    notice("Couldn't read the marks: " + err.message);
-  }
-}
-
-const fromMarker = (e) => markWin && e.sender === markWin.webContents;
+  },
+  progress: (text) => progress(text),
+  notice: (text) => notice(text),
+  keepIsland: () => keepIsland(),
+  grabDisplay: (display, signal) => grabDisplay(display, signal),
+  cursor,
+  overlay: (id) => overlays.get(id),
+  cleared: () => {
+    broadcast("marks-clear");
+    brain?.marks?.clear();
+  },
+  toPhysicalPoint,
+  toPhysicalRect,
+  ownPids,
+  explain: (at) => runExplain(at),
+  trace: (entry) => trace(entry),
+});
+const { start: startMarking, stop: stopMarkMode, clear: clearMarks, cancel: cancelMarking } = marker;
 
 // Each window's messages are taken only from that window: every Buddy page shares one preload (and so could call any
 // of them), but only the bubble answers its approval card or asks a question, only the island acts for the island.
@@ -1033,95 +799,9 @@ function handleFrom(check, channel, fn) {
     throw new Error(`${channel} isn't taken from this window`);
   });
 }
-ipcMain.on("mark-ready", (e) => {
-  if (!fromMarker(e) || mode !== "marking" || !markStartup || markStartup.abort.signal.aborted) return;
-  markStartup.ready = true;
-  clearTimeout(markStartup.readyTimer);
-  trace({ kind: "mark-ready", ms: Date.now() - markStartup.started });
-  markWin.show();
-  markWin.setBounds(markDisplay.bounds); // Windows clamps oversized windows to the work area on create
-  markWin.focus();
-  keepIsland();
-  progress("Click to explain · draw to ask");
-  // Backups in case Windows refuses the still keyboard focus.
-  globalShortcut.register("Return", () => markWin?.webContents.send("mark-command", "done"));
-  globalShortcut.register("Escape", cancelMarking);
-});
-ipcMain.on("mark-count", (e, n) => {
-  if (fromMarker(e)) progress(n ? `${n} marked · Enter to ask` : "Click to explain · draw to ask");
-});
-ipcMain.on("mark-finish", (e, result) => {
-  if (fromMarker(e)) finishMarking(result);
-});
-ipcMain.on("mark-cancel", (e) => fromMarker(e) && cancelMarking());
-// A single click in mark mode (before anything is drawn) explains the thing clicked.
-ipcMain.on("mark-click", (e, local) => {
-  if (!fromMarker(e) || !local) return;
-  const dip = asDipPoint({ x: markDisplay.bounds.x + Number(local.x), y: markDisplay.bounds.y + Number(local.y) });
-  stopMarkMode();
-  enter("working");
-  progress("Looking at that…");
-  // Let the still close before the screen is captured for the explainer.
-  setTimeout(() => runExplain(dip), 120);
-});
-
-// Model-written plates run with JavaScript off, a strict CSP, and a session that refuses every network request.
-const EXPLAINER_PARTITION = "explainer";
-
-function lockExplainerSession() {
-  const plates = session.fromPartition(EXPLAINER_PARTITION);
-  plates.webRequest.onBeforeRequest((details, done) => {
-    done({ cancel: !/^(file|data):/.test(details.url) });
-  });
-  plates.setPermissionRequestHandler((_wc, _permission, done) => done(false));
-  // Only Buddy's voice page may open the microphone.
-  session.defaultSession.setPermissionRequestHandler((wc, permission, done) => {
-    done(permission !== "media" || wc.getURL().endsWith("/ui/voice.html"));
-  });
-}
-
-const appLabel = (win) => win?.app_name?.replace(/\.exe$/i, "") || null;
-
-// `near` is where the plate opens beside; `observed` is the window the subject was seen in. Callers pass their own,
-// so a task's plate doesn't borrow the bubble's place or app.
-/** @param {any} explainer @param {{ near?: DipPoint, observed?: { app_name?: string } | null }} [where] */
-function openExplainer(explainer, { near = cursor(), observed = null } = {}) {
-  const dir = path.join(app.getPath("userData"), "explainers");
-  fs.mkdirSync(dir, { recursive: true });
-  const plateNo = fs.readdirSync(dir).filter((f) => f.endsWith(".html")).length + 1;
-  const date = new Date().toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
-  const reducedMotion = process.platform === "win32" && systemPreferences.getAnimationSettings().prefersReducedMotion;
-  const page = renderExplainer(explainer, { plateNo, observedIn: appLabel(observed), date, reducedMotion });
-  const file = path.join(dir, `${Date.now()}.html`);
-  fs.writeFileSync(file, page);
-  const title = explainer.common_name ?? "Explainer";
-
-  const anchor = near;
-  const { workArea } = screen.getDisplayNearestPoint(anchor);
-  const w = Math.min(EXPLAINER.width, workArea.width - 32);
-  const h = Math.min(EXPLAINER.height, workArea.height - 32);
-  const right = anchor.x + 40 + w <= workArea.x + workArea.width;
-  const dark = nativeTheme.shouldUseDarkColors;
-  const win = new BrowserWindow({
-    width: w,
-    height: h,
-    x: Math.round(right ? anchor.x + 40 : Math.max(workArea.x + 16, anchor.x - 40 - w)),
-    y: Math.round(Math.min(Math.max(anchor.y - h / 3, workArea.y + 16), workArea.y + workArea.height - h - 16)),
-    title,
-    show: false,
-    titleBarStyle: "hidden",
-    titleBarOverlay: { color: dark ? "#131815" : "#f2f4f0", symbolColor: dark ? "#aab5ad" : "#4c5650", height: 40 },
-    backgroundColor: dark ? "#131815" : "#f2f4f0",
-    icon: ICON,
-    // JavaScript is on only for the motion player: each plate's CSP admits that one script by hash, the model's
-    // SVG is sanitized, and the partition still refuses every network request.
-    webPreferences: { javascript: true, sandbox: true, contextIsolation: true, nodeIntegration: false, partition: EXPLAINER_PARTITION, spellcheck: false },
-  });
-  win.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
-  win.webContents.on("will-navigate", (e) => e.preventDefault());
-  win.loadFile(file);
-  win.once("ready-to-show", () => win.showInactive());
-}
+// Explainer plates open in a window of their own (explainer-window.js), beside where the user was looking.
+/** @param {any} plate @param {{ near?: DipPoint, observed?: { app_name?: string } | null }} [where] */
+const openExplainer = (plate, { near = cursor(), observed = null } = {}) => openPlate(plate, { near, observed, dir: explainersDir(), icon: ICON });
 
 // ---------- IPC ----------
 
@@ -1137,9 +817,18 @@ async function answerQuestion(text, opts, isCurrent) {
   if (mode === "listening") voice.cancelListening();
   else if (mode !== "idle") return { reply: BUSY[mode] };
   enter("working");
+  // "Talking is ready" (or why it isn't) has been read by now; the tour's tip can have the space back.
+  if (voiceFetched) {
+    voiceFetched = null;
+    sendVoiceOffer();
+  }
   const engine = brain;
   answeringBrain = engine;
   startTurn({ spoken: !!opts?.spoken, lang: opts?.spoken ? heardLang : "en" });
+  const heard = turn.spoken ? heardTiming : null;
+  heardTiming = null;
+  const clock = questionTiming({ write: trace, voice: turn.spoken, at: heard?.at, heardMs: heard?.heardMs, provider: engine.provider, model: engine.model });
+  questionClock = clock;
   hushReply();
   replyMuted = false;
   releaseFocus();
@@ -1148,9 +837,8 @@ async function answerQuestion(text, opts, isCurrent) {
   const tally = engine.ui.spend;
   if (tally) tally.now = noSpend();
   try {
-    const withMarks = pendingMarks;
-    pendingMarks = null;
-    const how = { spoken: turn.spoken, lang: turn.lang };
+    const withMarks = marker.takePending();
+    const how = { spoken: turn.spoken, lang: turn.lang, timing: clock };
     reply = withMarks ? await engine.askWithMarks(text, withMarks, how) : await engine.ask(text, about.window, how);
   } catch (err) {
     hushReply();
@@ -1160,6 +848,7 @@ async function answerQuestion(text, opts, isCurrent) {
     answeringBrain = null;
     enter("idle");
     releaseLater("bubble");
+    clock.finish({ waitForAudio: !replyMuted && talksBack(turn.spoken) });
   }
   if (!isCurrent()) return { reply: null, superseded: true };
   notice(oneLine(reply));
@@ -1170,39 +859,6 @@ async function answerQuestion(text, opts, isCurrent) {
     if (!replyMuted && talksBack(turn.spoken)) speak(reply);
   }
   return { reply, spend: tally ? spendLine(tally.now) : null };
-}
-
-// A key that plainly belongs to another provider (sk-ant-, sk-or-, AIza) is saved for that one, which becomes the
-// provider Buddy uses. Other providers' keys are tried on their model list before they're kept. Resolves an error
-// message, or null.
-async function setApiKey(/** @type {string} */ key) {
-  const k = key.trim();
-  if (PROVIDERS[currentProvider()].key === "none") return `${PROVIDERS[currentProvider()].label} doesn't use a key.`;
-  const provider = providerForKey(k, currentProvider());
-  if (!keyFits(provider, k)) {
-    // A key that matches no provider's shape isn't "not OpenAI's": nobody chose OpenAI, it's only the fallback.
-    if (!providerOfKey(k)) return "That doesn't look like an API key. Anthropic keys start sk‑ant‑, OpenAI sk‑, OpenRouter sk‑or‑, Gemini AIza.";
-    return `That doesn't look like a key from ${PROVIDERS[provider].label}. Get one at ${PROVIDERS[provider].keyFrom}.`;
-  }
-  if (provider !== "anthropic") {
-    const error = await refreshModels(provider, k);
-    if (error && !providerModelLists.get(provider)?.models.length) return error;
-  }
-  saveApiKey(k, provider);
-  if (provider !== currentProvider()) changeSettings({ provider });
-  else startBrain();
-  return null;
-}
-
-/** Where Ollama, LM Studio or another server is. Models are listed from it right away. Resolves an error, or null. */
-async function setAddress(/** @type {string} */ url) {
-  const provider = currentProvider();
-  if (!ADDRESS_PROVIDERS.includes(provider)) return `${PROVIDERS[provider].label}'s address is fixed.`;
-  const address = url.trim().replace(/\/+$/, "");
-  const problem = addressProblem(address);
-  if (problem) return problem;
-  changeSettings({ providerURLs: { [provider]: address } });
-  return null;
 }
 
 handleFrom(fromBubble, "set-key", async (_e, key) => {
@@ -1219,6 +875,8 @@ const tourTipNow = () => tourTip(/** @type {import("./welcome.js").TourStep} */ 
 /** Moves the tour on, and shows the bubble the new tip (or none). */
 function tourEvent(/** @type {import("./welcome.js").TourEvent} */ event) {
   const next = tourNext(/** @type {import("./welcome.js").TourStep} */ (settings.tour), event);
+  // Setup just finished: offer the voice download too.
+  if (event === "setup") sendVoiceOffer();
   if (next === settings.tour) return;
   changeSettings({ tour: next });
   trace({ kind: "tour", step: next, event });
@@ -1227,6 +885,58 @@ function tourEvent(/** @type {import("./welcome.js").TourEvent} */ event) {
 
 onFrom(fromBubble, "tour", (_e, event) => {
   if (event === "skip" || event === "gotit") tourEvent(event);
+});
+
+// ---------- Voice ready at setup: the one-time download, offered rather than started ----------
+
+/** @type {null | { words: string }} the offered download while it runs: what it's fetching, how far */
+let voiceFetch = null;
+/** @type {null | "ready" | "failed"} how the offered download ended, shown for a moment */
+let voiceFetched = null;
+
+/** What the bubble's voice offer shows, or null for nothing. */
+function voiceOfferNow() {
+  if (!voice || !brain) return null;
+  if (voiceFetch) return { state: "fetching", text: voiceFetch.words };
+  if (voiceFetched === "ready") return { state: "done", text: settings.holdToTalk
+    ? `Talking is ready. Hold ${keyLabel(hotkey("ask"))}, say your question, and let go.`
+    : `Talking is ready. Press ${keyLabel(hotkey("talk"))} and say your question.` };
+  if (voiceFetched === "failed") return { state: "done", text: "I couldn't download my voice just now. I'll try again the first time you talk to me." };
+  if (settings.voiceSetup !== "ask" || voice.installed()) return null;
+  return { state: "offer", text: "Want to talk to me out loud? It needs a one-time download (275 MB, about a minute)." };
+}
+const sendVoiceOffer = () => bubble?.webContents.send("voice-offer", voiceOfferNow());
+
+/** Download progress from voice.js, while the offered download runs. */
+function voiceFetchProgress(/** @type {{ what: string, loaded: number, total: number }} */ info) {
+  if (!voiceFetch) return;
+  const words = `Getting my ${info.what === "speaking" ? "voice" : "ears"} ready… ${Math.round((100 * info.loaded) / info.total)}%`;
+  if (words === voiceFetch.words) return;
+  voiceFetch.words = words;
+  sendVoiceOffer();
+}
+
+onFrom(fromBubble, "voice-offer", async (_e, answer) => {
+  if (!voice || voiceFetch) return;
+  trace({ kind: "voice-offer", answer });
+  if (answer === "no") {
+    changeSettings({ voiceSetup: "no" });
+    return sendVoiceOffer();
+  }
+  if (answer !== "yes") return;
+  changeSettings({ voiceSetup: "yes" });
+  voiceFetch = { words: "Getting my voice ready…" };
+  sendVoiceOffer();
+  try {
+    await voice.prepare();
+  } catch {}
+  voiceFetch = null;
+  voiceFetched = voice.installed() ? "ready" : "failed";
+  sendVoiceOffer();
+  setTimeout(() => {
+    voiceFetched = null;
+    sendVoiceOffer();
+  }, 10_000);
 });
 
 // ---------- First-run setup in the bubble (welcome.js): an AI app, a model on this PC, or a key ----------
@@ -1298,7 +1008,7 @@ onFrom(fromIsland, "island-action", (_e, action) => {
   if (verb === "ask") summon();
   else if (verb === "settings") settingsWindow.open();
   else if (verb === "mark") startMarking();
-  else if (verb === "talk") talk();
+  else if (verb === "talk") talkByClick();
   else if (verb === "hush") hushReply();
   else if (verb === "show") showBubble({ focus: false });
   // The island faded an outcome: it has been seen.
@@ -1365,13 +1075,13 @@ function answerApproval(decision) {
 
 // When the bubble's own conversation starts guiding, the bubble folds back into the island: the pointer and its
 // caption carry the step, and the bubble would otherwise sit over the ribbon or dialog they need to click.
-/** @param {PhysicalRect} bounds @param {string} caption */
-function guidePoint(bounds, caption) {
+/** @param {PhysicalRect} bounds @param {string} caption @param {any} [guessIn] the window, when it's a best guess (guessPoint) */
+function guidePoint(bounds, caption, guessIn = null) {
   liveReply.cancel();
   if (mode === "working" && bubble.isVisible() && !waitingForOk()) hideBubble();
   // In a spoken conversation Buddy says each step as it points, the way a person beside you would.
   if (caption && talksBack(turn.spoken)) voice.say(caption);
-  return point(bounds, caption);
+  return guessIn ? guessPoint(bounds, caption, guessIn) : point(bounds, caption);
 }
 
 // ---------- Voice: talk to Buddy, and hear it talk back ----------
@@ -1401,12 +1111,23 @@ async function talk() {
   if (mode !== "idle") return wasSpeaking || progress(BUSY[mode]);
   if (!brain) return summon();
   enter("listening");
-  if (bubble.isVisible()) showBubble();
-  else await summon();
+  if (bubble.isVisible()) {
+    showBubble();
+    // Read their window while they speak, so the answer doesn't wait for it after they finish.
+    brain.glance?.(about.window, { keep: true });
+  } else await summon();
   bubble.webContents.send("listening", true);
-  progress("Listening…");
-  const { text, error, lang } = await voice.listen();
+  progress(talkHold ? "Listening… let go when you're done" : "Listening…");
+  const listening = voice.listen();
+  // The Talk key may have been held, or already let go, while the bubble was opening.
+  if (talkHold === "held") voice.holdListening();
+  else if (talkHold === "released") {
+    talkHold = null;
+    voice.finishListening();
+  }
+  const { text, error, lang, heardMs, endedAt } = await listening;
   heardLang = lang ?? "en";
+  heardTiming = text && endedAt ? { at: endedAt, heardMs } : null;
   bubble.webContents.send("listening", false);
   // Something else took over meanwhile (they typed the question instead): leave it be.
   if (currentMode() !== "listening") return;
@@ -1414,6 +1135,68 @@ async function talk() {
   if (text) return bubble.webContents.send("voice-text", text);
   if (error === "cancelled") return showIsland();
   notice(HEARD_ERRORS[error] ?? `Couldn't hear you: ${error}`);
+}
+
+// ---------- Hold to talk: one key, tapped to type or held to talk ----------
+
+// Holding the Ask or Talk shortcut talks to Buddy until it's let go; a tap keeps what each did before (Ask opens or
+// closes the bubble, Talk listens until a pause). The keyboard hook that sees the release exists only between the press
+// and the release (hold-key.js). `talkHold` is that press's state for talk(): null, "held" or "released".
+/** @type {null | "held" | "released"} */
+let talkHold = null;
+/** @type {import("./hold-key.js").KeyHook} */
+let keyHook = uiohookHook();
+/** @type {{ name: string, bubbleWasOpen: boolean } | null} */
+let pressedKey = null;
+const holdKey = createHoldKey({
+  hook: { start: (onKeyUp) => keyHook.start(onKeyUp), stop: () => keyHook.stop() },
+  // End-to-end checks shorten the wait for a release that never comes.
+  releaseTimeoutMs: Number(process.env.BUDDY_E2E && process.env.BUDDY_HOLD_TIMEOUT_MS) || undefined,
+  trace,
+  onTap: () => {
+    const p = pressedKey;
+    pressedKey = null;
+    talkHold = null;
+    if (p?.name === "ask" && p.bubbleWasOpen) toggle();
+  },
+  onHoldStart: () => {
+    talkHold = "held";
+    if (pressedKey?.name === "ask") talk();
+    // Already listening: keep going through pauses. Still opening the bubble: talk() applies it once listening starts.
+    else if (mode === "listening" && voice?.listening) voice.holdListening();
+  },
+  onHoldEnd: ({ timedOut }) => {
+    pressedKey = null;
+    if (timedOut) trace({ kind: "hold-released-late" });
+    // Let go while listening: that's the end of the question. Let go before listening began (the bubble was still
+    // opening): talk() ends it as soon as it starts.
+    if (mode === "listening" && voice?.listening) {
+      talkHold = null;
+      voice.finishListening();
+    } else talkHold = "released";
+  },
+});
+
+// Talk from a click (the bubble's mic, the island, the tray): no key is held.
+const talkByClick = () => {
+  talkHold = null;
+  return talk();
+};
+
+/** A global shortcut fired. @param {import("./settings.js").HotkeyName} name */
+function pressHotkey(name) {
+  if (!settings.holdToTalk || !voice || (name !== "ask" && name !== "talk")) return HOTKEY_ACTIONS[name]();
+  if (holdKey.watching) return; // the key repeating while held
+  const bubbleWasOpen = !!bubble?.isVisible();
+  pressedKey = { name, bubbleWasOpen };
+  talkHold = null;
+  if (!holdKey.pressed(hotkey(name))) {
+    pressedKey = null;
+    return HOTKEY_ACTIONS[name]();
+  }
+  // Ask opens the bubble at once (a tap on an open one closes it, on release); Talk starts listening at once.
+  if (name === "talk") talk();
+  else if (!bubbleWasOpen) toggle();
 }
 
 // ---------- Dictation: say it, and it's typed where you are ----------
@@ -1473,7 +1256,7 @@ function speak(text) {
   saying = oneLine(text);
   voice.say(text);
 }
-onFrom(fromBubble, "talk", () => talk());
+onFrom(fromBubble, "talk", () => talkByClick());
 
 let downloadSettle = null; // returns the island to rest once download progress stops coming
 function onVoiceState(state, info) {
@@ -1482,6 +1265,7 @@ function onVoiceState(state, info) {
     islandFacts.transcribing = true;
     showIsland();
   } else if (state === "downloading") {
+    voiceFetchProgress(/** @type {any} */ (info));
     islandFacts.download = `Getting Buddy's ${info.what === "speaking" ? "voice" : "ears"} ready… ${Math.round((100 * info.loaded) / info.total)}%`;
     showIsland();
     clearTimeout(downloadSettle);
@@ -1502,9 +1286,14 @@ function startVoice() {
     getLanguage: () => settings.language,
     onState: onVoiceState,
     onLevel: (level) => island?.isDestroyed() || island?.webContents.send("voice-level", level),
+    onSound: () => questionClock?.audio(),
     trace,
   });
-  setTimeout(() => voice.prepare(), 4000);
+  // The models are fetched in the background only when the user said yes (or an older profile, which always did);
+  // a new profile is asked once setup is done (voiceOfferNow). Already on this PC: prepare only tidies old caches.
+  setTimeout(() => {
+    if (settings.voiceSetup === "yes" || voice.installed()) voice.prepare();
+  }, 4000);
 }
 
 // Buddy keeps an eye on its own CPU. Normal use measures at 2-3% of one core (an approval waiting, the pointer
@@ -1547,12 +1336,30 @@ function clearOldSessions() {
 // Where create_document saves, and how it opens the result (Word, or whatever opens .docx here).
 // BUDDY_DOCUMENTS_DIR moves it (end-to-end checks keep their files out of the user's Documents).
 const documentsDir = () => process.env.BUDDY_DOCUMENTS_DIR ?? path.join(app.getPath("documents"), "Buddy");
+// The folders Buddy reads without asking (pc-tools.js): the user's list, or Documents, Desktop and Downloads wherever
+// Windows keeps them (OneDrive may hold them).
+const usualFolders = () => /** @type {const} */ (["documents", "desktop", "downloads"]).map((n) => app.getPath(n));
+const readFolders = () => settings.readFolders ?? usualFolders();
+const herePlaces = () => placesHere(documentsDir(), app.getPath("userData"), readFolders());
+
+/** Settings › Agents › Add a folder: the user picks one; a reason it can't be added, or null. @param {BrowserWindow} win */
+async function addReadFolder(win) {
+  const picked = await dialog.showOpenDialog(win, { title: "Choose a folder Buddy can read without asking", properties: ["openDirectory"] });
+  const dir = picked.canceled ? null : picked.filePaths[0];
+  if (!dir) return null;
+  const problem = grantProblem(dir, herePlaces());
+  if (problem) return problem;
+  if (readFolders().some((x) => x.toLowerCase() === dir.toLowerCase())) return null;
+  return changeSettings({ readFolders: [...readFolders(), dir] }).readFolders ?? null;
+}
 // Spike: BUDDY_ENGINE=sdk runs conversations on the Claude Agent SDK (src/agent-brain.js).
 /** @typedef {import("./providers.js").ProviderId} ProviderId */
 // The Agent SDK engine runs Claude Code, so it only works with an Anthropic key.
 // Loaded only when asked for: Buddy's own engine does everything for every provider, so installers leave the Agent SDK
-// (and the Claude Code program it runs, 346 MB) out.
-const AgentBrain = process.env.BUDDY_ENGINE === "sdk" ? (await import("./agent-brain.js")).AgentBrain : null;
+// (and the Claude Code program it runs, 346 MB) out. It is an optional dependency: without it, Buddy's own engine runs.
+const AgentBrain = process.env.BUDDY_ENGINE === "sdk"
+  ? await import("./agent-brain.js").then((m) => m.AgentBrain, (err) => (console.error(`BUDDY_ENGINE=sdk: the Agent SDK isn't installed (${err?.code ?? err}); using Buddy's own engine.`), null))
+  : null;
 const makeEngine = (ui) => (AgentBrain && currentProvider() === "anthropic" ? new AgentBrain({ ...ui, agentDir: path.join(app.getPath("userData"), "agent") }) : new Brain(ui));
 const openFile = (file) => shell.openPath(file);
 
@@ -1572,12 +1379,12 @@ function prepareScreenImage(image) {
   const resized = scale < 1 ? original.resize({ width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)), quality: "good" }) : original;
   return /** @type {import("./screen-context.js").ScreenImage} */ ({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: resized.toJPEG(82).toString("base64") } });
 }
-const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, commands: () => settings.commands,
-  screenContext: () => settings.screenContext, prepareImage: prepareScreenImage, ...spendUI() });
+const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, commands: () => settings.commands, readFolders,
+  screenContext: () => settings.screenContext, advanced: () => settings.advanced, prepareImage: prepareScreenImage, ...spendUI() });
 
 function startBrain() {
   brain = providerReady()
-    ? makeEngine({ ...providerUI(), point: guidePoint, annotate: (items, context) => showAnnotations(items, context), clearAnnotations: (ms = 0) => annotationLayer.release("bubble", ms), confirm, status, stream: (update) => liveReply.receive(update), explain: bubbleExplain, trace, documentsDir: documentsDir(), dataDir: app.getPath("userData"), record: recordChange, reveal: revealMade, isOwnWindow: (w) => ownPids().includes(Number(w.pid)), openFile })
+    ? makeEngine({ ...providerUI(), point: guidePoint, pointGuess: (bounds, caption, window) => guidePoint(bounds, caption, window), annotate: (items, context) => showAnnotations(items, context), clearAnnotations: (ms = 0) => annotationLayer.release("bubble", ms), confirm, status, stream: (update) => liveReply.receive(update), explain: bubbleExplain, trace, documentsDir: documentsDir(), dataDir: app.getPath("userData"), record: recordChange, reveal: revealMade, isOwnWindow: (w) => ownPids().includes(Number(w.pid)), openFile })
     : null;
 }
 
@@ -1602,6 +1409,7 @@ async function userWindow() {
 }
 
 function marksForClaude(/** @type {Brain} */ appBrain) {
+  const pendingMarks = marker.pending();
   if (!pendingMarks) return "The user hasn't marked anything yet. They can press Ctrl+Alt+M and draw over what they mean.";
   appBrain.marks = new Map(pendingMarks.marks.map((m) => [m.n, m.bounds]));
   appBrain.target = pendingMarks.target ?? appBrain.target;
@@ -1631,6 +1439,7 @@ function makeAppBrain(/** @type {number} */ conn, /** @type {string} */ client) 
       releaseLater(owner, 60_000);
       return shown;
     },
+    pointGuess: (bounds, caption, window) => guessPoint(bounds, caption, window, owner),
     confirm,
     status: (text) => {
       islandFacts.appCall = oneLine(`${client}: ${text}`);
@@ -1769,33 +1578,9 @@ const trayIcon = () => nativeImage.createFromPath(path.join(here, "../assets/tra
 
 const pretty = (accel) => accel.replaceAll("+", " + ");
 
-// ---------- Launching without a terminal: shortcuts and start-with-Windows ----------
+// ---------- Launching without a terminal (launch.js): shortcuts and start-with-Windows ----------
 
-// Installed, Buddy is its own "Desktop Buddy.exe" and the installer makes its shortcuts. From a source checkout it runs
-// as `electron <app dir>`, so every launcher passes the app directory to the Electron binary.
-const LAUNCH = app.isPackaged ? { path: process.execPath, args: [] } : { path: process.execPath, args: [app.getAppPath()] };
-
-const startsWithWindows = () => app.getLoginItemSettings(LAUNCH).openAtLogin;
-const setStartsWithWindows = (on) => app.setLoginItemSettings({ openAtLogin: on, ...LAUNCH });
-
-function writeShortcuts() {
-  const link = {
-    target: LAUNCH.path,
-    args: `"${LAUNCH.args[0]}"`,
-    icon: ICON,
-    iconIndex: 0,
-    appUserModelId: APP_ID,
-    description: `Desktop Buddy: ask about anything on your screen (${keyLabel(hotkey("ask"))})`,
-  };
-  const startMenu = path.join(app.getPath("appData"), "Microsoft", "Windows", "Start Menu", "Programs", "Desktop Buddy.lnk");
-  const desktop = path.join(app.getPath("desktop"), "Desktop Buddy.lnk");
-  // "create" writes or overwrites; "replace" only overwrites an existing link, so it silently made nothing.
-  return [startMenu, desktop].map((file) => {
-    const ok = shell.writeShortcutLink(file, "create", link);
-    if (!ok) console.error(`Could not write ${file}`);
-    return ok;
-  });
-}
+const writeShortcuts = () => writeLaunchShortcuts({ icon: ICON, appId: APP_ID, description: `Desktop Buddy: ask about anything on your screen (${keyLabel(hotkey("ask"))})` });
 
 // Once per install: put Buddy in Start and on the desktop, and start it at sign-in. Later Settings owns both.
 function firstRunSetup() {
@@ -1833,6 +1618,12 @@ function changeSettings(patch) {
       problems[`hotkeys.${name}`] = "Another app already uses this shortcut";
     }
   }
+  // A folder Buddy may not read without asking stays off the list, whoever asked for it.
+  if (Array.isArray(patch?.readFolders) && next.readFolders) {
+    const kept = next.readFolders.filter((dir) => !grantProblem(dir, herePlaces()));
+    if (kept.length < next.readFolders.length) problems.readFolders = grantProblem(next.readFolders.find((dir) => !kept.includes(dir)) ?? "", herePlaces()) ?? "That folder isn't allowed";
+    next.readFolders = kept;
+  }
   settings = next;
   saveSettings(settingsFile(), settings);
   if (!hotkeysSuspended && JSON.stringify(next.hotkeys) !== JSON.stringify(before.hotkeys)) registerHotkeys();
@@ -1846,6 +1637,7 @@ function changeSettings(patch) {
   setAgentPolicy(settings);
   if (next.language !== before.language) voice?.prepare();
   if (next.talkBack === "never" && before.talkBack !== "never") hushReply();
+  if (next.advanced !== before.advanced) bubble?.webContents.send("advanced", next.advanced);
   buildTrayMenu();
   showIsland({ force: true });
   settingsWindow?.refresh();
@@ -1893,7 +1685,7 @@ function registerHotkeys() {
   held.clear();
   for (const name of HOTKEY_NAMES) {
     const accel = hotkey(name);
-    if (globalShortcut.register(accel, HOTKEY_ACTIONS[name])) held.set(name, accel);
+    if (globalShortcut.register(accel, () => pressHotkey(name))) held.set(name, accel);
     else console.error(`Could not register ${accel}`);
   }
 }
@@ -1925,14 +1717,15 @@ function buildTrayMenu() {
   tray.setContextMenu(
     Menu.buildFromTemplate([
       { label: `Ask Buddy  (${keyLabel(hotkey("ask"))})`, click: () => summon() },
-      { label: `Talk to Buddy  (${keyLabel(hotkey("talk"))})`, click: () => talk() },
+      { label: `Talk to Buddy  (${keyLabel(hotkey("talk"))})`, click: () => talkByClick() },
       { label: `Mark or explain something  (${keyLabel(hotkey("mark"))})`, click: () => startMarking() },
       { label: "New conversation", click: () => brain?.reset() },
-      { label: "New task window", click: () => newTask() },
+      ...(settings.advanced ? [{ label: "New task window", click: () => newTask() }] : []),
       { type: "separator" },
       ...(updates?.state().status === "ready" ? [{ label: `Restart to update to ${updates.state().next}`, click: () => updates.install() }] : []),
       ...(appStatus().code !== "missing" ? [{ label: "Quick chat in Claude Code", click: () => openQuickChat() }] : []),
       { label: "Recent changes…", click: () => settingsWindow.open("activity") },
+      { label: "Report a problem…", click: () => settingsWindow.open("report") },
       { label: "Settings…", click: () => settingsWindow.open() },
       { label: "Recreate shortcuts", visible: process.platform === "win32" && !app.isPackaged, click: writeShortcuts },
       { type: "separator" },
@@ -1976,6 +1769,7 @@ function settingsState() {
       appearance: !!process.env.BUDDY_THEME,
     },
     taken: takenHotkeys(),
+    folders: { list: readFolders(), usual: !settings.readFolders, home: os.homedir() },
     key: (() => {
       const saved = savedKey(currentProvider());
       const usable = !!loadApiKey();
@@ -1985,7 +1779,7 @@ function settingsState() {
     })(),
     providers: Object.values(PROVIDERS).map((p) => ({ id: p.id, label: p.label, note: p.note, key: p.key, local: !!p.local, keyFrom: p.keyFrom, placeholder: p.placeholder, saved: !!envKey(p.id) || fs.existsSync(keyFile(p.id)), address: providerURL(p.id), defaultAddress: PROVIDERS[p.id].baseURL ?? null, ready: providerReady(p.id) })),
     providerModels: modelListState(),
-    modelCheck: modelCheck && { model: modelCheck.model, provider: modelCheck.provider, running: modelCheck.running, stopped: !!modelCheck.stopped, done: modelCheck.done, total: modelCheck.total, passed: modelCheck.passed, missed: modelCheck.missed },
+    modelCheck: ((modelCheck) => modelCheck && { model: modelCheck.model, provider: modelCheck.provider, running: modelCheck.running, stopped: !!modelCheck.stopped, done: modelCheck.done, total: modelCheck.total, passed: modelCheck.passed, missed: modelCheck.missed })(providerState.modelCheck()),
     tested: testedOf(providerURL() ?? undefined, chosenModel() ?? ""),
     checkTasks: CASES.length,
     activity: (activity?.list() ?? []).slice(0, 200).map((e) => ({ id: e.id, at: e.at, from: e.from, kind: e.kind, summary: e.summary, undone: e.undone ?? null, canUndo: e.canUndo, file: e.file ?? null })),
@@ -2040,26 +1834,9 @@ function checkRoutines() {
   }
 }
 
-// ---------- Request a feature: a pre-filled GitHub issue, opened in the browser for the user to edit and send ----------
+// ---------- Request a feature, report a problem, Buddy Plus (feedback.js) ----------
 
-const ISSUES = "https://github.com/donlapidos/desktop-buddy/issues/new";
-// Where people say they'd want Buddy Plus (the AI included, no key). One place, so a form without a GitHub account
-// can replace it.
-const PLUS_INTEREST = `${ISSUES}?template=buddy-plus.yml`;
 onFrom(fromBubble, "plus-interest", () => (trace({ kind: "plus-interest", from: "bubble" }), shell.openExternal(PLUS_INTEREST)));
-function requestFeature() {
-  const body = [
-    "**What would you like Buddy to do?**",
-    "",
-    "",
-    "**How would it help you?**",
-    "",
-    "",
-    "---",
-    `Desktop Buddy ${app.getVersion()} · Windows ${os.release()}`,
-  ].join("\n");
-  shell.openExternal(`${ISSUES}?${new URLSearchParams({ title: "Feature request: ", body, labels: "enhancement" })}`);
-}
 
 const settingsWindow = createSettingsWindow({
   here,
@@ -2090,6 +1867,7 @@ const settingsWindow = createSettingsWindow({
     for (const f of fs.readdirSync(explainersDir()).filter((x) => x.endsWith(".html"))) fs.rmSync(path.join(explainersDir(), f), { force: true });
   },
   openData: () => shell.openPath(app.getPath("userData")),
+  addFolder: addReadFolder,
   runRoutine: (id) => {
     const r = settings.routines.find((x) => x.id === id);
     return r ? runRoutine(r, "now").then((res) => res.error ?? null) : Promise.resolve("That routine no longer exists.");
@@ -2097,6 +1875,8 @@ const settingsWindow = createSettingsWindow({
   // Apps with a window open now, as suggestions for the Agents lists.
   apps: async () => [...new Set((await listWindows()).map((w) => w.app_name).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
   requestFeature,
+  report: () => problemReport({ timingLog: timingLog(), settings }),
+  sendReport: (how, body) => (trace({ kind: "problem-report", how }), sendProblemReport(how, body)),
   plusInterest: () => (trace({ kind: "plus-interest", from: "settings" }), shell.openExternal(PLUS_INTEREST)),
   checkUpdates: () => updates?.check(),
   installUpdate: () => updates?.install(),
@@ -2107,7 +1887,6 @@ const settingsWindow = createSettingsWindow({
 
 // ---------- App updates (updates.js) ----------
 
-const RELEASES = "https://github.com/donlapidos/desktop-buddy/releases";
 let announcedUpdate = null;
 function startUpdates() {
   updates = createUpdates({
@@ -2127,6 +1906,27 @@ function startUpdates() {
 }
 onFrom(fromBubble, "open-settings", (_e, page) => settingsWindow.open(page === "claude" ? "claude" : undefined));
 
+// Whether this run is a dev or end-to-end check: a BUDDY_*_TEST variable is set (dev-hooks.js runs it).
+const devHook = Object.entries(process.env).some(([name, value]) => value && /^BUDDY_[A-Z_]+_TEST$/.test(name));
+
+/** What dev-hooks.js may use. Variables main.js reassigns are getters, so a hook always sees the current one. @returns {import("./dev-hooks.js").DevKit} */
+const devKit = () => ({
+  here, trace, point, guidePoint, confirm, summon, toggle, ownPids, startMarking, cancelMarking, stopMarkMode, enter, currentMode, grabDisplay,
+  toLocalRect, annotationLayer, showAnnotations, releaseLater, openExplainer, changeSettings, settingsState, settingsFile, settingsWindow, runRoutine,
+  typeText, saveApiKey, loadApiKey, providerURL, prepareScreenImage, timingLog, documentsDir, startBrain, spendState,
+  bubble, island, tasks, voice, updates, activity, pressHotkey, sendVoiceOffer,
+  useKeyHook: (/** @type {import("./hold-key.js").KeyHook} */ hook) => { keyHook = hook; },
+  get settings() { return settings; },
+  get brain() { return brain; },
+  set brain(b) { brain = b; },
+  get about() { return about; },
+  set about(a) { about = a; },
+  get markDisplay() { return marker.display(); },
+  get markWin() { return marker.window(); },
+  get pendingMarks() { return marker.pending(); },
+  get displayCaptures() { return displayCaptures; },
+});
+
 app.whenReady().then(() => {
   const loaded = loadSettings(settingsFile());
   settings = loaded.settings;
@@ -2139,7 +1939,7 @@ app.whenReady().then(() => {
   refreshModels().catch(() => {});
   setAgentPolicy(settings);
   app.setAppUserModelId(APP_ID);
-  const devRun = process.env.BUDDY_POINT_TEST || process.env.BUDDY_EXPLAINER_TEST || process.env.BUDDY_MARK_TEST || process.env.BUDDY_TASK_TEST || process.env.BUDDY_VOICE_TEST || process.env.BUDDY_SETTINGS_TEST || process.env.BUDDY_APPROVAL_TEST || process.env.BUDDY_FILES_TEST || process.env.BUDDY_WELCOME_TEST || process.env.BUDDY_THEME;
+  const devRun = devHook || process.env.BUDDY_THEME;
   // First-run setup (shortcuts, start with Windows) changes the user's PC, so only the real Buddy does it: never a dev
   // check, and never a test copy with a data folder of its own (--user-data-dir), which would otherwise leave a second
   // copy starting at sign-in.
@@ -2170,511 +1970,9 @@ app.whenReady().then(() => {
   screen.on("display-removed", displaysChanged);
   screen.on("display-metrics-changed", displaysChanged);
   registerHotkeys();
-  if (process.env.BUDDY_POINT_TEST) {
-    // Dev check for coordinate mapping: BUDDY_POINT_TEST='{"x":..,"y":..,"width":..,"height":..}' (physical px)
-    setTimeout(() => point(JSON.parse(process.env.BUDDY_POINT_TEST), "Is this the right spot?"), 2500);
-  } else if (process.env.BUDDY_MARK_TEST) {
-    // Dev check for the marker without a mouse: BUDDY_MARK_TEST='[[{"x":..,"y":..},...],...]' (screen DIP strokes).
-    // BUDDY_MARK_TEST_OUT=path saves the image the model would receive.
-    setTimeout(async () => {
-      await startMarking();
-      const strokes = JSON.parse(process.env.BUDDY_MARK_TEST).map((s) =>
-        s.map((p) => ({ x: p.x - markDisplay.bounds.x, y: p.y - markDisplay.bounds.y })),
-      );
-      const ready = setInterval(() => {
-        if (!markWin?.isVisible()) return;
-        clearInterval(ready);
-        markWin.webContents.send("mark-inject", strokes);
-      }, 100);
-      const done = setInterval(() => {
-        if (!pendingMarks) return;
-        clearInterval(done);
-        if (!process.env.BUDDY_MARK_TEST_OUT) return;
-        fs.writeFileSync(process.env.BUDDY_MARK_TEST_OUT, Buffer.from(pendingMarks.image, "base64"));
-        console.log("MARKS", JSON.stringify(pendingMarks.marks.map((x) => ({ n: x.n, elements: x.elements.map((e) => e.path) }))));
-        setTimeout(async () => {
-          const img = await bubble.webContents.capturePage();
-          fs.writeFileSync(process.env.BUDDY_MARK_TEST_OUT.replace(/.png$/, "-bubble.png"), img.toPNG());
-          console.log("BUBBLE_SHOT", JSON.stringify(bubble.getBounds()), JSON.stringify(island.getBounds()));
-          console.log("MARK_TEST_DONE");
-        }, 600);
-      }, 100);
-    }, 2500);
-  } else if (process.env.BUDDY_TASK_TEST) {
-    // Dev check for task windows without the model: two scripted agents, one of which asks for approval.
-    // BUDDY_TASK_TEST=<dir> saves each task window and the island there.
-    const out = process.env.BUDDY_TASK_TEST;
-    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    const scripted = (steps, reply, approval) => ({
-      ui: {},
-      log: [],
-      transcript() {
-        return this.log.slice();
-      },
-      cancel() {},
-      async ask(text) {
-        this.log.push({ role: "user", text });
-        for (const s of steps) {
-          await wait(700);
-          this.ui.status(s);
-        }
-        if (approval) this.ui.status((await this.ui.confirm(approval)) === "deny" ? "Skipped that." : approval);
-        await wait(600);
-        this.log.push({ role: "buddy", text: reply });
-        return reply;
-      },
-    });
-    setTimeout(async () => {
-      await tasks.create({ brain: scripted(["Looking…", "Reading the page…", "Comparing the three plans"], "The Pro plan is the only one with SSO. It costs $24 a seat, and the annual price saves 20%.") });
-      await tasks.create({ brain: scripted(["Looking…"], "Saved the file as report-final.xlsx.", "Click Save") });
-      const taskWins = () => BrowserWindow.getAllWindows().filter((w) => w.webContents.getURL().endsWith("task.html"));
-      for (let i = 0; i < 50 && taskWins().length < 2; i++) await wait(100);
-      const wins = taskWins().sort((a, b) => a.id - b.id);
-      const asks = ["Compare the pricing plans on this page", "Save this workbook"];
-      await wait(800);
-      wins.forEach((w, i) => w.webContents.executeJavaScript(`document.getElementById("input").value = ${JSON.stringify(asks[i])}; document.getElementById("form").requestSubmit();`));
-      await wait(1800);
-      wins[0].hide(); // tuck task 1 into the island while it works
-      await wait(2600);
-      const shot = async (name, win) => {
-        win.webContents.invalidate(); // a transparent window can hand back its last frame otherwise
-        await wait(150);
-        fs.writeFileSync(path.join(out, name), (await win.webContents.capturePage()).toPNG());
-      };
-      await shot("task-2-confirm.png", wins[1]);
-      await shot("island.png", island);
-      console.log("TASKS", JSON.stringify(tasks.list()));
-      // Preview the tucked-away task from the island, then approve task 2 from its preview.
-      await island.webContents.executeJavaScript(`showPeek("t1")`);
-      await wait(1500);
-      await shot("island-peek-hidden.png", island);
-      await island.webContents.executeJavaScript(`showPeek("t2")`);
-      await wait(1500);
-      {
-        // What's actually on screen, cropped to the island (a page capture of this transparent window can be stale).
-        const d = screen.getPrimaryDisplay();
-        const sf = d.scaleFactor;
-        const [src] = await desktopCapturer.getSources({ types: ["screen"], thumbnailSize: { width: Math.round(d.size.width * sf), height: Math.round(d.size.height * sf) } });
-        const b = island.getBounds();
-        fs.writeFileSync(path.join(out, "island-peek-confirm.png"), src.thumbnail.crop({ x: Math.round(b.x * sf), y: Math.round(b.y * sf), width: Math.round(b.width * sf), height: Math.round(b.height * sf) }).toPNG());
-      }
-      await island.webContents.executeJavaScript(`document.getElementById("peek-allow").click(); showPeek(null);`);
-      await wait(2500);
-      wins[0].show();
-      await wait(400);
-      await shot("task-1-done.png", wins[0]);
-      await shot("task-2-done.png", wins[1]);
-      console.log("TASKS", JSON.stringify(tasks.list()));
-      console.log("TASK_TEST_DONE");
-    }, 2500);
-  } else if (process.env.BUDDY_VOICE_TEST) {
-    // Dev check for the speech engine, muted: the voice says a line, the recognizer hears it back, then a two-sentence reply
-    // plays through the voice page. BUDDY_VOICE_TEST_MIC=1 also opens the microphone once.
-    setTimeout(async () => {
-      voice.mute();
-      await voice.warm();
-      const line = process.env.BUDDY_VOICE_TEST;
-      let t0 = Date.now();
-      const clip = await voice.synthesize(line);
-      console.log("VOICE_SYNTH", Date.now() - t0, "ms", (clip.audio.length / clip.rate).toFixed(2), "s");
-      const ratio = clip.rate / 16000;
-      const pcm = Float32Array.from({ length: Math.floor(clip.audio.length / ratio) }, (_, i) => clip.audio[Math.floor(i * ratio)]);
-      t0 = Date.now();
-      const { text } = await voice.transcribe(pcm);
-      console.log("VOICE_HEARD", Date.now() - t0, "ms", JSON.stringify(text));
-      t0 = Date.now();
-      await voice.say(`**${line}** It's under the *Formulas* tab → Insert Function.`);
-      console.log("VOICE_SAID", Date.now() - t0, "ms");
-      if (process.env.BUDDY_VOICE_TEST_MIC) console.log("VOICE_MIC", JSON.stringify(await voice.listen()));
-      console.log("VOICE_TEST_DONE");
-    }, 1500);
-  } else if (process.env.BUDDY_APPROVAL_TEST) {
-    // Dev check, with a REAL mouse click (the pointer moves; keep hands off the mouse): an approval card must take a
-    // click, and the keyboard must go back to the user's app afterwards. Cases:
-    //   plain    the card in a bubble opened once
-    //   guide    the bubble folds away while Buddy points at a step, then the card comes
-    //   cycle    the bubble is closed and opened again before asking (this left cards deaf to clicks)
-    //   twoasks  one answer guides, the bubble is opened again, and the next answer needs approval
-    // Run: BUDDY_APPROVAL_TEST=cycle npm start (it needs ANTHROPIC_API_KEY set to anything; Claude isn't called).
-    const kind = process.env.BUDDY_APPROVAL_TEST;
-    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    const step = asPhysicalRect({ x: 200, y: 300, width: 120, height: 40 });
-    setTimeout(async () => {
-      await summon();
-      await wait(800);
-      let answered = null;
-      const approve = async () => {
-        if (kind === "guide") {
-          await guidePoint(step, "Click here");
-          await wait(1500);
-        }
-        answered = await confirm('Create "Report" in Documents\\Buddy and open it in Word', null);
-        return "Done.";
-      };
-      brain = { reset() {}, cancel() {}, marks: new Map(), transcript: () => [], ask: approve };
-      if (kind === "cycle") {
-        toggle();
-        await wait(800);
-        toggle();
-        await wait(1200);
-      }
-      if (kind === "twoasks") {
-        brain.ask = async () => {
-          await guidePoint(step, "Click here");
-          await wait(1500);
-          brain.ask = approve;
-          return "Done guiding.";
-        };
-        await bubble.webContents.executeJavaScript(`window.buddy.ask("show me how", {})`);
-        await wait(7500);
-        toggle();
-        await wait(1200);
-      }
-      bubble.webContents.executeJavaScript(`window.buddy.ask("make a report", {})`);
-      await wait(4000);
-      const box = await bubble.webContents.executeJavaScript(`(() => { const r = document.querySelector('#confirm [data-d="allow"]').getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
-      const b = bubble.getContentBounds();
-      const at = screen.dipToScreenPoint({ x: Math.round(b.x + box.x), y: Math.round(b.y + box.y) });
-      const { execFileSync } = await import("node:child_process");
-      execFileSync("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path.join(here, "../scripts/real-click.ps1"), String(at.x), String(at.y)]);
-      await wait(1500);
-      const front = (await listWindows()).find((w) => w.is_focused);
-      console.log("APPROVAL_TEST", JSON.stringify({ kind, answered, keyboardBackInApp: !!front && !ownPids().includes(front.pid) }));
-      app.quit();
-    }, 2500);
-  } else if (process.env.BUDDY_SETTINGS_TEST) {
-    // Dev check for Settings: BUDDY_SETTINGS_TEST=<dir> captures each section of the window there, then checks that
-    // changes reach the rest of Buddy (the island's colour, the registered shortcuts, the file) and that a clash is
-    // refused.
-    const out = process.env.BUDDY_SETTINGS_TEST;
-    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    setTimeout(async () => {
-      settingsWindow.open();
-      await wait(1500);
-      const win = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("settings.html"));
-      const shoot = async (page, name) => {
-        await win.webContents.executeJavaScript(`show(${JSON.stringify(page)})`);
-        await wait(400);
-        fs.writeFileSync(path.join(out, `${name}.png`), (await win.webContents.capturePage()).toPNG());
-      };
-      for (const page of ["voice", "look", "keys", "claude"]) await shoot(page, `settings-${page}`);
-      await win.webContents.executeJavaScript(`document.querySelector("main").scrollTop = 9999`);
-      await wait(300);
-      fs.writeFileSync(path.join(out, "settings-claude-bottom.png"), (await win.webContents.capturePage()).toPNG());
-      const problems = changeSettings({ accent: "coral", voice: 3, speed: 1.15, hotkeys: { ask: "Control+Alt+K" } });
-      await wait(800);
-      const accentOf = (wc) => wc.executeJavaScript(`getComputedStyle(document.documentElement).getPropertyValue("--buddy").trim()`);
-      console.log("SETTINGS_APPLIED", JSON.stringify({
-        problems,
-        island: await accentOf(island.webContents),
-        bubble: await accentOf(bubble.webContents),
-        settingsPage: await accentOf(win.webContents),
-        newAskHeld: globalShortcut.isRegistered("Control+Alt+K"),
-        oldAskReleased: !globalShortcut.isRegistered("Control+Alt+B"),
-        file: JSON.parse(fs.readFileSync(settingsFile(), "utf8")),
-      }));
-      console.log("SETTINGS_CLASH", JSON.stringify(changeSettings({ hotkeys: { talk: "Control+Alt+K" } })));
-      // Agents: the policy reaches every Brain.
-      changeSettings({ rope: "trusted", trustedApps: ["Notepad"] });
-      const { decide } = await import("./policy.js");
-      console.log("SETTINGS_POLICY", JSON.stringify({
-        notepadType: decide(settings, { kind: "type", app: "notepad.exe" }),
-        wordType: decide(settings, { kind: "type", app: "WINWORD.EXE" }),
-        keepass: decide(settings, { kind: "scroll_to", app: "KeePass.exe" }),
-      }));
-      // Routines: one saved, shown with its next run, and run now (no API key here, so it must say so, not call Claude).
-      changeSettings({ routines: [{ id: "rtest1", name: "Inbox check", prompt: "Summarise my unread email.", schedule: { every: "weekday", time: "09:00", days: [], hours: 4 } }] });
-      const started = await runRoutine(settings.routines[0], "now");
-      console.log("SETTINGS_ROUTINE", JSON.stringify({ info: settingsState().routineInfo.rtest1, started }));
-      // Dictation types through the clipboard into the focused app, then puts the clipboard back. The target is a window
-      // of Buddy's own, and the paste is skipped unless it really has the keyboard, so nothing lands in another app.
-      // It replaces what the user had copied, so it runs only when asked (BUDDY_SETTINGS_TEST_DICTATION=1).
-      if (process.env.BUDDY_SETTINGS_TEST_DICTATION) {
-      const pad = new BrowserWindow({ width: 420, height: 160, show: false, title: "Buddy dictation check", webPreferences: { sandbox: true } });
-      await pad.loadURL("data:text/html,<title>Buddy dictation check</title><textarea id=t autofocus style='width:100%;height:120px'></textarea>");
-      pad.show();
-      pad.focus();
-      await pad.webContents.executeJavaScript("document.getElementById('t').focus()");
-      await wait(500);
-      await clipboard.writeText("what the user had copied");
-      // Electron's isFocused() can say yes while Windows gives the keyboard to another app (a background app may not
-      // take focus), so ask Windows which window really has it, through agent-desktop.
-      const front = (await listWindows()).find((w) => w.is_focused);
-      if (front && ownPids().includes(front.pid) && front.title === "Buddy dictation check") {
-        await typeText("Hello from dictation.");
-        await wait(400);
-        console.log("SETTINGS_DICTATION", JSON.stringify({
-          typed: await pad.webContents.executeJavaScript("document.getElementById('t').value"),
-          clipboardRestored: (await clipboard.readText()) === "what the user had copied",
-        }));
-      } else console.log("SETTINGS_DICTATION", JSON.stringify({ skipped: "the test window didn't get the keyboard" }));
-      pad.destroy();
-      } else console.log("SETTINGS_DICTATION", JSON.stringify({ skipped: "not asked for (BUDDY_SETTINGS_TEST_DICTATION)" }));
-      // Language: Spanish spoken by the voice, heard through Buddy's own speech process with detection on.
-      changeSettings({ language: "auto" });
-      voice.mute();
-      const clip = await voice.synthesize("Haz clic en la pestaña Fórmulas y luego elige Insertar función.", { lang: "es" });
-      const ratio = clip.rate / 16000;
-      const pcm = Float32Array.from({ length: Math.floor(clip.audio.length / ratio) }, (_, i) => clip.audio[Math.floor(i * ratio)]);
-      const t0 = Date.now();
-      console.log("SETTINGS_LANGUAGE", JSON.stringify({ ...(await voice.transcribe(pcm)), ms: Date.now() - t0 }));
-      // A key for "Other server" goes only to the address it was saved for.
-      changeSettings({ provider: "custom", providerURLs: { custom: "https://a.example/v1" } });
-      saveApiKey("key-for-server-a-0123456789", "custom");
-      const atA = { key: settingsState().key, sent: loadApiKey() };
-      changeSettings({ providerURLs: { custom: "https://b.example/v1" } });
-      const atB = { key: settingsState().key, sent: loadApiKey() };
-      changeSettings({ providerURLs: { custom: "https://a.example/v1" } });
-      const backAtA = { key: settingsState().key, sent: loadApiKey() };
-      console.log("SETTINGS_KEYS", JSON.stringify({ atA, atB, backAtA }));
-      changeSettings({ provider: "anthropic" });
-      for (const page of ["dictation", "agents", "routines"]) await shoot(page, `settings-${page}`);
-      await updates.check();
-      await wait(4000);
-      await shoot("about", "settings-about");
-      console.log("SETTINGS_INSTALLED", JSON.stringify({ packaged: app.isPackaged, agentDesktop: resolveBinary(), userData: app.getPath("userData"), updates: updates.state() }));
-      await win.webContents.executeJavaScript(`render(${JSON.stringify(settingsState())})`);
-      await shoot("look", "settings-look-coral");
-      await shoot("keys", "settings-keys-changed");
-      console.log("SETTINGS_TEST_DONE");
-    }, 2500);
-  } else if (process.env.BUDDY_EXPLAINER_TEST) {
-    // Dev check for the explainer renderer: BUDDY_EXPLAINER_TEST=path/to/explainer.json (show_explainer input)
-    openExplainer(JSON.parse(fs.readFileSync(process.env.BUDDY_EXPLAINER_TEST, "utf8")));
-    setTimeout(async () => {
-      const plates = BrowserWindow.getAllWindows().filter((w) => /explainer/i.test(w.webContents.getURL()));
-      const out = process.env.BUDDY_EXPLAINER_TEST_OUT;
-      if (out && plates[0]) fs.writeFileSync(out, (await plates[0].webContents.capturePage()).toPNG());
-      const text = plates[0] ? await plates[0].webContents.executeJavaScript("document.body.innerText") : "";
-      console.log("EXPLAINER_SHOWN", JSON.stringify({ windows: plates.length, visible: plates.some((w) => w.isVisible()), chars: text.length, title: text.split("\n").find((l) => l.trim()) ?? "" }));
-      console.log("EXPLAINER_TEST_DONE");
-    }, 4000);
-  } else if (process.env.BUDDY_MARK_STARTUP_TEST) {
-    setTimeout(async () => {
-      const { runMarkerStartupTest } = await import("./marker-startup-test.js");
-      await runMarkerStartupTest({ start: startMarking, cancel: cancelMarking,
-        retire: (delay) => { stopMarkMode(delay); enter("idle"); }, window: () => markWin, mode: currentMode,
-        captureFrame: grabDisplay, activeCaptures: () => displayCaptures });
-    }, 2500);
-  } else if (process.env.BUDDY_MARK_RENDER_TEST) {
-    setTimeout(async () => {
-      const { runMarkerTest } = await import("./marker-test.js");
-      await runMarkerTest({ here, out: process.env.BUDDY_MARK_RENDER_TEST });
-    }, 2500);
-  } else if (process.env.BUDDY_ANNOTATIONS_TEST) {
-    setTimeout(async () => {
-      const { runAnnotationTest } = await import("./annotation-test.js");
-      await runAnnotationTest({ script: process.env.BUDDY_ANNOTATIONS_SAMPLE ?? path.join(here, "../scripts/samples/context-window.ps1"),
-        out: process.env.BUDDY_ANNOTATIONS_TEST, showAnnotations, annotationLayer, toLocalRect, point, release: releaseLater });
-    }, 2500);
-  } else if (process.env.BUDDY_SCREEN_CONTEXT_TEST) {
-    // Capture only this test-owned sample. The scripted server checks both image transport and the real tree.
-    setTimeout(async () => {
-      let sample;
-      try {
-        const title = "Buddy visual context sample";
-        const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-        const script = process.env.BUDDY_SCREEN_CONTEXT_SAMPLE ?? path.join(here, "../scripts/samples/context-window.ps1");
-        sample = spawn("powershell.exe", ["-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", script], { windowsHide: false });
-        let sampleErrors = "";
-        sample.stderr.on("data", (chunk) => { sampleErrors += chunk.toString(); });
-        let sampleOutput = "";
-        sample.stdout.on("data", (chunk) => { sampleOutput += chunk.toString(); });
-        await new Promise((resolve, reject) => { sample.once("spawn", resolve); sample.once("error", reject); });
-        let target;
-        for (let i = 0; i < 50; i++) {
-          target = (await listWindows()).find((w) => w.title === title && Number(w.pid) === sample.pid);
-          if (target) break;
-          await wait(200);
-        }
-        if (!target) throw new Error(`The sample window wasn't found (exit ${sample.exitCode}). ${sampleErrors.slice(0, 1000)} ${sampleOutput.slice(0, 200)}`);
-        changeSettings({ provider: "custom", providerURLs: { custom: process.env.BUDDY_SCREEN_CONTEXT_TEST }, providerModels: { custom: "vision-fixture" }, screenContext: true, talkBack: "never" });
-        learnCaps(providerURL(), "vision-fixture", { tools: true, vision: true });
-        about = { window: target, point: null };
-        const js = (code) => bubble.webContents.executeJavaScript(code);
-        const first = await js(`window.buddy.ask("Which bar is higher?", {})`);
-        const sentImage = brain.messages.flatMap((m) => Array.isArray(m.content) ? m.content : []).find((c) => c.type === "image");
-        let largeImageBounded = false;
-        if (sentImage) {
-          const large = nativeImage.createFromBuffer(Buffer.from(sentImage.source.data, "base64")).resize({ width: 3200, height: 2400 });
-          const compressed = prepareScreenImage({ source: { data: large.toPNG().toString("base64") } });
-          const size = nativeImage.createFromBuffer(Buffer.from(compressed.source.data, "base64")).getSize();
-          largeImageBounded = size.width === 1600 && size.height === 1200 && compressed.source.media_type === "image/jpeg";
-        }
-        settingsWindow.open("claude");
-        let settingsWin;
-        for (let i = 0; i < 100; i++) {
-          settingsWin = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("settings.html") && !w.webContents.isLoading());
-          if (settingsWin && await settingsWin.webContents.executeJavaScript(`document.getElementById("screen-context")?.getAttribute("aria-checked") === "true"`)) break;
-          await wait(100);
-        }
-        if (!settingsWin) throw new Error("Settings didn't open.");
-        const settingWasOn = await settingsWin.webContents.executeJavaScript(`document.getElementById("screen-context").getAttribute("aria-checked") === "true"`);
-        await settingsWin.webContents.executeJavaScript(`document.getElementById("screen-context").click()`);
-        for (let i = 0; settings.screenContext && i < 50; i++) await wait(50);
-        let settingUIOff = false;
-        for (let i = 0; i < 50; i++) {
-          settingUIOff = await settingsWin.webContents.executeJavaScript(`document.getElementById("screen-context").getAttribute("aria-checked") === "false"`);
-          if (settingUIOff) break;
-          await wait(50);
-        }
-        if (process.env.BUDDY_SCREEN_CONTEXT_TEST_OUT) fs.writeFileSync(process.env.BUDDY_SCREEN_CONTEXT_TEST_OUT, (await settingsWin.webContents.capturePage()).toPNG());
-        const second = await js(`window.buddy.ask("Read the chart title", {})`);
-        const saved = JSON.parse(fs.readFileSync(settingsFile(), "utf8"));
-        console.log("SCREEN_CONTEXT_TEST", JSON.stringify({ first: first.reply, second: second.reply, settingWasOn, settingOff: !settings.screenContext, settingUIOff, savedOff: saved.screenContext === false, largeImageBounded }));
-      } catch (err) {
-        console.log("SCREEN_CONTEXT_TEST", JSON.stringify({ error: err.message }));
-      } finally {
-        sample?.kill();
-        console.log("SCREEN_CONTEXT_TEST_DONE");
-      }
-    }, 2500);
-  } else if (process.env.BUDDY_CONVERSATION_TEST) {
-    // Real renderer + IPC + streamed model: show a partial answer, then steer it while it is still running.
-    setTimeout(async () => {
-      const js = (code) => bubble.webContents.executeJavaScript(code);
-      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-      const until = async (code) => {
-        for (const end = Date.now() + 10_000; Date.now() < end; await wait(50)) if (await js(code)) return true;
-        return false;
-      };
-      try {
-        changeSettings({ provider: "ollama", providerURLs: { ollama: process.env.BUDDY_CONVERSATION_TEST }, providerModels: { ollama: "scripted" }, talkBack: "never" });
-        await summon();
-        await js(`document.getElementById("input").value = "Start answering"; document.getElementById("form").requestSubmit();`);
-        const partial = await until(`document.getElementById("reply").textContent === "The first sentence is visible. " && !document.getElementById("stop").hidden`);
-        const editable = await js(`!document.getElementById("input").disabled`);
-        if (process.env.BUDDY_CONVERSATION_TEST_OUT) fs.writeFileSync(process.env.BUDDY_CONVERSATION_TEST_OUT, (await bubble.webContents.capturePage()).toPNG());
-        await js(`document.getElementById("input").value = "Change direction"; document.getElementById("form").requestSubmit();`);
-        const corrected = await until(`document.getElementById("reply").textContent === "Here is the corrected answer." && document.getElementById("stop").hidden`);
-        console.log("CONVERSATION_TEST", JSON.stringify({ partial, editable, corrected }));
-      } catch (err) {
-        console.log("CONVERSATION_TEST", JSON.stringify({ error: err.message }));
-      }
-      console.log("CONVERSATION_TEST_DONE");
-    }, 2500);
-  } else if (process.env.BUDDY_FILES_TEST) {
-    // End-to-end check of Buddy working with files, through the real app: BUDDY_FILES_TEST=<address of a scripted
-    // OpenAI-style server> (scripts/e2e.mjs runs one). The model asks to make a file; the approval card is clicked;
-    // the file is made, shown, listed in Activity, and undone. Files go to BUDDY_DOCUMENTS_DIR.
-    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    setTimeout(async () => {
-      changeSettings({ provider: "custom", providerURLs: { custom: process.env.BUDDY_FILES_TEST }, providerModels: { custom: "scripted" } });
-      setBrainDefaults(settings);
-      startBrain();
-      await wait(500);
-      const answer = bubble.webContents.executeJavaScript(`window.buddy.ask("Make me a shopping list file with eggs, milk and bread.", {})`);
-      let carded = false;
-      for (let i = 0; i < 100 && !carded; i++) {
-        await wait(100);
-        carded = await bubble.webContents.executeJavaScript(`document.getElementById("confirm").classList.contains("on")`);
-      }
-      const card = carded ? await bubble.webContents.executeJavaScript(`document.getElementById("what").textContent`) : null;
-      await wait(700);
-      // Another Buddy window (here the island) can't answer the bubble's card, though it has the same preload.
-      island.webContents.executeJavaScript(`window.buddy.confirmReply("allow")`);
-      await wait(400);
-      const otherWindowRefused = await bubble.webContents.executeJavaScript(`document.getElementById("confirm").classList.contains("on")`);
-      if (carded) await bubble.webContents.executeJavaScript(`document.querySelector('#confirm [data-d="allow"]').click()`);
-      const { reply } = await answer;
-      const file = path.join(documentsDir(), "Shopping list.txt");
-      const made = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
-      const listed = activity?.list() ?? [];
-      settingsWindow.open("activity");
-      await wait(1800);
-      const win = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("settings.html"));
-      const page = win ? await win.webContents.executeJavaScript(`document.getElementById("page-activity").hidden ? null : document.getElementById("activity").innerText`) : null;
-      if (win && process.env.BUDDY_FILES_TEST_OUT) fs.writeFileSync(process.env.BUDDY_FILES_TEST_OUT, (await win.webContents.capturePage()).toPNG());
-      const undone = listed[0] ? await activity?.undo(listed[0].id) : null;
-      console.log("FILES_TEST", JSON.stringify({ card, otherWindowRefused, reply, made, listed: listed.map((e) => ({ kind: e.kind, summary: e.summary, canUndo: e.canUndo })), page, undone, goneAfterUndo: !fs.existsSync(file) }));
-      console.log("FILES_TEST_DONE");
-    }, 2500);
-  } else if (process.env.BUDDY_WELCOME_TEST) {
-    // End-to-end check of first-run setup, through the real bubble: BUDDY_WELCOME_TEST=<address of a scripted
-    // Ollama-style server> (scripts/e2e.mjs runs one, and gives a made-up home in BUDDY_APPS_HOME holding a Gemini CLI
-    // folder). Walks each way in: add Buddy to the AI app, a bad key and then a good one, and the model on "this PC".
-    const out = process.env.BUDDY_WELCOME_TEST_OUT ?? app.getPath("userData");
-    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    const js = (/** @type {string} */ code) => bubble.webContents.executeJavaScript(code);
-    const until = async (/** @type {string} */ code, ms = 10_000) => {
-      for (const end = Date.now() + ms; Date.now() < end; await wait(100)) if (await js(code)) return true;
-      return false;
-    };
-    const shot = async (/** @type {string} */ name) => fs.writeFileSync(path.join(out, `welcome-${name}.png`), (await bubble.webContents.capturePage()).toPNG());
-    const click = (/** @type {string} */ selector, text = "") => js(`[...document.querySelectorAll(${JSON.stringify(selector)})].find((b) => b.textContent.includes(${JSON.stringify(text)})).click()`);
-    const openDoors = async () => {
-      await summon();
-      await until(`document.querySelectorAll("[data-door]").length === 3`);
-      await wait(400);
-    };
-    setTimeout(async () => {
-      const r = {};
-      changeSettings({ providerURLs: { ollama: process.env.BUDDY_WELCOME_TEST } });
-      await openDoors();
-      r.doors = await js(`[...document.querySelectorAll("[data-door]")].map((b) => b.dataset.door)`);
-      r.keyFieldAtStart = await js(`!document.getElementById("form").hidden`);
-      await shot("doors");
-
-      await click("[data-door]", "AI app I already have");
-      await until(`document.querySelectorAll("#welcome .app").length > 0`);
-      r.apps = await js(`[...document.querySelectorAll("#welcome .app > span:first-child")].map((s) => s.textContent)`);
-      await click("#welcome .app button", "Add Buddy");
-      await until(`document.getElementById("welcome").innerText.startsWith("Buddy is in")`);
-      r.appText = await js(`document.getElementById("welcome").innerText`);
-      try {
-        r.appEntry = JSON.parse(fs.readFileSync(path.join(process.env.BUDDY_APPS_HOME ?? "", ".gemini", "settings.json"), "utf8")).mcpServers?.["desktop-buddy"] ?? null;
-      } catch {
-        r.appEntry = null;
-      }
-      await shot("app-added");
-
-      await click("#welcome button", "Back");
-      await until(`document.querySelectorAll("[data-door]").length === 3`);
-      await click("[data-door]", "API key");
-      await js(`document.getElementById("input").value = "not a key"; document.getElementById("form").requestSubmit()`);
-      await until(`!!document.querySelector("#welcome .problem")?.textContent`);
-      r.badKey = await js(`document.querySelector("#welcome .problem").textContent`);
-      // Said where it can be read: not squeezed to nothing, and inside the bubble.
-      r.badKeyShown = await js(`(() => { const p = document.querySelector("#welcome .problem").getBoundingClientRect(), box = document.getElementById("welcome").getBoundingClientRect(); return p.height > 12 && p.top >= box.top && p.bottom <= box.bottom + 1; })()`);
-      await shot("bad-key");
-
-      await click("#welcome button", "Back");
-      await until(`document.querySelectorAll("[data-door]").length === 3`);
-      await click("[data-door]", "Free, on this PC");
-      await until(`[...document.querySelectorAll("#welcome button")].some((b) => b.textContent === "Use Ollama")`);
-      r.localText = await js(`document.getElementById("welcome").innerText`);
-      await click("#welcome button", "Use Ollama");
-      await until(`document.getElementById("welcome").hidden`, 20_000);
-      r.localReady = { brain: !!brain, provider: settings.provider, shown: await js(`document.getElementById("reply").textContent`) };
-      // The tour: a tip to ask about the window in front, then, once answered, one for Mark; "Got it" ends it.
-      const tipNow = () => js(`document.getElementById("tip").hidden ? null : document.getElementById("tip").innerText`);
-      r.tipAfterSetup = await tipNow();
-      await shot("local-ready");
-      const answered = await js(`window.buddy.ask("Say hello.", {})`);
-      r.localReply = answered.reply;
-      r.localSpend = answered.spend;
-      r.spendSettings = spendState();
-      await until(`/draw around/.test(document.getElementById("tip").innerText) && !document.getElementById("tip").hidden`, 3_000);
-      r.tipAfterAnswer = await tipNow();
-      await shot("tour-mark");
-      await js(`document.getElementById("tip-do").click()`);
-      await until(`document.getElementById("tip").hidden`, 3_000);
-      r.tipAfterGotIt = await tipNow();
-      r.tourStep = settings.tour;
-
-      changeSettings({ provider: "anthropic" });
-      await openDoors();
-      r.doorsAgain = !brain && (await js(`document.querySelectorAll("[data-door]").length`)) === 3;
-      await click("[data-door]", "API key");
-      await js(`document.getElementById("input").value = "sk-ant-api03-${"e2e".repeat(30)}"; document.getElementById("form").requestSubmit()`);
-      await until(`document.getElementById("welcome").hidden`);
-      r.keyReady = { brain: !!brain, provider: settings.provider, shown: await js(`document.getElementById("reply").textContent`) };
-      r.tipAfterSecondSetup = await tipNow();
-      await shot("key-ready");
-      console.log("WELCOME_TEST", JSON.stringify(r));
-      console.log("WELCOME_TEST_DONE");
-    }, 2500);
-  } else if (!brain) summon();
+  // A dev or end-to-end check (a BUDDY_*_TEST variable) runs from dev-hooks.js, loaded only then.
+  if (devHook) import("./dev-hooks.js").then(({ runDevHook }) => runDevHook(devKit()));
+  else if (!brain) summon();
 });
 
 app.on("window-all-closed", (e) => e.preventDefault());

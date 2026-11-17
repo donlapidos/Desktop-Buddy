@@ -20,9 +20,10 @@ const PLAY_GRACE_MS = 5_000;
  * both come from Settings and are asked every time.
  * @param {{ here: string, cacheDir: string, getVoice: () => { sid: number, speed: number, lang?: string },
  *           getLanguage: () => string,
- *           onState: (state: string, info?: object) => void, onLevel: (level: number) => void, trace?: Function }} opts
+ *           onState: (state: string, info?: object) => void, onLevel: (level: number) => void, onSound?: () => void, trace?: Function }} opts
+ * `onSound` is told each time a clip starts playing (for the ask-to-pointer timing's first sound).
  */
-export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, onLevel, trace = () => {} }) {
+export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, onLevel, onSound = () => {}, trace = () => {} }) {
   let speech = null;
   let unloadTimer = null;
   let seq = 0;
@@ -127,22 +128,27 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
     played.delete(id);
   });
 
-  // Transcribes 16 kHz audio in the listening language from Settings. Resolves { text, lang } or { error }; `lang` is
-  // the language heard (a two-letter code), which is always "en" unless detection is on.
+  // Transcribes 16 kHz audio in the listening language from Settings. Resolves { text, lang, heardMs } or { error };
+  // `lang` is the language heard (a two-letter code), which is always "en" unless detection is on, and `heardMs` how
+  // long the transcription took.
   async function hear(pcm) {
     const t0 = Date.now();
     try {
       const { text, lang } = await request("transcribe", { pcm, language: getLanguage() });
-      trace({ kind: "voice-heard", ms: Date.now() - t0, seconds: +(pcm.length / 16000).toFixed(1), lang });
+      const heardMs = Date.now() - t0;
+      trace({ kind: "voice-heard", ms: heardMs, seconds: +(pcm.length / 16000).toFixed(1), lang });
       // Recognizers can fill silence with tags like "[BLANK_AUDIO]" or "(wind blowing)"; drop them.
       const clean = text.replace(/\[[^\]]*\]|\([^)]*\)/g, "").trim();
-      return clean.replace(/[.\s]/g, "") ? { text: clean, lang: lang || "en" } : { error: "silence" };
+      return clean.replace(/[.\s]/g, "") ? { text: clean, lang: lang || "en", heardMs } : { error: "silence" };
     } catch (err) {
       return { error: err.message };
     }
   }
 
-  /** Records until the user stops talking, then transcribes. Resolves { text, lang } or { error }. */
+  /**
+   * Records until the user stops talking, then transcribes. Resolves { text, lang, heardMs, endedAt } or { error };
+   * `endedAt` is when their speech ended (the clock a spoken question's timing starts from).
+   */
   async function listen() {
     hush();
     if (heard) return { error: "busy" };
@@ -152,8 +158,9 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
       send({ cmd: "listen" });
     });
     if (!result?.pcm) return { error: result?.error ?? "cancelled" };
+    const endedAt = Date.now();
     onState("transcribing");
-    return hear(result.pcm);
+    return { ...(await hear(result.pcm)), endedAt };
   }
 
   /**
@@ -192,6 +199,8 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
 
   /** Ends listening now and uses what was said so far. */
   const finishListening = () => heard && send({ cmd: "finish" });
+  /** The Talk key is being held: keep listening through pauses until finishListening(). */
+  const holdListening = () => heard && send({ cmd: "hold" });
   const cancelListening = () => {
     if (!heard) return;
     send({ cmd: "cancel" });
@@ -232,6 +241,7 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
             resolve(undefined);
           });
           send({ cmd: "play", id, audio: clip.audio, rate: clip.rate });
+          onSound();
         });
         if (mine !== gen) return;
       }
@@ -258,12 +268,15 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
     listen,
     dictate,
     finishListening,
+    holdListening,
     cancelListening,
     say,
     hush,
     warm,
     // On a first run, fetch the models in the background so the first question isn't a long wait. Caches of the
     // speech models earlier versions used are removed once the current ones are in place.
+    /** Whether the models for listening (in the language from Settings) and speaking are on this PC. */
+    installed: () => [getLanguage() === "auto" ? ASR_MULTI : ASR, TTS].every((m) => isInstalled(cacheDir, m)),
     prepare: async () => {
       const needed = [getLanguage() === "auto" ? ASR_MULTI : ASR, TTS];
       if (!needed.every((m) => isInstalled(cacheDir, m))) await warm();

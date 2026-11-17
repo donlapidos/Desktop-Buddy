@@ -1,9 +1,10 @@
 // End-to-end checks: the real app, run as separate test copies (each with its own data folder, so the user's Buddy,
 // settings and files are left alone), each driven by one of main.js's BUDDY_*_TEST hooks. The runner reads what each
 // copy prints, checks it, and keeps the screenshots.
-//   npm run e2e                  context, conversation, files, welcome, tasks, settings, explainer, voice, firstrun
+//   npm run e2e                  context, conversation, files, welcome, tasks, settings, explainer, voice, island, firstrun
 //   npm run e2e -- tasks voice   only those
 //   npm run e2e -- --exe "<path to Desktop Buddy.exe>"   against a built or installed copy
+//   npm run e2e -- --no-voice    without the voice models (CI): the voice check and hearing a language are left out
 //   npm run e2e -- --interactive also the marker (a full-screen freeze frame) and approval clicks (moves the mouse)
 // Windows appear briefly while it runs. Nothing touches the clipboard, real files or the mouse unless --interactive.
 import { spawn, spawnSync } from "node:child_process";
@@ -21,6 +22,9 @@ fs.mkdirSync(out, { recursive: true });
 const exeArg = process.argv.indexOf("--exe");
 const installed = exeArg >= 0 ? path.resolve(process.argv[exeArg + 1]) : null;
 const realModels = path.join(process.env.APPDATA ?? "", "desktop-buddy", "models");
+// --no-voice: where the voice models aren't downloaded (CI). The settings check skips hearing Spanish, and the voice
+// check is left out even when named.
+const noVoice = process.argv.includes("--no-voice");
 
 // ---------- A scripted OpenAI-style model, for the files check ----------
 
@@ -60,15 +64,18 @@ function scriptedOllama() {
 /**
  * Runs Buddy with `env` until it prints `done` (or `timeoutMs` passes), and returns what it printed, by marker.
  * Every copy's own timing.log is read afterwards: a refused mode or task-state change is a bug, whichever check hit it.
- * @returns {Promise<{ markers: Record<string, any[]>, log: string, timedOut: boolean }>}
+ * `devHooks` says whether the copy loaded dev-hooks.js (it writes dev-hooks-loaded to its timing log when it does).
+ * @returns {Promise<{ markers: Record<string, any[]>, log: string, timedOut: boolean, devHooks: boolean }>}
  */
-function runCopy(name, env, done, timeoutMs = 90_000) {
+function runCopy(name, env, done, timeoutMs = 90_000, seed = {}) {
   const data = fs.mkdtempSync(path.join(os.tmpdir(), `buddy-e2e-${name}-`));
+  // `seed`: files the copy's data folder starts with (an existing profile's settings.json, say).
+  for (const [file, text] of Object.entries(seed)) fs.writeFileSync(path.join(data, file), text);
   const clean = Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^(ANTHROPIC|OPENAI|OPENROUTER|GEMINI|DEEPSEEK)_|^BUDDY_/.test(k)));
   // The source tree on Electron, or (--exe) a built or installed Buddy.
   const child = spawn(installed ?? electron, [...(installed ? [] : ["."]), `--user-data-dir=${data}`], {
     cwd: installed ? path.dirname(installed) : app,
-    env: { ...clean, BUDDY_E2E: "1", ...(fs.existsSync(realModels) ? { BUDDY_MODELS_DIR: realModels } : {}), ...env },
+    env: { ...clean, BUDDY_E2E: "1", ...(fs.existsSync(realModels) ? { BUDDY_MODELS_DIR: realModels } : {}), ...(noVoice ? { BUDDY_E2E_NO_VOICE: "1" } : {}), ...env },
     windowsHide: false,
   });
   let log = "";
@@ -82,12 +89,14 @@ function runCopy(name, env, done, timeoutMs = 90_000) {
       clearTimeout(timer);
       spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"], { windowsHide: true });
       fs.writeFileSync(path.join(out, `${name}.log`), log);
+      let timing = "";
       try {
-        for (const line of fs.readFileSync(path.join(data, "timing.log"), "utf8").split(/\r?\n/)) {
+        timing = fs.readFileSync(path.join(data, "timing.log"), "utf8");
+        for (const line of timing.split(/\r?\n/)) {
           if (/"kind":"refused-(mode-change|task-state)"/.test(line)) refusals.push(`${name}: ${line}`);
         }
       } catch {}
-      resolve({ markers, log, timedOut });
+      resolve({ markers, log, timedOut, devHooks: timing.includes('"kind":"dev-hooks-loaded"') });
     };
     const timer = setTimeout(() => finish(true), timeoutMs);
     const read = (chunk) => {
@@ -183,9 +192,18 @@ const CHECKS = {
       const messages = JSON.parse(body || "{}").messages ?? [];
       const images = messages.flatMap((m) => Array.isArray(m.content) ? m.content.filter((c) => c.type === "image_url") : []);
       const text = messages.map((m) => typeof m.content === "string" ? m.content : (m.content ?? []).map((c) => c.text ?? "").join("\n")).join("\n");
+      res.setHeader("content-type", "text/event-stream");
+      // Pointing by sight: the question carries the spot the check found in the picture; point there.
+      const lastUser = messages.filter((m) => m.role === "user").at(-1);
+      const asked = typeof lastUser?.content === "string" ? lastUser.content : (lastUser?.content ?? []).map((c) => c.text ?? "").join("\n");
+      const spot = asked.match(/\[spot ([\d.]+),([\d.]+)\]/);
+      if (spot) {
+        if (messages.at(-1)?.role === "tool") return res.end(`data: ${JSON.stringify({ choices: [{ delta: { content: "That's the blue bar." }, finish_reason: "stop" }] })}\n\ndata: [DONE]\n\n`);
+        const args = { spot: { x: Number(spot[1]), y: Number(spot[2]) }, caption: "The blue bar", then_say: "That's the blue bar." };
+        return res.end(`data: ${JSON.stringify({ choices: [{ delta: { tool_calls: [{ index: 0, id: "spot_1", type: "function", function: { name: "point_at", arguments: JSON.stringify(args) } }] }, finish_reason: "tool_calls" }] })}\n\ndata: [DONE]\n\n`);
+      }
       observations.push({ images: images.length, jpeg: images.some((i) => /^data:image\/jpeg;base64,/.test(i.image_url?.url ?? "") && i.image_url.url.length > 1000), tree: text.includes("Quarterly sales") && /@s[a-z0-9]+:e\d+/i.test(text) });
       const content = images.length ? "Visual context received." : "Text-only context received.";
-      res.setHeader("content-type", "text/event-stream");
       res.end(`data: ${JSON.stringify({ choices: [{ delta: { content }, finish_reason: "stop" }] })}\n\ndata: [DONE]\n\n`);
     });
     await new Promise((r) => server.listen(0, "127.0.0.1", r));
@@ -199,6 +217,11 @@ const CHECKS = {
         !observations[0]?.tree && "the first question didn't carry the sample's real accessibility refs",
         !r.largeImageBounded && "a large screenshot wasn't resized within the image budget",
         r.second !== "Text-only context received." && "turning screenshots off didn't remove old and new images",
+        r.sight?.error && `pointing by sight: ${r.sight.error}`,
+        r.sight && !r.sight.error && !r.sight.inside && `pointing by sight landed at ${JSON.stringify(r.sight.pointedAt)}, outside the blue bar ${JSON.stringify(r.sight.bar)}`,
+        r.sight && !r.sight.error && !r.sight.softRing && "a pointer by sight wasn't shown as a best guess",
+        r.sight && !r.sight.error && !/about here/.test(r.sight.caption ?? "") && `a pointer by sight said ${JSON.stringify(r.sight.caption)}, not "about here"`,
+        r.sight && !r.sight.error && !r.sight.cleared && "a pointer by sight stayed up: it wasn't let go",
         !r.settingWasOn && "the screenshot setting wasn't initially on", !r.settingOff && "the setting didn't switch off", !r.settingUIOff && "the switch didn't display its saved off state", !r.savedOff && "the setting wasn't saved",
       ].filter(Boolean);
     } finally { server.closeAllConnections(); server.close(); }
@@ -210,10 +233,19 @@ const CHECKS = {
       if (req.url?.endsWith("/models")) return res.end(JSON.stringify({ data: [{ id: "scripted" }] }));
       if (req.url === "/api/show") return res.end(JSON.stringify({ capabilities: ["completion", "tools"] }));
       const messages = JSON.parse(body || "{}").messages ?? [];
-      const last = String(messages.filter((m) => m.role === "user").at(-1)?.content ?? "");
+      const textOf = (m) => (typeof m?.content === "string" ? m.content : (m?.content ?? []).map((c) => c.text ?? "").join("\n"));
+      const last = textOf(messages.filter((m) => m.role === "user").at(-1));
       res.setHeader("content-type", "text/event-stream");
       const chunk = (text, finish = null) => `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: text }, finish_reason: finish }] })}\n\n`;
       if (last.includes("Change direction")) return res.end(chunk("Here is the corrected answer.", "stop"));
+      // The guided question: point at the sample's details button, by the ref Buddy read from the window.
+      if (last.includes("Where are the details?")) {
+        if (messages.at(-1)?.role === "tool") return res.end(chunk("There they are.", "stop"));
+        const ref = last.match(/(@\S+) button "Quarterly sales details"/)?.[1];
+        if (!ref) return res.end(chunk("I couldn't read the window.", "stop"));
+        const call = { index: 0, id: "call_point", type: "function", function: { name: "point_at", arguments: JSON.stringify({ ref, caption: "The details are here", then_say: "There they are." }) } };
+        return res.end(`data: ${JSON.stringify({ choices: [{ index: 0, delta: { tool_calls: [call] }, finish_reason: "tool_calls" }] })}\n\ndata: [DONE]\n\n`);
+      }
       res.write(chunk("The first sentence is visible. "));
       const timer = setTimeout(() => res.end(chunk("The old answer finished.", "stop")), 15_000);
       res.on("close", () => clearTimeout(timer));
@@ -221,10 +253,19 @@ const CHECKS = {
     await new Promise((r) => server.listen(0, "127.0.0.1", r));
     try {
       const url = `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`;
-      const { markers, timedOut } = await runCopy("conversation", { BUDDY_CONVERSATION_TEST: url, BUDDY_CONVERSATION_TEST_OUT: path.join(out, "conversation.png") }, "CONVERSATION_TEST_DONE");
+      const { markers, timedOut } = await runCopy("conversation", { BUDDY_CONVERSATION_TEST: url, BUDDY_CONVERSATION_TEST_OUT: path.join(out, "conversation.png"),
+        BUDDY_CONVERSATION_SAMPLE: path.join(app, "scripts/samples/context-window.ps1") }, "CONVERSATION_TEST_DONE");
       const r = markers.CONVERSATION_TEST?.[0];
       if (!r) return [timedOut ? "timed out" : "no conversation result"];
-      return [!r.partial && "text wasn't visible before completion", !r.editable && "the input was disabled while answering", !r.corrected && "the correction didn't replace the old answer", r.error].filter(Boolean);
+      const fp = r.firstPointer;
+      return [!r.partial && "text wasn't visible before completion", !r.editable && "the input was disabled while answering", !r.corrected && "the correction didn't replace the old answer", r.error,
+        r.guided !== "There they are." && `the guided answer said ${JSON.stringify(r.guided)}`,
+        !fp && "a guided answer left no first-pointer entry in the timing log",
+        fp && !["ms", "contextMs", "modelMs", "pointMs"].every((k) => Number.isFinite(fp[k])) && `the first-pointer entry is missing a part: ${JSON.stringify(fp)}`,
+        fp && (fp.voice !== false || fp.provider !== "ollama" || fp.model !== "scripted") && `the first-pointer entry has the wrong question facts: ${JSON.stringify(fp)}`,
+        fp && fp.ms < fp.pointMs && `the first-pointer total is less than its pointing part: ${JSON.stringify(fp)}`,
+        !r.glanceReused && "a question asked while the bubble kept focus read the window again instead of using the glance",
+      ].filter(Boolean);
     } finally {
       server.closeAllConnections();
       server.close();
@@ -278,6 +319,10 @@ const CHECKS = {
         !/1\.5k tokens over 1 model call/.test(r.spendSettings?.month ?? "") && `Settings' month said ${JSON.stringify(r.spendSettings?.month)}`,
         !/runs on this PC, so it costs nothing/.test(r.spendSettings?.note ?? "") && `Settings' spending note said ${JSON.stringify(r.spendSettings?.note)}`,
         !/^Try it: ask me how to do something in .*Skip tour$/s.test(r.tipAfterSetup ?? "") && `after setup, the tour said ${JSON.stringify(r.tipAfterSetup)}`,
+        r.voiceSetupAtStart !== "ask" && `a new profile's voice download was ${JSON.stringify(r.voiceSetupAtStart)}, not offered`,
+        !/275 MB/.test(r.voiceOffer ?? "") && `after setup, the voice offer said ${JSON.stringify(r.voiceOffer)}`,
+        (!r.voiceDeclined?.hidden || r.voiceDeclined.setting !== "no" || r.voiceDeclined.fetches !== 0) && `"Not now" didn't leave the voice alone: ${JSON.stringify(r.voiceDeclined)}`,
+        (!/^Talking is ready/.test(r.voiceAccepted?.text ?? "") || r.voiceAccepted.setting !== "yes" || r.voiceAccepted.fetches !== 1 || !r.voiceAccepted.buttons) && `"Set up talking" didn't fetch the voice once: ${JSON.stringify(r.voiceAccepted)}`,
         !/press Ctrl\+Alt\+M, then draw around.*Got it$/s.test(r.tipAfterAnswer ?? "") && `after the first answer, the tour said ${JSON.stringify(r.tipAfterAnswer)}`,
         (r.tipAfterGotIt !== null || r.tourStep !== "done") && `"Got it" didn't end the tour (${r.tourStep}: ${JSON.stringify(r.tipAfterGotIt)})`,
         r.tipAfterSecondSetup !== null && `setting up again brought the tour back: ${JSON.stringify(r.tipAfterSecondSetup)}`,
@@ -322,35 +367,83 @@ const CHECKS = {
       policy.wordType !== "ask" && `Word typing: ${policy.wordType}`,
       policy.keepass !== "block" && `KeePass: ${policy.keepass}`,
       !markers.SETTINGS_ROUTINE?.[0]?.started && "the routine didn't report anything",
+      ...(() => {
+        const f = markers.SETTINGS_FOLDERS?.[0];
+        if (!f) return ["no folders result printed"];
+        return [
+          !f.problem && "AppData was put on the folders Buddy reads without asking",
+          JSON.stringify(f.list) !== JSON.stringify([f.projects]) && `folders kept: ${JSON.stringify(f.list)}`,
+          JSON.stringify(f.chips) !== JSON.stringify([f.projects]) && `Settings shows folders: ${JSON.stringify(f.chips)}`,
+        ];
+      })(),
       lang.lang && lang.lang !== "es" && `Spanish heard as ${lang.lang}`,
-      !lang.text && "nothing heard in the language check (are the voice models downloaded?)",
+      !lang.text && !(noVoice && lang.skipped) && "nothing heard in the language check (are the voice models downloaded?)",
       !fs.existsSync(path.join(out, "settings-claude.png")) && "no Settings screenshots",
+      !markers.SETTINGS_REPORT?.[0]?.shown && "Report a problem didn't show its preview",
+      markers.SETTINGS_REPORT?.[0]?.shown && !markers.SETTINGS_REPORT[0].version && "the problem report didn't say Buddy's version",
+      markers.SETTINGS_REPORT?.[0]?.shown && !markers.SETTINGS_REPORT[0].timing && "the problem report had no timing log",
+      markers.SETTINGS_REPORT?.[0]?.key && "the problem report carried a saved key",
+      markers.SETTINGS_REPORT?.[0]?.home && "the problem report carried a path in the user's folder",
       ...keyProblems(markers.SETTINGS_KEYS?.[0]),
     ].filter(Boolean);
   },
 
   async explainer() {
-    const { markers, timedOut } = await runCopy("explainer", { BUDDY_EXPLAINER_TEST: path.join(app, "scripts", "samples", "vlookup.json"), BUDDY_EXPLAINER_TEST_OUT: path.join(out, "explainer.png") }, "EXPLAINER_TEST_DONE");
+    const { markers, timedOut, devHooks } = await runCopy("explainer", { BUDDY_EXPLAINER_TEST: path.join(app, "scripts", "samples", "vlookup.json"), BUDDY_EXPLAINER_TEST_OUT: path.join(out, "explainer.png") }, "EXPLAINER_TEST_DONE");
     const r = markers.EXPLAINER_SHOWN?.[0];
     if (!r) return [timedOut ? "timed out" : "nothing printed"];
-    return [!r.windows && "no explainer window opened", !r.visible && "the explainer window isn't visible", r.chars < 100 && `only ${r.chars} characters on the plate`].filter(Boolean);
+    return [!devHooks && "a dev check ran without dev-hooks.js reporting itself loaded", !r.windows && "no explainer window opened", !r.visible && "the explainer window isn't visible", r.chars < 100 && `only ${r.chars} characters on the plate`].filter(Boolean);
   },
 
   async voice() {
     const line = "Click the Formulas tab, then choose Insert Function.";
-    const { markers, timedOut } = await runCopy("voice", { BUDDY_VOICE_TEST: line }, "VOICE_TEST_DONE", 120_000);
+    // Talking needs an AI set up (without one, Buddy opens the bubble to ask for a key); no call is made.
+    const { markers, timedOut } = await runCopy("voice", { BUDDY_VOICE_TEST: line, BUDDY_HOLD_TIMEOUT_MS: "2000", ANTHROPIC_API_KEY: "sk-ant-e2e-not-used-0000000000" }, "VOICE_TEST_DONE", 150_000);
     const heard = String(markers.VOICE_HEARD?.[0] ?? "").toLowerCase();
     if (!markers.VOICE_SYNTH) return [timedOut ? "timed out (are the voice models downloaded?)" : "nothing spoken"];
-    return [!heard.includes("formulas") && `heard ${heard || "nothing"}`, !markers.VOICE_SAID && "the reply wasn't played"].filter(Boolean);
+    const hold = markers.VOICE_HOLD?.[0];
+    return [!heard.includes("formulas") && `heard ${heard || "nothing"}`, !markers.VOICE_SAID && "the reply wasn't played",
+      !hold && "the hold-to-talk check printed nothing",
+      hold && !hold.idleBefore && "the keyboard hook was installed before any key was pressed",
+      hold && !hold.installedWhileDown && "the keyboard hook wasn't installed while the key was down",
+      hold && hold.held !== "listen,hold,finish" && `holding and letting go did ${hold.held}, not listen, hold, finish`,
+      hold && !hold.idleAfterHold && "after letting go, the hook stayed or Buddy didn't return to rest",
+      hold && hold.tapped !== "listen" && `a tap did ${hold.tapped}, not just listen`,
+      hold && !hold.hookGoneAfterTap && "the hook stayed after a tap",
+      hold && hold.timedOut !== "listen,hold,finish" && `a release that never came did ${hold.timedOut}, not listen, hold, finish`,
+      hold && !hold.idleAfterTimeout && "after the release timed out, the hook stayed or Buddy kept listening",
+    ].filter(Boolean);
+  },
+
+  // A new profile's island offers the core actions only (Ask, Talk, Mark), and Settings no routines; a profile from
+  // before the switch keeps everything.
+  async island() {
+    const problems = [];
+    for (const [name, seed, advanced] of [["island-new", {}, false], ["island-existing", { "settings.json": JSON.stringify({ voice: 2 }) }, true]]) {
+      // With an AI set up (a key that is never used), so the bubble opens as it does day to day, not on the welcome.
+      const { markers, timedOut } = await runCopy(name, { BUDDY_ISLAND_TEST: path.join(out, `${name}.png`), ANTHROPIC_API_KEY: "sk-ant-e2e-not-used-0000000000" }, "ISLAND_TEST_DONE", 60_000, seed);
+      const r = markers.ISLAND_TEST?.[0];
+      if (!r) { problems.push(`${name}: ${timedOut ? "timed out" : "nothing printed"}`); continue; }
+      const want = advanced ? ["ask", "talk", "mark", "task"] : ["ask", "talk", "mark"];
+      if (r.error) problems.push(`${name}: ${r.error}`);
+      if (JSON.stringify(r.actions) !== JSON.stringify(want)) problems.push(`${name}: the island offered ${JSON.stringify(r.actions)}, not ${JSON.stringify(want)}`);
+      if (r.routines !== advanced) problems.push(`${name}: Settings ${r.routines ? "showed" : "hid"} Routines`);
+      if (r.makeTask !== advanced) problems.push(`${name}: the bubble ${r.makeTask ? "showed" : "hid"} Make task`);
+      if (r.advanced !== advanced) problems.push(`${name}: the advanced setting was ${r.advanced}`);
+      if (!fs.existsSync(path.join(out, `${name}.png`))) problems.push(`${name}: no picture of the island`);
+    }
+    return problems;
   },
 
   // A plain test copy (no dev hook, its own data folder) must leave the user's PC as it was: no start-with-Windows
-  // entry, no shortcuts. One once did, and would have started a second Buddy at every sign-in.
+  // entry, no shortcuts. One once did, and would have started a second Buddy at every sign-in. It must not load the
+  // dev hooks either: they are for checks only.
   async firstrun() {
     const before = machineState();
-    await runCopy("firstrun", {}, "NEVER", 12_000);
+    const { devHooks } = await runCopy("firstrun", {}, "NEVER", 12_000);
     const after = machineState();
-    return Object.keys({ ...before, ...after }).filter((k) => before[k] !== after[k]).map((k) => `changed ${k}: ${before[k] ?? "(none)"} -> ${after[k] ?? "(none)"}`);
+    return [devHooks && "a Buddy with no test variable loaded dev-hooks.js",
+      ...Object.keys({ ...before, ...after }).filter((k) => before[k] !== after[k]).map((k) => `changed ${k}: ${before[k] ?? "(none)"} -> ${after[k] ?? "(none)"}`)].filter(Boolean);
   },
 
   mark: {
@@ -388,7 +481,7 @@ const exeAt = args.indexOf("--exe");
 if (exeAt >= 0) args.splice(exeAt, 2);
 const interactive = args.includes("--interactive");
 const named = args.filter((a) => !a.startsWith("--"));
-const chosen = Object.entries(CHECKS).filter(([name, c]) => (named.length ? named.includes(name) : typeof c === "function" || (interactive && c.interactive)));
+const chosen = Object.entries(CHECKS).filter(([name, c]) => (named.length ? named.includes(name) : typeof c === "function" || (interactive && c.interactive)) && !(noVoice && name === "voice"));
 if (!chosen.length) {
   console.error(`No such check. Checks: ${Object.keys(CHECKS).join(", ")}`);
   process.exit(2);

@@ -123,3 +123,33 @@ test("addresses are kept per provider, and unsafe ones refused", () => {
   assert.deepEqual(update(s.settings, { providerURLs: { custom: "http://llm.example.com/v1" } }).rejected, ["providerURLs.custom"], "plain http to the internet");
   assert.deepEqual(update(s.settings, { providerURLs: { openai: "https://evil.example.com/v1" } }).settings.providerURLs, { ollama: "http://localhost:11500/v1" }, "fixed providers' addresses can't be changed");
 });
+
+test("hold to talk is on unless switched off, and only a yes or no is kept", () => {
+  assert.equal(normalize({}).holdToTalk, true);
+  assert.equal(normalize({ holdToTalk: false }).holdToTalk, false);
+  assert.equal(normalize({ holdToTalk: "no" }).holdToTalk, true);
+  assert.deepEqual(update(normalize({}), { holdToTalk: false }).rejected, []);
+});
+
+test("folders read without asking: the usual ones until changed, then full paths on a drive, each once", () => {
+  assert.equal(normalize({}).readFolders, null, "the usual folders");
+  assert.equal(normalize({ readFolders: "C:\\Users" }).readFolders, null);
+  assert.deepEqual(
+    normalize({ readFolders: ["C:\\Users\\sam\\Projects\\", "c:\\users\\sam\\projects", "Projects", "\\\\server\\share", "C:\\bad\u0007name", 4, "D:\\Photos"] }).readFolders,
+    ["C:\\Users\\sam\\Projects", "D:\\Photos"],
+  );
+  assert.deepEqual(normalize({ readFolders: [] }).readFolders, [], "an empty list stays empty");
+  const s = update(normalize({}), { readFolders: ["D:\\Photos"] });
+  assert.deepEqual(s.rejected, []);
+  assert.deepEqual(update(s.settings, { readFolders: null }).settings.readFolders, null, "back to the usual folders");
+  assert.deepEqual(update(s.settings, { readFolders: ["Photos"] }).rejected, ["readFolders"]);
+});
+
+test("a new profile is offered the voice download; an older one keeps fetching it as it always did", (t) => {
+  assert.equal(load(tempFile(t)).settings.voiceSetup, "ask", "first run: offered, not started");
+  const file = tempFile(t);
+  fs.writeFileSync(file, JSON.stringify({ voice: 2 }));
+  assert.equal(load(file).settings.voiceSetup, "yes", "a profile from before the offer");
+  assert.equal(normalize({ voiceSetup: "no" }).voiceSetup, "no");
+  assert.equal(normalize({ voiceSetup: "later" }).voiceSetup, "yes");
+});

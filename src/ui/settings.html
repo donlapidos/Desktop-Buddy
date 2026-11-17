@@ -154,6 +154,7 @@
   .field { height: 34px; flex: 1; min-width: 220px; padding: 0 11px; border: 1px solid transparent; border-radius: 9px; background: var(--field); outline: none; }
   .field:focus { border-color: color-mix(in srgb, var(--buddy) 70%, transparent); }
   .field::placeholder { color: #6f7682; }
+  #report-text { display: block; width: 100%; box-sizing: border-box; margin: 6px 0 10px; padding: 9px 11px; border: 1px solid transparent; border-radius: 9px; background: var(--field); color: inherit; font: 11.5px/1.45 ui-monospace, Consolas, monospace; resize: vertical; }
   .models { display: grid; gap: 6px; max-width: 440px; }
   .check-row { margin-top: 10px; align-items: center; gap: 10px; }
   .check-row .status-text { color: var(--muted); font-size: 12.5px; }
@@ -170,6 +171,7 @@
   .model[aria-checked="true"] { box-shadow: inset 0 0 0 1.5px var(--buddy); background: var(--accent-soft); }
   .model[aria-checked="true"] .radio { box-shadow: inset 0 0 0 5px var(--buddy); background: #fff; }
   .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  body.basic [data-page="routines"], body.basic .advanced-only { display: none; }
   .switch { width: 40px; height: 22px; flex: none; border: 0; border-radius: 11px; background: #33373f; position: relative; transition: background .18s; }
   .switch::after { content: ""; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .18s var(--ease); box-shadow: 0 1px 2px rgba(0,0,0,.4); }
   .switch[aria-checked="true"] { background: var(--buddy); }
@@ -261,6 +263,13 @@
     <section id="page-agents" hidden>
       <h2>Agents</h2>
       <p class="lede">Agents are Buddy doing things for you: tasks, routines and "do it for me". Choose how much they may do without asking, and where they may act at all.</p>
+      <div class="group switch-row">
+        <div>
+          <h3>Show advanced features</h3>
+          <p class="help" id="advanced-help" style="margin:0">Task windows that work while you do other things, routines on a schedule, and Buddy working with your files, web pages and Word documents. Off, Buddy keeps to the essentials: ask or talk, it shows you where to click, Mark, and doing things for you after you say yes.</p>
+        </div>
+        <button class="switch" id="advanced" role="switch" aria-label="Show advanced features" aria-describedby="advanced-help"></button>
+      </div>
       <div class="group">
         <h3>Without asking, agents may…</h3>
         <div class="models" id="rope" role="radiogroup" aria-label="How much agents may do without asking"></div>
@@ -277,7 +286,14 @@
         <div class="chips" id="blocked"></div>
         <div class="row"><input class="field" id="blocked-input" list="running-apps" placeholder="App name, e.g. KeePass" autocomplete="off" spellcheck="false"><button class="btn" id="blocked-add">Add</button></div>
       </div>
-      <div class="group switch-row">
+      <div class="group advanced-only">
+        <h3>Folders Buddy reads without asking</h3>
+        <p class="help">Buddy can look in these folders and read the files in them without asking you first. Anywhere else, it asks each time. Making or changing a file always asks. Its own Documents › Buddy folder is always on the list.</p>
+        <div class="chips" id="folders"></div>
+        <p class="problem" id="folder-problem"></p>
+        <div class="row"><button class="btn" id="folder-add">Add a folder…</button><button class="link" id="folders-usual">Go back to the usual folders</button></div>
+      </div>
+      <div class="group switch-row advanced-only">
         <div>
           <h3>Let Buddy run commands</h3>
           <p class="help" style="margin:0">For bigger jobs: renaming or sorting many files, converting, building things. Buddy asks before every command and says what it will do, but a command can change or delete things Buddy can't put back, and Buddy can't fully fence in what a command reaches. Leave it off unless you need it. Off, Buddy still works in your apps and makes and edits files, which it can undo.</p>
@@ -324,6 +340,21 @@
         <button class="switch" id="auto-update" role="switch" aria-label="Check for updates automatically"></button>
       </div>
       <div class="group">
+        <h3>Report a problem</h3>
+        <p class="help">Buddy puts together its version, your settings (without keys, addresses or routines) and its recent timing log, with anything that looks like a key or a file in your folder taken out. You see every word first, and nothing is sent unless you choose to.</p>
+        <div class="row"><button class="btn" id="report">Report a problem…</button></div>
+        <div id="report-preview" hidden>
+          <p class="help">This is everything that would be sent. Opening an issue takes you to GitHub, where you add what happened, and can change or remove anything, before you submit it.</p>
+          <textarea id="report-text" readonly rows="12" spellcheck="false" aria-label="The report, as it would be sent"></textarea>
+          <div class="row">
+            <button class="btn" id="report-issue">Open a GitHub issue</button>
+            <button class="btn" id="report-copy">Copy</button>
+            <button class="link" id="report-cancel">Cancel</button>
+          </div>
+          <p class="help" id="report-status" role="status"></p>
+        </div>
+      </div>
+      <div class="group">
         <h3>Source and licences</h3>
         <div class="row">
           <button class="btn" id="releases">Release notes</button>
@@ -357,6 +388,13 @@
       <h2>Shortcuts</h2>
       <p class="lede">Work from any app. Click a shortcut, then press the keys you want; Esc cancels.</p>
       <div class="group keys" id="keys"></div>
+      <div class="group switch-row">
+        <div>
+          <h3>Hold to talk</h3>
+          <p class="help" id="hold-to-talk-help" style="margin:0">Hold down the Ask or Talk shortcut, say your question, and let go. A quick press works as before. Buddy watches for you letting go only while the keys are down.</p>
+        </div>
+        <button class="switch" id="hold-to-talk" role="switch" aria-label="Hold to talk" aria-describedby="hold-to-talk-help"></button>
+      </div>
     </section>
 
     <section id="page-claude" hidden>
@@ -762,7 +800,8 @@
     note.textContent = list.loading ? `Asking ${provider().label} which models your key can use…`
       : list.error ? list.error
       : !provider().ready ? (provider().key === "required" ? "Save a key above to see the models it can use." : "Save the address above to see its models.")
-      : { good: "Works well with Buddy: it can use tools and see your screen.",
+      : { good: "Works well with Buddy: it passed Buddy's checks, and it can use tools and see your screen.",
+          capable: "It can use tools and see your screen, but hasn't been checked with Buddy yet. Check this model to see how it does.",
           no_images: "Can't see images, so Buddy reads your windows as text instead of screenshots. Guiding works; questions about pictures and charts won't.",
           no_tools: "Can't use tools, so it can't read your screen or point. Pick another.",
         }[v(chosen)] ?? (provider().local ? `Buddy doesn't know yet whether this model can use tools and see images; it finds out the first time you ask. Download models in ${provider().label}.` : "Buddy doesn't know yet whether this model can use tools and see images; it finds out the first time you ask.");
@@ -771,6 +810,7 @@
   function renderClaudeRest() {
     const s = S.settings;
     $("screen-context").setAttribute("aria-checked", String(s.screenContext));
+    $("hold-to-talk").setAttribute("aria-checked", String(s.holdToTalk));
     $("provider").replaceChildren(...S.providers.map((p) => {
       const b = el("button", { className: "model" }, el("span", { className: "radio" }), el("b", { textContent: p.label }), el("span", { textContent: p.note }));
       b.setAttribute("role", "radio");
@@ -898,6 +938,8 @@
 
   $("commands").addEventListener("click", () => set({ commands: !S.settings.commands }));
   $("screen-context").addEventListener("click", () => set({ screenContext: !S.settings.screenContext }));
+  $("hold-to-talk").addEventListener("click", () => set({ holdToTalk: !S.settings.holdToTalk }));
+  $("advanced").addEventListener("click", () => set({ advanced: !S.settings.advanced }));
   function renderAgents() {
     const s = S.settings;
     $("commands").setAttribute("aria-checked", String(s.commands));
@@ -914,7 +956,34 @@
       : "Used only with “Act freely in apps I trust”.";
     appChips($("trusted"), "trustedApps");
     appChips($("blocked"), "blockedApps");
+    renderFolders();
   }
+
+  // Folders read without asking: shown by their name in the home folder ("Documents"), in full elsewhere.
+  function folderName(dir) {
+    const home = S.folders.home.toLowerCase();
+    return dir.toLowerCase().startsWith(`${home}\\`) ? dir.slice(home.length + 1) : dir;
+  }
+  function renderFolders() {
+    const { list, usual } = S.folders;
+    $("folders").replaceChildren(...list.map((dir) => {
+      const name = folderName(dir);
+      const remove = el("button", { title: `Remove ${name}` }, X());
+      remove.setAttribute("aria-label", `Remove ${name}`);
+      remove.addEventListener("click", () => set({ readFolders: list.filter((x) => x !== dir) }));
+      return el("span", { className: "app-chip", title: dir }, name, remove);
+    }));
+    $("folders-usual").hidden = usual;
+  }
+  $("folder-add").addEventListener("click", async () => {
+    const { error, state } = await window.buddy.settingsAddFolder();
+    render(state);
+    $("folder-problem").textContent = error ?? "";
+  });
+  $("folders-usual").addEventListener("click", () => {
+    $("folder-problem").textContent = "";
+    set({ readFolders: null });
+  });
   // Suggest the apps open right now.
   window.buddy.settingsApps().then((apps) => $("running-apps").replaceChildren(...apps.map((a) => el("option", { value: a.replace(/\.exe$/i, "") })))).catch(() => {});
 
@@ -1021,6 +1090,25 @@
   });
 
   $("feature").addEventListener("click", () => window.buddy.settingsFeature());
+
+  // Report a problem: shown in full first; sent only by one of the two buttons, exactly as shown.
+  async function openReport() {
+    const report = await window.buddy.settingsReport();
+    $("report-text").value = report.body;
+    $("report-status").textContent = "";
+    $("report-preview").hidden = false;
+    $("report-text").scrollIntoView({ block: "nearest" });
+  }
+  $("report").addEventListener("click", openReport);
+  $("report-cancel").addEventListener("click", () => { $("report-preview").hidden = true; });
+  const sendReport = async (how) => {
+    const r = await window.buddy.settingsReportSend(how, $("report-text").value);
+    $("report-status").textContent = how === "copy" ? "Copied. Paste it wherever you'd like to send it."
+      : r.copied ? "GitHub is open in your browser. The report was too long for the link, so it's copied: paste it into the issue."
+      : "GitHub is open in your browser with the report filled in. Nothing is posted until you submit it there.";
+  };
+  $("report-issue").addEventListener("click", () => sendReport("issue"));
+  $("report-copy").addEventListener("click", () => sendReport("copy"));
   $("plus").addEventListener("click", () => window.buddy.settingsPlus());
   // Changes made elsewhere (the tray, a routine running) arrive here too.
   window.buddy.onSettingsChanged((state) => render(state));
@@ -1062,6 +1150,9 @@
   // ---------- Everything ----------
   function render(state) {
     S = state;
+    // Without the advanced features, Settings shows no routines.
+    document.body.classList.toggle("basic", !S.settings.advanced);
+    $("advanced").setAttribute("aria-checked", String(S.settings.advanced));
     renderVoice();
     renderDictation();
     renderLook();
@@ -1140,7 +1231,15 @@
 
   // Opened on a given page (the tray's "Recent changes…" opens Activity).
   let requestedPage = null;
+  let reportWanted = false;
   window.buddy.onSettingsShowPage?.((p) => {
+    // The tray's "Report a problem…" opens About with the report ready to read.
+    if (p === "report") {
+      requestedPage = "about";
+      reportWanted = true;
+      if (S) { show("about"); openReport(); }
+      return;
+    }
     if (!pages.includes(p)) return;
     requestedPage = p;
     if (S) show(p);
@@ -1151,6 +1250,7 @@
     try { page = pages.includes(localStorage.getItem("settings-page")) ? localStorage.getItem("settings-page") : "voice"; } catch {}
     render(await window.buddy.settingsState());
     show(requestedPage ?? page);
+    if (reportWanted) openReport();
   })();
 </script>
 </body>

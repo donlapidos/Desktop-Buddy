@@ -15,6 +15,10 @@
   #caption { position: absolute; max-width: 260px; padding: 7px 11px; border-radius: 12px; background: var(--buddy); color: #fff; font-size: 13.5px; line-height: 1.3; box-shadow: 0 6px 20px rgba(0,0,0,.25); opacity: 0; transform: translateY(4px); transition: opacity .2s, transform .2s; }
   #caption.on { opacity: 1; transform: none; }
   @media (prefers-reduced-motion: reduce) { #ring.on { animation: none; } }
+  /* A best guess from the screenshot (no control to point at): a soft round ring, not a crisp box. */
+  #ring.guess { border-style: dashed; border-radius: 50%; box-shadow: 0 0 0 10px color-mix(in srgb, var(--buddy) 14%, transparent); }
+  #ring.guess.on { animation: none; }
+  .guess .annotation-ink { stroke-dasharray: 6 5; }
   body.hide-buddy #buddy { visibility: hidden; }
   body.hide-buddy #ring, body.hide-buddy #caption, body.hide-buddy #annotations { visibility: hidden; }
   #annotations { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
@@ -109,7 +113,8 @@
     wake();
   });
 
-  window.buddy.onPoint(({ rect, caption: text, decorate = true }) => {
+  window.buddy.onPoint(({ rect, caption: text, decorate = true, guess = false }) => {
+    ring.classList.toggle("guess", guess);
     clearTimeout(captionTimer);
     mode = "point";
     const to = { x: rect.x + rect.width / 2 - 4, y: rect.y + rect.height / 2 - 2 };

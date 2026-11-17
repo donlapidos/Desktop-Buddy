@@ -1,7 +1,7 @@
 # Desktop Buddy: notes for agents
 
-A Windows desktop assistant (Electron, plain JavaScript checked by TypeScript through JSDoc). What it does and how it
-fits together: `README.md`. What to build next and why: `ROADMAP.md`. Look and feel: `DESIGN.md`, `PRODUCT.md`.
+A Windows desktop assistant (Electron, plain JavaScript checked by TypeScript through JSDoc). What it does: `README.md` (short) and
+`docs/GUIDE.md` (in full). How it fits together, tests and releasing: `docs/DEVELOPING.md`. What to build next and why: `ROADMAP.md`. Look and feel: `DESIGN.md`, `PRODUCT.md`.
 
 ## Commands
 

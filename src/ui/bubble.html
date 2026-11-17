@@ -85,6 +85,7 @@
   #welcome .lede { color: var(--muted); font-size: 13px; }
   /* Before an AI is set up, there's no conversation to move or restart, and nothing to say out loud. */
   body.welcoming #totask, body.welcoming #new, body.welcoming #mic { display: none; }
+  body.basic #totask { display: none; }
   .door { display: flex; flex-direction: column; align-items: flex-start; gap: 0; width: 100%; flex: none; text-align: left; border: 0; border-radius: 11px; padding: 6px 11px; background: var(--field); color: var(--fg); font: inherit; line-height: 1.35; cursor: pointer; }
   .door:hover { background: var(--field-hover); }
   .door b { font-weight: 600; }
@@ -106,6 +107,12 @@
   #tip span { flex: 1; }
   #tip button { flex: none; border: 0; border-radius: 8px; padding: 5px 9px; background: color-mix(in srgb, var(--buddy) 28%, var(--field)); color: var(--fg); font: inherit; font-weight: 600; cursor: pointer; }
   #tip button:hover { background: color-mix(in srgb, var(--buddy) 40%, var(--field)); }
+  #voice-offer { display: flex; align-items: center; gap: 6px; padding: 7px 8px 7px 10px; border-radius: 10px; background: color-mix(in srgb, var(--buddy) 14%, var(--field)); font-size: 12.5px; line-height: 1.35; }
+  #voice-offer[hidden], #voice-offer button[hidden] { display: none; }
+  #voice-offer span { flex: 1; }
+  #voice-offer button { flex: none; border: 0; border-radius: 8px; padding: 5px 9px; background: color-mix(in srgb, var(--buddy) 28%, var(--field)); color: var(--fg); font: inherit; font-weight: 600; cursor: pointer; }
+  #voice-offer button.quiet { background: transparent; font-weight: 500; }
+  #voice-offer button:hover { background: color-mix(in srgb, var(--buddy) 40%, var(--field)); }
   #welcome::-webkit-scrollbar { width: 8px; }
   #welcome::-webkit-scrollbar-thumb { background: #2a2d34; border-radius: 4px; }
 </style>
@@ -134,6 +141,7 @@
     </div>
   </div>
   <div id="tip" hidden><span id="tip-text"></span><button id="tip-do" type="button"></button></div>
+  <div id="voice-offer" hidden role="status"><span id="voice-offer-text"></span><button id="voice-yes" type="button">Set up talking</button><button id="voice-no" class="quiet" type="button">Not now</button></div>
   <form id="form">
     <input id="input" autocomplete="off" spellcheck="false" placeholder="How do I…?  or  Do it for me">
     <button class="btn ghost" id="mic" type="button" title="Say it (Ctrl+Alt+T). Pause when you're done."><svg viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg></button>
@@ -162,9 +170,11 @@
 
   // The tour's tip, or none (null).
   let tip = null;
+  let voiceOffer = null; // the voice download's offer (showVoiceOffer)
   function showTip(t) {
     tip = t;
-    $("tip").hidden = !t || needsKey;
+    // One at a time: the bubble has room for one, and the voice offer comes first.
+    $("tip").hidden = !t || needsKey || !!voiceOffer;
     if (!t) return;
     $("tip-text").textContent = t.text;
     $("tip-do").textContent = t.action;
@@ -172,9 +182,26 @@
   $("tip-do").addEventListener("click", () => tip && window.buddy.tour(tip.event));
   window.buddy.onTour((t) => showTip(t));
 
-  window.buddy.onSummon(({ target, needsKey: nk, tip: t }) => {
+  // The one-time voice download, offered after setup: an offer, its progress, then how it went (or nothing).
+  function showVoiceOffer(o) {
+    voiceOffer = o;
+    $("voice-offer").hidden = !o || needsKey;
+    showTip(tip);
+    if (!o) return;
+    $("voice-offer-text").textContent = o.text;
+    $("voice-yes").hidden = $("voice-no").hidden = o.state !== "offer";
+  }
+  $("voice-yes").addEventListener("click", () => window.buddy.voiceOffer("yes"));
+  $("voice-no").addEventListener("click", () => window.buddy.voiceOffer("no"));
+  window.buddy.onVoiceOffer((o) => showVoiceOffer(o));
+
+  // Without the advanced features there are no task windows to move a conversation into.
+  window.buddy.onAdvanced((on) => document.body.classList.toggle("basic", !on));
+  window.buddy.onSummon(({ target, needsKey: nk, tip: t, voiceOffer, advanced = true }) => {
+    document.body.classList.toggle("basic", !advanced);
     needsKey = nk;
     showTip(t);
+    showVoiceOffer(voiceOffer);
     $("marks").classList.remove("on");
     $("where").textContent = nk ? "Welcome to Buddy" : target ? `Looking at ${target}` : "Buddy";
     if (nk) welcome("doors");
@@ -201,6 +228,7 @@
     $("input").type = "text";
     $("input").placeholder = "How do I…?  or  Do it for me";
     showTip(tip); // a tour tip that came while setting up
+    showVoiceOffer(voiceOffer); // and the voice offer
   }
 
   // page: "doors" (the three choices), "apps", "local" or "key".

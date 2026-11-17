@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { Brain } from "../src/brain.js";
-import { judgePath, pageText, privateHost, runPcTool } from "../src/pc-tools.js";
+import { defaultFolders, grantProblem, judgePath, pageText, privateHost, runPcTool } from "../src/pc-tools.js";
 
 /** A made-up PC: a home with everyday folders, Buddy's working and data folders, another user, Windows. */
 function pc() {
@@ -22,6 +22,7 @@ function pc() {
     programFiles: [path.join(root, "Program Files")],
     programData: path.join(root, "ProgramData"),
     usersDir,
+    granted: defaultFolders(home),
   };
   const asked = [];
   // With the user's "Let Buddy run commands" switch on; the tests for it being off say so.
@@ -33,12 +34,43 @@ test("places: everyday folders read freely, elsewhere asks, private and system p
   const { home, places, root } = pc();
   assert.equal(judgePath("notes.txt", places).read, "free", "relative paths are in the working folder");
   assert.equal(judgePath("notes.txt", places).full, path.join(fs.realpathSync.native(places.workDir), "notes.txt"));
-  assert.equal(judgePath("~/Pictures/cat.jpg", places).read, "free");
+  assert.equal(judgePath("~/Downloads/form.pdf", places).read, "free");
+  assert.equal(judgePath("~/Pictures/cat.jpg", places).read, "ask", "only the folders on the list are read freely");
   assert.equal(judgePath(path.join(home, "Projects", "app.js"), places).read, "ask");
   for (const never of [path.join(home, ".ssh", "id_ed25519"), path.join(places.buddyData, "api-key.bin"), path.join(home, "AppData", "Roaming", "Claude", "claude_desktop_config.json"), path.join(home, ".claude.json"), path.join(root, "Windows", "System32", "x.dll"), path.join(root, "Users", "alex", "Documents", "diary.txt"), "\\\\server\\share\\x"]) {
     assert.equal(judgePath(never, places).read, "never", never);
   }
   assert.equal(judgePath(path.join(home, "Documents", "..", ".ssh", "config"), places).read, "never", "no way round it with ..");
+});
+
+test("the folders the user lists are read freely; the working folder always is", () => {
+  const { home, places } = pc();
+  const projects = path.join(home, "Projects", "app.js");
+  assert.equal(judgePath(projects, { ...places, granted: [...places.granted, path.join(home, "Projects")] }).read, "free", "an added folder");
+  const none = { ...places, granted: [] };
+  assert.equal(judgePath("~/Documents/letter.txt", none).read, "ask", "a removed folder asks again");
+  assert.equal(judgePath("notes.txt", none).read, "free", "the working folder stays on the list");
+});
+
+test("a folder that would uncover private places can't be on the list, even written into the settings by hand", () => {
+  const { home, places, root } = pc();
+  assert.equal(grantProblem(path.join(home, "Projects"), places), null);
+  for (const [dir, why] of [
+    [home, /too much/],
+    [path.parse(root).root, /too much/],
+    [path.join(home, "AppData"), /never reads/],
+    [path.join(home, "AppData", "Local", "Temp"), /never reads/],
+    [path.join(home, ".ssh"), /never reads/],
+    [places.buddyData, /never reads/],
+    [path.join(root, "Windows"), /never reads/],
+    [path.join(root, "Users", "alex", "Documents"), /another person/],
+    ["\\\\server\\share", /on this PC/],
+    ["Projects", /on this PC/],
+  ]) assert.match(String(grantProblem(dir, places)), why, dir);
+  const handEdited = { ...places, granted: [home, path.join(home, "AppData"), path.parse(root).root] };
+  assert.equal(judgePath(path.join(home, "Projects", "app.js"), handEdited).read, "ask", "the home folder isn't granted");
+  assert.equal(judgePath(path.join(home, "AppData", "Local", "x.db"), handEdited).read, "ask", "nor AppData");
+  assert.equal(judgePath(path.join(home, ".ssh", "id_ed25519"), handEdited).read, "never", "and private places stay closed");
 });
 
 test("a link inside an everyday folder can't lead somewhere forbidden", (t) => {

@@ -1,6 +1,6 @@
 name: CI
 
-# Type check and unit tests on Windows, the only platform Buddy ships on.
+# Type check, unit tests and the end-to-end checks on Windows, the only platform Buddy ships on.
 on:
   push:
     branches: [main]
@@ -42,3 +42,40 @@ jobs:
 
       - name: No known vulnerabilities in what ships
         run: npm audit --omit=dev
+
+  e2e:
+    name: The real app, end to end
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      # Still no install scripts; Electron's own binary is fetched on its own (its checksum is checked by its
+      # installer), and the hold-key hook uses the prebuilt binary it ships with.
+      - name: Install
+        run: |
+          npm ci --ignore-scripts
+          node node_modules/electron/install.js
+
+      # The agent-desktop CLI: the upstream release pinned in package.json, checksum verified.
+      - name: Fetch agent-desktop
+        run: npm run setup
+
+      # Every check but voice: the voice models (~275 MB) stay a local check. A refused mode or task-state change in
+      # any copy's log fails the run, as it does locally.
+      - name: End-to-end checks
+        run: npm run e2e -- --no-voice
+
+      - name: Keep the screenshots and logs
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-out
+          path: e2e-out/
+          retention-days: 7

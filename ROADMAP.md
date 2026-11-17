@@ -4,6 +4,9 @@ Written 2026-11-11, after 0.2.0. This is a work plan for an agent (Claude Opus i
 the owner. Each task says why it matters, what to do, and how to tell it's done. Do the phases in order; inside a
 phase, tasks are independent unless one names another.
 
+**What to build next (2026-11-16):** `BUILD-PLAN.md` orders the next packages (speed, voice first, pointing without
+an accessibility tree, shipping) after a comparison with heyclicky. This file stays the long list.
+
 **Direction (decided 2026-11-12):** Buddy stays free and open source, and may earn its keep through **Buddy Plus**, a
 monthly plan with the AI included (no key: Buddy relays to a provider on the owner's own API account). It is built
 only if people show they want it (task 1.6). Rules for it: never resell or route through anyone's Claude or ChatGPT
@@ -233,26 +236,46 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   once. Each layer has a test that fails without it. The wall (restricted token or AppContainer) is still to do.
 - **3.2 Places the user grants.** Replace "everyday folders are read freely" with a short list the user sees and can
   edit (Documents, Desktop, Downloads to start), shown in Settings.
+  **Done (2026-11-17).** `settings.readFolders` (null is the usual three, where Windows keeps them), Settings › Agents
+  › Folders Buddy reads without asking. `grantProblem` in pc-tools.js keeps drives, the home folder, AppData, private
+  places and other users' folders off the list, both when added and when written into the settings by hand.
 - **3.3 A problem report the user can send.** "Report a problem" gathers the timing log (already short and bounded),
   the version and settings without keys, shows it, and opens an issue or copies it. No silent telemetry.
 - **3.4 A security page.** `SECURITY.md`: what Buddy can touch, what it can't, what approval means, how to report a
   vulnerability. The README's "AI and privacy" section is the start.
+  **Done (2026-11-17):** [SECURITY.md](SECURITY.md), linked from the README. Reports go through GitHub's private
+  vulnerability reporting, which the owner turns on for the repository.
 
 ## Phase 4: the code can carry more work
 
 - **4.1 Split `main.js`.** Move the 323 lines of `BUDDY_*_TEST` hooks to `src/dev-hooks.js`, loaded only when one is
   set. Then split by area: windows (overlay, island, bubble), marking, voice wiring, AI-app bridge wiring, settings
   wiring, startup. No behaviour change; e2e must pass after each move.
+  **Under way (2026-11-17): 2,454 lines → 1,982.** The test hooks are in dev-hooks.js; provider-state.js (keys,
+  addresses, model lists, the model check), explainer-window.js, launch.js, feedback.js and marker.js are out, each
+  given what it needs as functions and moved with the e2e checks passing. Left: the overlay, island and bubble windows,
+  voice and dictation wiring, the AI-app bridge wiring, first-run setup in the bubble, and startup.
 - **4.2 Type the pages.** Move each page's script out of the HTML into a checked `.js` file. Start with
   `settings.html`.
 - **4.3 e2e in CI.** Run `files`, `settings`, `tasks`, `explainer` and `firstrun` on `windows-latest` (voice needs
   the models; keep it local). Fail the build on a refused state change.
+  **Done (2026-11-17):** the `e2e` job in ci.yml runs every check but voice (`--no-voice`); all twelve passed on
+  `windows-latest` on the first pull request, in about three minutes.
 - **4.4 Tidy dependencies.** `@anthropic-ai/claude-agent-sdk` is "All rights reserved" and unused by default: move it
   to `optionalDependencies` or drop the SDK engine. Keep `npm audit` at zero.
+  **Done (2026-11-17):** the SDK is an optional dependency, and `BUDDY_ENGINE=sdk` without it falls back to Buddy's
+  own engine. `npm audit --omit=dev` (what ships) is at zero and checked in CI; the six moderate findings left are
+  electron-builder's own `minimatch`, at build time only, fixed upstream only by a major downgrade.
 - **4.5 Buddy's own windows for everyone.** Keyboard-only use of the bubble, cards and Settings; labels for screen
   readers (the bubble has one `aria` attribute today); Windows high-contrast; reduced motion everywhere.
 - **4.6 Memory budget.** Idle under 200 MB, voice unloaded when unused (done), no growth over a day; add a check like
   `measure:idle` for memory.
+  **Measured (2026-11-17):** `npm run measure:idle -- -MemoryMB 200` now reports memory too. Idle, a fresh copy holds
+  about 700 MB of working set (shared pages counted once per process): three windows (overlay, island, bubble) at
+  ~100 MB each, the main process ~160 MB, the GPU process ~145 MB even with software compositing, a utility process
+  ~90 MB. It didn't grow over the window. Main-process CPU read 4-5% of one core with the mouse still, above the 2-3%
+  noted in main.js. Under 200 MB would mean fewer always-open windows (one overlay window shared by the island and
+  bubble, or creating the bubble on first use): a design change for the owner to weigh, not a tidy-up.
 
 ## Phase 5: what makes people stay
 
