@@ -1753,8 +1753,10 @@ async function addReadFolder(win) {
 /** @typedef {import("./providers.js").ProviderId} ProviderId */
 // The Agent SDK engine runs Claude Code, so it only works with an Anthropic key.
 // Loaded only when asked for: Buddy's own engine does everything for every provider, so installers leave the Agent SDK
-// (and the Claude Code program it runs, 346 MB) out.
-const AgentBrain = process.env.BUDDY_ENGINE === "sdk" ? (await import("./agent-brain.js")).AgentBrain : null;
+// (and the Claude Code program it runs, 346 MB) out. It is an optional dependency: without it, Buddy's own engine runs.
+const AgentBrain = process.env.BUDDY_ENGINE === "sdk"
+  ? await import("./agent-brain.js").then((m) => m.AgentBrain, (err) => (console.error(`BUDDY_ENGINE=sdk: the Agent SDK isn't installed (${err?.code ?? err}); using Buddy's own engine.`), null))
+  : null;
 const makeEngine = (ui) => (AgentBrain && currentProvider() === "anthropic" ? new AgentBrain({ ...ui, agentDir: path.join(app.getPath("userData"), "agent") }) : new Brain(ui));
 const openFile = (file) => shell.openPath(file);
 

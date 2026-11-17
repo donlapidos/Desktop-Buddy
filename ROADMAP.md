@@ -255,11 +255,13 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   `settings.html`.
 - **4.3 e2e in CI.** Run `files`, `settings`, `tasks`, `explainer` and `firstrun` on `windows-latest` (voice needs
   the models; keep it local). Fail the build on a refused state change.
-  **Written (2026-11-17):** the `e2e` job in ci.yml runs every check but voice (`--no-voice`), which all pass locally
-  without the models. Not yet run on GitHub's machines: the first pull request will show whether they can drive a
-  desktop the same way.
+  **Done (2026-11-17):** the `e2e` job in ci.yml runs every check but voice (`--no-voice`); all twelve passed on
+  `windows-latest` on the first pull request, in about three minutes.
 - **4.4 Tidy dependencies.** `@anthropic-ai/claude-agent-sdk` is "All rights reserved" and unused by default: move it
   to `optionalDependencies` or drop the SDK engine. Keep `npm audit` at zero.
+  **Done (2026-11-17):** the SDK is an optional dependency, and `BUDDY_ENGINE=sdk` without it falls back to Buddy's
+  own engine. `npm audit --omit=dev` (what ships) is at zero and checked in CI; the six moderate findings left are
+  electron-builder's own `minimatch`, at build time only, fixed upstream only by a major downgrade.
 - **4.5 Buddy's own windows for everyone.** Keyboard-only use of the bubble, cards and Settings; labels for screen
   readers (the bubble has one `aria` attribute today); Windows high-contrast; reduced motion everywhere.
 - **4.6 Memory budget.** Idle under 200 MB, voice unloaded when unused (done), no growth over a day; add a check like
