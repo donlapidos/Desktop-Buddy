@@ -257,6 +257,9 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   voice and dictation wiring, the AI-app bridge wiring, first-run setup in the bubble, and startup.
 - **4.2 Type the pages.** Move each page's script out of the HTML into a checked `.js` file. Start with
   `settings.html`.
+  **Settings done (2026-11-17):** its 773-line script is `src/ui/settings.js`, in `npm run check` (with
+  `src/ui/pages.d.ts` for the preload's `window.buddy`), and the page's CSP went from `script-src 'unsafe-inline'` to
+  `'self'`. The other pages' scripts are still inline.
 - **4.3 e2e in CI.** Run `files`, `settings`, `tasks`, `explainer` and `firstrun` on `windows-latest` (voice needs
   the models; keep it local). Fail the build on a refused state change.
   **Done (2026-11-17):** the `e2e` job in ci.yml runs every check but voice (`--no-voice`); all twelve passed on
