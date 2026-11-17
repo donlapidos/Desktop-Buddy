@@ -39,6 +39,7 @@
     "src/ai-app-setup.js",
     "src/app-bridge.js",
     "src/conversations.js",
+    "src/lessons.js",
     "src/updates.js",
     "src/speakable.js",
     "src/reply-stream.js",

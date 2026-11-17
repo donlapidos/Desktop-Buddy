@@ -303,6 +303,11 @@ Only after Phases 0-3; pick by what users ask for.
   AI & privacy › Conversations › Forget. The `restore` e2e check restarts Buddy on one data folder.
 - **5.2 "Teach me this app" lessons** built from guide routes: a saved, replayable walkthrough is the artifact people
   share.
+  **Done (2026-11-18).** A route the user finished (guide_steps) is offered under the answer as **Save as a lesson**;
+  main keeps the steps, never the page. `src/lessons.js` checks every lesson (words only, 30 steps), saved or imported
+  (`.buddy-lesson.json`). Playing one (tray, Settings › Lessons) runs `Brain.playLesson`: the route follower with no
+  model call, only pointing, and a plain outcome per step. The `lessons` e2e check plays one in a sample window.
+  Known limit: with several windows of the lesson's app open, it plays in the one in front.
 - **5.3 Integrations:** let Buddy use other MCP servers the user adds (calendar, mail), under the same approvals.
 - **5.4 Languages:** the interface in the user's language (replies already are).
 - **5.5 A cheap-then-smart mode:** a small model for guiding, the big one for explaining and building.

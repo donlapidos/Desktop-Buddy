@@ -43,6 +43,7 @@ import { createMarker } from "./marker.js";
 import { createAiAppSetup } from "./ai-app-setup.js";
 import { createAppBridge } from "./app-bridge.js";
 import { createConversations } from "./conversations.js";
+import { appName, createLessons } from "./lessons.js";
 import { appKey } from "./policy.js";
 import { appWords, tourNext, tourTip } from "./welcome.js";
 import { aboutMoney, addCall, capProblem, createLedger, moneyWords, noSpend, priceOf, spendLine, tokenWords } from "./costs.js";
@@ -223,6 +224,10 @@ function startActivity() {
 let ledger = null;
 /** @type {ReturnType<typeof createConversations> | null} the bubble's and tasks' conversations, kept on the PC */
 let conversations = null;
+/** @type {ReturnType<typeof createLessons> | null} "teach me this app" lessons, kept on the PC (lessons.js) */
+let lessons = null;
+/** @type {{ title: string, app: string, steps: any[] } | null} the route the bubble's last answer finished, offered as a lesson */
+let routeToKeep = null;
 /** A new conversation in the bubble: the old one is forgotten, here and on the PC. */
 function resetBubble() {
   brain?.reset();
@@ -867,7 +872,9 @@ async function answerQuestion(text, opts, isCurrent) {
     liveReply.cancel();
     if (!replyMuted && talksBack(turn.spoken)) speak(reply);
   }
-  return { reply, spend: tally ? spendLine(tally.now) : null };
+  // A route they went all the way through can be kept as a lesson; the bubble offers it, and main keeps the steps.
+  routeToKeep = engine.lastRoute ? { title: text, ...engine.lastRoute } : null;
+  return { reply, spend: tally ? spendLine(tally.now) : null, lesson: !!routeToKeep };
 }
 
 handleFrom(fromBubble, "set-key", async (_e, key) => {
@@ -875,6 +882,65 @@ handleFrom(fromBubble, "set-key", async (_e, key) => {
   if (!error && brain) tourEvent("setup");
   return { ok: !error && !!brain, error };
 });
+
+// ---------- Lessons (lessons.js): a finished route kept, to play again or share ----------
+
+// The bubble's "Save as a lesson": the route its last answer finished. The steps never come from the page.
+handleFrom(fromBubble, "save-lesson", () => {
+  if (!routeToKeep || !lessons) return { error: "There's no finished route to keep." };
+  const saved = lessons.add(routeToKeep);
+  if ("error" in saved) return saved;
+  routeToKeep = null;
+  trace({ kind: "lesson-saved", steps: saved.lesson.steps.length });
+  buildTrayMenu();
+  settingsWindow.refresh();
+  return { title: saved.lesson.title };
+});
+
+/** @type {Brain | null} the Brain playing a lesson: Stop cancels it */
+let lessonBrain = null;
+
+/**
+ * Plays a lesson in its app's window (the one in front, when several are open; `window` names one): Buddy points at
+ * each step and follows the user, with no model call. It only points, so a lesson someone shared can't do anything on
+ * this PC.
+ */
+async function playLesson(/** @type {string} */ id, { window = null } = {}) {
+  const lesson = lessons?.get(id);
+  if (!lesson) return notice("That lesson is gone.");
+  if (mode !== "idle") return progress(BUSY[mode]);
+  const own = ownPids();
+  const open = (await listWindows()).filter((w) => !own.includes(w.pid) && String(w.app_name).toLowerCase() === lesson.app.toLowerCase());
+  const win = (window && open.find((w) => w.id === window.id)) ?? open.find((w) => w.is_focused) ?? open[0];
+  if (!win) return notice(`Open ${appName(lesson.app)} first, then play the lesson again.`);
+  enter("working");
+  hideBubble({ now: true });
+  progress(`Lesson: ${lesson.title}`);
+  trace({ kind: "lesson-play", steps: lesson.steps.length });
+  lessonBrain = new Brain({
+    point: (bounds, caption) => point(bounds, caption),
+    annotate: (items, context) => showAnnotations(items, context),
+    clearAnnotations: (ms = 0) => annotationLayer.release("bubble", ms),
+    // A lesson never acts; were anything to ask, the answer is no.
+    confirm: async () => "deny",
+    status,
+    trace,
+    isOwnWindow: (w) => ownPids().includes(Number(w.pid)),
+  });
+  answeringBrain = lessonBrain;
+  let said;
+  try {
+    said = await lessonBrain.playLesson(lesson.steps, win);
+  } finally {
+    answeringBrain = null;
+    lessonBrain = null;
+    enter("idle");
+    releaseLater("bubble");
+  }
+  trace({ kind: "lesson-played", done: said.done });
+  notice(said.text);
+  return said;
+}
 
 // ---------- The thirty-second tour after setup (welcome.js): ask about the window in front, then Mark once ----------
 
@@ -1616,6 +1682,7 @@ function buildTrayMenu() {
       { label: `Talk to Buddy  (${keyLabel(hotkey("talk"))})`, click: () => talkByClick() },
       { label: `Mark or explain something  (${keyLabel(hotkey("mark"))})`, click: () => startMarking() },
       { label: "New conversation", click: () => resetBubble() },
+      ...(lessons?.list().length ? [{ label: "Play a lesson", submenu: lessons.list().slice(-15).reverse().map((l) => ({ label: `${l.title}  (${appName(l.app)})`, click: () => playLesson(l.id) })) }] : []),
       ...(settings.advanced ? [{ label: "New task window", click: () => newTask() }] : []),
       { type: "separator" },
       ...(updates?.state().status === "ready" ? [{ label: `Restart to update to ${updates.state().next}`, click: () => updates.install() }] : []),
@@ -1682,6 +1749,7 @@ function settingsState() {
     spend: spendState(),
     startsWithWindows: process.platform === "win32" && startsWithWindows(),
     data: { explainers, logBytes, conversations: conversations?.count() ?? 0 },
+    lessons: (lessons?.list() ?? []).slice().reverse().map((l) => ({ id: l.id, title: l.title, app: appName(l.app), steps: l.steps.length })),
     claude: appStatus(),
     aiApps: APP_IDS.map((id) => ({ id, label: APPS[id].label, after: APPS[id].after })),
     updates: updates?.state() ?? null,
@@ -1766,6 +1834,37 @@ const settingsWindow = createSettingsWindow({
   },
   openData: () => shell.openPath(app.getPath("userData")),
   addFolder: addReadFolder,
+  lesson: async (action, id, win) => {
+    if (action === "delete") {
+      lessons?.remove(id);
+      buildTrayMenu();
+      return {};
+    }
+    const lesson = lessons?.get(id);
+    if (!lesson) return { error: "That lesson is gone." };
+    if (action === "export") {
+      const picked = await dialog.showSaveDialog(win, { title: "Share a lesson", defaultPath: `${lesson.title.replace(/[\\/:*?"<>|]/g, " ").trim().slice(0, 60)}.buddy-lesson.json`, filters: [{ name: "Buddy lesson", extensions: ["json"] }] });
+      if (picked.canceled || !picked.filePath) return {};
+      fs.writeFileSync(picked.filePath, lessons.exportText(id) ?? "");
+      trace({ kind: "lesson-exported" });
+      return { saved: true };
+    }
+    // Play: Settings steps aside so the app the lesson is for can be seen; how it went shows on the island.
+    win.minimize();
+    await playLesson(id);
+    return {};
+  },
+  importLesson: async (win) => {
+    const picked = await dialog.showOpenDialog(win, { title: "Import a lesson", properties: ["openFile"], filters: [{ name: "Buddy lesson", extensions: ["json"] }] });
+    const file = picked.canceled ? null : picked.filePaths[0];
+    if (!file || !lessons) return {};
+    if (fs.statSync(file).size > 200_000) return { error: "That file is too big to be a Buddy lesson." };
+    const added = lessons.importText(fs.readFileSync(file, "utf8"));
+    if ("error" in added) return { error: added.error };
+    trace({ kind: "lesson-imported", steps: added.lesson.steps.length });
+    buildTrayMenu();
+    return { title: added.lesson.title };
+  },
   runRoutine: (id) => {
     const r = settings.routines.find((x) => x.id === id);
     return r ? runRoutine(r, "now").then((res) => res.error ?? null) : Promise.resolve("That routine no longer exists.");
@@ -1815,6 +1914,8 @@ const devKit = () => ({
   bubble, island, tasks, voice, updates, activity, pressHotkey, sendVoiceOffer,
   useKeyHook: (/** @type {import("./hold-key.js").KeyHook} */ hook) => { keyHook = hook; },
   get settings() { return settings; },
+  get lessons() { return lessons; },
+  playLesson,
   get brain() { return brain; },
   set brain(b) { brain = b; },
   get about() { return about; },
@@ -1835,6 +1936,7 @@ app.whenReady().then(() => {
   startActivity();
   startLedger();
   conversations = createConversations({ file: path.join(app.getPath("userData"), "conversations.json") });
+  lessons = createLessons({ file: path.join(app.getPath("userData"), "lessons.json") });
   refreshModels().catch(() => {});
   setAgentPolicy(settings);
   app.setAppUserModelId(APP_ID);

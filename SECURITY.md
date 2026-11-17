@@ -25,6 +25,7 @@ Ordinary bugs go through **Report a problem** in the tray, which shows you the w
 | Read files and folders | Freely in the folders listed in Settings › Agents (Documents, Desktop, Downloads to start) and its own Documents › Buddy folder; anywhere else asks first. |
 | Make or change files | Always asks first. A file it replaces or edits is kept for a week, and Activity can undo it. |
 | Read web pages | Asks for each website. Addresses on your PC or your local network are never fetched, redirects included. |
+| Play a lesson (one you saved or one someone shared) | It only points and follows you, like guiding; it never clicks, types or opens anything, and calls no AI. An imported lesson is checked to be only steps and short words. |
 | Run PowerShell commands | Off until you turn it on (Settings › Agents › Let Buddy run commands). On, it asks before every command. |
 
 ### What your "yes" means

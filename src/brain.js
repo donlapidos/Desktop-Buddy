@@ -986,6 +986,8 @@ export class Brain {
     this.explainerReady = explainer;
     this.abort = new AbortController();
     this.made = [];
+    // A route this answer walks the user all the way through (guideSteps), which they may keep as a lesson.
+    this.lastRoute = null;
     try {
       if (prepare) content = await prepare(this.abort.signal);
       if (this.abort.signal.aborted) return "Okay, stopped.";
@@ -1558,7 +1560,7 @@ export class Brain {
    * window it was found in, or `stop`: what to tell the model instead. Used by guide_steps for each step, and for the
    * first one while the model is still writing the rest (startEarly).
    * @param {any} win @param {any} step @param {number} i @param {{ of?: number, doneSoFar: string }} o
-   * @returns {Promise<{ win: any } | { stop: string }>}
+   * @returns {Promise<{ win: any } | { stop: string, why?: "several" | "missing" }>}
    */
   async showStep(win, step, i, { of, doneSoFar }) {
     const signal = this.abort?.signal;
@@ -1601,7 +1603,7 @@ export class Brain {
       const why = match
         ? `several controls are called "${step.target}" (${match.candidates.map((c) => c.ref_id).join(", ")})`
         : `nothing called "${step.target}" is on screen`;
-      return { stop: `${doneSoFar} At step ${i + 1} ("${step.caption}") ${why}. Point at the right one yourself, then call guide_steps again with the steps that are left. Their window now:
+      return { why: match ? "several" : "missing", stop: `${doneSoFar} At step ${i + 1} ("${step.caption}") ${why}. Point at the right one yourself, then call guide_steps again with the steps that are left. Their window now:
 ${text}` };
     }
     if (this.ui.annotate) {
@@ -1650,19 +1652,20 @@ ${text}` };
   async guideSteps(input) {
     const steps = (Array.isArray(input.steps) ? input.steps : []).filter((s) => typeof s?.target === "string" && s.target.trim());
     if (!steps.length) return "guide_steps needs steps, each with a target.";
-    if (!this.target) return "I don't know which window they're working in; look first.";
+    if (!this.target) return (this.routeOutcome = { kind: "no-window" }), "I don't know which window they're working in; look first.";
+    const startedIn = this.target.app_name;
     const seconds = Math.min(120, Math.max(10, Number(input.seconds_per_step) || 60));
     const signal = this.abort?.signal;
     const doneSoFar = (i) => (i ? `They did steps 1-${i} of ${steps.length}.` : `They haven't started yet.`);
     let win = this.target;
     let i = 0;
     while (i < steps.length) {
-      if (signal?.aborted) return "The user stopped.";
+      if (signal?.aborted) return (this.routeOutcome = { kind: "stopped" }), "The user stopped.";
       const step = steps[i];
       // The first step may already be on screen: it was started while the model was still writing the route.
       const early = i === 0 ? this.takeEarly("guide_steps", step.target, step.caption) : null;
-      const shown = /** @type {{ win: any } | { stop: string }} */ (await (early ?? this.showStep(win, step, i, { of: steps.length, doneSoFar: doneSoFar(i) })));
-      if ("stop" in shown) return shown.stop;
+      const shown = /** @type {{ win: any } | { stop: string, why?: "several" | "missing" }} */ (await (early ?? this.showStep(win, step, i, { of: steps.length, doneSoFar: doneSoFar(i) })));
+      if ("stop" in shown) return (this.routeOutcome = { kind: "stuck", step: i, why: shown.why ?? null }), shown.stop;
       win = shown.win;
       this.ui.status(`Step ${i + 1} of ${steps.length}: your turn`);
       // Listen for this step and every later one, so a user who works ahead is caught where they are.
@@ -1679,7 +1682,8 @@ ${text}` };
       const r = await waitForProgress({ win, steps: needles, timeoutMs: seconds * 1000, signal, session: this.session,
         onReady: () => this.ui.trace?.({ kind: "guide-ready", step: i + 1 }) });
       this.ui.clearAnnotations?.();
-      if (r.status === "cancelled") return "The user stopped.";
+      if (r.status === "cancelled") return (this.routeOutcome = { kind: "stopped" }), "The user stopped.";
+      if (r.status === "timeout") this.routeOutcome = { kind: "waiting", step: i };
       if (r.status === "timeout") return `${doneSoFar(i)} After ${seconds}s they still haven't done step ${i + 1} ("${step.caption}"); Buddy is pointing at it. Ask in one short line whether they're stuck.`;
       if (r.window && r.window.id !== win.id) win = r.window;
       if (r.status === "appeared") {
@@ -1688,6 +1692,7 @@ ${text}` };
       }
       if (needsGuideInspection(step, r)) {
         const current = r.snapshot ? renderTree(r.snapshot.tree, this.bounds, undefined, this.labels).text : "Read the window again.";
+        this.routeOutcome = { kind: "changed", step: i };
         return `${doneSoFar(i)} Their screen changed, but the expected result of step ${i + 1} wasn't observed. Check the current window before continuing:\n${current}`;
       }
       // Their window changed in a way no done_when covers. A new selection or typed text means this step was the click
@@ -1695,7 +1700,34 @@ ${text}` };
       const still = r.why !== "values" && r.snapshot ? findControl(r.snapshot.tree, step.target, step.role) : null;
       if (!still) i++;
     }
+    this.routeOutcome = { kind: "finished" };
+    // A route the user went all the way through can be kept as a lesson (lessons.js).
+    this.lastRoute = { app: startedIn, steps: steps.map(({ caption, target, role, annotation, done_when }) => ({ caption, target, role, annotation, done_when })) };
     return `They finished all ${steps.length} steps.`;
+  }
+
+  /**
+   * Plays a saved lesson (lessons.js) on the user's window: Buddy's own route follower, with no model call. It only
+   * points. Resolves what to tell them, in plain words, and whether they got all the way through.
+   * @param {import("./lessons.js").Step[]} steps @param {any} target the window to play it in
+   * @returns {Promise<{ done: boolean, text: string }>}
+   */
+  async playLesson(steps, target) {
+    this.ui.clearAnnotations?.();
+    this.abort = new AbortController();
+    this.target = target;
+    this.routeOutcome = null;
+    await this.guideSteps({ steps, seconds_per_step: 120 });
+    const o = this.routeOutcome ?? { kind: "stopped" };
+    const at = (i) => `step ${i + 1} ("${steps[i]?.caption}")`;
+    const ask = "Ask Buddy to finish from here.";
+    if (o.kind === "finished") return { done: true, text: "Done: that's the whole lesson." };
+    if (o.kind === "stuck" && o.why === "several") return { done: false, text: `At ${at(o.step)}, there's more than one "${steps[o.step].target}" on screen, so Buddy couldn't tell which. ${ask}` };
+    if (o.kind === "stuck") return { done: false, text: `At ${at(o.step)}, "${steps[o.step].target}" isn't on screen. The app may look different from when the lesson was saved. ${ask}` };
+    if (o.kind === "waiting") return { done: false, text: `Still waiting at ${at(o.step)}. Play the lesson again when you're ready.` };
+    if (o.kind === "changed") return { done: false, text: `Your screen changed at ${at(o.step)} in a way the lesson doesn't expect. ${ask}` };
+    if (o.kind === "no-window") return { done: false, text: "Open the app this lesson is for, then play it again." };
+    return { done: false, text: "Stopped." };
   }
 
   async act(input) {

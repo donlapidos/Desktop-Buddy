@@ -94,6 +94,12 @@ VS Code and more).
   moves (scrolling, expanding, moving windows), or anything in apps you trust. Apps on the **Never act in** list
   (password managers to start with) are off limits even if you'd approve. This is enforced where actions get their
   permission slip (`src/policy.js`, `src/approvals.js`), not just in the prompt.
+- **Lessons:** when Buddy has walked you all the way through something, **Save as a lesson** under its answer keeps
+  the steps. Play one from the tray (**Play a lesson**) or **Settings › Lessons**, in the app it's for: Buddy points at
+  each step and follows you, as it did the first time, without asking the AI, so it costs nothing and needs no key.
+  A lesson only points; it never clicks or types. If the app looks different and a step's control isn't there, the
+  lesson says which step and stops, and you can ask Buddy to finish from there. **Share…** saves a lesson as a file;
+  **Import a lesson…** takes one someone shared, checked to be only steps and words.
 - **Routines:** tasks on a schedule ("weekdays at 9:00, summarise my unread email"), each in its own task window tucked
   into the island, under the Agents rules. A run missed by less than six hours (the PC was asleep) still happens once.
 - **Word documents:** ask for a report, summary or memo "in Word" and Buddy writes a real `.docx` (title, headings,

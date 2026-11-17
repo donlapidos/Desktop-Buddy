@@ -278,19 +278,33 @@ $form().addEventListener("submit", async (e) => {
   const sequence = ++askSequence;
   $("spend").textContent = "";
   show(wasSpoken ? `“${text}”` : "Thinking…", true);
-  const { reply, spend, superseded } = await window.buddy.ask(text, { spoken: wasSpoken });
+  offerLesson(false);
+  const { reply, spend, superseded, lesson } = await window.buddy.ask(text, { spoken: wasSpoken });
   if (sequence !== askSequence) return;
   setBusy(false);
   if (!superseded) show(reply);
   else if (!listening) show("Okay, stopped.");
   $("spend").textContent = spend ?? "";
+  offerLesson(!superseded && !!lesson);
   $("confirm").classList.remove("on");
 });
 
 $("stop").addEventListener("click", () => window.buddy.cancel());
 $("totask").addEventListener("click", () => window.buddy.newTask());
 $("settings").addEventListener("click", () => window.buddy.openSettings());
-$("new").addEventListener("click", () => { window.buddy.reset(); show(""); $("spend").textContent = ""; $input().focus(); });
+$("new").addEventListener("click", () => { window.buddy.reset(); show(""); $("spend").textContent = ""; offerLesson(false); $input().focus(); });
+
+/** Shows (or hides) "Save as a lesson" under an answer that walked them through a whole route. */
+function offerLesson(on) {
+  $("lesson").hidden = !on;
+  $("lesson-save").hidden = false;
+  $("lesson-said").textContent = "";
+}
+$("lesson-save").addEventListener("click", async () => {
+  const r = await window.buddy.saveLesson();
+  $("lesson-said").textContent = r?.title ? "Saved. Play it again from the tray, or share it from Settings › Lessons." : r?.error ?? "Couldn't save that.";
+  if (r?.title) $("lesson-save").hidden = true;
+});
 addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   if (busy || listening) window.buddy.cancel(); else window.buddy.hide();
