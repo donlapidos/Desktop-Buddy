@@ -251,6 +251,10 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
 - **4.1 Split `main.js`.** Move the 323 lines of `BUDDY_*_TEST` hooks to `src/dev-hooks.js`, loaded only when one is
   set. Then split by area: windows (overlay, island, bubble), marking, voice wiring, AI-app bridge wiring, settings
   wiring, startup. No behaviour change; e2e must pass after each move.
+  **Under way (2026-11-17): 2,454 lines → 1,982.** The test hooks are in dev-hooks.js; provider-state.js (keys,
+  addresses, model lists, the model check), explainer-window.js, launch.js, feedback.js and marker.js are out, each
+  given what it needs as functions and moved with the e2e checks passing. Left: the overlay, island and bubble windows,
+  voice and dictation wiring, the AI-app bridge wiring, first-run setup in the bubble, and startup.
 - **4.2 Type the pages.** Move each page's script out of the HTML into a checked `.js` file. Start with
   `settings.html`.
 - **4.3 e2e in CI.** Run `files`, `settings`, `tasks`, `explainer` and `firstrun` on `windows-latest` (voice needs
@@ -266,6 +270,12 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   readers (the bubble has one `aria` attribute today); Windows high-contrast; reduced motion everywhere.
 - **4.6 Memory budget.** Idle under 200 MB, voice unloaded when unused (done), no growth over a day; add a check like
   `measure:idle` for memory.
+  **Measured (2026-11-17):** `npm run measure:idle -- -MemoryMB 200` now reports memory too. Idle, a fresh copy holds
+  about 700 MB of working set (shared pages counted once per process): three windows (overlay, island, bubble) at
+  ~100 MB each, the main process ~160 MB, the GPU process ~145 MB even with software compositing, a utility process
+  ~90 MB. It didn't grow over the window. Main-process CPU read 4-5% of one core with the mouse still, above the 2-3%
+  noted in main.js. Under 200 MB would mean fewer always-open windows (one overlay window shared by the island and
+  bubble, or creating the bubble on first use): a design change for the owner to weigh, not a tidy-up.
 
 ## Phase 5: what makes people stay
 
