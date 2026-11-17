@@ -251,10 +251,11 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
 - **4.1 Split `main.js`.** Move the 323 lines of `BUDDY_*_TEST` hooks to `src/dev-hooks.js`, loaded only when one is
   set. Then split by area: windows (overlay, island, bubble), marking, voice wiring, AI-app bridge wiring, settings
   wiring, startup. No behaviour change; e2e must pass after each move.
-  **Under way (2026-11-17): 2,454 lines → 1,982.** The test hooks are in dev-hooks.js; provider-state.js (keys,
-  addresses, model lists, the model check), explainer-window.js, launch.js, feedback.js and marker.js are out, each
-  given what it needs as functions and moved with the e2e checks passing. Left: the overlay, island and bubble windows,
-  voice and dictation wiring, the AI-app bridge wiring, first-run setup in the bubble, and startup.
+  **Under way (2026-11-17): 2,454 lines → 1,866.** The test hooks are in dev-hooks.js; provider-state.js (keys,
+  addresses, model lists, the model check), explainer-window.js, launch.js, feedback.js, marker.js, ai-app-setup.js
+  and app-bridge.js are out, each given what it needs as functions and moved with the e2e checks passing (a new
+  `bridge` check covers AI apps' calls). Left: the overlay, island and bubble windows, voice and dictation wiring, and
+  startup, which share most of main.js's state.
 - **4.2 Type the pages.** Move each page's script out of the HTML into a checked `.js` file. Start with
   `settings.html`.
   **Done (2026-11-17):** every page's script is its own file beside it (`src/ui/settings.js`, `bubble.js`, `island.js`,

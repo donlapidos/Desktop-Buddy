@@ -3,12 +3,10 @@ import {
   app, BrowserWindow, clipboard, ClipboardItem, desktopCapturer, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, screen,
   session, shell, Tray, webContents,
 } from "electron";
-import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { SAFE_TOOLS, startBridge } from "./bridge.js";
-import { APPS, APP_IDS, allowRules, appStatus, claudeCodeExe, launchSpec, quickChatArgs, quickChatConfig, setApp, setCodeAllowed, staleApps } from "./ai-apps.js";
+import { APPS, APP_IDS, appStatus } from "./ai-apps.js";
 import { Brain, SESSION_PREFIX, setAgentPolicy, setBrainDefaults, takeTurn } from "./brain.js";
 import { PROVIDERS, testedOf, verdict } from "./providers.js";
 import { CASES } from "./evals.js";
@@ -19,7 +17,6 @@ import { createLog } from "./log.js";
 import { questionTiming } from "./latency.js";
 import { createHoldKey, uiohookHook } from "./hold-key.js";
 import { createApprovalQueue } from "./approval-queue.js";
-import { createAppSessions } from "./app-sessions.js";
 import { islandView } from "./island-state.js";
 import { dictationPaste, returnFocus } from "./approvals.js";
 import { elementAt, foregroundWindow, listWindows, perform, resolveBinary, windowAt } from "./desktop.js";
@@ -43,8 +40,10 @@ import { createTurnQueue } from "./turn-queue.js";
 import { centerOf, createAnnotationLayer, guessGone, insideBox, sameBox } from "./annotations.js";
 import { abortable } from "./marker-startup.js";
 import { createMarker } from "./marker.js";
+import { createAiAppSetup } from "./ai-app-setup.js";
+import { createAppBridge } from "./app-bridge.js";
 import { appKey } from "./policy.js";
-import { appWords, findLocal, localDoor, tourNext, tourTip } from "./welcome.js";
+import { appWords, tourNext, tourTip } from "./welcome.js";
 import { aboutMoney, addCall, capProblem, createLedger, moneyWords, noSpend, priceOf, spendLine, tokenWords } from "./costs.js";
 
 /** @typedef {import("./geometry.js").DipPoint} DipPoint */
@@ -941,29 +940,16 @@ onFrom(fromBubble, "voice-offer", async (_e, answer) => {
 
 // ---------- First-run setup in the bubble (welcome.js): an AI app, a model on this PC, or a key ----------
 
-// End-to-end checks point the AI-app choice at a made-up home folder, so the user's own apps are never changed.
-const appPlaces = process.env.BUDDY_E2E && process.env.BUDDY_APPS_HOME
-  ? { home: process.env.BUDDY_APPS_HOME, appData: path.join(process.env.BUDDY_APPS_HOME, "AppData"), localAppData: path.join(process.env.BUDDY_APPS_HOME, "Local") }
-  : undefined;
-
-/** What the welcome offers: the AI apps on this PC (and whether Buddy is in each), and what a model on this PC needs. */
-async function welcomeState() {
-  const status = appStatus(appPlaces);
-  const apps = APP_IDS.filter((id) => status[id] !== "missing").map((id) => ({ id, label: APPS[id].label, added: status[id] === "added" }));
-  const local = localDoor(await findLocal({ urls: settings.providerURLs }), os.totalmem());
-  return { apps, local };
-}
-
-handleFrom(fromBubble, "welcome-state", () => welcomeState());
+handleFrom(fromBubble, "welcome-state", () => welcomeState(settings.providerURLs));
 
 handleFrom(fromBubble, "welcome-app", async (_e, id) => {
   if (!APP_IDS.includes(id)) return { error: "Buddy doesn't know that app." };
   const error = await setClaude(id, true, "welcome");
-  return { error, after: error ? null : APPS[id].after, state: await welcomeState() };
+  return { error, after: error ? null : APPS[id].after, state: await welcomeState(settings.providerURLs) };
 });
 
 handleFrom(fromBubble, "welcome-local", async () => {
-  const { local } = await welcomeState();
+  const { local } = await welcomeState(settings.providerURLs);
   if (!local.use) return { ok: false, error: local.text };
   changeSettings({ provider: local.use.id });
   const error = await refreshModels(local.use.id);
@@ -1390,47 +1376,15 @@ function startBrain() {
 
 // ---------- Use with your AI app: Buddy's tools for the apps people chat in (bridge.js, ai-apps.js) ----------
 
-// The chat apps the user talks to an AI in; the window they want help with is never one of these.
-const CLIENT_APPS = /^(claude|codex|windowsterminal|code|cursor|windsurf|lm studio)\.exe$/i;
-// After this long without a call from Claude, "Allow for this task" lapses: the next request is a new task.
-const CLAUDE_TASK_GAP_MS = 120_000;
-const LOOKS_AT_WINDOW = new Set(["look", "read_page", "screenshot"]);
-let bridge = null;
-// Each AI app session gets a Brain of its own (app-sessions.js).
-/** @type {ReturnType<typeof createAppSessions<Brain>>} */
-const appSessions = createAppSessions({ makeBrain: (conn, client) => makeAppBrain(conn, client), gapMs: CLAUDE_TASK_GAP_MS });
-let lastAppCall = 0;
-let claudeSessions = 0;
+// Adding Buddy to AI apps, quick chat, repair, and what the welcome offers (ai-app-setup.js).
+const { setClaude, openQuickChat, repairClaude, welcomeState } = createAiAppSetup({ trace: (entry) => trace(entry), documentsDir: () => documentsDir() });
 
-// The window the user works in while they chat with Claude: the frontmost one that isn't Buddy or the chat itself.
-async function userWindow() {
-  const own = ownPids();
-  return (await listWindows()).find((w) => !own.includes(w.pid) && !CLIENT_APPS.test(w.app_name ?? "")) ?? null;
-}
-
-function marksForClaude(/** @type {Brain} */ appBrain) {
-  const pendingMarks = marker.pending();
-  if (!pendingMarks) return "The user hasn't marked anything yet. They can press Ctrl+Alt+M and draw over what they mean.";
-  appBrain.marks = new Map(pendingMarks.marks.map((m) => [m.n, m.bounds]));
-  appBrain.target = pendingMarks.target ?? appBrain.target;
-  const lines = pendingMarks.marks.map((m) => {
-    const under = m.elements.length
-      ? m.elements.map((e) => `${e.path}${e.value ? ` (text: ${JSON.stringify(e.value.slice(0, 200))})` : ""}`).join("; ")
-      : "no accessibility info; rely on the image";
-    return `Mark ${m.n}: under the stroke: ${under}`;
-  });
-  return [
-    { type: "image", source: { type: "base64", media_type: "image/png", data: pendingMarks.image } },
-    { type: "text", text: `The image shows the area the user marked, with their translucent blue strokes numbered at their start.\n${lines.join("\n")}` },
-  ];
-}
-
-
-// A session's Brain: tools only (the app's own model does the thinking), pointing as that session.
-function makeAppBrain(/** @type {number} */ conn, /** @type {string} */ client) {
-  const owner = `app-${conn}`;
-  /** @type {Brain} */
-  const appBrain = new Brain({
+// The calls AI apps make (app-bridge.js): each session's Brain draws, points and asks as that session.
+const appBridge = createAppBridge({
+  dir: app.getPath("userData"),
+  ownPids,
+  pendingMarks: () => marker.pending(),
+  brainUI: (owner, target) => ({
     annotate: (items, context) => showAnnotations(items, context, owner),
     clearAnnotations: (ms = 0) => annotationLayer.release(owner, ms),
     screenContext: () => settings.screenContext,
@@ -1441,91 +1395,21 @@ function makeAppBrain(/** @type {number} */ conn, /** @type {string} */ client) 
     },
     pointGuess: (bounds, caption, window) => guessPoint(bounds, caption, window, owner),
     confirm,
-    status: (text) => {
-      islandFacts.appCall = oneLine(`${client}: ${text}`);
-      showIsland();
-    },
-    explain: (plate) => openExplainer(plate, { near: cursor(), observed: appBrain.target ?? null }),
+    explain: (plate) => openExplainer(plate, { near: cursor(), observed: target() }),
     trace,
     documentsDir: documentsDir(),
     openFile,
     isOwnWindow: (w) => ownPids().includes(Number(w.pid)),
-  });
-  return appBrain;
-}
-
-/** @param {string} name @param {any} input @param {AbortSignal} signal @param {string | undefined} client @param {number} conn */
-async function runForClaude(name, input, signal, client, conn) {
-  lastAppCall = Date.now();
-  try {
-    return await appSessions.call(conn, client ?? "Your AI app", signal, async (appBrain) => {
-      if ((LOOKS_AT_WINDOW.has(name) && !input.app && !input.root) || !appBrain.target) appBrain.target = await userWindow();
-      return name === "get_marks" ? marksForClaude(appBrain) : appBrain.runTool(name, input);
-    });
-  } finally {
-    lastAppCall = Date.now();
-    setTimeout(() => {
-      if (Date.now() - lastAppCall > 1000) {
-        islandFacts.appCall = null;
-        showIsland();
-      }
-    }, 1500);
-  }
-}
-
-const appSpec = (/** @type {import("./ai-apps.js").AppId} */ id) => launchSpec(process.execPath, path.join(here, "mcp-server.js"), id);
-
-/** Adds Buddy to one of the AI apps, or takes it out. Resolves an error message, or null. */
-async function setClaude(/** @type {import("./ai-apps.js").AppId} */ which, /** @type {boolean} */ on, why = "settings") {
-  const error = (await setApp(which, on ? appSpec(which) : null, appPlaces)) ?? (which === "code" ? setCodeAllowed(allowRules(SAFE_TOOLS), on) : null);
-  // Claude Code also gets allow rules for Buddy's look-and-point tools, so it doesn't stop to check each one.
-  trace({ kind: "claude-setup", which, on, why, error });
-  return error;
-}
-
-/**
- * Opens a quick Claude Code chat in a terminal: only Buddy's tools, none of the user's plugins or hooks, so each turn
- * is several times faster. Runs on their Claude plan. Resolves an error message, or null.
- */
-async function openQuickChat() {
-  if (appStatus().code === "missing") return "Claude Code isn't on this PC.";
-  const mcpFile = path.join(app.getPath("userData"), "quick-chat-mcp.json");
-  fs.writeFileSync(mcpFile, quickChatConfig(appSpec("code")));
-  fs.mkdirSync(documentsDir(), { recursive: true });
-  const exe = claudeCodeExe();
-  const args = quickChatArgs(mcpFile, [...SAFE_TOOLS]);
-  const start = (/** @type {string} */ command, /** @type {string[]} */ argv) =>
-    new Promise((resolve) => {
-      const child = spawn(command, argv, { cwd: documentsDir(), detached: true, stdio: "ignore" });
-      child.once("error", () => resolve(false));
-      child.once("spawn", () => (child.unref(), resolve(true)));
-    });
-  // Windows Terminal when there is one, else a console window of its own.
-  const ok = (await start("wt.exe", ["-d", documentsDir(), "--title", "Buddy · Claude", exe, ...args])) || (await start(exe, args));
-  trace({ kind: "quick-chat", ok });
-  return ok ? null : "Couldn't start Claude Code.";
-}
-
-// Apps that start Buddy under an old name, from where Buddy used to be, or without saying which app they are, are
-// pointed at this Buddy.
-async function repairClaude() {
-  for (const which of staleApps(appSpec)) await setClaude(which, true, "repair");
-}
-
-function startClaudeBridge() {
-  bridge = startBridge({
-    dir: app.getPath("userData"),
-    run: runForClaude,
-    onClosed: (conn) => appSessions.close(conn),
-    trace,
-    onClients: (n) => {
-      trace({ kind: "bridge-clients", n });
-      // Say so once when a chat starts using Buddy; tool calls then show on the island as "Codex: …" and so on.
-      if (n > claudeSessions) notice("Your AI app is using Buddy");
-      claudeSessions = n;
-    },
-  });
-}
+  }),
+  status: (text) => {
+    islandFacts.appCall = text === null ? null : oneLine(text);
+    showIsland();
+  },
+  notice: (text) => notice(text),
+  trace: (entry) => trace(entry),
+  // End-to-end checks serve on a pipe of their own (BUDDY_PIPE), so a running Buddy's AI apps never reach a test copy.
+  pipe: process.env.BUDDY_E2E ? process.env.BUDDY_PIPE : undefined,
+});
 
 // ---------- Tasks: agents with their own windows, tucked into island chips ----------
 
@@ -1951,7 +1835,7 @@ app.whenReady().then(() => {
   createIsland();
   createBubble();
   createTray();
-  startClaudeBridge();
+  appBridge.start();
   // Only the real Buddy points Claude's apps at itself, never a test copy with its own data folder.
   if (!app.commandLine.hasSwitch("user-data-dir")) repairClaude().catch((err) => trace({ kind: "claude-setup", why: "repair", error: String(err) }));
   startTasks();
@@ -1978,5 +1862,5 @@ app.whenReady().then(() => {
 app.on("window-all-closed", (e) => e.preventDefault());
 app.on("will-quit", () => {
   globalShortcut.unregisterAll();
-  bridge?.close();
+  appBridge.close();
 });

@@ -446,6 +446,21 @@ const CHECKS = {
       ...Object.keys({ ...before, ...after }).filter((k) => before[k] !== after[k]).map((k) => `changed ${k}: ${before[k] ?? "(none)"} -> ${after[k] ?? "(none)"}`)].filter(Boolean);
   },
 
+  // An AI app's calls over the pipe, as buddy-mcp makes them: answered with the right token, refused without it. The
+  // copy serves on a pipe of its own, so a running Buddy's AI apps never reach it.
+  async bridge() {
+    const pipe = `\\\\.\\pipe\\desktop-buddy-e2e-${process.pid}`;
+    const { markers, timedOut } = await runCopy("bridge", { BUDDY_BRIDGE_TEST: "1", BUDDY_PIPE: pipe }, "BRIDGE_TEST_DONE");
+    const r = markers.BRIDGE_TEST?.[0];
+    if (!r) return [timedOut ? "timed out" : "nothing printed"];
+    return [
+      r.hello !== "ok" && `hello answered ${JSON.stringify(r.hello)}`,
+      !/\S/.test(r.windows) || /couldn't|Unknown tool/i.test(r.windows) ? `list_windows answered ${JSON.stringify(r.windows)}` : null,
+      !/hasn't marked anything/.test(r.marks) && `get_marks answered ${JSON.stringify(r.marks)}`,
+      r.refusedReplies !== 0 && `a wrong token got ${r.refusedReplies} answer(s)`,
+    ].filter(Boolean);
+  },
+
   mark: {
     interactive: true,
     async run() {

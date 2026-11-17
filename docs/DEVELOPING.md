@@ -40,7 +40,8 @@ guided step with its expected result, interruption and focus/anchor cleanup), **
 refs; turning screenshots off removes images from the next request), **conversation** (streaming and mid-answer
 corrections), **files** (a scripted model asks for a file; the approval card is clicked; the file
 is made, listed in Activity and undone; another window can't answer the card), **tasks**, **settings** (including a
-key that must stay with its server), **explainer**, **voice**, and **firstrun** (a plain test copy must leave your
+key that must stay with its server), **explainer**, **voice**, **bridge** (an AI app's calls over its own pipe: answered
+with the token, refused without), and **firstrun** (a plain test copy must leave your
 startup entries and shortcuts as they were). Any check whose copy logged a refused mode or task-state change fails.
 `npm run e2e -- --exe "<path to Desktop Buddy.exe>"` runs them against a built or installed copy. `npm run e2e -- --interactive` adds the marker (a full-screen freeze frame) and the approval
 clicks below (it moves the mouse). `--no-voice` is for a PC without the voice models: it leaves out the voice check

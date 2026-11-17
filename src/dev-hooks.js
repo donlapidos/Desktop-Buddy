@@ -5,6 +5,7 @@
 import { app, BrowserWindow, clipboard, desktopCapturer, globalShortcut, nativeImage, screen } from "electron";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { setBrainDefaults } from "./brain.js";
@@ -843,7 +844,46 @@ function islandTest(kit) {
   }, 2500);
 }
 
+/** BUDDY_BRIDGE_TEST */
+function bridgeTest() {
+  // An AI app's calls, end to end: over the pipe named in bridge.json, with its token, to a session's Brain, the way
+  // buddy-mcp (mcp-server.js) makes them. A wrong token gets no answer at all.
+  /** Sends `messages` on one connection; resolves the replies that came back before it closed. */
+  const talk = (/** @type {string} */ pipe, /** @type {object[]} */ messages) =>
+    new Promise((resolve) => {
+      const replies = [];
+      let buf = "";
+      const socket = net.connect(pipe);
+      const timer = setTimeout(() => socket.destroy(), 20_000);
+      socket.setEncoding("utf8");
+      socket.on("connect", () => messages.forEach((m) => socket.write(`${JSON.stringify(m)}\n`)));
+      socket.on("data", (chunk) => {
+        buf += chunk;
+        for (let nl = buf.indexOf("\n"); nl >= 0; nl = buf.indexOf("\n")) {
+          replies.push(JSON.parse(buf.slice(0, nl)));
+          buf = buf.slice(nl + 1);
+          if (replies.length === messages.length) socket.end();
+        }
+      });
+      socket.on("error", () => {});
+      socket.on("close", () => (clearTimeout(timer), resolve(replies)));
+    });
+  setTimeout(async () => {
+    const { pipe, token } = JSON.parse(fs.readFileSync(path.join(app.getPath("userData"), "bridge.json"), "utf8"));
+    const replies = await talk(pipe, [
+      { id: 1, method: "hello", token, client: "E2E" },
+      { id: 2, method: "tool", name: "list_windows", input: {} },
+      { id: 3, method: "tool", name: "get_marks", input: {} },
+    ]);
+    const refused = await talk(pipe, [{ id: 1, method: "hello", token: "not-the-token" }, { id: 2, method: "tool", name: "list_windows", input: {} }]);
+    const text = (r) => (typeof r?.result === "string" ? r.result : JSON.stringify(r?.result ?? null)).slice(0, 300);
+    console.log("BRIDGE_TEST", JSON.stringify({ hello: replies[0]?.result ?? null, windows: text(replies[1]), marks: text(replies[2]), refusedReplies: refused.length }));
+    console.log("BRIDGE_TEST_DONE");
+  }, 2500);
+}
+
 const HOOKS = {
+  BUDDY_BRIDGE_TEST: bridgeTest,
   BUDDY_ISLAND_TEST: islandTest,
   BUDDY_POINT_TEST: pointTest,
   BUDDY_MARK_TEST: markTest,
