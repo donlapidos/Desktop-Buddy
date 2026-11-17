@@ -59,16 +59,35 @@ function scriptedOllama() {
   return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, close: () => server.close() })));
 }
 
+/** Answers each question with "Answer to: <the question>" and keeps every request, for the restore check. */
+function echoModel() {
+  /** @type {string[]} */
+  const requests = [];
+  const server = http.createServer(async (req, res) => {
+    let body = "";
+    for await (const c of req) body += c;
+    if (req.url?.endsWith("/models")) return res.end(JSON.stringify({ data: [{ id: "scripted", object: "model" }] }));
+    requests.push(body);
+    const last = (JSON.parse(body || "{}").messages ?? []).filter((m) => m.role === "user").at(-1);
+    const text = typeof last?.content === "string" ? last.content : (last?.content ?? []).map((p) => p.text ?? "").join("\n");
+    const said = { choices: [{ delta: { content: `Answer to: ${text.trim().split("\n").at(-1)}` }, finish_reason: "stop" }] };
+    res.setHeader("content-type", "text/event-stream");
+    res.end(`data: ${JSON.stringify(said)}\n\ndata: [DONE]\n\n`);
+  });
+  return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, requests, close: () => server.close() })));
+}
+
 // ---------- Running one test copy ----------
 
 /**
  * Runs Buddy with `env` until it prints `done` (or `timeoutMs` passes), and returns what it printed, by marker.
  * Every copy's own timing.log is read afterwards: a refused mode or task-state change is a bug, whichever check hit it.
  * `devHooks` says whether the copy loaded dev-hooks.js (it writes dev-hooks-loaded to its timing log when it does).
- * @returns {Promise<{ markers: Record<string, any[]>, log: string, timedOut: boolean, devHooks: boolean }>}
+ * `reuse` runs the copy on an earlier copy's data folder (`data` in what that run resolved): Buddy restarting.
+ * @returns {Promise<{ markers: Record<string, any[]>, log: string, timedOut: boolean, devHooks: boolean, data: string }>}
  */
-function runCopy(name, env, done, timeoutMs = 90_000, seed = {}) {
-  const data = fs.mkdtempSync(path.join(os.tmpdir(), `buddy-e2e-${name}-`));
+function runCopy(name, env, done, timeoutMs = 90_000, seed = {}, reuse = null) {
+  const data = reuse ?? fs.mkdtempSync(path.join(os.tmpdir(), `buddy-e2e-${name}-`));
   // `seed`: files the copy's data folder starts with (an existing profile's settings.json, say).
   for (const [file, text] of Object.entries(seed)) fs.writeFileSync(path.join(data, file), text);
   const clean = Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^(ANTHROPIC|OPENAI|OPENROUTER|GEMINI|DEEPSEEK)_|^BUDDY_/.test(k)));
@@ -96,7 +115,7 @@ function runCopy(name, env, done, timeoutMs = 90_000, seed = {}) {
           if (/"kind":"refused-(mode-change|task-state)"/.test(line)) refusals.push(`${name}: ${line}`);
         }
       } catch {}
-      resolve({ markers, log, timedOut, devHooks: timing.includes('"kind":"dev-hooks-loaded"') });
+      resolve({ markers, log, timedOut, devHooks: timing.includes('"kind":"dev-hooks-loaded"'), data });
     };
     const timer = setTimeout(() => finish(true), timeoutMs);
     const read = (chunk) => {
@@ -444,6 +463,37 @@ const CHECKS = {
     const after = machineState();
     return [devHooks && "a Buddy with no test variable loaded dev-hooks.js",
       ...Object.keys({ ...before, ...after }).filter((k) => before[k] !== after[k]).map((k) => `changed ${k}: ${before[k] ?? "(none)"} -> ${after[k] ?? "(none)"}`)].filter(Boolean);
+  },
+
+  // Conversations surviving a restart: two runs on one data folder. The first answers a task and the bubble and quits
+  // (closing every window); the second finds the task back as a chip, shows it, carries it into a follow-up, and
+  // forgets it when it's closed.
+  async restore() {
+    const model = await echoModel();
+    try {
+      const seed = { "settings.json": JSON.stringify({ provider: "custom", providerURLs: { custom: model.url }, providerModels: { custom: "scripted" }, advanced: true, launchSetupDone: true, voiceSetup: "no" }) };
+      const first = await runCopy("restore-1", { BUDDY_RESTORE_TEST: "first" }, "RESTORE_TEST_DONE", 90_000, seed);
+      const a = first.markers.RESTORE_FIRST?.[0];
+      if (!a) return [first.timedOut ? "the first run timed out" : "the first run printed nothing"];
+      const second = await runCopy("restore-2", { BUDDY_RESTORE_TEST: "second" }, "RESTORE_TEST_DONE", 90_000, {}, first.data);
+      const b = second.markers.RESTORE_SECOND?.[0];
+      if (!b) return [second.timedOut ? "the second run timed out" : "the second run printed nothing"];
+      const followUp = model.requests.find((r) => r.includes("And undo that?")) ?? "";
+      return [
+        !/Where is Save As/.test(a.bubbleReply ?? "") && `the bubble answered ${JSON.stringify(a.bubbleReply)}`,
+        !(a.kept.includes("t1") && a.kept.includes("bubble")) && `quitting kept ${JSON.stringify(a.kept)}, not the task and the bubble`,
+        (b.listed.length !== 1 || b.listed[0].id !== "t1" || b.listed[0].title !== "Sort the budget") && `after the restart the island listed ${JSON.stringify(b.listed)}`,
+        b.windowsBeforeOpen && "the restored task opened a window before it was asked to",
+        !/How do I sort column B\?[\s\S]*Answer to: How do I sort column B\?/.test(b.shown ?? "") && `the task window showed ${JSON.stringify(b.shown)}`,
+        !/before Buddy restarted/.test(followUp) && "the follow-up didn't carry the earlier conversation",
+        !/How do I sort column B\?/.test(followUp) && "the follow-up didn't include the earlier question",
+        !(b.bubble ?? []).some((l) => /Where is Save As/.test(l.text)) && `the bubble's conversation didn't come back: ${JSON.stringify(b.bubble)}`,
+        !b.keptAfterAsk?.includes("t1") && "the task wasn't kept after its follow-up",
+        b.keptAfterClose?.includes("t1") && "closing the task didn't forget it",
+      ].filter(Boolean);
+    } finally {
+      model.close();
+    }
   },
 
   // An AI app's calls over the pipe, as buddy-mcp makes them: answered with the right token, refused without it. The

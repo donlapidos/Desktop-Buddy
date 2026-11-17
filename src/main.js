@@ -42,6 +42,7 @@ import { abortable } from "./marker-startup.js";
 import { createMarker } from "./marker.js";
 import { createAiAppSetup } from "./ai-app-setup.js";
 import { createAppBridge } from "./app-bridge.js";
+import { createConversations } from "./conversations.js";
 import { appKey } from "./policy.js";
 import { appWords, tourNext, tourTip } from "./welcome.js";
 import { aboutMoney, addCall, capProblem, createLedger, moneyWords, noSpend, priceOf, spendLine, tokenWords } from "./costs.js";
@@ -220,6 +221,13 @@ function startActivity() {
 
 /** @type {ReturnType<typeof createLedger> | null} */
 let ledger = null;
+/** @type {ReturnType<typeof createConversations> | null} the bubble's and tasks' conversations, kept on the PC */
+let conversations = null;
+/** A new conversation in the bubble: the old one is forgotten, here and on the PC. */
+function resetBubble() {
+  brain?.reset();
+  conversations?.forget("bubble");
+}
 const startLedger = () => (ledger = createLedger({ file: path.join(app.getPath("userData"), "spend.json") }));
 
 // Every Brain gets these: each model call is added to the month (tasks and routines count too), and the limit is
@@ -652,7 +660,7 @@ function releaseFocus() {
 
 async function summon() {
   if (mode === "working" || mode === "reading-marks") return showBubble({ focus: false });
-  if (Date.now() - turn.at > IDLE_RESET_MS) brain?.reset();
+  if (Date.now() - turn.at > IDLE_RESET_MS) resetBubble();
   // The window the user is in: the focused one, or, when Buddy itself has the focus (its bubble was just closed), the
   // frontmost window that isn't Buddy's, which is where they'll be once it's gone. Without one, the keyboard couldn't
   // be handed back after an approval (releaseFocus).
@@ -847,6 +855,8 @@ async function answerQuestion(text, opts, isCurrent) {
     answeringBrain = null;
     enter("idle");
     releaseLater("bubble");
+    // Kept on the PC, so a restart within the next few minutes picks the conversation up (conversations.js).
+    if (engine === brain) conversations?.save({ id: "bubble", n: 0, title: "", target: null, transcript: engine.transcript() });
     clock.finish({ waitForAudio: !replyMuted && talksBack(turn.spoken) });
   }
   if (!isCurrent()) return { reply: null, superseded: true };
@@ -973,7 +983,7 @@ onFrom(fromBubble, "cancel", () => {
 onFrom(fromBubble, "reset", () => {
   if (mode === "working") return;
   hushReply();
-  brain?.reset();
+  resetBubble();
   clearMarks();
 });
 onFrom(fromBubble, "hide", () => {
@@ -1429,6 +1439,7 @@ function startTasks() {
     onChange: (list) => {
       if (island && !island.isDestroyed()) island.webContents.send("tasks", list);
     },
+    keep: conversations ?? undefined,
     trace,
   });
 }
@@ -1443,6 +1454,7 @@ async function newTask({ fromBubble = false } = {}) {
     result = await tasks.create({ brain, target: about.window });
     if (!result.error) {
       startBrain();
+      conversations?.forget("bubble"); // it's the task's now
       clearMarks();
       bubble.webContents.send("reply", "");
     }
@@ -1603,7 +1615,7 @@ function buildTrayMenu() {
       { label: `Ask Buddy  (${keyLabel(hotkey("ask"))})`, click: () => summon() },
       { label: `Talk to Buddy  (${keyLabel(hotkey("talk"))})`, click: () => talkByClick() },
       { label: `Mark or explain something  (${keyLabel(hotkey("mark"))})`, click: () => startMarking() },
-      { label: "New conversation", click: () => brain?.reset() },
+      { label: "New conversation", click: () => resetBubble() },
       ...(settings.advanced ? [{ label: "New task window", click: () => newTask() }] : []),
       { type: "separator" },
       ...(updates?.state().status === "ready" ? [{ label: `Restart to update to ${updates.state().next}`, click: () => updates.install() }] : []),
@@ -1669,7 +1681,7 @@ function settingsState() {
     activity: (activity?.list() ?? []).slice(0, 200).map((e) => ({ id: e.id, at: e.at, from: e.from, kind: e.kind, summary: e.summary, undone: e.undone ?? null, canUndo: e.canUndo, file: e.file ?? null })),
     spend: spendState(),
     startsWithWindows: process.platform === "win32" && startsWithWindows(),
-    data: { explainers, logBytes },
+    data: { explainers, logBytes, conversations: conversations?.count() ?? 0 },
     claude: appStatus(),
     aiApps: APP_IDS.map((id) => ({ id, label: APPS[id].label, after: APPS[id].after })),
     updates: updates?.state() ?? null,
@@ -1744,6 +1756,8 @@ const settingsWindow = createSettingsWindow({
   },
   setStartup: (on) => process.platform === "win32" && setStartsWithWindows(on),
   clear: (what) => {
+    // Forgets what's kept on the PC; open tasks and the bubble carry on, and are kept again after their next answer.
+    if (what === "conversations") return conversations?.clear();
     if (what === "log") {
       fs.rmSync(timingLog(), { force: true });
       return fs.rmSync(timingLog().replace(/\.log$/, ".old.log"), { force: true });
@@ -1820,6 +1834,7 @@ app.whenReady().then(() => {
   loadModelCaps();
   startActivity();
   startLedger();
+  conversations = createConversations({ file: path.join(app.getPath("userData"), "conversations.json") });
   refreshModels().catch(() => {});
   setAgentPolicy(settings);
   app.setAppUserModelId(APP_ID);
@@ -1831,6 +1846,12 @@ app.whenReady().then(() => {
   lockExplainerSession();
   clearOldSessions();
   startBrain();
+  // The bubble's conversation, if Buddy restarted before it would have been forgotten anyway.
+  const earlier = conversations.bubble(IDLE_RESET_MS);
+  if (earlier && brain) {
+    brain.resume(earlier.transcript);
+    turn = { ...turn, at: earlier.savedAt };
+  }
   createOverlays();
   createIsland();
   createBubble();
@@ -1839,6 +1860,7 @@ app.whenReady().then(() => {
   // Only the real Buddy points Claude's apps at itself, never a test copy with its own data folder.
   if (!app.commandLine.hasSwitch("user-data-dir")) repairClaude().catch((err) => trace({ kind: "claude-setup", why: "repair", error: String(err) }));
   startTasks();
+  tasks.restore();
   startVoice();
   startUpdates();
   setTimeout(checkRoutines, 10_000);

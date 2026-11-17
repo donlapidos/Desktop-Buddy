@@ -378,6 +378,13 @@ function renderClaudeRest() {
     clear.addEventListener("click", () => { confirming = "explainers"; renderClaude(); });
     ex.replaceChildren(clear);
   }
+  const c = S.data.conversations;
+  $("conversations-count").textContent = c
+    ? ` ${c === 1 ? "One conversation" : `${c} conversations`}, in words only (no screenshots), so they carry on after Buddy restarts. Closing a task forgets it.`
+    : " None kept. What you ask and Buddy's replies are kept, in words only, so they carry on after Buddy restarts.";
+  const forget = el("button", { className: "btn", textContent: "Forget", disabled: !c });
+  forget.addEventListener("click", async () => render(await window.buddy.settingsClear("conversations")));
+  $("conversations-actions").replaceChildren(forget);
   const kb = S.data.logBytes;
   $("log-size").textContent = kb ? ` Timings of each step, ${kb < 1024 ? `${kb} bytes` : `${Math.round(kb / 1024)} KB`}; no screen content.` : " Empty.";
   const clearLog = el("button", { className: "btn", textContent: "Clear", disabled: !kb });

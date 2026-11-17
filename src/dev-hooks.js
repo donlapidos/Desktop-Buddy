@@ -884,7 +884,62 @@ function bridgeTest() {
   }, 2500);
 }
 
+/** BUDDY_RESTORE_TEST=first|second @param {DevKit} kit */
+function restoreTest(kit) {
+  // Conversations surviving a restart, in two runs on one data folder against a scripted model (scripts/e2e.mjs).
+  // first: a task and the bubble each get an answer, then Buddy quits the way the tray's Quit does, closing every
+  // window. second: the task is back as a chip, its window shows the conversation, a follow-up carries it, and
+  // closing the task forgets it.
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const kept = () => {
+    try {
+      return JSON.parse(fs.readFileSync(path.join(app.getPath("userData"), "conversations.json"), "utf8")).map((c) => c.id);
+    } catch {
+      return [];
+    }
+  };
+  const taskWindow = () => BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("task.html"));
+  // The scripted model answers "Answer to: <the question>", so a task's line says which question it has answered.
+  const answered = async (question) => {
+    for (let i = 0; i < 150 && !(kit.tasks.list()[0]?.line ?? "").includes(question); i++) await wait(100);
+  };
+  setTimeout(async () => {
+    const { tasks, bubble } = kit;
+    if (process.env.BUDDY_RESTORE_TEST === "first") {
+      await tasks.create({ title: "Sort the budget", target: null, prompt: "How do I sort column B?" });
+      await answered("How do I sort column B?");
+      const asked = await bubble.webContents.executeJavaScript(`window.buddy.ask("Where is Save As?", {})`);
+      // Reported after every window has closed: Buddy quitting must keep the conversations.
+      app.once("will-quit", () => {
+        console.log("RESTORE_FIRST", JSON.stringify({ tasks: tasks.list().map((t) => t.id), bubbleReply: asked?.reply ?? null, kept: kept() }));
+        console.log("RESTORE_TEST_DONE");
+      });
+      app.quit();
+      return;
+    }
+    const listed = tasks.list();
+    const r = { listed, bubble: kit.brain?.transcript() ?? null, windowsBeforeOpen: !!taskWindow() };
+    if (listed[0]) {
+      tasks.open(listed[0].id);
+      for (let i = 0; i < 50 && !taskWindow(); i++) await wait(100);
+      await wait(1200);
+      const win = taskWindow();
+      r.shown = win ? await win.webContents.executeJavaScript(`document.getElementById("log").textContent`) : null;
+      win?.webContents.executeJavaScript(`document.getElementById("input").value = "And undo that?"; document.getElementById("form").requestSubmit();`);
+      await answered("And undo that?");
+      await wait(300);
+      r.keptAfterAsk = kept();
+      tasks.close(listed[0].id);
+      await wait(300);
+      r.keptAfterClose = kept();
+    }
+    console.log("RESTORE_SECOND", JSON.stringify(r));
+    console.log("RESTORE_TEST_DONE");
+  }, 2500);
+}
+
 const HOOKS = {
+  BUDDY_RESTORE_TEST: restoreTest,
   BUDDY_BRIDGE_TEST: bridgeTest,
   BUDDY_ISLAND_TEST: islandTest,
   BUDDY_POINT_TEST: pointTest,

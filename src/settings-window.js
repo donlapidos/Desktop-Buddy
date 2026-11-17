@@ -20,7 +20,7 @@ const SIZE = { width: 640, height: 600 };
  *   undo: (id: string, force: boolean) => Promise<{ ok: boolean, message: string, changed?: boolean }>, // Settings › Activity                        // starts (or stops) a model check; an error, or null
  *   removeKey: () => void,
  *   setStartup: (on: boolean) => void,
- *   clear: (what: "explainers" | "log") => void,
+ *   clear: (what: "explainers" | "log" | "conversations") => void,
  *   openData: () => void,
  *   addFolder: (win: BrowserWindow) => Promise<string | null>, // Agents › Add a folder; why it can't be added, or null
  *   runRoutine: (id: string) => Promise<string | null>,    // start a routine now; returns an error message, or null
@@ -92,7 +92,7 @@ export function createSettingsWindow(deps) {
   handle("settings-key-remove", () => (deps.removeKey(), deps.state()));
   handle("settings-startup", (on) => (deps.setStartup(!!on), deps.state()));
   handle("settings-clear", (what) => {
-    if (what !== "explainers" && what !== "log") throw new Error("Nothing to clear");
+    if (what !== "explainers" && what !== "log" && what !== "conversations") throw new Error("Nothing to clear");
     deps.clear(what);
     return deps.state();
   });
