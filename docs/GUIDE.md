@@ -162,9 +162,8 @@ Open **Settings** from the tray, the sliders icon on the island, or the bubble. 
   detect automatically).
 - **Agents** and **Routines:** see above.
 - **Look:** Buddy's accent colour (pointer, island, chat, task windows and marks) and light or dark explainer plates.
-  **Language** sets the words in Buddy's windows: the same as Windows (the default), English or Español. The bubble,
-  island, task windows, marker and tray are translated so far; Settings follows. Buddy answers in the language you
-  ask in, whatever this says.
+  **Language** sets the words in Buddy's windows: the same as Windows (the default), English or Español. Every window,
+  Settings and the approval cards follow it. Buddy answers in the language you ask in, whatever this says.
 - **Shortcuts:** click one and press new keys. A shortcut another app already owns, or another Buddy action uses, is
   refused with the reason; while you record one, Buddy lets go of its own so pressing them is recorded.
 - **AI & privacy:** the provider, its key or address, the model (each marked "works well", "can't see images" or

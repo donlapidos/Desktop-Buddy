@@ -258,15 +258,16 @@ function spendState() {
   const label = PROVIDERS[provider].label;
   const model = provider === "anthropic" ? settings.model : settings.providerModels[provider] ?? "";
   const price = priceOf(provider, model);
-  const month = m.calls
-    ? `This month so far: ${m.cost > 0 ? aboutMoney(m.cost) : "nothing priced"}, ${tokenWords(m.tokens)} tokens over ${m.calls} model call${m.calls === 1 ? "" : "s"}.`
-    : "Nothing spent this month yet.";
+  const spent = m.cost > 0 ? aboutMoney(m.cost) : t("nothing priced");
+  const month = !m.calls ? t("Nothing spent this month yet.")
+    : m.calls === 1 ? t("This month so far: {spent}, {tokens} tokens over 1 model call.", { spent, tokens: tokenWords(m.tokens) })
+    : t("This month so far: {spent}, {tokens} tokens over {n} model calls.", { spent, tokens: tokenWords(m.tokens), n: m.calls });
   const basis =
-    price === "free" ? `${label} runs on this PC, so it costs nothing.`
-    : price ? `Costs are estimates from ${label}'s published prices; your bill is what ${label} charges.`
-    : `Buddy doesn't know ${label}'s price for this model, so its use shows as tokens only and doesn't count toward a limit.`;
-  const unpriced = m.unpriced ? ` ${m.unpriced} call${m.unpriced === 1 ? "" : "s"} this month had no known price.` : "";
-  const cap = settings.monthlyCap > 0 ? ` Buddy stops when this month's priced spend reaches ${moneyWords(settings.monthlyCap)}.` : "";
+    price === "free" ? t("{provider} runs on this PC, so it costs nothing.", { provider: label })
+    : price ? t("Costs are estimates from {provider}'s published prices; your bill is what {provider} charges.", { provider: label })
+    : t("Buddy doesn't know {provider}'s price for this model, so its use shows as tokens only and doesn't count toward a limit.", { provider: label });
+  const unpriced = !m.unpriced ? "" : m.unpriced === 1 ? ` ${t("1 call this month had no known price.")}` : ` ${t("{n} calls this month had no known price.", { n: m.unpriced })}`;
+  const cap = settings.monthlyCap > 0 ? ` ${t("Buddy stops when this month's priced spend reaches {limit}.", { limit: moneyWords(settings.monthlyCap) })}` : "";
   return { month, note: `${basis}${unpriced}${cap}` };
 }
 
@@ -975,18 +976,19 @@ function voiceOfferNow() {
   if (!voice || !brain) return null;
   if (voiceFetch) return { state: "fetching", text: voiceFetch.words };
   if (voiceFetched === "ready") return { state: "done", text: settings.holdToTalk
-    ? `Talking is ready. Hold ${keyLabel(hotkey("ask"))}, say your question, and let go.`
-    : `Talking is ready. Press ${keyLabel(hotkey("talk"))} and say your question.` };
-  if (voiceFetched === "failed") return { state: "done", text: "I couldn't download my voice just now. I'll try again the first time you talk to me." };
+    ? t("Talking is ready. Hold {key}, say your question, and let go.", { key: keyLabel(hotkey("ask")) })
+    : t("Talking is ready. Press {key} and say your question.", { key: keyLabel(hotkey("talk")) }) };
+  if (voiceFetched === "failed") return { state: "done", text: t("I couldn't download my voice just now. I'll try again the first time you talk to me.") };
   if (settings.voiceSetup !== "ask" || voice.installed()) return null;
-  return { state: "offer", text: "Want to talk to me out loud? It needs a one-time download (275 MB, about a minute)." };
+  return { state: "offer", text: t("Want to talk to me out loud? It needs a one-time download (275 MB, about a minute).") };
 }
 const sendVoiceOffer = () => bubble?.webContents.send("voice-offer", voiceOfferNow());
 
 /** Download progress from voice.js, while the offered download runs. */
 function voiceFetchProgress(/** @type {{ what: string, loaded: number, total: number }} */ info) {
   if (!voiceFetch) return;
-  const words = `Getting my ${info.what === "speaking" ? "voice" : "ears"} ready… ${Math.round((100 * info.loaded) / info.total)}%`;
+  const pct = Math.round((100 * info.loaded) / info.total);
+  const words = info.what === "speaking" ? t("Getting my voice ready… {pct}%", { pct }) : t("Getting my ears ready… {pct}%", { pct });
   if (words === voiceFetch.words) return;
   voiceFetch.words = words;
   sendVoiceOffer();
@@ -1022,7 +1024,7 @@ handleFrom(fromBubble, "welcome-state", () => welcomeState(settings.providerURLs
 handleFrom(fromBubble, "welcome-app", async (_e, id) => {
   if (!APP_IDS.includes(id)) return { error: "Buddy doesn't know that app." };
   const error = await setClaude(id, true, "welcome");
-  return { error, after: error ? null : APPS[id].after, state: await welcomeState(settings.providerURLs) };
+  return { error, after: error ? null : t(APPS[id].after), state: await welcomeState(settings.providerURLs) };
 });
 
 handleFrom(fromBubble, "welcome-local", async () => {
@@ -1574,7 +1576,7 @@ function changeSettings(patch) {
   for (const field of rejected) {
     const name = field.startsWith("hotkeys.") ? field.slice(8) : null;
     const clash = name && HOTKEY_NAMES.find((other) => other !== name && next.hotkeys[other] === patch.hotkeys?.[name]);
-    problems[field] = clash ? `Already used for ${HOTKEY_LABELS[clash]}` : "That value isn't allowed";
+    problems[field] = clash ? t("Already used for {action}", { action: t(HOTKEY_LABELS[clash]) }) : t("That value isn't allowed");
   }
   for (const name of HOTKEY_NAMES) {
     const accel = next.hotkeys[name];
@@ -1642,7 +1644,7 @@ app.on("web-contents-created", (_e, wc) => wc.on("did-finish-load", () => paintA
 
 // ---------- Global shortcuts ----------
 
-const HOTKEY_LABELS = { ask: "Ask", talk: "Talk", mark: "Mark", explain: "Explain", dictate: "Dictate" };
+const HOTKEY_LABELS = { ask: N("Ask"), talk: N("Talk"), mark: N("Mark"), explain: N("Explain"), dictate: N("Dictate") };
 const HOTKEY_ACTIONS = { ask: () => toggle(), talk: () => talk(), mark: () => startMarking(), explain: () => explainAt(cursor()), dictate: () => dictate() };
 /** @param {import("./settings.js").HotkeyName} name */
 const hotkey = (name) => ENV_HOTKEYS[name] ?? settings.hotkeys[name];
@@ -1732,12 +1734,12 @@ function settingsState() {
   return {
     settings,
     accents: ACCENTS,
-    models: MODELS,
+    models: MODELS.map((x) => ({ ...x, note: t(x.note) })),
     efforts: EFFORTS,
     voices: VOICES,
     speed: SPEED,
     defaultHotkeys: DEFAULTS.hotkeys,
-    labels: HOTKEY_LABELS,
+    labels: Object.fromEntries(Object.entries(HOTKEY_LABELS).map(([k, v]) => [k, t(v)])),
     // Set by environment variables, which win over Settings; the page shows these as fixed.
     fixed: {
       hotkeys: HOTKEY_NAMES.filter((n) => ENV_HOTKEYS[n]),
@@ -1755,7 +1757,7 @@ function settingsState() {
       const elsewhere = !!saved && !usable && boundToAddress(currentProvider()) ? saved.origin : null;
       return { saved: !!saved && !elsewhere, elsewhere, fromEnv: !!envKey(), env: PROVIDERS[currentProvider()].keyEnv };
     })(),
-    providers: Object.values(PROVIDERS).map((p) => ({ id: p.id, label: p.label, note: p.note, key: p.key, local: !!p.local, keyFrom: p.keyFrom, placeholder: p.placeholder, saved: !!envKey(p.id) || fs.existsSync(keyFile(p.id)), address: providerURL(p.id), defaultAddress: PROVIDERS[p.id].baseURL ?? null, ready: providerReady(p.id) })),
+    providers: Object.values(PROVIDERS).map((p) => ({ id: p.id, label: t(p.label), note: t(p.note), key: p.key, local: !!p.local, keyFrom: p.keyFrom, placeholder: p.placeholder, saved: !!envKey(p.id) || fs.existsSync(keyFile(p.id)), address: providerURL(p.id), defaultAddress: PROVIDERS[p.id].baseURL ?? null, ready: providerReady(p.id) })),
     providerModels: modelListState(),
     modelCheck: ((modelCheck) => modelCheck && { model: modelCheck.model, provider: modelCheck.provider, running: modelCheck.running, stopped: !!modelCheck.stopped, done: modelCheck.done, total: modelCheck.total, passed: modelCheck.passed, missed: modelCheck.missed })(providerState.modelCheck()),
     tested: testedOf(providerURL() ?? undefined, chosenModel() ?? ""),
@@ -1767,7 +1769,7 @@ function settingsState() {
     uiLanguages: LANGUAGES,
     lessons: (lessons?.list() ?? []).slice().reverse().map((l) => ({ id: l.id, title: l.title, app: appName(l.app), steps: l.steps.length })),
     claude: appStatus(),
-    aiApps: APP_IDS.map((id) => ({ id, label: APPS[id].label, after: APPS[id].after })),
+    aiApps: APP_IDS.map((id) => ({ id, label: APPS[id].label, after: t(APPS[id].after) })),
     updates: updates?.state() ?? null,
     routineInfo: Object.fromEntries(
       settings.routines.map((r) => [

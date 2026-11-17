@@ -2,6 +2,7 @@
 // "paste a key" field: use the AI app they already have (Buddy adds itself to it, no key needed), a free model on
 // this PC (Ollama or LM Studio, found if they're running), or an API key. This module finds what's on the PC and says
 // it; main.js does the setting up.
+import { t } from "./i18n.js";
 import { listModels, PROVIDERS } from "./providers.js";
 
 /** The local servers Buddy can think with, in the order they're offered. */
@@ -44,9 +45,9 @@ export const LOCAL_MEMORY_GB = 8;
 /** What this PC's memory means for a model on it, in words. @param {number} totalBytes */
 export function memoryWords(totalBytes) {
   const gb = Math.round(totalBytes / 2 ** 30);
-  if (gb >= 3 * LOCAL_MEMORY_GB) return `This PC has ${gb} GB of memory, which is plenty.`;
-  if (gb >= LOCAL_MEMORY_GB + 4) return `This PC has ${gb} GB of memory: enough, with other apps closed.`;
-  return `This PC has ${gb} GB of memory, which is likely too little: a model on it would be slow or wouldn't load. An AI app or an API key will work better.`;
+  if (gb >= 3 * LOCAL_MEMORY_GB) return t("This PC has {gb} GB of memory, which is plenty.", { gb });
+  if (gb >= LOCAL_MEMORY_GB + 4) return t("This PC has {gb} GB of memory: enough, with other apps closed.", { gb });
+  return t("This PC has {gb} GB of memory, which is likely too little: a model on it would be slow or wouldn't load. An AI app or an API key will work better.", { gb });
 }
 
 /**
@@ -56,12 +57,14 @@ export function memoryWords(totalBytes) {
  */
 export function localDoor(servers, totalBytes) {
   const ready = servers.find((s) => s.running && s.models.length);
-  if (ready) return { text: `${ready.label} is running on this PC with ${ready.models.length === 1 ? "a model" : `${ready.models.length} models`}. Buddy can think with it, free and private: nothing leaves this PC.`, use: { id: ready.id, label: ready.label, model: ready.models[0] } };
+  if (ready) return { text: ready.models.length === 1
+    ? t("{app} is running on this PC with a model. Buddy can think with it, free and private: nothing leaves this PC.", { app: ready.label })
+    : t("{app} is running on this PC with {n} models. Buddy can think with it, free and private: nothing leaves this PC.", { app: ready.label, n: ready.models.length }), use: { id: ready.id, label: ready.label, model: ready.models[0] } };
   const empty = servers.find((s) => s.running);
   const memory = memoryWords(totalBytes);
-  if (empty) return { text: `${empty.label} is running but has no models yet. Download one in ${empty.label} that can use tools (its model list says so), then check again. A model needs about ${LOCAL_MEMORY_GB} GB of free memory. ${memory}`, use: null };
+  if (empty) return { text: `${t("{app} is running but has no models yet. Download one in {app} that can use tools (its model list says so), then check again. A model needs about {gb} GB of free memory.", { app: empty.label, gb: LOCAL_MEMORY_GB })} ${memory}`, use: null };
   return {
-    text: `Buddy can think with a free model on this PC, through Ollama (${PROVIDERS.ollama.keyFrom}) or LM Studio (${PROVIDERS.lmstudio.keyFrom}). Neither is running now. Install one, download a model that can use tools, start it, then check again. A model needs about ${LOCAL_MEMORY_GB} GB of free memory. ${memory}`,
+    text: `${t("Buddy can think with a free model on this PC, through Ollama ({ollama}) or LM Studio ({lmstudio}). Neither is running now. Install one, download a model that can use tools, start it, then check again. A model needs about {gb} GB of free memory.", { ollama: PROVIDERS.ollama.keyFrom, lmstudio: PROVIDERS.lmstudio.keyFrom, gb: LOCAL_MEMORY_GB })} ${memory}`,
     use: null,
   };
 }
@@ -107,9 +110,11 @@ export function appWords(win) {
  */
 export function tourTip(step, { ask, mark, app }) {
   if (step === "ask") {
-    const where = app ? `in ${app}` : "in the app you were using";
-    return { text: `Try it: ask me how to do something ${where}, like "How do I…?", and I'll point the way. Later, press ${ask} from any app.`, action: "Skip tour", event: "skip" };
+    const text = app
+      ? t("Try it: ask me how to do something in {app}, like \"How do I…?\", and I'll point the way. Later, press {key} from any app.", { app, key: ask })
+      : t("Try it: ask me how to do something in the app you were using, like \"How do I…?\", and I'll point the way. Later, press {key} from any app.", { key: ask });
+    return { text, action: t("Skip tour"), event: "skip" };
   }
-  if (step === "mark") return { text: `One more: press ${mark}, then draw around anything on your screen, and I'll explain what you circled.`, action: "Got it", event: "gotit" };
+  if (step === "mark") return { text: t("One more: press {key}, then draw around anything on your screen, and I'll explain what you circled.", { key: mark }), action: t("Got it"), event: "gotit" };
   return null;
 }

@@ -12,6 +12,7 @@ import { PC_TOOL_NAMES, beyondScreen, hideSecrets, pcTools, placesHere, runPcToo
 import { fingerprint } from "./activity.js";
 import { spotRect } from "./geometry.js";
 import { earlyInput } from "./early-tools.js";
+import { N, t as tr } from "./i18n.js";
 import path from "node:path";
 
 /** @typedef {"low" | "medium" | "high" | "xhigh" | "max"} Effort */
@@ -62,13 +63,13 @@ const moved = (/** @type {{ x: number, y: number, width: number, height: number 
 // What Buddy says when the model call itself fails, in words an everyday user can act on. Keys are the Agent SDK's
 // error kinds; the direct engine maps its API errors onto the same ones.
 export const FAILURES = {
-  billing_error: "Your Anthropic account is out of credit. Add some at console.anthropic.com under Billing, or ask me from the AI app you already use, on your own plan (Settings › AI & privacy › Use with your AI app).",
-  authentication_failed: "My API key was rejected. Open settings from the tray to fix it.",
-  account_on_hold: "Your Anthropic account is on hold. Check console.anthropic.com, then ask me again.",
-  rate_limit: "I'm being rate limited. Give me a moment and try again.",
-  overloaded: "Claude is busy right now. Try again in a minute.",
-  server_error: "Claude is having trouble right now. Try again in a minute.",
-  model_not_found: "The model chosen in Settings isn't available on your account. Pick another under AI & privacy.",
+  billing_error: N("Your Anthropic account is out of credit. Add some at console.anthropic.com under Billing, or ask me from the AI app you already use, on your own plan (Settings › AI & privacy › Use with your AI app)."),
+  authentication_failed: N("My API key was rejected. Open settings from the tray to fix it."),
+  account_on_hold: N("Your Anthropic account is on hold. Check console.anthropic.com, then ask me again."),
+  rate_limit: N("I'm being rate limited. Give me a moment and try again."),
+  overloaded: N("Claude is busy right now. Try again in a minute."),
+  server_error: N("Claude is having trouble right now. Try again in a minute."),
+  model_not_found: N("The model chosen in Settings isn't available on your account. Pick another under AI & privacy."),
 };
 
 // Told to a model that can't see images.
@@ -78,15 +79,15 @@ about a picture, chart or drawing, say you can't see it and describe what the wi
 
 /** FAILURES in the words of the provider Buddy is using. */
 export function failureFor(/** @type {string} */ kind, /** @type {import("./providers.js").ProviderId} */ provider = "anthropic") {
-  if (provider === "anthropic") return FAILURES[kind];
+  if (provider === "anthropic") return FAILURES[kind] && tr(FAILURES[kind]);
   const p = PROVIDERS[provider];
-  if (kind === "billing_error") return `Your ${p.label} account is out of credit. Add some at ${p.keyFrom}, or switch provider in Settings › AI & privacy.`;
-  if (kind === "account_on_hold") return `Your ${p.label} account is on hold. Check ${p.keyFrom}, then ask me again.`;
-  if (kind === "no_tools") return "The model chosen in Settings can't use tools, and I need them to read your screen and point. Pick one marked \"works well\" under Settings › AI & privacy.";
-  if (kind === "not_running") return `${p.label} isn't running on this PC. Start it, then ask me again.`;
-  if (kind === "unreachable") return `I couldn't reach ${p.label}. Check your connection and the address under Settings › AI & privacy.`;
-  if (kind === "authentication_failed" && p.key !== "required") return `${p.label} refused my request. Check the key under Settings › AI & privacy.`;
-  return FAILURES[kind]?.replaceAll("Claude", p.label);
+  if (kind === "billing_error") return tr("Your {provider} account is out of credit. Add some at {site}, or switch provider in Settings › AI & privacy.", { provider: p.label, site: p.keyFrom });
+  if (kind === "account_on_hold") return tr("Your {provider} account is on hold. Check {site}, then ask me again.", { provider: p.label, site: p.keyFrom });
+  if (kind === "no_tools") return tr("The model chosen in Settings can't use tools, and I need them to read your screen and point. Pick one marked \"works well\" under Settings › AI & privacy.");
+  if (kind === "not_running") return tr("{provider} isn't running on this PC. Start it, then ask me again.", { provider: p.label });
+  if (kind === "unreachable") return tr("I couldn't reach {provider}. Check your connection and the address under Settings › AI & privacy.", { provider: p.label });
+  if (kind === "authentication_failed" && p.key !== "required") return tr("{provider} refused my request. Check the key under Settings › AI & privacy.", { provider: p.label });
+  return FAILURES[kind] && tr(FAILURES[kind]).replaceAll("Claude", p.label);
 }
 // A look taken when the bubble opened is used for a question asked within this long (unless the user went back to
 // their window meanwhile: staleGlance), and waited on at most this long.
@@ -603,14 +604,15 @@ const trimEnvelope = (res) =>
 
 // The approval card says exactly what will happen, built from the action itself; Claude's own summary is only the
 // note under it, so a card can never read "Click Save" while the action types something else.
+// What an action asks to do, and (DONE) what it did, as whole phrases: other languages put the words in another order.
 const VERBS = {
-  click: "Click", double_click: "Double-click", right_click: "Right-click", clear: "Clear", check: "Check",
-  uncheck: "Uncheck", toggle: "Toggle", expand: "Expand", collapse: "Collapse", scroll_to: "Scroll to",
+  click: N("Click {control}"), double_click: N("Double-click {control}"), right_click: N("Right-click {control}"), clear: N("Clear {control}"), check: N("Check {control}"),
+  uncheck: N("Uncheck {control}"), toggle: N("Toggle {control}"), expand: N("Expand {control}"), collapse: N("Collapse {control}"), scroll_to: N("Scroll to {control}"),
 };
 // The same, done: how an action reads in Activity.
 const DONE = {
-  click: "Clicked", double_click: "Double-clicked", right_click: "Right-clicked", clear: "Cleared", check: "Checked",
-  uncheck: "Unchecked", toggle: "Toggled", expand: "Expanded", collapse: "Collapsed", scroll_to: "Scrolled to",
+  click: N("Clicked {control}"), double_click: N("Double-clicked {control}"), right_click: N("Right-clicked {control}"), clear: N("Cleared {control}"), check: N("Checked {control}"),
+  uncheck: N("Unchecked {control}"), toggle: N("Toggled {control}"), expand: N("Expanded {control}"), collapse: N("Collapsed {control}"), scroll_to: N("Scrolled to {control}"),
 };
 // A field whose text Activity keeps to itself (it's saved on disk for a week).
 const PRIVATE_FIELD = /password|passcode|passphrase|\bpin\b|secret|security code|cvv|cvc/i;
@@ -1004,9 +1006,9 @@ export class Brain {
     } catch (err) {
       if (this.abort.signal.aborted) return "Okay, stopped.";
       if (err instanceof ProviderError) return failureFor(err.kind, this.provider) ?? `The model call failed (${err.status}): ${err.message.slice(0, 160)}`;
-      if (err instanceof Anthropic.AuthenticationError) return FAILURES.authentication_failed;
-      if (err instanceof Anthropic.RateLimitError) return FAILURES.rate_limit;
-      if (err instanceof Anthropic.APIError && /credit balance/i.test(err.message)) return FAILURES.billing_error;
+      if (err instanceof Anthropic.AuthenticationError) return failureFor("authentication_failed");
+      if (err instanceof Anthropic.RateLimitError) return failureFor("rate_limit");
+      if (err instanceof Anthropic.APIError && /credit balance/i.test(err.message)) return failureFor("billing_error");
       if (err instanceof Anthropic.APIError) return `The model call failed (${err.status}).`;
       throw err;
     } finally {
@@ -1257,13 +1259,13 @@ export class Brain {
 
   // What an act call will do, in words built from the call itself.
   describeAction(input) {
-    if (input.action === "press") return `Press ${input.keys}`;
-    const el = this.labels.get(input.ref) ?? "the highlighted control";
-    if (input.action === "set_value") return `Set ${el} to ${quote(input.text)}`;
-    if (input.action === "type") return `Type ${quote(input.text)} into ${el}`;
-    if (input.action === "select") return `Choose ${quote(input.text)} in ${el}`;
-    if (this.opensIt(input)) return `Open ${el}`;
-    return `${VERBS[input.action]} ${el}`;
+    if (input.action === "press") return tr("Press {keys}", { keys: input.keys });
+    const control = this.labels.get(input.ref) ?? tr("the highlighted control");
+    if (input.action === "set_value") return tr("Set {control} to {text}", { control, text: quote(input.text) });
+    if (input.action === "type") return tr("Type {text} into {control}", { control, text: quote(input.text) });
+    if (input.action === "select") return tr("Choose {text} in {control}", { control, text: quote(input.text) });
+    if (this.opensIt(input)) return tr("Open {control}", { control });
+    return tr(VERBS[input.action], { control });
   }
 
   // A click or double-click on a file or folder in a file list opens it; the card and Activity say so.
@@ -1277,15 +1279,15 @@ export class Brain {
    * @param {any} input @param {string | undefined} app
    */
   describeDone(input, app) {
-    const where = app ? ` in ${String(app).replace(/\.exe$/i, "")}` : "";
-    if (input.action === "press") return `Pressed ${input.keys}${where}`;
-    const el = this.labels.get(input.ref) ?? "a control";
-    const text = input.text == null || PRIVATE_FIELD.test(el) ? null : hideSecrets(quote(input.text, 80)).text;
-    if (input.action === "set_value") return `${text ? `Set ${el} to ${text}` : `Filled in ${el}`}${where}`;
-    if (input.action === "type") return `${text ? `Typed ${text} into ${el}` : `Typed into ${el}`}${where}`;
-    if (input.action === "select") return `Chose ${text ?? "an option"} in ${el}${where}`;
-    if (this.opensIt(input)) return `Opened ${el}${where}`;
-    return `${DONE[input.action] ?? "Used"} ${el}${where}`;
+    const inApp = (done) => (app ? tr("{done} in {app}", { done, app: String(app).replace(/\.exe$/i, "") }) : done);
+    if (input.action === "press") return inApp(tr("Pressed {keys}", { keys: input.keys }));
+    const control = this.labels.get(input.ref) ?? tr("a control");
+    const text = input.text == null || PRIVATE_FIELD.test(control) ? null : hideSecrets(quote(input.text, 80)).text;
+    if (input.action === "set_value") return inApp(text ? tr("Changed {control} to {text}", { control, text }) : tr("Filled in {control}", { control }));
+    if (input.action === "type") return inApp(text ? tr("Typed {text} into {control}", { control, text }) : tr("Typed into {control}", { control }));
+    if (input.action === "select") return inApp(text ? tr("Chose {text} in {control}", { control, text }) : tr("Chose an option in {control}", { control }));
+    if (this.opensIt(input)) return inApp(tr("Opened {control}", { control }));
+    return inApp(tr(DONE[input.action] ?? N("Used {control}"), { control }));
   }
 
   /**
@@ -1448,7 +1450,7 @@ export class Brain {
       case "create_document": {
         if (!input.title?.trim() || !input.markdown?.trim()) return "create_document needs a title and markdown.";
         if (!this.ui.documentsDir || !this.ui.openFile) return "Documents can't be created from here.";
-        if (!(await askUser(`Create "${input.title}" in Documents\\Buddy and open it in Word`, { ...this.asking(), scope: "files" }))) return "The user declined.";
+        if (!(await askUser(tr("Create \"{title}\" in Documents\\Buddy and open it in Word", { title: input.title }), { ...this.asking(), scope: "files" }))) return "The user declined.";
         this.ui.status("Writing the document…");
         const file = await writeDocx({ title: input.title, markdown: input.markdown, dir: this.ui.documentsDir });
         this.ui.record?.({ kind: "document", summary: `Made the document "${input.title}"`, file, after: fingerprint(file), from: this.ui.source ?? "Buddy" });

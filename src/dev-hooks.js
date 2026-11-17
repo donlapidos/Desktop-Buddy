@@ -1023,6 +1023,41 @@ function languageTest(kit) {
     };
     await inLanguage("es");
     const spanish = await read();
+    // Every page of Settings in Spanish: any text on show with common English words in it is a word left behind.
+    kit.settingsWindow.open();
+    let settingsWin;
+    for (let i = 0; i < 50 && !(settingsWin = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("settings.html"))); i++) await wait(100);
+    await wait(1500);
+    const leftEnglish = settingsWin ? await settingsWin.webContents.executeJavaScript(`(async () => {
+      // Common English words that aren't Spanish ones, so a sentence left in English trips at least one. Any letter,
+      // accented or not, is part of a word ("actúan" is no "an").
+      const english = /(?<!\\p{L})(the|and|your|you|with|when|what|which|this|that|from|into|only|isn't|can't|don't|it's|will|would|click|press|choose|none|yet|here|there|asks?|asking|nothing|every|before|after|while|is|are|to|for|of|in|it|or|not|can|without|may|off|on|be|by|an|its|they|them|use|new|add|show|open)(?!\\p{L})/iu;
+      const seen = new Set();
+      for (const page of pages) {
+        show(page);
+        await new Promise((r) => setTimeout(r, 150));
+        const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+          const text = n.textContent.trim();
+          const shown = n.parentElement && n.parentElement.offsetParent !== null;
+          if (text && shown && english.test(text)) seen.add(page + ": " + text.slice(0, 90));
+        }
+        for (const el of document.querySelectorAll("[title], [aria-label], [placeholder]")) {
+          for (const a of ["title", "aria-label", "placeholder"]) {
+            const v = el.getAttribute(a);
+            if (v && el.offsetParent !== null && english.test(v)) seen.add(page + " [" + a + "]: " + v.slice(0, 90));
+          }
+        }
+      }
+      return [...seen];
+    })()`) : ["Settings didn't open"];
+    // Two of the wordiest pages, to see the Spanish fits.
+    for (const page of ["agents", "claude"]) {
+      await settingsWin?.webContents.executeJavaScript(`show(${JSON.stringify(page)})`);
+      await wait(400);
+      if (settingsWin) fs.writeFileSync(path.join(process.env.BUDDY_LANGUAGE_TEST, `settings-${page}-es.png`), (await settingsWin.webContents.capturePage()).toPNG());
+    }
+    settingsWin?.close();
     changeSettings({ uiLanguage: "en" });
     await inLanguage("en");
     const english = await read();
@@ -1039,7 +1074,7 @@ function languageTest(kit) {
     await inLanguage("en");
     await wait(500);
     const setupEnglish = await bubble.webContents.executeJavaScript(`document.querySelector("#welcome .lede")?.textContent ?? null`);
-    console.log("LANGUAGE_TEST", JSON.stringify({ spanish, english, setupSpanish, setupEnglish }));
+    console.log("LANGUAGE_TEST", JSON.stringify({ spanish, english, setupSpanish, setupEnglish, leftEnglish }));
     console.log("LANGUAGE_TEST_DONE");
   }, 2500);
 }

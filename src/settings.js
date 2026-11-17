@@ -2,7 +2,7 @@
 // hand-edited, half-written or out-of-date file can never put Buddy in a state it can't handle: anything invalid
 // falls back to its default. Writes go to a temporary file first and replace the old one in a single step.
 import fs from "node:fs";
-import { LANGUAGES as UI_LANGUAGES } from "./i18n.js";
+import { N, LANGUAGES as UI_LANGUAGES } from "./i18n.js";
 import { addressProblem } from "./providers.js";
 
 /** Accent colours for the pointer, island, bubble and task windows. Each reads on both light and dark apps. */
@@ -18,9 +18,9 @@ export const ACCENTS = Object.freeze({
 
 /** Claude models Buddy offers. All accept the effort levels below. */
 export const MODELS = Object.freeze([
-  { id: "claude-opus-5-5", label: "Opus 5.5", note: "Most capable. The default." },
-  { id: "claude-sonnet-5-5", label: "Sonnet 5.5", note: "Nearly as capable, about half the price." },
-  { id: "claude-haiku-5-5", label: "Haiku 5.5", note: "Fastest and cheapest; best for quick questions." },
+  { id: "claude-opus-5-5", label: "Opus 5.5", note: N("Most capable. The default.") },
+  { id: "claude-sonnet-5-5", label: "Sonnet 5.5", note: N("Nearly as capable, about half the price.") },
+  { id: "claude-haiku-5-5", label: "Haiku 5.5", note: N("Fastest and cheapest; best for quick questions.") },
 ]);
 
 export const EFFORTS = Object.freeze(["low", "medium", "high"]);

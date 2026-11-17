@@ -476,6 +476,7 @@ const CHECKS = {
       ...["spanish", "english"].flatMap((which) => Object.entries(want[which]).filter(([k, v]) => r[which]?.[k] !== v).map(([k, v]) => `${which} ${k} was ${JSON.stringify(r[which]?.[k])}, not ${JSON.stringify(v)}`)),
       r.setupSpanish !== "Buddy necesita una IA para pensar. Elige una forma de empezar:" && `setup in Spanish said ${JSON.stringify(r.setupSpanish)}`,
       r.setupEnglish !== "Buddy needs an AI to think with. Pick one way in:" && `setup switched to English said ${JSON.stringify(r.setupEnglish)}`,
+      ...(r.leftEnglish ?? ["Settings wasn't read"]).map((s) => `English left in Spanish Settings: ${s}`),
     ].filter(Boolean);
   },
 

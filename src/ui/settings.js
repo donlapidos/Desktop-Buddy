@@ -58,7 +58,6 @@ function renderVoice() {
       const b = el("button", { className: "voice" }, el("span", { className: "wave" }, el("i"), el("i"), el("i")), el("b", { textContent: String(sid) }));
       b.dataset.sid = String(sid);
       b.setAttribute("role", "radio");
-      b.setAttribute("aria-label", `Voice ${sid}`);
       b.addEventListener("click", async () => {
         if (S.settings.voice !== sid) await set({ voice: sid });
         preview(sid, S.settings.speed);
@@ -67,6 +66,7 @@ function renderVoice() {
     }
   }
   for (const b of /** @type {HTMLCollectionOf<HTMLButtonElement>} */ (box.children)) {
+    b.setAttribute("aria-label", t("Voice {n}", { n: b.dataset.sid }));
     b.setAttribute("aria-checked", String(Number(b.dataset.sid) === s.voice));
     b.disabled = S.fixed.voice;
   }
@@ -77,9 +77,9 @@ function renderVoice() {
   if (document.activeElement !== r) r.value = s.speed;
   paintSpeed();
 
-  const help = { spoken: "Buddy answers out loud when you asked out loud, and stays quiet when you typed.", always: "Buddy reads every answer aloud.", never: "Buddy never speaks; answers stay in the chat." };
+  const help = { spoken: t("Buddy answers out loud when you asked out loud, and stays quiet when you typed."), always: t("Buddy reads every answer aloud."), never: t("Buddy never speaks; answers stay in the chat.") };
   $("talkback-help").textContent = help[s.talkBack];
-  segmented($("talkback"), [["spoken", "When I speak"], ["always", "Always"], ["never", "Never"]], s.talkBack, (v) => set({ talkBack: v }));
+  segmented($("talkback"), [["spoken", t("When I speak")], ["always", t("Always")], ["never", t("Never")]], s.talkBack, (v) => set({ talkBack: v }));
 }
 function paintSpeed() {
   const r = $field("speed");
@@ -104,14 +104,14 @@ function renderLook() {
     b.addEventListener("click", () => id !== s.accent && set({ accent: id }));
     return b;
   }));
-  segmented($("appearance"), [["system", "Match Windows"], ["light", "Light"], ["dark", "Dark"]], s.appearance, (v) => set({ appearance: v }), S.fixed.appearance);
+  segmented($("appearance"), [["system", t("Match Windows")], ["light", t("Light")], ["dark", t("Dark")]], s.appearance, (v) => set({ appearance: v }), S.fixed.appearance);
   // Each language by its own name, so someone who can't read the current one can still find theirs.
-  segmented($("ui-language"), [["auto", "Match Windows"], ...Object.entries(S.uiLanguages)], s.uiLanguage, (v) => set({ uiLanguage: v }));
+  segmented($("ui-language"), [["auto", t("Match Windows")], ...Object.entries(S.uiLanguages)], s.uiLanguage, (v) => set({ uiLanguage: v }));
   $("appearance-fixed").hidden = !S.fixed.appearance;
 }
 
 // ---------- Shortcuts ----------
-const DESCRIBE = { ask: "Open or close the chat", talk: "Start talking; press again to send", mark: "Click to explain, or draw to ask", explain: "Explain whatever is under the pointer", dictate: "Type what you say into the app you're in" };
+const DESCRIBE = { ask: N("Open or close the chat"), talk: N("Start talking; press again to send"), mark: N("Click to explain, or draw to ask"), explain: N("Explain whatever is under the pointer"), dictate: N("Type what you say into the app you're in") };
 const KEY_LABEL = { Control: "Ctrl", Super: "Win", Alt: "Alt", Shift: "Shift", Up: "↑", Down: "↓", Left: "←", Right: "→", PageUp: "Page Up", PageDown: "Page Down" };
 const caps = (accel) => accel.split("+").map((k) => el("kbd", { textContent: KEY_LABEL[k] ?? k }));
 
@@ -121,23 +121,23 @@ function renderKeys() {
     const accel = S.settings.hotkeys[name];
     const fixed = S.fixed.hotkeys.includes(name);
     const cap = el("button", { className: "keycap", disabled: fixed });
-    cap.setAttribute("aria-label", `${S.labels[name]} shortcut: ${accel}. Click to change.`);
+    cap.setAttribute("aria-label", t("{name} shortcut: {keys}. Click to change.", { name: S.labels[name], keys: accel }));
     if (recording === name) {
       cap.classList.add("recording");
-      cap.textContent = "Press keys…";
+      cap.textContent = t("Press keys…");
     } else cap.append(...caps(accel));
     cap.addEventListener("click", () => (recording === name ? stopRecording() : startRecording(name)));
     const side = el("div", { className: "side" });
     if (!fixed && accel !== S.defaultHotkeys[name]) {
-      const reset = el("button", { className: "link", textContent: "Reset" });
+      const reset = el("button", { className: "link", textContent: t("Reset") });
       reset.addEventListener("click", () => set({ hotkeys: { [name]: S.defaultHotkeys[name] } }));
       side.append(reset);
     }
     side.append(cap);
-    const taken = S.taken.includes(name) ? "Another app has this shortcut, so it isn't working. Pick a different one." : "";
-    const note = fixed ? "Set by an environment variable." : problems[`hotkeys.${name}`] || taken;
+    const taken = S.taken.includes(name) ? t("Another app has this shortcut, so it isn't working. Pick a different one.") : "";
+    const note = fixed ? t("Set by an environment variable.") : problems[`hotkeys.${name}`] || taken;
     return el("div", { className: "key-row" },
-      el("div", { className: "what" }, el("b", { textContent: S.labels[name] }), el("span", { textContent: DESCRIBE[name] })),
+      el("div", { className: "what" }, el("b", { textContent: S.labels[name] }), el("span", { textContent: DESCRIBE[name] ? t(DESCRIBE[name]) : "" })),
       side,
       el("p", { className: fixed ? "fixed" : "problem", textContent: note }));
   }));
@@ -175,11 +175,11 @@ addEventListener("keydown", async (e) => {
   const { key, mods } = accelerator(e);
   const name = recording;
   if (!key) {
-    problems[`hotkeys.${name}`] = "That key can't be part of a shortcut. Try a letter, number or F-key.";
+    problems[`hotkeys.${name}`] = t("That key can't be part of a shortcut. Try a letter, number or F-key.");
     return renderKeys();
   }
   if (!mods.some((m) => m !== "Shift")) {
-    problems[`hotkeys.${name}`] = "Add Ctrl, Alt or the Windows key, so the shortcut doesn't get in the way of typing.";
+    problems[`hotkeys.${name}`] = t("Add Ctrl, Alt or the Windows key, so the shortcut doesn't get in the way of typing.");
     return renderKeys();
   }
   recording = null;
@@ -191,6 +191,7 @@ addEventListener("blur", stopRecording);
 // ---------- Claude, privacy & startup ----------
 let replacingKey = false;
 let confirming = null; // "explainers" | "remove-key"
+const EFFORT = { low: N("Low"), medium: N("Medium"), high: N("High") };
 
 function renderClaude() {
   // A background update mustn't wipe a key being typed.
@@ -205,7 +206,7 @@ function renderAddress() {
   $("address-group").hidden = !(p.local || p.key === "optional");
   if ($("address-group").hidden) return;
   const input = el("input", { className: "field", id: "address-input", type: "url", value: p.address ?? "", placeholder: p.defaultAddress ?? "https://example.com/v1", spellcheck: false });
-  const save = el("button", { className: "btn primary", textContent: "Save address" });
+  const save = el("button", { className: "btn primary", textContent: t("Save address") });
   const submit = async () => {
     if (!input.value.trim()) return;
     $("address-problem").textContent = "";
@@ -218,13 +219,13 @@ function renderAddress() {
   input.addEventListener("keydown", (e) => e.key === "Enter" && submit());
   const row = el("div", { className: "row" }, input, save);
   if (p.defaultAddress && p.address !== p.defaultAddress) {
-    const reset = el("button", { className: "btn", textContent: "Use the usual one" });
+    const reset = el("button", { className: "btn", textContent: t("Use the usual one") });
     reset.addEventListener("click", async () => render((await window.buddy.settingsAddress(p.defaultAddress)).state));
     row.append(reset);
   }
   const note = p.local
-    ? `Where ${p.label} listens. The usual address works unless you changed it in ${p.label}. Get ${p.label} at ${p.keyFrom}.`
-    : "The server's address, ending in /v1 for most. Use https:// unless the server is on this PC or your local network.";
+    ? t("Where {app} listens. The usual address works unless you changed it in {app}. Get {app} at {url}.", { app: p.label, url: p.keyFrom })
+    : t("The server's address, ending in /v1 for most. Use https:// unless the server is on this PC or your local network.");
   $("address").replaceChildren(row, el("p", { className: "note", textContent: note }));
 }
 
@@ -233,29 +234,29 @@ function renderKeyBox() {
   box.replaceChildren();
   const p = provider();
   $("key-group").hidden = p.key === "none";
-  $("key-title").textContent = p.key === "optional" ? "API key (if the server needs one)" : "API key";
+  $("key-title").textContent = p.key === "optional" ? t("API key (if the server needs one)") : t("API key");
   if (p.key === "none") return;
   if (S.key.fromEnv) {
-    box.append(el("div", { className: "status" }, el("span", { className: "dot" }), `Using ${S.key.env} from the environment.`));
+    box.append(el("div", { className: "status" }, el("span", { className: "dot" }), t("Using {name} from the environment.", { name: S.key.env })));
   } else if (S.key.saved && !replacingKey) {
-    const replace = el("button", { className: "btn", textContent: "Replace key" });
+    const replace = el("button", { className: "btn", textContent: t("Replace key") });
     replace.addEventListener("click", () => { replacingKey = true; renderClaude(); $("key-input")?.focus(); });
     const actions = el("div", { className: "row" }, replace);
     if (confirming === "remove-key") {
-      const yes = el("button", { className: "btn danger", textContent: "Remove it" });
-      const no = el("button", { className: "btn", textContent: "Keep it" });
+      const yes = el("button", { className: "btn danger", textContent: t("Remove it") });
+      const no = el("button", { className: "btn", textContent: t("Keep it") });
       yes.addEventListener("click", async () => { confirming = null; render(await window.buddy.settingsKeyRemove()); });
       no.addEventListener("click", () => { confirming = null; renderClaude(); });
-      actions.replaceChildren(el("span", { textContent: "Buddy will stop answering until you add a key." }), yes, no);
+      actions.replaceChildren(el("span", { textContent: t("Buddy will stop answering until you add a key.") }), yes, no);
     } else {
-      const remove = el("button", { className: "btn danger", textContent: "Remove" });
+      const remove = el("button", { className: "btn danger", textContent: t("Remove") });
       remove.addEventListener("click", () => { confirming = "remove-key"; renderClaude(); });
       actions.append(remove);
     }
-    box.append(el("div", { className: "status" }, el("span", { className: "dot" }), "A key is saved, encrypted on this PC."), actions);
+    box.append(el("div", { className: "status" }, el("span", { className: "dot" }), t("A key is saved, encrypted on this PC.")), actions);
   } else {
     const input = el("input", { className: "field", id: "key-input", type: "password", placeholder: provider().placeholder, autocomplete: "off", spellcheck: false });
-    const save = el("button", { className: "btn primary", textContent: "Save key" });
+    const save = el("button", { className: "btn primary", textContent: t("Save key") });
     const submit = async () => {
       if (!input.value.trim()) return;
       const res = await window.buddy.settingsKey(input.value);
@@ -269,16 +270,16 @@ function renderKeyBox() {
     input.addEventListener("keydown", (e) => e.key === "Enter" && submit());
     const row = el("div", { className: "row" }, input, save);
     if (S.key.saved) {
-      const cancel = el("button", { className: "btn", textContent: "Cancel" });
+      const cancel = el("button", { className: "btn", textContent: t("Cancel") });
       cancel.addEventListener("click", () => { replacingKey = false; $("key-problem").textContent = ""; renderClaude(); });
       row.append(cancel);
     }
     box.append(
-      el("div", { className: `status${S.key.saved ? "" : " none"}` }, el("span", { className: "dot" }), S.key.saved ? "Enter the new key."
-        : S.key.elsewhere ? `The saved key is for ${S.key.elsewhere}, so Buddy won't send it to this address. Enter this server's key, if it needs one.`
-        : provider().key === "optional" ? "No key saved. Add one only if the server asks for it." : `No ${provider().label} key yet. Buddy's own chat needs one; Use with your AI app, below, doesn't.`),
+      el("div", { className: `status${S.key.saved ? "" : " none"}` }, el("span", { className: "dot" }), S.key.saved ? t("Enter the new key.")
+        : S.key.elsewhere ? t("The saved key is for {where}, so Buddy won't send it to this address. Enter this server's key, if it needs one.", { where: S.key.elsewhere })
+        : provider().key === "optional" ? t("No key saved. Add one only if the server asks for it.") : t("No {provider} key yet. Buddy's own chat needs one; Use with your AI app, below, doesn't.", { provider: provider().label })),
       row,
-      el("p", { className: "note", textContent: `Get one at ${provider().keyFrom}. It's stored encrypted with Windows and never shown again.` }),
+      el("p", { className: "note", textContent: t("Get one at {url}. It's stored encrypted with Windows and never shown again.", { url: provider().keyFrom }) }),
     );
   }
 }
@@ -290,19 +291,19 @@ function renderModelCheck() {
   const s = S.settings;
   const chosen = s.provider === "anthropic" ? s.model : s.providerModels[s.provider];
   const c = S.modelCheck && S.modelCheck.model === chosen && S.modelCheck.provider === s.provider ? S.modelCheck : null;
-  const t = S.tested;
-  const button = el("button", { className: "btn", textContent: c?.running ? "Stop" : t ? "Check again" : "Check this model", disabled: !chosen || !provider().ready });
+  const tested = S.tested;
+  const button = el("button", { className: "btn", textContent: c?.running ? t("Stop") : tested ? t("Check again") : t("Check this model"), disabled: !chosen || !provider().ready });
   button.addEventListener("click", async () => render((await window.buddy.settingsCheckModel()).state));
-  const status = c?.running ? `Checking… ${c.done} of ${c.total} done, ${c.passed} passed.`
-    : t ? `Passed ${t.passed} of ${t.total} tasks, about ${Math.max(1, Math.round(t.avgMs / 1000))} s each.`
+  const status = c?.running ? t("Checking… {done} of {total} done, {passed} passed.", { done: c.done, total: c.total, passed: c.passed })
+    : tested ? t("Passed {passed} of {total} tasks, about {s} s each.", { passed: tested.passed, total: tested.total, s: Math.max(1, Math.round(tested.avgMs / 1000)) })
     : "";
   $("model-check").replaceChildren(button, el("span", { className: "status-text", textContent: status }));
-  $("model-check-note").textContent = c?.running ? "Each task asks the model for help in a made-up Excel, Edge, Word, File Explorer or Notepad window, like you would."
-    : c?.stopped ? "Stopped. Nothing was saved."
-    : c?.missed.length ? `Missed: ${c.missed.join(", ")}.`
-    : t ? ""
-    : provider().local ? `Runs ${S.checkTasks} short Buddy tasks on this model and scores them. Free, since it runs on this PC.`
-    : `Runs ${S.checkTasks} short Buddy tasks on this model and scores them. Uses a little of your account: about ${S.checkTasks * 2} requests.`;
+  $("model-check-note").textContent = c?.running ? t("Each task asks the model for help in a made-up Excel, Edge, Word, File Explorer or Notepad window, like you would.")
+    : c?.stopped ? t("Stopped. Nothing was saved.")
+    : c?.missed.length ? t("Missed: {tasks}.", { tasks: c.missed.join(", ") })
+    : tested ? ""
+    : provider().local ? t("Runs {n} short Buddy tasks on this model and scores them. Free, since it runs on this PC.", { n: S.checkTasks })
+    : t("Runs {n} short Buddy tasks on this model and scores them. Uses a little of your account: about {requests} requests.", { n: S.checkTasks, requests: S.checkTasks * 2 });
 }
 
 function renderModel() {
@@ -319,19 +320,19 @@ function renderModel() {
   const ids = list.models.length ? list.models : chosen ? [chosen] : [];
   const select = /** @type {HTMLSelectElement} */ ($("model-select"));
   select.disabled = S.fixed.model || !ids.length;
-  const BADGE = { good: "works well", no_images: "can't see images", no_tools: "can't use tools" };
+  const BADGE = { good: t("works well"), no_images: t("can't see images"), no_tools: t("can't use tools") };
   const v = (id) => list.verdicts?.[id] ?? "unknown";
-  const label = (id) => [id, BADGE[v(id)], list.tested?.[id] && `passed ${list.tested[id].passed}/${list.tested[id].total}`].filter(Boolean).join("  ·  ");
+  const label = (id) => [id, BADGE[v(id)], list.tested?.[id] && t("passed {passed}/{total}", { passed: list.tested[id].passed, total: list.tested[id].total })].filter(Boolean).join("  ·  ");
   select.replaceChildren(...ids.map((id) => el("option", { value: id, textContent: label(id), selected: id === chosen })));
   select.onchange = () => set({ providerModels: { [s.provider]: select.value } });
-  note.textContent = list.loading ? `Asking ${provider().label} which models your key can use…`
+  note.textContent = list.loading ? t("Asking {provider} which models your key can use…", { provider: provider().label })
     : list.error ? list.error
-    : !provider().ready ? (provider().key === "required" ? "Save a key above to see the models it can use." : "Save the address above to see its models.")
-    : { good: "Works well with Buddy: it passed Buddy's checks, and it can use tools and see your screen.",
-        capable: "It can use tools and see your screen, but hasn't been checked with Buddy yet. Check this model to see how it does.",
-        no_images: "Can't see images, so Buddy reads your windows as text instead of screenshots. Guiding works; questions about pictures and charts won't.",
-        no_tools: "Can't use tools, so it can't read your screen or point. Pick another.",
-      }[v(chosen)] ?? (provider().local ? `Buddy doesn't know yet whether this model can use tools and see images; it finds out the first time you ask. Download models in ${provider().label}.` : "Buddy doesn't know yet whether this model can use tools and see images; it finds out the first time you ask.");
+    : !provider().ready ? (provider().key === "required" ? t("Save a key above to see the models it can use.") : t("Save the address above to see its models."))
+    : { good: t("Works well with Buddy: it passed Buddy's checks, and it can use tools and see your screen."),
+        capable: t("It can use tools and see your screen, but hasn't been checked with Buddy yet. Check this model to see how it does."),
+        no_images: t("Can't see images, so Buddy reads your windows as text instead of screenshots. Guiding works; questions about pictures and charts won't."),
+        no_tools: t("Can't use tools, so it can't read your screen or point. Pick another."),
+      }[v(chosen)] ?? (provider().local ? t("Buddy doesn't know yet whether this model can use tools and see images; it finds out the first time you ask. Download models in {app}.", { app: provider().label }) : t("Buddy doesn't know yet whether this model can use tools and see images; it finds out the first time you ask."));
 }
 
 function renderClaudeRest() {
@@ -360,36 +361,37 @@ function renderClaudeRest() {
     return b;
   }));
   $("model-fixed").hidden = !S.fixed.model;
-  segmented($("effort"), S.efforts.map((e) => [e, e[0].toUpperCase() + e.slice(1)]), s.effort, (v) => set({ effort: v }), S.fixed.effort);
+  segmented($("effort"), S.efforts.map((e) => [e, EFFORT[e] ? t(EFFORT[e]) : e[0].toUpperCase() + e.slice(1)]), s.effort, (v) => set({ effort: v }), S.fixed.effort);
   $("effort-fixed").hidden = !S.fixed.effort;
 
   $("startup").setAttribute("aria-checked", String(S.startsWithWindows));
   renderClaudeApps();
 
   const n = S.data.explainers;
-  $("explainers-count").textContent = n ? ` ${n} plate${n === 1 ? "" : "s"}, in your data folder.` : " None yet.";
+  $("explainers-count").textContent = ` ${n === 1 ? t("1 plate, in your data folder.") : n ? t("{n} plates, in your data folder.", { n }) : t("None yet.")}`;
   const ex = $("explainers-actions");
   if (confirming === "explainers") {
-    const yes = el("button", { className: "btn danger", textContent: `Delete ${n}` });
-    const no = el("button", { className: "btn", textContent: "Keep" });
+    const yes = el("button", { className: "btn danger", textContent: t("Delete {n}", { n }) });
+    const no = el("button", { className: "btn", textContent: t("Keep") });
     yes.addEventListener("click", async () => { confirming = null; render(await window.buddy.settingsClear("explainers")); });
     no.addEventListener("click", () => { confirming = null; renderClaude(); });
     ex.replaceChildren(yes, no);
   } else {
-    const clear = el("button", { className: "btn", textContent: "Clear…", disabled: !n });
+    const clear = el("button", { className: "btn", textContent: t("Clear…"), disabled: !n });
     clear.addEventListener("click", () => { confirming = "explainers"; renderClaude(); });
     ex.replaceChildren(clear);
   }
   const c = S.data.conversations;
-  $("conversations-count").textContent = c
-    ? ` ${c === 1 ? "One conversation" : `${c} conversations`}, in words only (no screenshots), so they carry on after Buddy restarts. Closing a task forgets it.`
-    : " None kept. What you ask and Buddy's replies are kept, in words only, so they carry on after Buddy restarts.";
-  const forget = el("button", { className: "btn", textContent: "Forget", disabled: !c });
+  $("conversations-count").textContent = ` ${c === 1 ? t("One conversation, in words only (no screenshots), so they carry on after Buddy restarts. Closing a task forgets it.")
+    : c ? t("{n} conversations, in words only (no screenshots), so they carry on after Buddy restarts. Closing a task forgets it.", { n: c })
+    : t("None kept. What you ask and Buddy's replies are kept, in words only, so they carry on after Buddy restarts.")}`;
+  const forget = el("button", { className: "btn", textContent: t("Forget"), disabled: !c });
   forget.addEventListener("click", async () => render(await window.buddy.settingsClear("conversations")));
   $("conversations-actions").replaceChildren(forget);
   const kb = S.data.logBytes;
-  $("log-size").textContent = kb ? ` Timings of each step, ${kb < 1024 ? `${kb} bytes` : `${Math.round(kb / 1024)} KB`}; no screen content.` : " Empty.";
-  const clearLog = el("button", { className: "btn", textContent: "Clear", disabled: !kb });
+  const size = kb < 1024 ? t("{n} bytes", { n: kb }) : t("{n} KB", { n: Math.round(kb / 1024) });
+  $("log-size").textContent = ` ${kb ? t("Timings of each step, {size}; no screen content.", { size }) : t("Empty.")}`;
+  const clearLog = el("button", { className: "btn", textContent: t("Clear"), disabled: !kb });
   clearLog.addEventListener("click", async () => render(await window.buddy.settingsClear("log")));
   $("log-actions").replaceChildren(clearLog);
 }
@@ -400,10 +402,10 @@ function renderClaudeApps() {
   const apps = [...S.aiApps].sort((a, b) => Number(S.claude[a.id] === "missing") - Number(S.claude[b.id] === "missing"));
   $("claude-apps").replaceChildren(...apps.map((a) => {
     const status = S.claude[a.id];
-    const text = status === "added" ? `Added. ${a.after}` : status === "missing" ? "Not on this PC." : "Not added yet.";
+    const text = status === "added" ? `${t("Added.")} ${a.after}` : status === "missing" ? t("Not on this PC.") : t("Not added yet.");
     const btn = el("button", {
       className: status === "added" ? "btn" : "btn primary",
-      textContent: claudeBusy === a.id ? "Working…" : status === "added" ? "Remove" : "Add Buddy",
+      textContent: claudeBusy === a.id ? t("Working…") : status === "added" ? t("Remove") : t("Add Buddy"),
       disabled: status === "missing" || !!claudeBusy,
     });
     btn.addEventListener("click", async () => {
@@ -427,20 +429,20 @@ $("open-data").addEventListener("click", () => window.buddy.settingsOpenData());
 function renderDictation() {
   const s = S.settings;
   $("dictate-key").replaceChildren(...caps(s.hotkeys.dictate));
-  const stopHelp = { pause: "Buddy types what you said as soon as you pause. Good for a sentence or two.", press: "Keep talking through pauses; each sentence is typed as you go. Press the shortcut again to stop." };
+  const stopHelp = { pause: t("Buddy types what you said as soon as you pause. Good for a sentence or two."), press: t("Keep talking through pauses; each sentence is typed as you go. Press the shortcut again to stop.") };
   $("dictate-stop-help").textContent = stopHelp[s.dictateStop];
-  segmented($("dictate-stop"), [["pause", "When I pause"], ["press", "When I press it again"]], s.dictateStop, (v) => set({ dictateStop: v }));
-  const langHelp = { en: "Fastest, and the most accurate for English.", auto: "Understands about 99 languages and works out which one you're speaking. Downloads a 160 MB model the first time." };
+  segmented($("dictate-stop"), [["pause", t("When I pause")], ["press", t("When I press it again")]], s.dictateStop, (v) => set({ dictateStop: v }));
+  const langHelp = { en: t("Fastest, and the most accurate for English."), auto: t("Understands about 99 languages and works out which one you're speaking. Downloads a 160 MB model the first time.") };
   $("language-help").textContent = langHelp[s.language];
-  segmented($("language"), [["en", "English"], ["auto", "Detect automatically"]], s.language, (v) => set({ language: v }));
+  segmented($("language"), [["en", t("English")], ["auto", t("Detect automatically")]], s.language, (v) => set({ language: v }));
 }
 $("dictate-change").addEventListener("click", () => show("keys"));
 
 // ---------- Agents ----------
 const ROPES = [
-  ["ask", "Nothing: ask every time", "Every click, keystroke and window move waits for your OK. The safest."],
-  ["safe", "Make safe moves", "Scroll, expand and collapse, and move windows without asking. Anything that clicks, types or opens an app still asks."],
-  ["trusted", "Act freely in apps I trust", "In your trusted apps, agents act without asking. Everywhere else, safe moves only."],
+  ["ask", N("Nothing: ask every time"), N("Every click, keystroke and window move waits for your OK. The safest.")],
+  ["safe", N("Make safe moves"), N("Scroll, expand and collapse, and move windows without asking. Anything that clicks, types or opens an app still asks.")],
+  ["trusted", N("Act freely in apps I trust"), N("In your trusted apps, agents act without asking. Everywhere else, safe moves only.")],
 ];
 const X = () => {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -451,8 +453,8 @@ const X = () => {
 };
 function appChips(box, key) {
   box.replaceChildren(...S.settings[key].map((name) => {
-    const remove = el("button", { title: `Remove ${name}` }, X());
-    remove.setAttribute("aria-label", `Remove ${name}`);
+    const remove = el("button", { title: t("Remove {name}", { name }) }, X());
+    remove.setAttribute("aria-label", t("Remove {name}", { name }));
     remove.addEventListener("click", () => set({ [key]: S.settings[key].filter((x) => x !== name) }));
     return el("span", { className: "app-chip" }, name, remove);
   }));
@@ -478,7 +480,7 @@ function renderAgents() {
   const s = S.settings;
   $("commands").setAttribute("aria-checked", String(s.commands));
   $("rope").replaceChildren(...ROPES.map(([id, label, note]) => {
-    const b = el("button", { className: "model" }, el("span", { className: "radio" }), el("b", { textContent: label }), el("span", { textContent: note }));
+    const b = el("button", { className: "model" }, el("span", { className: "radio" }), el("b", { textContent: t(label) }), el("span", { textContent: t(note) }));
     b.setAttribute("role", "radio");
     b.setAttribute("aria-checked", String(id === s.rope));
     b.addEventListener("click", () => id !== s.rope && set({ rope: id }));
@@ -486,8 +488,8 @@ function renderAgents() {
   }));
   $("trusted-group").classList.toggle("muted-group", s.rope !== "trusted");
   $("trusted-help").textContent = s.rope === "trusted"
-    ? "Agents act in these without asking. Add only apps where a mistake is easy to undo."
-    : "Used only with “Act freely in apps I trust”.";
+    ? t("Agents act in these without asking. Add only apps where a mistake is easy to undo.")
+    : t("Used only with “Act freely in apps I trust”.");
   appChips($("trusted"), "trustedApps");
   appChips($("blocked"), "blockedApps");
   renderFolders();
@@ -502,8 +504,8 @@ function renderFolders() {
   const { list, usual } = S.folders;
   $("folders").replaceChildren(...list.map((dir) => {
     const name = folderName(dir);
-    const remove = el("button", { title: `Remove ${name}` }, X());
-    remove.setAttribute("aria-label", `Remove ${name}`);
+    const remove = el("button", { title: t("Remove {name}", { name }) }, X());
+    remove.setAttribute("aria-label", t("Remove {name}", { name }));
     remove.addEventListener("click", () => set({ readFolders: list.filter((x) => x !== dir) }));
     return el("span", { className: "app-chip", title: dir }, name, remove);
   }));
@@ -524,7 +526,7 @@ window.buddy.settingsApps().then((apps) => $("running-apps").replaceChildren(...
 // ---------- Routines ----------
 let editing = null; // the routine being edited (a copy), or null
 let deleting = null;
-const DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY = [N("Sun"), N("Mon"), N("Tue"), N("Wed"), N("Thu"), N("Fri"), N("Sat")];
 const newId = () => `r${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 const when = (iso) => new Date(iso).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" });
 
@@ -532,36 +534,36 @@ function renderRoutines() {
   const list = S.settings.routines;
   const box = $("routines");
   if (!list.length) {
-    box.replaceChildren(el("div", { className: "empty", textContent: "No routines yet. For example: “Every weekday at 9:00, summarise my unread email and list anything urgent.”" }));
+    box.replaceChildren(el("div", { className: "empty", textContent: t("No routines yet. For example: “Every weekday at 9:00, summarise my unread email and list anything urgent.”") }));
   } else {
     box.replaceChildren(...list.map((r) => {
       const info = S.routineInfo[r.id] ?? {};
       const toggle = el("button", { className: "switch" });
       toggle.setAttribute("role", "switch");
       toggle.setAttribute("aria-checked", String(r.enabled));
-      toggle.setAttribute("aria-label", `${r.name}: ${r.enabled ? "on" : "off"}`);
+      toggle.setAttribute("aria-label", r.enabled ? t("{name}: on", { name: r.name }) : t("{name}: off", { name: r.name }));
       toggle.addEventListener("click", () => set({ routines: list.map((x) => (x.id === r.id ? { ...x, enabled: !x.enabled } : x)) }));
       const actions = el("div", { className: "actions" });
       if (deleting === r.id) {
-        const yes = el("button", { className: "btn danger", textContent: "Delete it" });
-        const no = el("button", { className: "btn", textContent: "Keep it" });
+        const yes = el("button", { className: "btn danger", textContent: t("Delete it") });
+        const no = el("button", { className: "btn", textContent: t("Keep it") });
         yes.addEventListener("click", () => { deleting = null; set({ routines: list.filter((x) => x.id !== r.id) }); });
         no.addEventListener("click", () => { deleting = null; renderRoutines(); });
         actions.append(yes, no);
       } else {
-        const run = el("button", { className: "btn", textContent: "Run now", disabled: !S.key.saved && !S.key.fromEnv });
+        const run = el("button", { className: "btn", textContent: t("Run now"), disabled: !S.key.saved && !S.key.fromEnv });
         run.addEventListener("click", async () => {
           const res = await window.buddy.settingsRunRoutine(r.id);
           $("routine-problem").textContent = res.error ?? "";
           render(res.state);
         });
-        const edit = el("button", { className: "btn", textContent: "Edit" });
+        const edit = el("button", { className: "btn", textContent: t("Edit") });
         edit.addEventListener("click", () => { editing = structuredClone(r); renderRoutines(); });
-        const del = el("button", { className: "btn danger", textContent: "Delete" });
+        const del = el("button", { className: "btn danger", textContent: t("Delete") });
         del.addEventListener("click", () => { deleting = r.id; renderRoutines(); });
         actions.append(run, edit, del);
       }
-      const next = r.enabled && info.next ? ` · next ${when(info.next)}` : r.enabled ? "" : " · off";
+      const next = r.enabled && info.next ? ` · ${t("next {when}", { when: when(info.next) })}` : r.enabled ? "" : ` · ${t("off")}`;
       return el("div", { className: "routine" },
         el("div", {}, el("b", { textContent: r.name }), el("div", { className: "when", textContent: `${info.schedule ?? ""}${next}` })),
         toggle,
@@ -577,24 +579,24 @@ function renderEditor() {
   const box = $("routine-editor");
   if (!editing) return box.replaceChildren();
   const r = editing;
-  const name = el("input", { className: "field", value: r.name, placeholder: "Morning inbox", maxLength: 60 });
+  const name = el("input", { className: "field", value: r.name, placeholder: t("Morning inbox"), maxLength: 60 });
   name.addEventListener("input", () => (r.name = name.value));
-  const prompt = el("textarea", { value: r.prompt, placeholder: "Summarise my unread email in Outlook and list anything urgent.", maxLength: 2000 });
+  const prompt = el("textarea", { value: r.prompt, placeholder: t("Summarise my unread email in Outlook and list anything urgent."), maxLength: 2000 });
   prompt.addEventListener("input", () => (r.prompt = prompt.value));
   const every = el("div", { className: "seg" });
-  segmented(every, [["day", "Every day"], ["weekday", "Weekdays"], ["week", "Some days"], ["hours", "Every few hours"]], r.schedule.every, (v) => { r.schedule.every = v; renderEditor(); });
+  segmented(every, [["day", t("Every day")], ["weekday", t("Weekdays")], ["week", t("Some days")], ["hours", t("Every few hours")]], r.schedule.every, (v) => { r.schedule.every = v; renderEditor(); });
   const time = el("input", { type: "time", value: r.schedule.time });
   time.addEventListener("change", () => (r.schedule.time = time.value || "09:00"));
-  const detail = el("div", { className: "row" }, el("span", { textContent: r.schedule.every === "hours" ? "Starting at" : "At" }), time);
+  const detail = el("div", { className: "row" }, el("span", { textContent: r.schedule.every === "hours" ? t("Starting at") : t("At") }), time);
   if (r.schedule.every === "hours") {
-    const hours = el("select", {}, ...[1, 2, 3, 4, 6, 8, 12].map((h) => el("option", { value: String(h), textContent: `every ${h === 1 ? "hour" : `${h} hours`}`, selected: h === r.schedule.hours })));
+    const hours = el("select", {}, ...[1, 2, 3, 4, 6, 8, 12].map((h) => el("option", { value: String(h), textContent: h === 1 ? t("every hour") : t("every {n} hours", { n: h }), selected: h === r.schedule.hours })));
     hours.addEventListener("change", () => (r.schedule.hours = Number(hours.value)));
     detail.append(hours);
   }
-  const parts = [el("label", {}, "Name", name), el("label", {}, "What should Buddy do?", prompt), el("label", {}, "When", every), detail];
+  const parts = [el("label", {}, t("Name"), name), el("label", {}, t("What should Buddy do?"), prompt), el("label", {}, t("When"), every), detail];
   if (r.schedule.every === "week") {
     parts.push(el("div", { className: "days" }, ...DAY.map((d, i) => {
-      const b = el("button", { textContent: d });
+      const b = el("button", { textContent: t(d) });
       b.setAttribute("aria-pressed", String(r.schedule.days.includes(i)));
       b.addEventListener("click", () => {
         r.schedule.days = r.schedule.days.includes(i) ? r.schedule.days.filter((x) => x !== i) : [...r.schedule.days, i].sort();
@@ -603,17 +605,17 @@ function renderEditor() {
       return b;
     })));
   }
-  const save = el("button", { className: "btn primary", textContent: "Save routine" });
-  const cancel = el("button", { className: "btn", textContent: "Cancel" });
+  const save = el("button", { className: "btn primary", textContent: t("Save routine") });
+  const cancel = el("button", { className: "btn", textContent: t("Cancel") });
   const problem = el("p", { className: "problem" });
   save.addEventListener("click", async () => {
-    if (!r.prompt.trim()) return (problem.textContent = "Say what Buddy should do.");
-    if (r.schedule.every === "week" && !r.schedule.days.length) return (problem.textContent = "Pick at least one day.");
+    if (!r.prompt.trim()) return (problem.textContent = t("Say what Buddy should do."));
+    if (r.schedule.every === "week" && !r.schedule.days.length) return (problem.textContent = t("Pick at least one day."));
     const list = S.settings.routines;
     const next = list.some((x) => x.id === r.id) ? list.map((x) => (x.id === r.id ? r : x)) : [...list, r];
     editing = null;
     const problems = await set({ routines: next });
-    $("routine-problem").textContent = problems.routines ? "That routine couldn't be saved. You can have up to 20." : "";
+    $("routine-problem").textContent = problems.routines ? t("That routine couldn't be saved. You can have up to 20.") : "";
   });
   cancel.addEventListener("click", () => { editing = null; renderRoutines(); });
   box.replaceChildren(el("div", { className: "editor" }, ...parts, problem, el("div", { className: "row" }, save, cancel)));
@@ -637,9 +639,9 @@ $("report").addEventListener("click", openReport);
 $("report-cancel").addEventListener("click", () => { $("report-preview").hidden = true; });
 const sendReport = async (how) => {
   const r = await window.buddy.settingsReportSend(how, $field("report-text").value);
-  $("report-status").textContent = how === "copy" ? "Copied. Paste it wherever you'd like to send it."
-    : r.copied ? "GitHub is open in your browser. The report was too long for the link, so it's copied: paste it into the issue."
-    : "GitHub is open in your browser with the report filled in. Nothing is posted until you submit it there.";
+  $("report-status").textContent = how === "copy" ? t("Copied. Paste it wherever you'd like to send it.")
+    : r.copied ? t("GitHub is open in your browser. The report was too long for the link, so it's copied: paste it into the issue.")
+    : t("GitHub is open in your browser with the report filled in. Nothing is posted until you submit it there.");
 };
 $("report-issue").addEventListener("click", () => sendReport("issue"));
 $("report-copy").addEventListener("click", () => sendReport("copy"));
@@ -651,25 +653,25 @@ window.buddy.onSettingsChanged((state) => render(state));
 function renderAbout() {
   const u = S.updates;
   $("about-version").textContent = `Desktop Buddy ${u?.version ?? ""}`;
-  const when = u?.checkedAt ? ` Last checked ${new Date(u.checkedAt).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}.` : "";
+  const when = u?.checkedAt ? ` ${t("Last checked {when}.", { when: new Date(u.checkedAt).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" }) })}` : "";
   const status = {
-    source: "Running from source: update with git.",
-    idle: "Not checked yet.",
-    checking: "Checking for updates…",
-    downloading: `Downloading ${u?.next ?? "the new version"}… ${u?.progress ?? 0}%`,
-    ready: `Version ${u?.next} is downloaded. It installs when Buddy restarts.`,
-    current: `You have the latest version.${when}`,
-    error: `${u?.error ?? "Couldn't check"}.${when}`,
+    source: t("Running from source: update with git."),
+    idle: t("Not checked yet."),
+    checking: t("Checking for updates…"),
+    downloading: t("Downloading {version}… {pct}%", { version: u?.next ?? t("the new version"), pct: u?.progress ?? 0 }),
+    ready: t("Version {version} is downloaded. It installs when Buddy restarts.", { version: u?.next }),
+    current: `${t("You have the latest version.")}${when}`,
+    error: `${u?.error ?? t("Couldn't check")}.${when}`,
   }[u?.status ?? "source"];
   $("update-status").textContent = status;
   const actions = $("update-actions");
   actions.replaceChildren();
   if (u?.status === "ready") {
-    const restart = el("button", { className: "btn primary", textContent: "Restart and update" });
+    const restart = el("button", { className: "btn primary", textContent: t("Restart and update") });
     restart.addEventListener("click", () => window.buddy.settingsUpdateInstall());
     actions.append(restart);
   } else if (u && u.status !== "source") {
-    const check = el("button", { className: "btn", textContent: "Check now", disabled: u.status === "checking" || u.status === "downloading" });
+    const check = el("button", { className: "btn", textContent: t("Check now"), disabled: u.status === "checking" || u.status === "downloading" });
     check.addEventListener("click", () => window.buddy.settingsUpdateCheck());
     actions.append(check);
   }
@@ -705,33 +707,33 @@ let deletingLesson = null;
 function renderLessons() {
   const list = S.lessons ?? [];
   if (!list.length) {
-    $("lessons").replaceChildren(el("p", { className: "empty", textContent: "None yet. Ask Buddy how to do something; when it has walked you all the way through, choose Save as a lesson under its answer." }));
+    $("lessons").replaceChildren(el("p", { className: "empty", textContent: t("None yet. Ask Buddy how to do something; when it has walked you all the way through, choose Save as a lesson under its answer.") }));
     return;
   }
   $("lessons").replaceChildren(...list.map((l) => {
-    const info = el("div", {}, el("b", { textContent: l.title }), el("span", { className: "when", textContent: ` ${l.app} · ${l.steps === 1 ? "1 step" : `${l.steps} steps`}` }));
+    const info = el("div", {}, el("b", { textContent: l.title }), el("span", { className: "when", textContent: ` ${l.app} · ${l.steps === 1 ? t("1 step") : t("{n} steps", { n: l.steps })}` }));
     const actions = el("div", { className: "row" });
     if (deletingLesson === l.id) {
-      const yes = el("button", { className: "btn danger", textContent: "Delete" });
-      const no = el("button", { className: "btn", textContent: "Keep" });
+      const yes = el("button", { className: "btn danger", textContent: t("Delete") });
+      const no = el("button", { className: "btn", textContent: t("Keep") });
       yes.addEventListener("click", async () => { deletingLesson = null; render((await window.buddy.settingsLesson("delete", l.id)).state); });
       no.addEventListener("click", () => { deletingLesson = null; renderLessons(); });
       actions.append(yes, no);
     } else {
-      const play = el("button", { className: "btn primary", textContent: "Play" });
-      play.setAttribute("aria-label", `Play ${l.title}`);
+      const play = el("button", { className: "btn primary", textContent: t("Play") });
+      play.setAttribute("aria-label", t("Play {title}", { title: l.title }));
       play.addEventListener("click", async () => {
         const r = await window.buddy.settingsLesson("play", l.id);
         $("lesson-problem").textContent = r.error ?? "";
       });
-      const share = el("button", { className: "btn", textContent: "Share…" });
-      share.setAttribute("aria-label", `Share ${l.title} as a file`);
+      const share = el("button", { className: "btn", textContent: t("Share…") });
+      share.setAttribute("aria-label", t("Share {title} as a file", { title: l.title }));
       share.addEventListener("click", async () => {
         const r = await window.buddy.settingsLesson("export", l.id);
-        $("lesson-problem").textContent = r.error ?? (r.saved ? "Saved. Send that file to whoever you'd like to show." : "");
+        $("lesson-problem").textContent = r.error ?? (r.saved ? t("Saved. Send that file to whoever you'd like to show.") : "");
       });
-      const del = el("button", { className: "btn", textContent: "Delete…" });
-      del.setAttribute("aria-label", `Delete ${l.title}`);
+      const del = el("button", { className: "btn", textContent: t("Delete…") });
+      del.setAttribute("aria-label", t("Delete {title}", { title: l.title }));
       del.addEventListener("click", () => { deletingLesson = l.id; renderLessons(); });
       actions.append(play, share, del);
     }
@@ -740,7 +742,7 @@ function renderLessons() {
 }
 $("lesson-import").addEventListener("click", async () => {
   const r = await window.buddy.settingsLessonImport();
-  $("lesson-problem").textContent = r.error ?? (r.title ? `Imported "${r.title}".` : "");
+  $("lesson-problem").textContent = r.error ?? (r.title ? t("Imported \"{title}\".", { title: r.title }) : "");
   render(r.state);
 });
 
@@ -756,7 +758,7 @@ $("cap").addEventListener("change", async (e) => {
   const text = /** @type {HTMLInputElement} */ (e.target).value.trim();
   const v = text === "" ? 0 : Math.round(Number(text) * 100) / 100;
   const refused = !Number.isFinite(v) || v < 0 || (await set({ monthlyCap: v })).monthlyCap !== undefined;
-  $("cap-problem").textContent = refused ? "That limit wasn't saved: give an amount in dollars, up to 10,000, or leave it empty for none." : "";
+  $("cap-problem").textContent = refused ? t("That limit wasn't saved: give an amount in dollars, up to 10,000, or leave it empty for none.") : "";
 });
 
 // ---------- Activity ----------
@@ -766,12 +768,12 @@ const activityDay = (iso) => {
   const d = new Date(iso);
   const today = new Date();
   const yesterday = new Date(Date.now() - 864e5);
-  return d.toDateString() === today.toDateString() ? "Today" : d.toDateString() === yesterday.toDateString() ? "Yesterday" : d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "short" });
+  return d.toDateString() === today.toDateString() ? t("Today") : d.toDateString() === yesterday.toDateString() ? t("Yesterday") : d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "short" });
 };
 function renderActivity() {
   const list = S.activity ?? [];
   if (!list.length) {
-    $("activity").replaceChildren(el("p", { className: "empty", textContent: "Nothing yet. When Buddy makes or changes a file, runs a command, reads a page, or clicks or types in an app for you, it shows up here." }));
+    $("activity").replaceChildren(el("p", { className: "empty", textContent: t("Nothing yet. When Buddy makes or changes a file, runs a command, reads a page, or clicks or types in an app for you, it shows up here.") }));
     return;
   }
   const rows = [];
@@ -780,11 +782,11 @@ function renderActivity() {
     const d = activityDay(e.at);
     if (d !== day) rows.push(el("h3", { className: "day", textContent: (day = d) }));
     const time = new Date(e.at).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-    const meta = [time, e.from !== "Buddy" ? e.from : null, e.undone ? "undone" : null].filter(Boolean).join(" · ");
+    const meta = [time, e.from !== "Buddy" ? e.from : null, e.undone ? t("undone") : null].filter(Boolean).join(" · ");
     const row = el("div", { className: `data-row activity-row${e.undone ? " dim" : ""}` }, el("div", {}, el("b", { textContent: e.summary }), el("span", { textContent: ` ${meta}` })));
     if (e.canUndo) {
       const again = confirmUndo === e.id;
-      const btn = el("button", { className: again ? "btn danger" : "btn", textContent: undoing === e.id ? "Undoing…" : again ? "Undo anyway" : "Undo", disabled: !!undoing });
+      const btn = el("button", { className: again ? "btn danger" : "btn", textContent: undoing === e.id ? t("Undoing…") : again ? t("Undo anyway") : t("Undo"), disabled: !!undoing });
       btn.addEventListener("click", async () => {
         undoing = e.id;
         renderActivity();
@@ -796,7 +798,7 @@ function renderActivity() {
       });
       row.append(btn);
     } else if (!e.undone && (e.kind === "ran" || e.kind === "read" || e.kind === "acted")) {
-      row.append(el("span", { className: "status-text", textContent: e.kind === "ran" ? "Can't be undone automatically" : e.kind === "acted" ? "Undo it in the app" : "" }));
+      row.append(el("span", { className: "status-text", textContent: e.kind === "ran" ? t("Can't be undone automatically") : e.kind === "acted" ? t("Undo it in the app") : "" }));
     }
     rows.push(row);
   }
@@ -823,6 +825,9 @@ window.buddy.onSettingsShowPage?.((p) => {
   requestedPage = p;
   if (S) show(p);
 });
+
+// Redraw the words this script wrote when Buddy's words arrive or the language changes (nothing to redraw before S).
+whenStrings(() => S && render(S));
 
 (async () => {
   let page = "voice";
