@@ -244,7 +244,7 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
 - **3.4 A security page.** `SECURITY.md`: what Buddy can touch, what it can't, what approval means, how to report a
   vulnerability. The README's "AI and privacy" section is the start.
   **Done (2026-11-17):** [SECURITY.md](SECURITY.md), linked from the README. Reports go through GitHub's private
-  vulnerability reporting, which the owner turns on for the repository.
+  vulnerability reporting, turned on for the repository the same day.
 
 ## Phase 4: the code can carry more work
 
