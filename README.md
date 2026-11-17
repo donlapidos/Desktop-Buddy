@@ -68,7 +68,8 @@ SmartScreen says it "protected your PC", choose **More info › Run anyway**. Mo
 - Voice runs on your PC. Keys are stored encrypted by Windows and only sent to their own provider.
 - Window pictures can be turned off in **Settings › AI & privacy**.
 
-The full details are in [AI and privacy](docs/GUIDE.md#ai-and-privacy).
+The full details are in [AI and privacy](docs/GUIDE.md#ai-and-privacy). What Buddy can and can't touch, what your
+approval means, and how to report a security problem: [Security](SECURITY.md).
 
 ## More
 

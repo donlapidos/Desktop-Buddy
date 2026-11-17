@@ -5,6 +5,8 @@
 * **Folders Buddy reads without asking** (Settings › Agents): Documents, Desktop and Downloads to start, and you
   choose the rest. Pictures, Music, Videos and OneDrive folders now ask first unless you add them. A drive, your whole
   user folder, AppData and other people's folders can't be added.
+* A [security page](SECURITY.md): what Buddy can and can't touch, what your approval means, the limits we know about,
+  and how to report a security problem privately.
 
 ## 0.4.0 (2026-11-16)
 
