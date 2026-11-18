@@ -1308,7 +1308,9 @@ function settingsAuditTest(kit) {
       if (fromSource) await step("automatic updates (from source)", () => true, async () => is("the update status", await page(`document.getElementById("update-status").textContent`), "Running from source: update with git."));
       else await step("automatic updates: off", () => page(`document.getElementById("auto-update").click()`),
         () => is("saved autoUpdate", saved().autoUpdate, false), async () => is("its switch", await checked("auto-update"), "false"));
-      await step("the close button", () => page(`document.getElementById("close").click()`), () => is("Settings showing", !win.isDestroyed() && win.isVisible(), false));
+      // Closing can take the page away before the click's own call returns: that is the button working, not a failure.
+      await step("the close button", () => page(`document.getElementById("close").click()`).catch((e) => { if (!/disposed|destroyed/i.test(String(e?.message))) throw e; }),
+        () => is("Settings showing", !win.isDestroyed() && win.isVisible(), false));
     } catch (err) {
       problems.push({ step: "audit", problem: String(err?.message ?? err) });
     }
