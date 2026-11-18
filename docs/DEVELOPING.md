@@ -40,7 +40,10 @@ guided step with its expected result, interruption and focus/anchor cleanup), **
 refs; turning screenshots off removes images from the next request), **conversation** (streaming and mid-answer
 corrections), **files** (a scripted model asks for a file; the approval card is clicked; the file
 is made, listed in Activity and undone; another window can't answer the card), **tasks**, **settings** (including a
-key that must stay with its server), **explainer**, **voice**, **bridge** (an AI app's calls over its own pipe: answered
+key that must stay with its server), **controls** (every Settings control clicked or typed into as a person would:
+each must be saved, shown, and take effect, such as the island's colour, the bubble's language, a plate's theme, a
+registered shortcut or the Agents rules; Start with Windows, adding Buddy to AI apps and the links that open the
+browser are left out because they'd change the PC), **explainer** (a plate opened in Light, switched to Dark while open), **voice**, **bridge** (an AI app's calls over its own pipe: answered
 with the token, refused without), **language** (the windows in Spanish, every Settings page read for English left behind, then switched to English
 while open),
 **connections** (a stand-in service with real OAuth on this PC: the

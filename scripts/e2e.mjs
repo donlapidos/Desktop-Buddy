@@ -425,10 +425,16 @@ const CHECKS = {
   },
 
   async explainer() {
-    const { markers, timedOut, devHooks } = await runCopy("explainer", { BUDDY_EXPLAINER_TEST: path.join(app, "scripts", "samples", "vlookup.json"), BUDDY_EXPLAINER_TEST_OUT: path.join(out, "explainer.png") }, "EXPLAINER_TEST_DONE");
+    // Opened in Light (Settings › Look › Explainer appearance), then switched to Dark while the plate is open.
+    const seed = { "settings.json": JSON.stringify({ appearance: "light", launchSetupDone: true, voiceSetup: "no" }) };
+    const { markers, timedOut, devHooks } = await runCopy("explainer", { BUDDY_EXPLAINER_TEST: path.join(app, "scripts", "samples", "vlookup.json"), BUDDY_EXPLAINER_TEST_OUT: path.join(out, "explainer.png") }, "EXPLAINER_TEST_DONE", 90_000, seed);
     const r = markers.EXPLAINER_SHOWN?.[0];
     if (!r) return [timedOut ? "timed out" : "nothing printed"];
-    return [!devHooks && "a dev check ran without dev-hooks.js reporting itself loaded", !r.windows && "no explainer window opened", !r.visible && "the explainer window isn't visible", r.chars < 100 && `only ${r.chars} characters on the plate`].filter(Boolean);
+    return [!devHooks && "a dev check ran without dev-hooks.js reporting itself loaded", !r.windows && "no explainer window opened", !r.visible && "the explainer window isn't visible", r.chars < 100 && `only ${r.chars} characters on the plate`,
+      r.opened?.dark !== false && `a plate opened in Light read as dark (${JSON.stringify(r.opened)})`,
+      r.switched?.dark !== true && `switching to Dark left the open plate light (${JSON.stringify(r.switched)})`,
+      r.opened?.paper === r.switched?.paper && `the plate's paper stayed ${r.opened?.paper} through the switch`,
+    ].filter(Boolean);
   },
 
   async voice() {
@@ -508,6 +514,20 @@ const CHECKS = {
       model.close();
       service.close();
     }
+  },
+
+  // Every control in Settings used as a person would, each one saved, shown, and taking effect (dev-hooks.js
+  // settingsAuditTest). It starts from a profile where every step is a change.
+  async controls() {
+    const seed = {
+      "settings.json": JSON.stringify({ appearance: "system", uiLanguage: "en", advanced: false, launchSetupDone: true, voiceSetup: "no" }),
+      // An hour old, so it's kept (for Forget) but not picked back up in the bubble.
+      "conversations.json": JSON.stringify([{ id: "bubble", n: 0, title: "", target: null, savedAt: Date.now() - 3_600_000, transcript: [{ role: "user", text: "hello" }, { role: "buddy", text: "Hi." }] }]),
+    };
+    const { markers, timedOut } = await runCopy("controls", { BUDDY_SETTINGS_AUDIT_TEST: out }, "SETTINGS_AUDIT_DONE", 150_000, seed);
+    const r = markers.SETTINGS_AUDIT?.[0];
+    if (!r) return [timedOut ? "timed out" : "nothing printed"];
+    return [...r.problems.map((p) => `${p.step}: ${p.problem}`), r.passed < 30 && `only ${r.passed} steps passed`].filter(Boolean);
   },
 
   // Buddy's windows in Spanish, and back to English live.
