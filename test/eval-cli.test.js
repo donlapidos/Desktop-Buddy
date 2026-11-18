@@ -6,16 +6,17 @@ import os from "node:os";
 import path from "node:path";
 import { WORKFLOW_CASES } from "../evals/workflow-cases.mjs";
 
-const run = (...args) => spawnSync(process.execPath, ["scripts/eval.mjs", ...args], { encoding: "utf8", timeout: 10000, windowsHide: true });
+// Each run loads all of Buddy (about 3 s alone, far more while the rest of the suite runs): the limit only stops a hang.
+const run = (...args) => spawnSync(process.execPath, ["scripts/eval.mjs", ...args], { encoding: "utf8", timeout: 30000, windowsHide: true });
 
-test("workflow cases can be listed without a provider or API key", () => {
+test("workflow cases can be listed without a provider or API key", { timeout: 60000 }, () => {
   const result = run("--set", "workflows", "--list");
   assert.equal(result.status, 0, result.stderr);
   assert.equal(result.stdout.trim().split(/\r?\n/).length, 6);
   assert.match(result.stdout, /workflow-excel-correction/);
 });
 
-test("unknown sets and unknown case IDs fail before any model call", () => {
+test("unknown sets and unknown case IDs fail before any model call", { timeout: 120000 }, () => {
   for (const args of [["--set", "typo"], ["--set", "workflows", "--cases", "typo"], ["--set", "workflows", "--cases", ""]]) {
     const result = run(...args);
     assert.equal(result.status, 2, result.stderr);
@@ -23,7 +24,7 @@ test("unknown sets and unknown case IDs fail before any model call", () => {
   }
 });
 
-test("rescore CLI preserves the original and needs no model configuration", { timeout: 30000 }, () => {
+test("rescore CLI preserves the original and needs no model configuration", { timeout: 150000 }, () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "buddy-rescore-test-"));
   const input = path.join(dir, "input.json");
   const output = path.join(dir, "output.json");
