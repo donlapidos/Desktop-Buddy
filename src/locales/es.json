@@ -188,7 +188,6 @@
  "Add a folder…": "Añadir una carpeta…",
  "Go back to the usual folders": "Volver a las carpetas habituales",
  "Let Buddy run commands": "Dejar que Buddy ejecute comandos",
- "For bigger jobs: renaming or sorting many files, converting, building things. Buddy asks before every command and says what it will do, but a command can change or delete things Buddy can't put back, and Buddy can't fully fence in what a command reaches. Leave it off unless you need it. Off, Buddy still works in your apps and makes and edits files, which it can undo.": "Para trabajos más grandes: renombrar u ordenar muchos archivos, convertir, crear cosas. Buddy pregunta antes de cada comando y dice qué va a hacer, pero un comando puede cambiar o borrar cosas que Buddy no puede recuperar, y Buddy no puede limitar del todo hasta dónde llega un comando. Déjalo desactivado salvo que lo necesites. Desactivado, Buddy sigue trabajando en tus apps y crea y edita archivos, algo que sí puede deshacer.",
  "Tasks Buddy starts on a schedule, each in its own window tucked into the island. They follow your Agents rules, so anything that needs your OK waits for you.": "Tareas que Buddy empieza según un horario, cada una en su propia ventana recogida en la isla. Siguen tus reglas de Agentes, así que todo lo que necesite tu permiso te espera.",
  "New routine": "Nueva rutina",
  "Routines run while Buddy is running. One missed by less than six hours (the PC was asleep) runs when Buddy next can; older ones are skipped.": "Las rutinas se ejecutan mientras Buddy está en marcha. Una que se perdió hace menos de seis horas (el PC estaba en reposo) se ejecuta en cuanto Buddy pueda; las más antiguas se omiten.",
@@ -558,5 +557,12 @@
  "Disconnect": "Desconectar",
  "Disconnect {service}": "Desconectar {service}",
  "Connect {service}": "Conectar {service}",
- "Jira and Confluence": "Jira y Confluence"
+ "Jira and Confluence": "Jira y Confluence",
+ "For bigger jobs: renaming or sorting many files, converting, zipping. Commands run walled off: they can reach only Buddy's own folder (Documents › Buddy), work on copies of your files that Buddy brings in, and have no internet. Buddy asks before every command and says what it will do. Off, Buddy still works in your apps and makes and edits files, which it can undo.": "Para trabajos grandes: renombrar u ordenar muchos archivos, convertir, comprimir. Los comandos se ejecutan aislados: solo pueden llegar a la carpeta de Buddy (Documentos › Buddy), trabajan con copias de tus archivos que Buddy trae y no tienen internet. Buddy pregunta antes de cada comando y dice lo que hará. Desactivado, Buddy sigue trabajando en tus apps y crea y edita archivos, algo que puede deshacer.",
+ "Copy {file} into {folder}": "Copiar {file} en {folder}",
+ "Copy {n} files from {from} into {folder}": "Copiar {n} archivos de {from} en {folder}",
+ "The originals stay as they are.": "Los originales se quedan como están.",
+ "Copying files…": "Copiando archivos…",
+ "Copied {file} into {folder}": "Copió {file} en {folder}",
+ "Copied {n} files into {folder}": "Copió {n} archivos en {folder}"
 }

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* **Commands are walled off.** With Settings › Agents › Let Buddy run commands on, each PowerShell command now runs in
+  a Windows sandbox that reaches only Documents › Buddy and has no internet. To work on your files elsewhere, Buddy
+  copies them in first (asking you), so a command never changes your originals. Nothing to set up.
 * **Connections:** Buddy can use Notion, Linear, and Jira and Confluence for you, with your own account. On one of
   their sites the bubble offers to connect; you sign in in your browser (Buddy never sees your password). Buddy asks
   before every action in a service. Settings › Connections lists them. Comes with the advanced features.

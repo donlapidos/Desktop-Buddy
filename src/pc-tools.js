@@ -11,11 +11,14 @@
 // - Changes: writing, editing, running PowerShell and opening a web page all ask on Buddy's card, in plain words
 //   ("Allow for this task" covers the rest of the answer). A file that is replaced or edited is copied to Buddy's undo
 //   folder first and kept for a week.
-// - PowerShell runs without the user's API keys in its environment, in the working folder, and stops on cancel. It
-//   can't be walled off from private places the way the file tools are; see "PowerShell and private places".
+// - PowerShell runs walled off (wall.ps1, a Windows AppContainer): it reaches the working folder and nothing else of
+//   the user's, and has no internet. Files elsewhere come in as copies (copy_files, which asks), so a command never
+//   changes an original. It also runs without the user's API keys in its environment, and stops on cancel. The checks
+//   under "PowerShell and private places" still refuse a command that names a private place, before it's asked about.
 // - Web pages: only public http(s) addresses, never this PC or the local network (redirects included); their text is
 //   marked as information, not instructions.
 import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import dns from "node:dns/promises";
 import fs from "node:fs";
 import os from "node:os";
@@ -52,12 +55,17 @@ export const PC_TOOLS = [
   {
     name: "run_powershell",
     description:
-      "Run PowerShell on the user's PC, in the working folder, and get its output. For jobs files and folders need (renaming many files, converting, sorting, zipping) and anything Windows can do from a command. The user sees `description` on the approval card, so make it a short plain sentence of what it does for them, like \"Rename 12 photos by date\". Never delete permanently; send to the Recycle Bin. Default timeout 60 s, at most 300.",
+      "Run PowerShell in a sealed space that reaches only the working folder (its full path is in $Work) and has no internet, and get its output. For jobs on files (renaming many, converting, sorting, zipping): copy them into the working folder first with copy_files. The user sees `description` on the approval card, so make it a short plain sentence of what it does for them, like \"Rename 12 photos by date\". Never delete: move files into a Removed folder in the working folder. Default timeout 60 s, at most 300.",
     input_schema: {
       type: "object",
       properties: { command: { type: "string" }, description: { type: "string" }, timeout_seconds: { type: "integer" } },
       required: ["command", "description"],
     },
+  },
+  {
+    name: "copy_files",
+    description: "Copy the user's files into the working folder, so a command (run_powershell) can work on the copies: a file, a folder (with what's in it), or files in a folder matching a pattern, like \"~/Pictures/*.jpg\". `to` names the folder inside the working folder they go in. The originals are never changed. The user approves it.",
+    input_schema: { type: "object", properties: { from: { type: "string" }, to: { type: "string" } }, required: ["from"] },
   },
   {
     name: "fetch_page",
@@ -88,9 +96,12 @@ export const beyondScreen = (commands) => `Beyond the screen:
 - Never go into passwords, keys, browser data or Buddy's own files, with any tool${commands ? "; PowerShell commands that do are\n  refused, and" : ";"} secret keys in what you read are hidden from you.
 ${
   commands
-    ? `- Never delete permanently: move things to the Recycle Bin instead
-  ([Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile(path, 'OnlyErrorDialogs', 'SendToRecycleBin'), after
-  Add-Type -AssemblyName Microsoft.VisualBasic; DeleteDirectory for folders).`
+    ? `- Commands run in a sealed space: they can see and change only the working folder, whose full path is in $Work,
+  and nothing else of the user's, and they have no internet. Build full paths from it, like (Join-Path $Work 'photos');
+  Set-Location doesn't work there. To work on the user's files elsewhere (Pictures, Downloads…), copy them in first
+  with copy_files, work on the copies, and leave the results in the working folder: commands never change the
+  originals. Something outside the working folder is "Access denied" by design: don't try another way round.
+- Never delete: move files you'd remove into a folder named Removed inside the working folder.`
     : `- You can't run commands: the user hasn't turned that on. A job that needs one (renaming, moving or deleting files,
   converting, zipping, reading Word, Excel or PDF files, installing things) you can't do yourself: say so in one
   line, and that they can turn it on in Settings › Agents › Let Buddy run commands. Offer what you can do instead:
@@ -216,6 +227,11 @@ export function realPlaces(p) {
   return { home: r(p.home), workDir: r(p.workDir), buddyData: r(p.buddyData), systemRoot: r(p.systemRoot), programFiles: p.programFiles.map(r), programData: r(p.programData), usersDir: r(p.usersDir), granted: p.granted?.map(r) };
 }
 
+/** A folder in words: "Documents\Buddy", or the full path outside the home folder. */
+export function folderWords(/** @type {string} */ dir, /** @type {Places} */ p) {
+  return inside(dir, p.home) ? path.relative(p.home, dir) || tr("your home folder") : dir;
+}
+
 /** A place in words: "budget.csv in Documents\Buddy". */
 export function placeWords(/** @type {string} */ full, /** @type {Places} */ p) {
   const dir = path.dirname(full);
@@ -224,8 +240,8 @@ export function placeWords(/** @type {string} */ full, /** @type {Places} */ p) 
 }
 
 // ---------- PowerShell and private places ----------
-// PowerShell runs as the user, so Windows lets it read anything they can; Buddy can't wall it off the way judgePath
-// walls off the file tools (that would take an app container). Two checks narrow it instead. A command that names a
+// The wall (wall.ps1) is what keeps a command to the working folder. Two checks come before it, so a command aimed at a
+// private place is refused outright rather than run and denied. A command that names a
 // private place (keys and .ssh, saved Windows credentials, browser profiles, the AI apps' settings, Buddy's own data),
 // in any of the usual spellings ($env:APPDATA\desktop-buddy, %USERPROFILE%\.ssh, ~/.aws), or reaches for Windows'
 // own secret stores (DPAPI's Unprotect, cmdkey, vaultcmd), is refused before it is asked about. And anything that
@@ -351,13 +367,20 @@ async function fetchPublic(/** @type {string} */ url, /** @type {AbortSignal | u
 // Variables PowerShell never gets: API keys and Buddy's own settings.
 const SECRET_ENV = /^(ANTHROPIC_|OPENAI_|OPENROUTER_|GEMINI_|GOOGLE_API|DEEPSEEK_|BUDDY_|CLAUDE_|AZURE_OPENAI|AWS_SECRET|GITHUB_TOKEN|GH_TOKEN|.*_API_KEY$|.*_TOKEN$|.*_SECRET$)/i;
 
-function runPowerShell(/** @type {string} */ command, { cwd, timeoutMs, signal }) {
+// The wall (wall.ps1) is a script PowerShell reads from disk, so an installed Buddy keeps it outside its app archive.
+const WALL = path.join(path.dirname(fileURLToPath(import.meta.url)).replace(/app\.asar([\\/])/, "app.asar.unpacked$1"), "wall.ps1");
+/** The container commands run in; tests use one of their own. */
+export const WALL_NAME = "DesktopBuddy.Commands";
+
+/** Runs a command inside the wall: it reaches the working folder (`cwd`, as $Work) and nothing else of the user's. */
+/** @param {string} command @param {{ cwd: string, timeoutMs: number, signal?: AbortSignal, wall?: { name?: string, cache?: string } }} opts */
+function runPowerShell(command, { cwd, timeoutMs, signal, wall = {} }) {
   return new Promise((resolve) => {
     const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !SECRET_ENV.test(k)));
-    // The script goes in encoded, so nothing in it is parsed by a shell on the way. Output is UTF-8.
-    const script = `[Console]::OutputEncoding = [Text.Encoding]::UTF8; $ProgressPreference = 'SilentlyContinue'\n${command}`;
-    const encoded = Buffer.from(script, "utf16le").toString("base64");
-    const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand", encoded], { cwd, env, windowsHide: true });
+    // The command goes in encoded, so nothing in it is parsed by a shell on the way. Output is UTF-8.
+    const encoded = Buffer.from(command, "utf16le").toString("base64");
+    const args = ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", WALL, "-WorkDir", cwd, "-Name", wall.name ?? WALL_NAME, ...(wall.cache ? ["-Cache", wall.cache] : []), "-Encoded", encoded];
+    const child = spawn("powershell.exe", args, { cwd, env, windowsHide: true });
     let out = "";
     const take = (d) => {
       if (out.length < 200_000) out += d.toString("utf8");
@@ -393,6 +416,7 @@ function runPowerShell(/** @type {string} */ command, { cwd, timeoutMs, signal }
  *   status: (text: string) => void,
  *   record?: (change: Omit<import("./activity.js").Change, "id" | "at" | "from">) => void,
  *   commands?: boolean,                                                         // the user lets Buddy run commands
+ *   wall?: { name?: string, cache?: string },                                   // the commands' container (wall.ps1)
  *   signal?: AbortSignal,
  *   fetchImpl?: typeof fetch,
  *   lookup?: (host: string) => Promise<boolean>,
@@ -400,6 +424,8 @@ function runPowerShell(/** @type {string} */ command, { cwd, timeoutMs, signal }
  */
 
 const MAX_READ_CHARS = 60_000;
+const MAX_COPY_FILES = 1000;
+const MAX_COPY_BYTES = 2 * 1024 ** 3;
 const MAX_FILE_BYTES = 20 * 1048576; // read_file and edit_file load the whole file
 const DEFAULT_LINES = 2000;
 
@@ -439,12 +465,12 @@ export async function runPcTool(name, input, ctx) {
       if (j.read === "ask" && !(await ctx.ask(tr("Read {place}", { place: placeWords(j.full, p) }), undefined, "read"))) return "The user declined.";
       let buf;
       try {
-        if (fs.statSync(j.full).size > MAX_FILE_BYTES) return "That file is over 20 MB; read it with run_powershell (Get-Content -TotalCount, Select-String).";
+        if (fs.statSync(j.full).size > MAX_FILE_BYTES) return "That file is over 20 MB. To work through it with a command, copy it in with copy_files, then run_powershell (Get-Content -TotalCount, Select-String).";
         buf = fs.readFileSync(j.full);
       } catch (err) {
         return `Couldn't read it: ${err.code === "ENOENT" ? "it doesn't exist" : err.code === "EISDIR" ? "that's a folder; use list_folder" : err.message}`;
       }
-      if (buf.subarray(0, 8000).includes(0)) return `${path.basename(j.full)} isn't a text file (a picture, document or program). Open it in its app, or use run_powershell for what you need from it.`;
+      if (buf.subarray(0, 8000).includes(0)) return `${path.basename(j.full)} isn't a text file (a picture, document or program). Open it in its app, or copy it in with copy_files and use run_powershell on the copy.`;
       ctx.status("Reading a file…");
       const all = buf.toString("utf8").replace(/^\uFEFF/, "").split(/\r?\n/);
       const from = Math.max(1, Number(input.offset) || 1);
@@ -478,7 +504,7 @@ export async function runPcTool(name, input, ctx) {
       if (j.read === "never") return refused(j);
       let text;
       try {
-        if (fs.statSync(j.full).size > MAX_FILE_BYTES) return "That file is over 20 MB, too big to edit here; use run_powershell for it.";
+        if (fs.statSync(j.full).size > MAX_FILE_BYTES) return "That file is over 20 MB, too big to edit here. Copy it in with copy_files and change the copy with run_powershell.";
         text = fs.readFileSync(j.full, "utf8");
       } catch (err) {
         return `Couldn't open it: ${err.code === "ENOENT" ? "it doesn't exist" : err.message}`;
@@ -508,12 +534,66 @@ export async function runPcTool(name, input, ctx) {
       ctx.status(said.endsWith("…") ? said : `${said}…`);
       fs.mkdirSync(p.workDir, { recursive: true });
       const timeoutMs = Math.min(300, Math.max(5, Number(input.timeout_seconds) || 60)) * 1000;
-      const { code, out, ended } = await runPowerShell(command, { cwd: p.workDir, timeoutMs, signal: ctx.signal });
+      const { code, out, ended } = await runPowerShell(command, { cwd: p.workDir, timeoutMs, signal: ctx.signal, wall: ctx.wall });
       ctx.record?.({ kind: "ran", summary: said });
       const { text: clean, hidden } = hideSecrets(out);
       const shown = clean.length > 30_000 ? `${clean.slice(0, 15_000)}\n…[${clean.length - 30_000} characters left out]…\n${clean.slice(-15_000)}` : clean;
       const head = ended === "timeout" ? `Stopped after ${timeoutMs / 1000} s.` : ended === "cancelled" ? "Stopped: the user cancelled." : `Exit code ${code}.`;
       return `${head}\n${shown.trim() || "(no output)"}${hiddenNote(hidden)}`;
+    }
+
+    case "copy_files": {
+      const given = String(input.from ?? "").trim();
+      // A pattern in the last part ("*.jpg") picks those files in that folder.
+      const pattern = /[*?]/.test(path.basename(given)) ? path.basename(given) : null;
+      const j = place(pattern ? path.dirname(given) : given);
+      if (j.read === "never") return refused(j);
+      let stat;
+      try {
+        stat = fs.statSync(j.full);
+      } catch {
+        return "There's nothing there to copy.";
+      }
+      const match = pattern ? new RegExp(`^${pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".")}$`, "i") : null;
+      /** @type {{ from: string, rel: string }[]} */
+      const files = [];
+      let bytes = 0;
+      const add = (/** @type {string} */ from, /** @type {string} */ rel) => {
+        // Each file is judged on its own: a folder can't carry a private place in with it.
+        if (judgePath(from, p).read === "never") return;
+        files.push({ from, rel });
+        bytes += fs.statSync(from).size;
+      };
+      const walk = (/** @type {string} */ dir, /** @type {string} */ rel) => {
+        for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+          if (files.length > MAX_COPY_FILES) return;
+          const from = path.join(dir, e.name);
+          if (inside(from, p.workDir)) continue; // the working folder isn't copied into itself
+          if (e.isDirectory() && !match) walk(from, path.join(rel, e.name));
+          else if (e.isFile() && (!match || match.test(e.name))) add(from, path.join(rel, e.name));
+        }
+      };
+      if (stat.isDirectory()) walk(j.full, "");
+      else add(j.full, path.basename(j.full));
+      if (!files.length) return "No files matched, so nothing was copied.";
+      if (files.length > MAX_COPY_FILES || bytes > MAX_COPY_BYTES) return `That's more than Buddy copies at once (${MAX_COPY_FILES} files or 2 GB). Pick fewer, or a smaller folder.`;
+      const name = String(input.to ?? "").replace(/[\\/:*?"<>|]/g, " ").trim() || (stat.isDirectory() ? path.basename(j.full) : "copies");
+      const dest = path.join(p.workDir, name);
+      if (!inside(dest, p.workDir) || dest === p.workDir) return "Copies go into a folder inside the working folder; give `to` a folder name.";
+      const words = files.length === 1
+        ? tr("Copy {file} into {folder}", { file: path.basename(files[0].from), folder: folderWords(dest, p) })
+        : tr("Copy {n} files from {from} into {folder}", { n: files.length, from: folderWords(stat.isDirectory() ? j.full : path.dirname(j.full), p), folder: folderWords(dest, p) });
+      if (!(await ctx.ask(words, tr("The originals stay as they are."), "files"))) return "The user declined.";
+      ctx.status(tr("Copying files…"));
+      for (const f of files) {
+        let to = path.join(dest, f.rel);
+        fs.mkdirSync(path.dirname(to), { recursive: true });
+        // Never over a file already there: "name (2).jpg".
+        for (let k = 2; fs.existsSync(to); k++) to = path.join(path.dirname(to), `${path.parse(f.rel).name} (${k})${path.extname(f.rel)}`);
+        fs.copyFileSync(f.from, to);
+      }
+      ctx.record?.({ kind: "created", summary: files.length === 1 ? tr("Copied {file} into {folder}", { file: path.basename(files[0].from), folder: folderWords(dest, p) }) : tr("Copied {n} files into {folder}", { n: files.length, folder: folderWords(dest, p) }), file: dest });
+      return `Copied ${files.length} file${files.length === 1 ? "" : "s"} into ${dest}. In a command that's (Join-Path $Work '${name}').`;
     }
 
     case "fetch_page": {

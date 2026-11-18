@@ -123,10 +123,11 @@ VS Code and more).
   profiles, the AI apps' settings and Buddy's own data are off limits to the file tools whatever is asked, and
   anything shaped like a secret key is hidden from the model.
 - **Running commands is off until you turn it on** (Settings › Agents › **Let Buddy run commands**). On, Buddy can
-  run PowerShell for bigger jobs (renaming many photos, tidying a folder, converting, building things), asking
-  before each command. Commands that name private places are refused, but PowerShell runs as you, so that narrows
-  what a command can reach rather than walling it off, and Buddy can't undo what a command does. Off, Buddy says
-  when a job needs it and how to turn it on.
+  run PowerShell for bigger jobs (renaming many photos, sorting, converting, zipping), asking before each command.
+  Commands run walled off in a Windows sandbox: they reach only Documents › Buddy and have no internet. To work on
+  your photos, say, Buddy first copies them into Documents › Buddy (asking you), and the command works on the copies:
+  your originals are never changed by a command. There's nothing to set up. Off, Buddy says when a job needs it and
+  how to turn it on.
 - **Activity and undo:** Settings › **Activity** (or **Recent changes…** in the tray) lists what Buddy made or changed
   this past week, commands it ran and pages it read. **Undo** sends a file it made to the Recycle Bin or puts a
   changed one back (the old version is kept for a week); a file you changed since is only put back if you say so again.

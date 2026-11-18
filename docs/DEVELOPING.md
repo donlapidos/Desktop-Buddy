@@ -148,6 +148,7 @@ hotkey ─► main.js ── remembers the window you were in (list-windows, is_
             ├─► brain.js      the tool loop: look · screenshot · point_at · guide_steps · act · list_windows · …
             │      ├─► providers.js  Anthropic, OpenAI (Responses), and Chat Completions for the rest; what models can do
             │      ├─► pc-tools.js   files, PowerShell, web pages (places, the PowerShell guard, hidden secrets)
+            │      │     └─► wall.ps1  each command inside a Windows AppContainer: the working folder only, no network
             │      └─► desktop.js ─► agent-desktop CLI (snapshot -i --compact --include-bounds, click, set-value…)
             ├─► approval-queue.js  the approval card's queue; approvals.js issues the single-use slips
             ├─► island-state.js    what the island says, worked out from what Buddy is doing

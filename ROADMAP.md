@@ -233,7 +233,15 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
   **Off by default: done (2026-11-13).** `settings.commands` (false for everyone, existing installs too). Off, the
   model isn't offered `run_powershell`, its guidance says what to tell the user instead, and a call that comes anyway
   runs nothing and shows no card (`COMMANDS_OFF` in pc-tools.js). The switch is in Settings › Agents and works at
-  once. Each layer has a test that fails without it. The wall (restricted token or AppContainer) is still to do.
+  once. Each layer has a test that fails without it.
+  **The wall: done (2026-11-18).** `src/wall.ps1` runs each command in a Windows AppContainer (no capabilities, so
+  no network) granted only the working folder (DocumentsBuddy); files elsewhere come in as copies through
+  `copy_files`, which asks. No admin, no setup: PowerShell compiles the launcher once (kept in Buddy's data folder).
+  Found on the way: PowerShell 5.1 can't make a folder inside a sandbox its location (Set-Location walks C: and
+  C:Users, which no sandbox may list), and refuses Move/Copy/Remove/Rename-Item on path strings there while doing
+  them on file objects; so commands get $Work and full paths, and the wall wraps those four cmdlets. Short (8.3)
+  paths break it, so the working folder is passed in its long form. Each command takes about 4 s to start (PowerShell
+  starting inside the sandbox). Not walled: what a command does inside the working folder can't be undone.
 - **3.2 Places the user grants.** Replace "everyday folders are read freely" with a short list the user sees and can
   edit (Documents, Desktop, Downloads to start), shown in Settings.
   **Done (2026-11-17).** `settings.readFolders` (null is the usual three, where Windows keeps them), Settings › Agents
