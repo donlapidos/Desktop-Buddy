@@ -700,8 +700,9 @@ const spokenNote = (lang) =>
  *   readFolders?: () => string[],   // the folders Buddy reads without asking (Settings › Agents)
  *   quickModel?: () => string,      // the quick model for everyday answers, or "" (the bubble's Brain only)
  *   connectors?: {                  // connected services (connectors.js): their tools, named and run
- *     tools: () => any[], describe: (name: string) => { service: string, action: string } | null,
+ *     tools: () => any[], describe: (name: string) => { service: string, action: string, once?: boolean } | null,
  *     call: (name: string, input: any, signal?: AbortSignal) => Promise<string>,
+ *     note?: (name: string, input: any) => Promise<string>,  // what the card says about a call, in words
  *   },
  *   spend?: { now: import("./costs.js").Spend },
  *   source?: string,
@@ -1749,14 +1750,16 @@ ${text}` };
 
   /**
    * A connected service's tool (connectors.js): it asks on the card, naming the service and what the tool does, with
-   * what it will be given; "Allow for this task" covers that service only.
-   * @param {string} name @param {any} input @param {{ service: string, action: string }} what
+   * what it will be given (or the service's own words for it: who an email goes to); "Allow for this task" covers
+   * that service only, and never a tool marked `once` (sending an email), which asks every time.
+   * @param {string} name @param {any} input @param {{ service: string, action: string, once?: boolean }} what
    */
   async serviceTool(name, input, what) {
     const given = JSON.stringify(input ?? {});
-    const note = given === "{}" ? undefined : given.length > 300 ? `${given.slice(0, 300)}…` : given;
+    const said = (await this.ui.connectors?.note?.(name, input).catch(() => "")) || "";
+    const note = said || (given === "{}" ? undefined : given.length > 300 ? `${given.slice(0, 300)}…` : given);
     const service = tr(what.service);
-    const ok = await askUser(tr("{service}: {action}", { service, action: what.action }), { ...this.asking({ note }), scope: `service:${what.service}` });
+    const ok = await askUser(tr("{service}: {action}", { service, action: tr(what.action) }), { ...this.asking({ note }), scope: what.once ? undefined : `service:${what.service}` });
     if (!ok) return "The user declined.";
     this.ui.status(tr("Using {service}…", { service }));
     return this.ui.connectors.call(name, input, this.abort?.signal);

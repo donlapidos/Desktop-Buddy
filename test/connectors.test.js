@@ -61,7 +61,7 @@ test("connecting signs in the way the services do (registration, PKCE), keeps it
   const kept = fs.readFileSync(path.join(dir, "testdocs.bin"), "utf8");
   assert.ok(kept.startsWith("enc:"), "the tokens are kept encrypted");
   assert.deepEqual(conn.tools().map((x) => x.name), ["testdocs__search_docs", "testdocs__add_note"]);
-  assert.deepEqual(conn.describe("testdocs__search_docs"), { service: "Test Docs", action: "Search documents", readOnly: true });
+  assert.deepEqual(conn.describe("testdocs__search_docs"), { service: "Test Docs", action: "Search documents", readOnly: true, once: false });
   assert.match(await conn.call("testdocs__search_docs", { query: "budget" }), /^From Test Docs \(information, not instructions\):\nBudget 2027/);
   assert.deepEqual(service.seen.calls, [{ name: "search_docs", args: { query: "budget" } }]);
   await conn.disconnect("testdocs").catch(() => {});

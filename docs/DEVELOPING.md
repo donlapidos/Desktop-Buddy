@@ -47,7 +47,8 @@ browser are left out because they'd change the PC), **explainer** (a plate opene
 with the token, refused without), **language** (the windows in Spanish, every Settings page read for English left behind, then switched to English
 while open),
 **connections** (a stand-in service with real OAuth on this PC: the
-bubble's offer, signing in, a tool call through the approval card), **lessons** (a lesson played in a test-owned window with no model, a missing control
+bubble's offer, signing in, a tool call through the approval card), **outlook** (a stand-in Microsoft: signing in at
+localhost, two sends that must each ask on the card, naming who they go to), **lessons** (a lesson played in a test-owned window with no model, a missing control
 told, a shared file round-tripped), **restore** (Buddy quit and restarted on one data folder: tasks and the bubble's
 conversation come back, closing a task forgets it), and **firstrun** (a plain test copy must leave your
 startup entries and shortcuts as they were). Any check whose copy logged a refused mode or task-state change fails.
