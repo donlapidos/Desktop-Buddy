@@ -2,13 +2,7 @@
 
 ## Unreleased
 
-* **Show me:** the first tip after setup has a **Show me** button. Buddy points at one thing in the app you were
-  using and says what it's for, so you see what the pointer does before you think of a question.
-* **Pointing by sight works with GPT:** in apps with nothing Buddy can name (a drawing canvas, a design tool's
-  icons, a 3D view, a scanned PDF), GPT models now point at the spot instead of only describing where it is, and
-  sooner. Window pictures go at a size the AI doesn't shrink again, so the spot lands where the model meant.
-
-## 0.4.0 (2026-11-18)
+## 0.4.0 (2026-11-19)
 
 Buddy can now draw on your screen (circles, arrows, labels, drag paths) to show you what goes where.
 Answers appear as Buddy writes them, and you can change your question halfway through, by typing or by talking.
@@ -16,7 +10,14 @@ Buddy sees a fresh picture of the window you ask about, and Mark opens and draws
 Hold one key to talk, and Buddy points sooner, even in apps with nothing it can name.
 Buddy can now use Notion, Linear, and Jira and Confluence for you, keep your conversations across a restart, play
 back what it taught you as a lesson, speak Spanish, and run commands walled off from the rest of your PC.
+Right after setup, Show me has Buddy point at something in the app you were using, and with GPT it now points in
+apps with nothing it can name.
 
+* **Show me:** the first tip after setup has a **Show me** button. Buddy points at one thing in the app you were
+  using and says what it's for, so you see what the pointer does before you think of a question.
+* **Pointing by sight works with GPT:** in apps with nothing Buddy can name (a drawing canvas, a design tool's
+  icons, a 3D view, a scanned PDF), GPT models now point at the spot instead of only describing where it is, and
+  sooner. Window pictures go at a size the AI doesn't shrink again, so the spot lands where the model meant.
 * **Commands are walled off.** With Settings › Agents › Let Buddy run commands on, each PowerShell command now runs in
   a Windows sandbox that reaches only Documents › Buddy and has no internet. To work on your files elsewhere, Buddy
   copies them in first (asking you), so a command never changes your originals. Nothing to set up.
