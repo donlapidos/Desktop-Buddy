@@ -24,7 +24,7 @@ Ordinary bugs go through **Report a problem** in the tray, which shows you the w
 | Click, type, press keys, open apps and move windows | Only after you say yes on Buddy's card, unless your Agents rules say otherwise (below). Never in an app on the Never act in list (password managers to start). Never on a spot it only guessed from a picture. |
 | Read files and folders | Freely in the folders listed in Settings › Agents (Documents, Desktop, Downloads to start) and its own Documents › Buddy folder; anywhere else asks first. |
 | Make or change files | Always asks first. A file it replaces or edits is kept for a week, and Activity can undo it. |
-| Read web pages | Asks for each website. Addresses on your PC or your local network are never fetched, redirects included. |
+| Read web pages | Asks for every page, showing its full address. Addresses on your PC or your local network are never fetched, redirects included. |
 | Use a connected service (Notion, Linear, Jira and Confluence) | Only after you connect it, signing in in your browser, and only with the advanced features on. Every action asks on Buddy's card, naming the service; "Allow for this task" covers that one service. What it sends back is treated as information, never instructions, and anything shaped like a key is hidden. |
 | Play a lesson (one you saved or one someone shared) | It only points and follows you, like guiding; it never clicks, types or opens anything, and calls no AI. An imported lesson is checked to be only steps and short words. |
 | Run PowerShell commands | Off until you turn it on (Settings › Agents › Let Buddy run commands). On, it asks before every command, and each one runs walled off: only Buddy's own folder, no internet. Your files go in as copies, when you allow it. |
@@ -33,7 +33,8 @@ Ordinary bugs go through **Report a problem** in the tray, which shows you the w
 
 - **Allow** lets that one action happen.
 - **Allow for this task** lets more of the *same kind* through until the answer ends: screen actions, file changes,
-  PowerShell, and each website, separately. Saying it for a file change doesn't let a command or a website through.
+  and PowerShell, separately. Saying it for a file change doesn't let a command through. Reading a web page and
+  sending an email always ask, because a web address or an email could carry what Buddy has read to someone else.
 - **Don't** stops the action; the AI is told you declined.
 - The card can be answered only from Buddy's own bubble, and not in its first half second, so a click that was
   already on its way can't answer it.

