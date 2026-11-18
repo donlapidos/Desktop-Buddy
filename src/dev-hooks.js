@@ -512,9 +512,10 @@ function screenContextTest(kit) {
       let largeImageBounded = false;
       if (sentImage) {
         const large = nativeImage.createFromBuffer(Buffer.from(sentImage.source.data, "base64")).resize({ width: 3200, height: 2400 });
+        // Sent at a size no provider shrinks again (geometry.js modelPictureSize), and Buddy knows that size.
         const compressed = prepareScreenImage({ source: { data: large.toPNG().toString("base64") } });
-        const size = nativeImage.createFromBuffer(Buffer.from(compressed.source.data, "base64")).getSize();
-        largeImageBounded = size.width === 1600 && size.height === 1200 && compressed.source.media_type === "image/jpeg";
+        const size = nativeImage.createFromBuffer(Buffer.from(compressed.image.source.data, "base64")).getSize();
+        largeImageBounded = size.width === 1024 && size.height === 768 && compressed.width === 1024 && compressed.height === 768 && compressed.image.source.media_type === "image/jpeg";
       }
       const sight = sentImage ? await pointBySight(kit, target, sentImage, js) : { error: "no screenshot was sent" };
       settingsWindow.open("claude");
@@ -566,7 +567,8 @@ async function pointBySight(kit, target, sentImage, js) {
     }
   }
   if (!box) return { error: "the blue bar isn't in the picture Buddy sent" };
-  const spot = { x: (box.x0 + box.x1) / 2 / width, y: (box.y0 + box.y1) / 2 / height };
+  // Pixels on the picture as sent, as a model counts them.
+  const spot = { x: Math.round((box.x0 + box.x1) / 2), y: Math.round((box.y0 + box.y1) / 2) };
   // Where the bar really is on screen, from the window's own layout (the bars are unnamed groups a look leaves out).
   const layout = await observe(["snapshot", "--window-id", target.id, "--include-bounds", "--max-depth", "30"], { timeoutMs: 10_000 });
   const bars = [];
@@ -592,7 +594,7 @@ async function pointBySight(kit, target, sentImage, js) {
     return shown;
   };
   try {
-    const reply = (await js(`window.buddy.ask("Point at the blue bar [spot ${spot.x.toFixed(4)},${spot.y.toFixed(4)}]", {})`)).reply;
+    const reply = (await js(`window.buddy.ask("Point at the blue bar [spot ${spot.x},${spot.y}]", {})`)).reply;
     if (!guessed) return { error: `Buddy didn't point by sight: ${reply}` };
     const c = { x: guessed.bounds.x + guessed.bounds.width / 2, y: guessed.bounds.y + guessed.bounds.height / 2 };
     const inside = c.x >= bar.x && c.x <= bar.x + bar.width && c.y >= bar.y && c.y <= bar.y + bar.height;

@@ -3,7 +3,8 @@
 // own Brain, prompt and tools; only the desktop is stood in for: looking returns the case's window, pointing and
 // guiding are recorded, and actions are approved and recorded. A case passes when the model shows the right controls
 // in the right order (or does the right action), the way a person checking its answer would judge it.
-import { Brain } from "./brain.js";
+import { Brain, pictureSize, withoutBlanks } from "./brain.js";
+import { PC_TOOL_NAMES } from "./pc-tools.js";
 import { ReplayDesktop } from "./eval-replay.js";
 import { renderTree } from "./desktop.js";
 import { addCall, noSpend, tokensOf } from "./costs.js";
@@ -221,7 +222,7 @@ class EvalBrain extends Brain {
   sightImage() {
     const shot = this.case.image;
     if (!shot) return null;
-    this.shot = { window: { id: "w-1", app_name: this.case.app, bounds: { x: 0, y: 0, width: shot.width, height: shot.height } }, width: shot.width, height: shot.height, at: Date.now() };
+    this.shot = { window: { id: "w-1", app_name: this.case.app, bounds: { x: 0, y: 0, width: shot.width, height: shot.height } }, width: shot.width, height: shot.height, seen: { width: shot.width, height: shot.height }, at: Date.now() };
     return /** @type {import("./screen-context.js").ScreenImage} */ ({ type: "image", source: { type: "base64", media_type: "image/png", data: shot.data } });
   }
   /** @param {import("./brain.js").BrainUI} ui @param {EvalCase} c @param {Call[]} calls */
@@ -267,6 +268,7 @@ class EvalBrain extends Brain {
 
   async runTool(name, input) {
     if (name === "prepare_explainer") return super.runTool(name, input);
+    if (!name.includes("__") && !PC_TOOL_NAMES.has(name)) input = withoutBlanks(input); // as Brain.runTool does
     // A connected mailbox goes through Buddy's own path (the card, then connectors.call below).
     if (name.startsWith("mail__") && this.case.mail) return super.runTool(name, input);
     if (this.replay && ["point_at", "guide_steps", "wait_for_user", "act", "annotate", "clear_annotations"].includes(name)) return this.replayTool(name, input);
@@ -277,7 +279,7 @@ class EvalBrain extends Brain {
         return this.look();
       case "screenshot": {
         const image = this.sightImage();
-        return image ? [image] : "(No screenshot in this check; use look.)";
+        return image ? [image, { type: "text", text: pictureSize({ width: this.case.image?.width ?? 0, height: this.case.image?.height ?? 0 }) }] : "(No screenshot in this check; use look.)";
       }
       case "list_windows":
         return `w-1 · ${this.case.app} · "${this.window.name}" (focused)`;

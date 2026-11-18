@@ -209,8 +209,8 @@ accessibility.
 
 **Build:**
 - When the window's read comes back nearly empty, or the wanted thing has no control, and the model can see
-  images: `point_at` and `annotate` accept a spot on the screenshot Buddy sent (fractions of its width and
-  height). Convert through `geometry.js` only, as for every other coordinate.
+  images: `point_at` and `annotate` accept a spot on the screenshot Buddy sent (pixels on the picture as sent;
+  fractions until 2026-11-18). Convert through `geometry.js` only, as for every other coordinate.
 - Show it differently (a soft ring, "about here") so the user knows it is a best guess.
 - These drawings clear on window move, resize, scroll input or focus loss, since there is no control to follow.
 - **Protection:** a spot is never accepted by `act`. Do mode stays tied to controls and approval slips. Prove
@@ -357,6 +357,26 @@ loses focus (`guessGone`, unit-tested), or after 10 s.
 - Eval: `npm run eval -- --set sight` runs five screens with nothing named in their tree (a paint canvas, a scanned
   PDF, a remote desktop, a chart picture, a game menu; `scripts/make-sight-screens.cjs`), each passing only for a
   spot inside the target box. The share passed is the model's hit rate. Hit rates per model are the owner's runs.
+
+**2026-11-18 · package 7 · spots in pixels, and blank fields.** From Clicky (farzaa/clicky, MIT), which has the
+model count pixels on a picture whose size it is told. A spot is now x and y in pixels on the picture as the model
+was given it, and every window picture says its size beside it. Pictures are sent at a size no provider shrinks
+again (`geometry.js` `modelPictureSize`: at most 1568 on the long edge, 768 on the short, 1.15 megapixels), so
+the pixels the model counts are the ones Buddy measures; the `screenshot` tool's picture is shrunk the same way
+(it went at full size before). Three sight screens with small targets were added: a design tool's pen tool (32 px),
+a 3D viewport's camera button (28 px), a layers panel's eye (24 px).
+- Found on the way: GPT fills every optional field, sending `ref: ""` and `mark: 0` beside its spot, and Buddy
+  read the empty ref as a ref that matched nothing, so it refused the spot ("No position known") and the model fell
+  back to words. Buddy's screen tools now drop blank fields first (`withoutBlanks`, unit-tested; with it removed on
+  purpose, the test failed).
+- Eval, `gpt-6.1-sol`, `--set sight` (8 screens): before the fix, 4/8 with fractions and 4/8 with pixels, 12-13 s a
+  case; the misses were answers in words, and the two traced call by call were spots refused for the empty ref.
+  After it, 8/8 in each of three runs, about 4 s a case, every spot inside its box (the four small targets within
+  2 px of their middle). On these 1280 x 800 screens GPT's spots hit with fractions too whenever they got through,
+  so the gain measured here is the blank-field fix. Pixels are for models trained to count them (Claude) and for
+  large windows; they weren't measured on Claude, as the Anthropic account was out of credit. A prompt line urging
+  the model to point (tried before the fix was found: 1/8 and 2/8) added nothing once the fix was in (8/8 without
+  it) and was left out.
 
 **2026-11-17 · package 8 · Report a problem.** In the tray and Settings › About & updates. Buddy builds the report
 (version, settings without keys, addresses, routines or app lists, and the last 60 timing entries) and takes out

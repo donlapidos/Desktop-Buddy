@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* **Pointing by sight works with GPT:** in apps with nothing Buddy can name (a drawing canvas, a design tool's
+  icons, a 3D view, a scanned PDF), GPT models now point at the spot instead of only describing where it is, and
+  sooner. Window pictures go at a size the AI doesn't shrink again, so the spot lands where the model meant.
+
 ## 0.4.0 (2026-11-18)
 
 Buddy can now draw on your screen (circles, arrows, labels, drag paths) to show you what goes where.
