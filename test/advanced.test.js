@@ -4,7 +4,7 @@ import { Brain } from "../src/brain.js";
 
 // Settings › Agents › Show advanced features decides which tools the model is offered. The lists are held here.
 const CORE = ["act", "annotate", "clear_annotations", "guide_steps", "launch_app", "list_windows", "look", "point_at", "prepare_explainer", "read_page", "screenshot", "wait_for_user", "window"];
-const ADVANCED = ["create_document", "edit_file", "fetch_page", "list_folder", "read_file", "write_file"];
+const ADVANCED = ["copy_files", "create_document", "edit_file", "fetch_page", "list_folder", "read_file", "write_file"];
 
 function brain(advanced) {
   let on = advanced;

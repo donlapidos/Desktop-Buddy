@@ -130,9 +130,9 @@ test("PowerShell asks with the plain description, runs in the working folder, an
   const { places, asked, ctx } = pc();
   process.env.OPENAI_API_KEY = "sk-proj-secret-should-not-leak";
   try {
-    const out = await runPcTool("run_powershell", { command: "(Get-Location).Path; \"key=[$env:OPENAI_API_KEY]\"; 'héllo'", description: "Check the folder" }, ctx());
+    const out = await runPcTool("run_powershell", { command: "$Work; \"key=[$env:OPENAI_API_KEY]\"; 'héllo'", description: "Check the folder" }, ctx());
     assert.equal(asked[0].s, "Check the folder");
-    assert.match(asked[0].n, /Get-Location/, "the command itself is on the card, under the description");
+    assert.match(asked[0].n, /\$Work/, "the command itself is on the card, under the description");
     assert.match(out, /^Exit code 0/);
     assert.ok(out.toLowerCase().includes(fs.realpathSync.native(places.workDir).toLowerCase()), out);
     assert.match(out, /key=\[\]/);
@@ -308,4 +308,73 @@ test("running commands is off until the user turns it on: not offered, not descr
   assert.match(b.system(), /run_powershell/);
   assert.match(await b.runTool("run_powershell", { command: "'hi'", description: "Say hi" }), /hi/);
   assert.deepEqual(cards, ["Say hi"]);
+});
+
+test("commands run walled off: the working folder only, PowerShell's file commands as usual, and no internet", async () => {
+  const { home, places, ctx } = pc();
+  fs.writeFileSync(path.join(home, "Documents", "private.txt"), "not for commands");
+  fs.writeFileSync(path.join(places.workDir, "old.txt"), "made before the command");
+  for (const n of ["IMG_1.jpg", "IMG_2.jpg"]) fs.writeFileSync(path.join(places.workDir, n), n);
+  const run = (command) => runPcTool("run_powershell", { command, description: "Test" }, ctx());
+  const inside = await run([
+    "New-Item -ItemType Directory (Join-Path $Work 'sorted') | Out-Null",
+    "Move-Item (Join-Path $Work 'IMG_*.jpg') (Join-Path $Work 'sorted')",
+    "Rename-Item (Join-Path $Work 'sorted/IMG_1.jpg') 'first.jpg'",
+    "Copy-Item (Join-Path $Work 'sorted') (Join-Path $Work 'backup') -Recurse",
+    "Remove-Item (Join-Path $Work 'old.txt')",
+    "'made inside' | Set-Content (Join-Path $Work 'new.txt')",
+    "(Get-ChildItem $Work -Recurse -File).Name -join ','",
+  ].join("; "));
+  assert.match(inside, /^Exit code 0/, inside);
+  assert.deepEqual(fs.readdirSync(path.join(places.workDir, "sorted")).sort(), ["IMG_2.jpg", "first.jpg"]);
+  assert.ok(fs.existsSync(path.join(places.workDir, "backup", "first.jpg")), "copied");
+  assert.ok(!fs.existsSync(path.join(places.workDir, "old.txt")), "a file made before the command can be removed");
+  assert.equal(fs.readFileSync(path.join(places.workDir, "new.txt"), "utf8").trim(), "made inside");
+  // Outside the working folder: the user's other files, and the internet.
+  const outside = await run(`Get-Content '${path.join(home, "Documents", "private.txt")}'; 'x' | Set-Content '${path.join(home, "Desktop", "dropped.txt")}'; try { Invoke-WebRequest https://example.com -UseBasicParsing -TimeoutSec 5 | Out-Null; 'ONLINE' } catch { 'offline' }`);
+  assert.doesNotMatch(outside, /not for commands/, "the user's other files can't be read");
+  assert.ok(!fs.existsSync(path.join(home, "Desktop", "dropped.txt")), "nor written");
+  assert.match(outside, /offline/);
+  assert.doesNotMatch(outside, /ONLINE/);
+});
+
+test("copy_files brings copies into the working folder, asking, and never carries a private place in", async () => {
+  const { home, places, asked, ctx } = pc();
+  for (const n of ["a.jpg", "b.jpg", "c.png"]) fs.writeFileSync(path.join(home, "Pictures", n), n);
+  fs.writeFileSync(path.join(home, ".ssh", "id_ed25519"), "PRIVATE");
+  const out = await runPcTool("copy_files", { from: "~/Pictures/*.jpg", to: "photos" }, ctx());
+  assert.match(out, /Copied 2 files/);
+  assert.match(asked.at(-1).s, /^Copy 2 files from Pictures into Documents.Buddy.photos$/);
+  assert.deepEqual(fs.readdirSync(path.join(places.workDir, "photos")).sort(), ["a.jpg", "b.jpg"]);
+  assert.ok(fs.existsSync(path.join(home, "Pictures", "a.jpg")), "the originals stay");
+  // Again: nothing is overwritten.
+  await runPcTool("copy_files", { from: "~/Pictures/a.jpg", to: "photos" }, ctx());
+  assert.ok(fs.existsSync(path.join(places.workDir, "photos", "a (2).jpg")));
+  // A whole folder that holds a private place: the private files stay behind.
+  await runPcTool("copy_files", { from: "~", to: "everything" }, ctx());
+  assert.ok(!fs.existsSync(path.join(places.workDir, "everything", ".ssh", "id_ed25519")), "keys never copied");
+  assert.match(await runPcTool("copy_files", { from: "~/.ssh/id_ed25519" }, ctx()), /^Not allowed/);
+  assert.equal(await runPcTool("copy_files", { from: "~/Pictures/c.png" }, ctx(false)), "The user declined.");
+  assert.ok(!fs.existsSync(path.join(places.workDir, "copies", "c.png")), "nothing copied when declined");
+});
+
+test("stopping the wall's launcher stops the command inside at once, however it's timed", async (t) => {
+  const { spawn, spawnSync } = await import("node:child_process");
+  const { places } = pc();
+  const wall = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")), "..", "src", "wall.ps1");
+  const enc = Buffer.from("'started'; Start-Sleep 30; 'finished'", "utf16le").toString("base64");
+  const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", wall, "-WorkDir", places.workDir, "-Name", "DesktopBuddy.Test", "-Encoded", enc], { windowsHide: true });
+  t.after(() => spawnSync("taskkill", ["/pid", String(child.pid), "/T", "/F"]));
+  let out = "";
+  let killedAt = 0;
+  const closed = new Promise((resolve) => child.on("close", resolve));
+  child.stdout.on("data", (d) => {
+    out += d;
+    // Only the launcher: the command inside must end with it, through the job it was put in.
+    if (!killedAt && out.includes("started")) (killedAt = Date.now()), spawnSync("taskkill", ["/pid", String(child.pid), "/F"]);
+  });
+  await closed;
+  assert.ok(killedAt, "the command started");
+  assert.ok(Date.now() - killedAt < 10_000, `the command ran on for ${Date.now() - killedAt} ms`);
+  assert.doesNotMatch(out, /finished/);
 });

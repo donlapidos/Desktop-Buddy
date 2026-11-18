@@ -1167,6 +1167,8 @@ export class Brain {
     return runPcTool(name, input, {
       places: placesHere(/** @type {string} */ (this.ui.documentsDir), dataDir, this.ui.readFolders?.()),
       undoDir: path.join(dataDir, "undo"),
+      // Commands run inside the wall (wall.ps1); its compiled launcher is kept here.
+      wall: { cache: path.join(dataDir, "wall") },
       ask: (summary, note, scope) => askUser(summary, { ...this.asking({ note }), scope }),
       status: (text) => this.ui.status(text),
       signal: this.abort?.signal,

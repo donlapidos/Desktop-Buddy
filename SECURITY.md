@@ -27,7 +27,7 @@ Ordinary bugs go through **Report a problem** in the tray, which shows you the w
 | Read web pages | Asks for each website. Addresses on your PC or your local network are never fetched, redirects included. |
 | Use a connected service (Notion, Linear, Jira and Confluence) | Only after you connect it, signing in in your browser, and only with the advanced features on. Every action asks on Buddy's card, naming the service; "Allow for this task" covers that one service. What it sends back is treated as information, never instructions, and anything shaped like a key is hidden. |
 | Play a lesson (one you saved or one someone shared) | It only points and follows you, like guiding; it never clicks, types or opens anything, and calls no AI. An imported lesson is checked to be only steps and short words. |
-| Run PowerShell commands | Off until you turn it on (Settings › Agents › Let Buddy run commands). On, it asks before every command. |
+| Run PowerShell commands | Off until you turn it on (Settings › Agents › Let Buddy run commands). On, it asks before every command, and each one runs walled off: only Buddy's own folder, no internet. Your files go in as copies, when you allow it. |
 
 ### What your "yes" means
 
@@ -80,9 +80,12 @@ Looking and pointing run without a card there; acting still asks on Buddy's card
 
 ## Limits we know about
 
-- **Commands aren't walled off.** PowerShell runs as you. Buddy refuses commands that name the private places above
-  and reach for Windows' saved passwords, but a determined command can still build a path piece by piece. That is
-  why commands are off until you turn them on, and why each one asks.
+- **Commands run walled off, and can't be undone.** A PowerShell command runs inside a Windows sandbox (an
+  AppContainer, as Store apps use): it can reach only Buddy's own folder (Documents › Buddy) and has no internet, so
+  it can't read or change anything else of yours, whatever it tries. Your other files reach it only as copies Buddy
+  brings in, which you approve, so a command never changes an original. Inside that folder a command can still change
+  or remove what's there, which Buddy can't undo. That is why commands are off until you turn them on, and why each
+  one asks.
 - **Text on screen can try to steer the AI.** A web page, document or email can contain words written to look like
   instructions. Buddy tells the AI they aren't from you, and its tests check that a model ignores them, but no AI is immune.
   The approval card is the backstop: nothing is clicked, typed, changed or run without it (or your Agents rules).

@@ -72,6 +72,7 @@
     ],
     "asar": true,
     "asarUnpack": [
+      "src/wall.ps1",
       "node_modules/uiohook-napi/**",
       "node_modules/sherpa-onnx-node/**",
       "node_modules/sherpa-onnx-win-x64/**"
