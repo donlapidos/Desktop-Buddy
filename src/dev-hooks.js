@@ -2,7 +2,7 @@
 // starts test copies with them). main.js imports this file only when one of those variables is set, so a normal
 // Buddy never loads it, and hands it what it needs as one kit (DevKit). Members main.js reassigns (settings, brain,
 // about, the marker's state) are read through the kit each time; the rest are fixed once the app is ready.
-import { app, BrowserWindow, clipboard, desktopCapturer, globalShortcut, nativeImage, screen } from "electron";
+import { app, BrowserWindow, clipboard, desktopCapturer, globalShortcut, nativeImage, nativeTheme, screen } from "electron";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import net from "node:net";
@@ -438,7 +438,14 @@ function explainerTest(kit) {
     const out = process.env.BUDDY_EXPLAINER_TEST_OUT;
     if (out && plates[0]) fs.writeFileSync(out, (await plates[0].webContents.capturePage()).toPNG());
     const text = plates[0] ? await plates[0].webContents.executeJavaScript("document.body.innerText") : "";
-    console.log("EXPLAINER_SHOWN", JSON.stringify({ windows: plates.length, visible: plates.some((w) => w.isVisible()), chars: text.length, title: text.split("\n").find((l) => l.trim()) ?? "" }));
+    // Settings › Look › Explainer appearance: what the plate shows, as it opened and after switching while it's open.
+    const look = async () => plates[0]?.webContents.executeJavaScript(`({ dark: matchMedia("(prefers-color-scheme: dark)").matches, paper: getComputedStyle(document.documentElement).backgroundColor })`);
+    const opened = await look();
+    const other = kit.settings.appearance === "light" ? "dark" : "light";
+    kit.changeSettings({ appearance: other });
+    await new Promise((r) => setTimeout(r, 600));
+    const switched = { to: other, ...(await look()) };
+    console.log("EXPLAINER_SHOWN", JSON.stringify({ windows: plates.length, visible: plates.some((w) => w.isVisible()), chars: text.length, title: text.split("\n").find((l) => l.trim()) ?? "", appearance: kit.settings.appearance, opened, switched }));
     console.log("EXPLAINER_TEST_DONE");
   }, 4000);
 }
@@ -1116,7 +1123,198 @@ function connectionsTest(kit) {
   }, 2500);
 }
 
+/** BUDDY_SETTINGS_AUDIT_TEST @param {DevKit} kit */
+function settingsAuditTest(kit) {
+  // Every control in Settings, used the way a person does (a click, typing, a key pressed in the shortcut recorder)
+  // in the real Settings window: the setting must be saved, the control must show it, and where Buddy shows the
+  // effect elsewhere (the island's colour, the bubble's language, the plates' theme, a shortcut, the Agents rules),
+  // that must change too. Controls that would change this PC from a test copy (Start with Windows, adding Buddy to AI
+  // apps, links that open the browser) aren't clicked here.
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  setTimeout(async () => {
+    /** @type {{ step: string, problem: string }[]} */
+    const problems = [];
+    let passed = 0;
+    try {
+      // A saved plate, for Clear… to delete (the e2e check seeds a kept conversation for Forget).
+      const plates = path.join(app.getPath("userData"), "explainers");
+      fs.mkdirSync(plates, { recursive: true });
+      fs.writeFileSync(path.join(plates, "audit.html"), "<p>plate</p>");
+      kit.settingsWindow.open();
+      let win;
+      for (let i = 0; i < 50 && !(win = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("settings.html"))); i++) await wait(100);
+      await wait(1500);
+      const page = (code) => win.webContents.executeJavaScript(code);
+      const saved = () => JSON.parse(fs.readFileSync(kit.settingsFile(), "utf8"));
+      const show = (p) => page(`show(${JSON.stringify(p)})`);
+      // Clicks the button in #box whose words are `text` (or whose aria-label is), as a person would.
+      const click = (box, text) => page(`(() => { const b = [...document.querySelectorAll(${JSON.stringify(`#${box} button`)})].find((x) => x.textContent.trim() === ${JSON.stringify(text)} || x.getAttribute("aria-label") === ${JSON.stringify(text)}); if (!b) return false; b.click(); return true; })()`);
+      const pressed = (box, text) => page(`[...document.querySelectorAll(${JSON.stringify(`#${box} button`)})].find((x) => x.textContent.trim() === ${JSON.stringify(text)})?.getAttribute("aria-pressed") ?? [...document.querySelectorAll(${JSON.stringify(`#${box} button`)})].find((x) => x.textContent.trim() === ${JSON.stringify(text)})?.getAttribute("aria-checked")`);
+      const checked = (id) => page(`document.getElementById(${JSON.stringify(id)}).getAttribute("aria-checked")`);
+      const step = async (name, act, ...checks) => {
+        try {
+          const did = await act();
+          if (did === false) return problems.push({ step: name, problem: "the control wasn't there to use" });
+          await wait(450);
+          for (const check of checks) {
+            const problem = await check();
+            if (problem) return problems.push({ step: name, problem });
+          }
+          passed++;
+        } catch (err) {
+          problems.push({ step: name, problem: String(err?.message ?? err) });
+        }
+      };
+      const is = (what, got, want) => (JSON.stringify(got) === JSON.stringify(want) ? null : `${what} is ${JSON.stringify(got)}, not ${JSON.stringify(want)}`);
+      const visible = (id) => page(`(() => { const e = document.getElementById(${JSON.stringify(id)}); return !!e && !e.closest("[hidden]") && e.getClientRects().length > 0; })()`);
+
+      // ---------- The page list down the side ----------
+      for (const name of ["voice", "dictation", "look", "keys", "agents", "lessons", "claude", "activity", "about"]) {
+        await step(`the ${name} page`, () => page(`document.querySelector('nav button[data-page="${name}"], button[data-page="${name}"]').click()`),
+          async () => is(`page-${name} showing`, await visible(`page-${name}`), true));
+      }
+      await step("Change… under the dictation shortcut", async () => { await show("dictation"); await page(`document.getElementById("dictate-change").click()`); },
+        async () => is("the Shortcuts page showing", await visible("page-keys"), true));
+
+      // ---------- Voice & speech ----------
+      await show("voice");
+      await step("voice", () => page(`document.querySelector('#voices button[data-sid="4"]').click()`),
+        () => is("saved voice", saved().voice, 4), async () => is("voice 4's card", await page(`document.querySelector('#voices button[data-sid="4"]').getAttribute("aria-checked")`), "true"));
+      await step("speed", () => page(`(() => { const r = document.getElementById("speed"); r.value = "1.2"; r.dispatchEvent(new Event("input")); r.dispatchEvent(new Event("change")); })()`),
+        () => is("saved speed", saved().speed, 1.2), async () => is("speed shown", await page(`document.getElementById("speed-out").textContent`), "1.20×"));
+      await step("talk back: never", () => click("talkback", "Never"),
+        () => is("saved talkBack", saved().talkBack, "never"), async () => is("Never", await pressed("talkback", "Never"), "true"));
+
+      // ---------- Dictation ----------
+      await show("dictation");
+      await step("dictation stops: when I press it again", () => click("dictate-stop", "When I press it again"), () => is("saved dictateStop", saved().dictateStop, "press"));
+      await step("listening language: detect", () => click("language", "Detect automatically"), () => is("saved language", saved().language, "auto"));
+
+      // ---------- Look ----------
+      await show("look");
+      const islandAccent = () => island.webContents.executeJavaScript(`getComputedStyle(document.documentElement).getPropertyValue("--buddy").trim()`);
+      const { island, bubble } = kit;
+      // The sample under Explainer appearance, in the same colours as a real plate's paper (explainer.css).
+      const samplePaper = () => page(`getComputedStyle(document.getElementById("plate-sample")).backgroundColor`);
+      await step("accent: green", () => page(`[...document.querySelectorAll("#swatches button")].find((b) => b.textContent.includes("Green")).click()`),
+        () => is("saved accent", saved().accent, "green"), async () => is("the island's colour", (await islandAccent()).toLowerCase(), "#16a34a"));
+      await step("explainer appearance: light", () => click("appearance", "Light"),
+        () => is("saved appearance", saved().appearance, "light"), () => is("the theme plates follow", nativeTheme.themeSource, "light"), async () => is("Light", await pressed("appearance", "Light"), "true"),
+        async () => is("the sample plate", await samplePaper(), "rgb(242, 244, 240)"));
+      await step("explainer appearance: dark", () => click("appearance", "Dark"), () => is("the theme plates follow", nativeTheme.themeSource, "dark"),
+        async () => is("the sample plate", await samplePaper(), "rgb(19, 24, 21)"));
+      // The Look page in Dark, for a person to look over (the variable is the e2e run's folder).
+      await page(`document.getElementById("plate-sample").scrollIntoView({ block: "end" })`);
+      await wait(200);
+      if (fs.existsSync(process.env.BUDDY_SETTINGS_AUDIT_TEST ?? "")) fs.writeFileSync(path.join(process.env.BUDDY_SETTINGS_AUDIT_TEST, "settings-look.png"), (await win.webContents.capturePage()).toPNG());
+      await step("language: Español", () => click("ui-language", "Español"),
+        () => is("saved uiLanguage", saved().uiLanguage, "es"), async () => is("the bubble's language", await bubble.webContents.executeJavaScript("document.documentElement.lang"), "es"));
+      await step("language: back to English", () => click("ui-language", "English"), async () => is("Settings' language", await page("document.documentElement.lang"), "en"));
+
+      // ---------- Shortcuts ----------
+      await show("keys");
+      await step("record a shortcut for Mark", async () => {
+        const ok = await page(`(() => { const c = document.querySelectorAll("#keys .keycap")[2]; if (!c) return false; c.click(); return true; })()`);
+        if (!ok) return false;
+        await wait(300);
+        await page(`document.dispatchEvent(new KeyboardEvent("keydown", { key: "j", code: "KeyJ", ctrlKey: true, altKey: true, bubbles: true }))`);
+      }, () => is("saved Mark shortcut", saved().hotkeys.mark, "Control+Alt+J"), () => is("Ctrl+Alt+J registered", globalShortcut.isRegistered("Control+Alt+J"), true), () => is("the old one let go", globalShortcut.isRegistered("Control+Alt+M"), false));
+      await step("reset that shortcut", () => page(`(() => { const b = [...document.querySelectorAll("#keys button.link")].find((x) => x.textContent.trim() === "Reset"); if (!b) return false; b.click(); })()`),
+        // When another Buddy on this PC holds Ctrl+Alt+M (the owner's, say), the reset is refused and Settings says why.
+        async () => (saved().hotkeys.mark === "Control+Alt+M" ? is("Ctrl+Alt+M registered", globalShortcut.isRegistered("Control+Alt+M"), true)
+          : is("why the reset was refused", await page(`document.querySelector("#keys").textContent.includes("Another app already uses this shortcut")`), true)));
+      await step("hold to talk: off", () => page(`document.getElementById("hold-to-talk").click()`),
+        () => is("saved holdToTalk", saved().holdToTalk, false), async () => is("its switch", await checked("hold-to-talk"), "false"));
+
+      // ---------- Agents ----------
+      await show("agents");
+      await step("advanced features: on", () => page(`document.getElementById("advanced").click()`),
+        () => is("saved advanced", saved().advanced, true), async () => is("the bubble's basic mode", await bubble.webContents.executeJavaScript(`document.body.classList.contains("basic")`), false));
+      await step("agents may: make safe moves", () => click("rope", "Make safe movesScroll, expand and collapse, and move windows without asking. Anything that clicks, types or opens an app still asks.") || page(`[...document.querySelectorAll("#rope button")][1].click()`),
+        () => is("saved rope", saved().rope, "safe"), async () => is("a scroll in Notepad", (await import("./policy.js")).decide(kit.settings, { kind: "scroll_to", app: "notepad.exe" }), "allow"));
+      await step("trust Notepad", () => page(`(() => { const i = document.getElementById("trusted-input"); i.value = "Notepad"; document.getElementById("trusted-add").click(); })()`),
+        () => is("saved trustedApps", saved().trustedApps, ["Notepad"]));
+      await step("stop blocking Keeper", () => click("blocked", "Remove Keeper"),
+        () => (saved().blockedApps.includes("Keeper") ? "Keeper is still blocked" : null), async () => is("Keeper's chip", await page(`[...document.querySelectorAll("#blocked .app-chip")].some((c) => c.textContent.includes("Keeper"))`), false));
+      await step("block Keeper again", () => page(`(() => { const i = document.getElementById("blocked-input"); i.value = "Keeper"; document.getElementById("blocked-add").click(); })()`),
+        async () => is("KeePass-style blocking", (await import("./policy.js")).decide(kit.settings, { kind: "scroll_to", app: "Keeper.exe" }), "block"));
+      await step("let Buddy run commands: on", () => page(`document.getElementById("commands").click()`),
+        () => is("saved commands", saved().commands, true), async () => is("its switch", await checked("commands"), "true"));
+      kit.changeSettings({ readFolders: [path.join(os.homedir(), "Projects")] });
+      await wait(300);
+      await step("folders: back to the usual ones", () => page(`document.getElementById("folders-usual").click()`),
+        () => is("saved readFolders", saved().readFolders, null), async () => is("the link", await page(`document.getElementById("folders-usual").hidden`), true));
+
+      // ---------- AI & privacy ----------
+      await show("claude");
+      await step("window screenshots: off", () => page(`document.getElementById("screen-context").click()`),
+        () => is("saved screenContext", saved().screenContext, false), async () => is("its switch", await checked("screen-context"), "false"));
+      await step("model: Haiku", () => page(`[...document.querySelectorAll("#models button")].find((b) => b.textContent.includes("Haiku")).click()`),
+        () => is("saved model", saved().model, "claude-haiku-5-5"), async () => is("Haiku's choice", await page(`[...document.querySelectorAll("#models button")].find((b) => b.textContent.includes("Haiku")).getAttribute("aria-checked")`), "true"));
+      await step("thinking effort: high", () => click("effort", "High"), () => is("saved effort", saved().effort, "high"));
+      await step("quick model: Haiku", () => page(`(() => { const s = document.getElementById("quick-model"); s.value = "claude-haiku-5-5"; s.dispatchEvent(new Event("change")); })()`),
+        () => is("saved quick model", saved().quickModels, { anthropic: "claude-haiku-5-5" }));
+      await step("monthly limit: $25", () => page(`(() => { const c = document.getElementById("cap"); c.value = "25"; c.dispatchEvent(new Event("change")); })()`),
+        () => is("saved monthlyCap", saved().monthlyCap, 25));
+      await step("provider: Ollama", () => page(`[...document.querySelectorAll("#provider button")].find((b) => b.textContent.includes("Ollama")).click()`),
+        () => is("saved provider", saved().provider, "ollama"), async () => is("Ollama's choice", await page(`[...document.querySelectorAll("#provider button")].find((b) => b.textContent.includes("Ollama")).getAttribute("aria-checked")`), "true"));
+      await step("Ollama's address, saved", () => page(`(() => { const i = document.getElementById("address-input"); i.value = "http://127.0.0.1:1"; [...document.querySelectorAll("#address button")].find((b) => b.textContent.trim() === "Save address").click(); })()`),
+        () => is("saved address", saved().providerURLs.ollama, "http://127.0.0.1:1"), async () => is("its box", await page(`document.getElementById("address-input").value`), "http://127.0.0.1:1"));
+      await step("Ollama's address: Use the usual one", () => click("address", "Use the usual one"),
+        () => (saved().providerURLs.ollama && saved().providerURLs.ollama !== "http://localhost:11434/v1" ? `saved address is still ${saved().providerURLs.ollama}` : null));
+      await step("provider: back to Anthropic", () => page(`[...document.querySelectorAll("#provider button")].find((b) => b.textContent.includes("Anthropic")).click()`), () => is("saved provider", saved().provider, "anthropic"));
+      await step("saved plates: Clear…, then Keep", async () => { await click("explainers-actions", "Clear…"); await wait(200); return click("explainers-actions", "Keep"); },
+        () => is("the plate", fs.existsSync(path.join(plates, "audit.html")), true));
+      await step("saved plates: Clear…, then Delete", async () => { await click("explainers-actions", "Clear…"); await wait(200); return click("explainers-actions", "Delete 1"); },
+        () => is("the plate", fs.existsSync(path.join(plates, "audit.html")), false), async () => is("the count", (await page(`document.getElementById("explainers-count").textContent`)).trim(), "None yet."));
+      await step("conversations: Forget", () => click("conversations-actions", "Forget"),
+        () => is("conversations.json", fs.existsSync(path.join(app.getPath("userData"), "conversations.json")), false), async () => is("Forget", await page(`document.querySelector("#conversations-actions button").disabled`), true));
+      await step("API key: typed and the box takes it", () => page(`(() => { const i = document.getElementById("key-input"); if (!i) return false; i.value = "x"; return true; })()`),
+        async () => is("the key box", await page(`document.getElementById("key-input").type`), "password"));
+      kit.trace({ kind: "audit-marker" });
+      await step("clear the activity log", () => page(`(() => { const b = document.querySelector("#log-actions button"); if (!b || b.disabled) return false; b.click(); })()`),
+        () => (fs.existsSync(kit.timingLog()) && fs.readFileSync(kit.timingLog(), "utf8").includes("audit-marker") ? "the log still has what was in it" : null));
+
+      // ---------- Routines ----------
+      await show("routines");
+      await step("new routine, saved", async () => {
+        if ((await page(`(() => { const b = document.getElementById("routine-new"); b.click(); return true; })()`)) === false) return false;
+        await wait(300);
+        await page(`(() => { const e = document.getElementById("routine-editor"); const n = e.querySelector("input.field"); n.value = "Morning check"; n.dispatchEvent(new Event("input")); const p = e.querySelector("textarea"); p.value = "Summarise my unread email."; p.dispatchEvent(new Event("input")); [...e.querySelectorAll("button")].find((b) => b.textContent.trim() === "Save routine").click(); })()`);
+      }, () => is("saved routines", saved().routines.map((r) => r.name), ["Morning check"]), async () => is("its row", await page(`document.getElementById("routines").textContent.includes("Morning check")`), true));
+      await step("routine: off", () => click("routines", "Morning check: on"),
+        () => is("saved enabled", saved().routines[0]?.enabled, false), async () => is("its switch", await page(`document.querySelector("#routines .switch").getAttribute("aria-checked")`), "false"));
+      await step("routine: Edit, renamed, saved", async () => {
+        if ((await click("routines", "Edit")) === false) return false;
+        await wait(300);
+        await page(`(() => { const e = document.getElementById("routine-editor"); const n = e.querySelector("input.field"); n.value = "Evening check"; n.dispatchEvent(new Event("input")); [...e.querySelectorAll("button")].find((b) => b.textContent.trim() === "Save routine").click(); })()`);
+      }, () => is("saved routines", saved().routines.map((r) => r.name), ["Evening check"]));
+      await step("routine: Delete, then Keep it", async () => { await click("routines", "Delete"); await wait(200); return click("routines", "Keep it"); },
+        () => is("saved routines", saved().routines.length, 1));
+      await step("routine: Delete, then Delete it", async () => { await click("routines", "Delete"); await wait(200); return click("routines", "Delete it"); },
+        () => is("saved routines", saved().routines.length, 0));
+
+      // ---------- About & updates ----------
+      await show("about");
+      await step("Report a problem: preview", () => page(`document.getElementById("report").click()`),
+        async () => is("the preview", await visible("report-text"), true), async () => ((await page(`document.getElementById("report-text").value.length`)) < 50 ? "the preview is empty" : null));
+      await step("Report a problem: Cancel", () => page(`document.getElementById("report-cancel").click()`), async () => is("the preview", await visible("report-text"), false));
+      // Run from source there is nothing to update, so the switch is greyed out and the status says so; installed, it flips.
+      const fromSource = await page(`document.getElementById("auto-update").disabled`);
+      if (fromSource) await step("automatic updates (from source)", () => true, async () => is("the update status", await page(`document.getElementById("update-status").textContent`), "Running from source: update with git."));
+      else await step("automatic updates: off", () => page(`document.getElementById("auto-update").click()`),
+        () => is("saved autoUpdate", saved().autoUpdate, false), async () => is("its switch", await checked("auto-update"), "false"));
+      await step("the close button", () => page(`document.getElementById("close").click()`), () => is("Settings showing", !win.isDestroyed() && win.isVisible(), false));
+    } catch (err) {
+      problems.push({ step: "audit", problem: String(err?.message ?? err) });
+    }
+    console.log("SETTINGS_AUDIT", JSON.stringify({ passed, problems }));
+    console.log("SETTINGS_AUDIT_DONE");
+  }, 2500);
+}
+
 const HOOKS = {
+  BUDDY_SETTINGS_AUDIT_TEST: settingsAuditTest,
   BUDDY_CONNECTIONS_TEST: connectionsTest,
   BUDDY_LANGUAGE_TEST: languageTest,
   BUDDY_LESSONS_TEST: lessonsTest,

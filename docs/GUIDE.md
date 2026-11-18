@@ -169,6 +169,8 @@ Open **Settings** from the tray, the sliders icon on the island, or the bubble. 
   detect automatically).
 - **Agents** and **Routines:** see above.
 - **Look:** Buddy's accent colour (pointer, island, chat, task windows and marks) and light or dark explainer plates.
+  Explainer appearance changes only the plates (a sample under the buttons shows how they'll look); Buddy's own
+  windows stay dark.
   **Language** sets the words in Buddy's windows: the same as Windows (the default), English or Español. Every window,
   Settings and the approval cards follow it. Buddy answers in the language you ask in, whatever this says.
 - **Shortcuts:** click one and press new keys. A shortcut another app already owns, or another Buddy action uses, is
