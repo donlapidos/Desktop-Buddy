@@ -41,15 +41,20 @@ const MAX_STEPS = 30;
 const SHOT_FRESH_MS = 5 * 60_000;
 
 /**
- * What a window's screenshot shows, for measuring spots on it: the window's bounds when captured, and the picture's
- * size in physical pixels (agent-desktop's width and height, before Buddy shrinks it to send).
- * @typedef {{ window: any, width: number, height: number, at: number }} Shot
+ * What a window's screenshot shows, for measuring spots on it: the window's bounds when captured, the picture's size
+ * in physical pixels (agent-desktop's width and height), and the size the model was given it at (`seen`, after Buddy
+ * shrinks it to send). Spots are pixels on `seen`.
+ * @typedef {{ window: any, width: number, height: number, seen: { width: number, height: number }, at: number }} Shot
  * @returns {Shot | null}
  */
-function shotFacts(/** @type {any} */ win, /** @type {any} */ data) {
+function shotFacts(/** @type {any} */ win, /** @type {any} */ data, /** @type {{ width: number, height: number } | undefined} */ seen) {
   const width = Number(data?.width), height = Number(data?.height);
-  return win?.bounds && width > 0 && height > 0 ? { window: { ...win, bounds: win.bounds }, width, height, at: Date.now() } : null;
+  return win?.bounds && width > 0 && height > 0 ? { window: { ...win, bounds: win.bounds }, width, height, seen: seen ?? { width, height }, at: Date.now() } : null;
 }
+
+/** The line that goes with a window picture, so a spot on it is counted in the pixels the model sees. */
+export const pictureSize = (/** @type {{ width: number, height: number }} */ seen) =>
+  `This picture is ${seen.width} x ${seen.height} pixels. A spot on it is x and y in these pixels, from its top left.`;
 
 // Buddy's own tools that only come with Settings › Agents › Show advanced features (the PC tools come with it too).
 export const ADVANCED_TOOLS = new Set(["create_document"]);
@@ -125,7 +130,8 @@ How you help:
   screenshot unless the tree can't show what you need.
 - To point something out when there's nothing for them to do after ("where is the Name Box?"), use one point_at.
 - Use annotate to explain a relationship on their actual screen: highlight or circle a control, add a short label,
-  connect two controls with an arrow, or show a drag path. Use refs from the latest look, never made-up coordinates.
+  connect two controls with an arrow, or show a drag path. Use refs from the latest look; never guess where a
+  control is without a ref or a spot on the screenshot.
   Its caption is spoken as the drawing appears. It only draws: the user still does the clicking and dragging.
   Drawings clear if their window or controls change. For guide_steps, each step is highlighted automatically;
   use its annotation field for a circle, arrow or drag to another named control. Never draw a step twice.
@@ -247,9 +253,23 @@ Style: you are talking in a small speech bubble. Be warm and brief: one to three
 no long lists. Speak about the UI by its visible labels, never by ref ids.`;
 
 const str = (description) => ({ type: "string", description });
+// Some models fill every optional field, with "" or 0 for the ones they don't mean (GPT sends ref "" and mark 0 beside a
+// spot). In Buddy's screen tools those blanks read as left out, not as a ref "" that matches nothing.
+const BLANKABLE = ["ref", "to_ref", "mark", "app", "window_id", "root"];
+/** @param {any} input */
+export function withoutBlanks(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return input;
+  const out = { ...input };
+  for (const k of BLANKABLE) if (k in out && (out[k] === "" || out[k] === null || (k === "mark" && !(Number(out[k]) >= 1)))) delete out[k];
+  // A spot left at 0, 0 beside a ref or mark is a blank too; on its own it's the picture's corner.
+  if (out.spot === null || (out.spot && (out.ref || out.mark) && !out.spot.x && !out.spot.y)) delete out.spot;
+  if (Array.isArray(out.items)) out.items = out.items.map(withoutBlanks);
+  return out;
+}
+
 // A place on the latest screenshot of the window, for something that has no ref (point_at, annotate). act never takes one.
-const SPOT_SCHEMA = { type: "object", description: "Where it is on the latest screenshot of this window, as fractions of the picture's width and height (0 to 1, from the top left). Only for something with no ref.",
-  properties: { x: { type: "number", minimum: 0, maximum: 1 }, y: { type: "number", minimum: 0, maximum: 1 } }, required: ["x", "y"] };
+const SPOT_SCHEMA = { type: "object", description: "Where it is on the latest screenshot of this window, in that picture's pixels from its top left (its size is given with it). Aim at the middle of the thing. Only for something with no ref.",
+  properties: { x: { type: "integer", minimum: 0 }, y: { type: "integer", minimum: 0 } }, required: ["x", "y"] };
 
 /** @type {Anthropic.Beta.BetaTool[]} */
 export const TOOLS = [
@@ -688,7 +708,7 @@ const spokenNote = (lang) =>
  *   clearAnnotations?: (ms?: number) => void,
  *   screenContext?: () => boolean,
  *   advanced?: () => boolean,
- *   prepareImage?: (image: import("./screen-context.js").ScreenImage) => import("./screen-context.js").ScreenImage,
+ *   prepareImage?: (image: import("./screen-context.js").ScreenImage) => { image: import("./screen-context.js").ScreenImage, width: number, height: number },
  *   explain?: (plate: object) => void | Promise<void>,
  *   trace?: (entry: object) => void,
  *   documentsDir?: string,
@@ -873,10 +893,20 @@ export class Brain {
     if (!res.ok || signal.aborted) return null;
     const data = res.data?.base64 ?? res.data?.png ?? res.data?.image ?? res.data?.data;
     if (typeof data !== "string" || !data) return null;
-    const image = /** @type {import("./screen-context.js").ScreenImage} */ ({ type: "image", source: { type: "base64", media_type: "image/png", data } });
-    const sent = this.ui.prepareImage ? this.ui.prepareImage(image) : image;
-    this.shotOf.set(sent, shotFacts(target, res.data));
-    return sent;
+    const { image, shot } = this.sendable(data, res.data, target);
+    if (shot) this.shotOf.set(image, shot);
+    return image;
+  }
+
+  /**
+   * A window picture as it goes to the model (shrunk by ui.prepareImage when there is one), and what it shows for
+   * spots measured on it. @param {string} data base64 PNG @param {any} facts agent-desktop's screenshot result
+   */
+  sendable(data, facts, /** @type {any} */ target) {
+    const png = /** @type {import("./screen-context.js").ScreenImage} */ ({ type: "image", source: { type: "base64", media_type: "image/png", data } });
+    const prepared = this.ui.prepareImage?.(png);
+    const image = prepared?.image ?? png;
+    return { image, shot: target ? shotFacts(target, facts, prepared ? { width: prepared.width, height: prepared.height } : undefined) : null };
   }
 
   async initialContext(target, signal) {
@@ -944,7 +974,8 @@ export class Brain {
       const { reading, image } = await this.initialContext(target, signal);
       this.timing?.add("contextMs", Date.now() - contextStart);
       const window = reading ? `\n\nTheir window when they asked (already looked; its refs work, so skip your first look):\n${reading}` : "";
-      const visual = image ? "\n\nThe attached image shows this window when they asked. Use it for visual context; use the tree's refs for controls." : "\n\nNo fresh screenshot is attached. Don't assume an older image shows the current screen.";
+      const size = image && this.shot ? ` ${pictureSize(this.shot.seen)}` : "";
+      const visual = image ? `\n\nThe attached image shows this window when they asked. Use it for visual context; use the tree's refs for controls.${size}` : "\n\nNo fresh screenshot is attached. Don't assume an older image shows the current screen.";
       const content = `${describeTarget(target)}${window}${visual}\n\n${text}${spoken ? spokenNote(lang) : ""}`;
       if (reading || image) this.contextReadings.set(content, `${describeTarget(target)}\n\n[Earlier automatic window observation omitted; use current observations and refs.]\n\n${text}${spoken ? spokenNote(lang) : ""}`);
       if (image) this.contextImages.add(image);
@@ -1389,6 +1420,7 @@ export class Brain {
     if (PC_TOOL_NAMES.has(name)) return this.pcTool(name, input);
     const service = this.advanced ? this.ui.connectors?.describe(name) : null;
     if (service) return this.serviceTool(name, input, service);
+    input = withoutBlanks(input);
     switch (name) {
       case "prepare_explainer":
         this.explainerReady = true;
@@ -1418,10 +1450,11 @@ export class Brain {
         const res = await observe(["screenshot", ...this.windowArgs(input)], { timeoutMs: 20_000, session: this.session });
         if (this.ui.screenContext?.() === false || this.abort?.signal.aborted) return "The screenshot was cancelled.";
         const data = res.ok ? res.data?.base64 ?? res.data?.png ?? res.data?.image ?? res.data?.data : null;
-        if (typeof data !== "string") return trimEnvelope(res);
+        if (!res.ok || typeof data !== "string") return trimEnvelope(res);
         // A spot can be measured on this picture only when it's of the conversation's own window, whose bounds are known.
-        this.shot = res.ok && !input.app && !input.window_id && this.target ? shotFacts(this.target, res.data) : null;
-        return [{ type: "image", source: { type: "base64", media_type: "image/png", data } }];
+        const { image, shot } = this.sendable(data, res.data, !input.app && !input.window_id ? this.target : null);
+        this.shot = shot;
+        return shot ? [image, { type: "text", text: pictureSize(shot.seen) }] : [image];
       }
       case "point_at": {
         if (input.spot != null && input.ref == null && input.mark == null) {
@@ -1580,8 +1613,9 @@ export class Brain {
   spotBounds(/** @type {any} */ spot) {
     if (capsOf(this.provider, this.ui.baseURL, this.activeModel).vision !== true) return "A spot needs a model that can see the screenshot. Point at a ref from a look instead.";
     if (!this.shot || Date.now() - this.shot.at > SHOT_FRESH_MS) return "There's no recent screenshot of this window to measure a spot on. Take a screenshot first.";
-    const rect = spotRect(spot, { window: this.shot.window.bounds, width: this.shot.width, height: this.shot.height });
-    return rect ?? "A spot is two fractions of the screenshot, x and y, each from 0 to 1.";
+    const seen = this.shot.seen ?? this.shot;
+    const rect = spotRect(spot, { window: this.shot.window.bounds, width: this.shot.width, height: this.shot.height, seen });
+    return rect ?? `A spot is x and y in pixels on the latest screenshot, which is ${seen.width} x ${seen.height}: x from 0 to ${seen.width}, y from 0 to ${seen.height}.`;
   }
 
   /** The last whole read of `win`, if it was taken within GUIDE_REUSE_MS; taken either way, so it's used once. */
@@ -1668,6 +1702,7 @@ ${text}` };
    */
   startEarly(name, input) {
     const at = Date.now();
+    input = withoutBlanks(input);
     if (name === "point_at") {
       const bounds = input.mark != null ? this.marks?.get(input.mark) : this.bounds.get(input.ref);
       if (!bounds) return;

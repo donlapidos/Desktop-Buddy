@@ -81,6 +81,63 @@ const SCREENS = {
     ].join("")),
     ask: "How do I open this game's settings?",
   },
+  // The next three have small targets, as in design and 3D apps: a near miss in pixels is a miss.
+  "design-toolbar": {
+    target: { x: 132, y: 8, width: 32, height: 32 },
+    html: page([
+      box(0, 0, W, 48, "background:#2c2c2c;border-bottom:1px solid #444"),
+      // Move, frame, rectangle, pen, text, hand, comment: icons only, as in a design tool's toolbar.
+      ...[
+        `<path d="M9 6 L9 25 L14 20 L18 28 L21 27 L17 19 L24 19 Z" fill="#eee"/>`,
+        `<path d="M11 5 V27 M21 5 V27 M5 11 H27 M5 21 H27" stroke="#eee" stroke-width="2"/>`,
+        `<rect x="7" y="8" width="18" height="16" fill="none" stroke="#eee" stroke-width="2"/>`,
+        `<path d="M16 4 L24 15 L19 27 H13 L8 15 Z" fill="none" stroke="#eee" stroke-width="2"/><circle cx="16" cy="16" r="2.5" fill="#eee"/><path d="M16 4 V13" stroke="#eee" stroke-width="1.5"/>`,
+        `<text x="9" y="24" font-size="20" font-weight="700" fill="#eee" font-family="Segoe UI">T</text>`,
+        `<path d="M10 17 V10 a2 2 0 0 1 4 0 V15 V8 a2 2 0 0 1 4 0 V15 V10 a2 2 0 0 1 4 0 V20 q0 7 -7 7 q-5 0 -8 -5 l-3 -5 a2 2 0 0 1 3 -2 Z" fill="none" stroke="#eee" stroke-width="1.6"/>`,
+        `<path d="M6 8 H26 V21 H14 L9 26 V21 H6 Z" fill="none" stroke="#eee" stroke-width="2"/>`,
+      ].map((icon, i) => box(12 + i * 40, 8, 32, 32, `border-radius:5px;${i === 0 ? "background:#0d99ff" : ""}`, `<svg width="32" height="32">${icon}</svg>`)),
+      box(0, 49, 240, H - 49, "background:#2c2c2c;border-right:1px solid #444;color:#bbb;font-size:12px;padding:12px", "Layers<br><br>▸ Home screen<br>▸ Sign in<br>▸ Settings"),
+      box(240, 49, 800, H - 49, "background:#1e1e1e"),
+      box(330, 120, 260, 520, "background:#fff;border-radius:6px"),
+      box(650, 120, 260, 520, "background:#fff;border-radius:6px"),
+      box(1040, 49, 240, H - 49, "background:#2c2c2c;border-left:1px solid #444;color:#bbb;font-size:12px;padding:12px", "Design<br><br>W 260 &nbsp; H 520<br>Fill #FFFFFF"),
+    ].join(""), "#1e1e1e"),
+    ask: "In this design app, which button is the pen tool, for drawing my own shapes?",
+  },
+  "3d-viewport": {
+    target: { x: 1206, y: 222, width: 28, height: 28 },
+    html: page([
+      box(0, 0, W, H, "background:#393939;background-image:linear-gradient(#444 1px,transparent 1px),linear-gradient(90deg,#444 1px,transparent 1px);background-size:64px 64px"),
+      box(0, 0, W, 30, "background:#2b2b2b;color:#ccc;font-size:12px;padding:7px 12px", "Object Mode &nbsp; View &nbsp; Select &nbsp; Add &nbsp; Object"),
+      // A cube in the middle of the scene.
+      box(520, 300, 240, 220, "", `<svg width="240" height="220"><path d="M40 60 L140 20 L220 60 L120 100 Z" fill="#9a9a9a"/><path d="M40 60 L120 100 L120 210 L40 170 Z" fill="#7a7a7a"/><path d="M120 100 L220 60 L220 170 L120 210 Z" fill="#5f5f5f"/></svg>`),
+      // The navigation gizmo (axes) and, under it, zoom, move the view, look through the camera, switch perspective.
+      box(1150, 44, 110, 90, "", `<svg width="110" height="90"><line x1="55" y1="45" x2="95" y2="55" stroke="#e44" stroke-width="3"/><circle cx="95" cy="55" r="9" fill="#e44"/><line x1="55" y1="45" x2="75" y2="15" stroke="#7c4" stroke-width="3"/><circle cx="75" cy="15" r="9" fill="#7c4"/><line x1="55" y1="45" x2="55" y2="5" stroke="#48f" stroke-width="3"/><circle cx="55" cy="8" r="8" fill="#48f"/></svg>`),
+      ...[
+        `<circle cx="12" cy="12" r="6" fill="none" stroke="#ddd" stroke-width="2"/><path d="M16 16 L22 22" stroke="#ddd" stroke-width="2.5"/>`,
+        `<path d="M8 13 V8 a1.5 1.5 0 0 1 3 0 V12 V6 a1.5 1.5 0 0 1 3 0 V12 V8 a1.5 1.5 0 0 1 3 0 V16 q0 6 -6 6 q-4 0 -6 -4 l-2 -4 a1.5 1.5 0 0 1 2.5 -1.5 Z" fill="none" stroke="#ddd" stroke-width="1.5"/>`,
+        `<rect x="4" y="9" width="14" height="11" rx="2" fill="#ddd"/><path d="M18 12 L24 8 V21 L18 17 Z" fill="#ddd"/><circle cx="8" cy="6" r="3" fill="none" stroke="#ddd" stroke-width="1.5"/><circle cx="14" cy="6" r="3" fill="none" stroke="#ddd" stroke-width="1.5"/>`,
+        `<path d="M4 6 H24 V22 H4 Z M4 14 H24 M14 6 V22" fill="none" stroke="#ddd" stroke-width="1.5"/>`,
+      ].map((icon, i) => box(1206, 150 + i * 36, 28, 28, "border-radius:50%;background:rgba(80,80,80,.85)", `<svg width="28" height="28">${icon}</svg>`)),
+    ].join(""), "#393939"),
+    ask: "How do I look through the camera in this 3D app?",
+  },
+  "layers-panel": {
+    target: { x: 970, y: 270, width: 24, height: 24 },
+    html: page([
+      box(0, 0, 950, H, "background:#535353"),
+      box(150, 100, 650, 520, "background:linear-gradient(160deg,#88b4d8,#e8c79a);box-shadow:0 0 0 1px #333", `<div style="position:absolute;left:220px;top:200px;font:700 54px 'Segoe UI';color:#fff;text-shadow:0 3px 6px #0007">Summer</div>`),
+      box(950, 0, 330, H, "background:#3c3c3c;border-left:1px solid #222"),
+      box(950, 80, 330, 30, "color:#eee;font-size:13px;padding:7px 14px;border-bottom:1px solid #222", "Layers"),
+      // Each row: the eye that shows or hides the layer, a thumbnail, its name.
+      ...["Title text", "Sticker", "Shadow", "Photo", "Background"].map((name, i) =>
+        box(950, 120 + i * 36, 330, 36, `border-bottom:1px solid #2e2e2e;${i === 3 ? "background:#4a5a70" : ""}`) +
+        box(970, 126 + i * 36, 24, 24, "", `<svg width="24" height="24"><path d="M2 12 Q12 3 22 12 Q12 21 2 12 Z" fill="none" stroke="#ddd" stroke-width="1.6"/><circle cx="12" cy="12" r="3.5" fill="#ddd"/></svg>`) +
+        box(1004, 124 + i * 36, 34, 28, `background:${["#fff", "#f6a", "#555", "#9bc", "#eee"][i]};border:1px solid #222`) +
+        box(1050, 130 + i * 36, 220, 20, "color:#ddd;font-size:13px", name)),
+    ].join(""), "#535353"),
+    ask: "How do I hide the Background layer in this photo editor?",
+  },
 };
 
 app.disableHardwareAcceleration();

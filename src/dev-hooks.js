@@ -28,7 +28,7 @@ import { learnCaps } from "./providers.js";
  *   changeSettings: (patch: object) => any, settingsState: () => any, settingsFile: () => string, runRoutine: Function,
  *   typeText: (text: string) => Promise<void>, saveApiKey: Function, loadApiKey: Function, providerURL: Function,
  *   prepareScreenImage: Function, timingLog: () => string, documentsDir: () => string, startBrain: Function, spendState: Function,
- *   pressHotkey: (name: any) => void, sendVoiceOffer: () => void, useKeyHook: (hook: import("./hold-key.js").KeyHook) => void,
+ *   pressHotkey: (name: any) => void, sendVoiceOffer: () => void, startupVoiceFetch: () => void, useKeyHook: (hook: import("./hold-key.js").KeyHook) => void,
  *   connectors: ReturnType<typeof import("./connectors.js").createConnectors> | null, offerConnection: (win: any) => Promise<void>,
  *   lessons: ReturnType<typeof import("./lessons.js").createLessons> | null, playLesson: (id: string, opts?: { window?: any }) => Promise<any>,
  * }} DevKit
@@ -512,9 +512,10 @@ function screenContextTest(kit) {
       let largeImageBounded = false;
       if (sentImage) {
         const large = nativeImage.createFromBuffer(Buffer.from(sentImage.source.data, "base64")).resize({ width: 3200, height: 2400 });
+        // Sent at a size no provider shrinks again (geometry.js modelPictureSize), and Buddy knows that size.
         const compressed = prepareScreenImage({ source: { data: large.toPNG().toString("base64") } });
-        const size = nativeImage.createFromBuffer(Buffer.from(compressed.source.data, "base64")).getSize();
-        largeImageBounded = size.width === 1600 && size.height === 1200 && compressed.source.media_type === "image/jpeg";
+        const size = nativeImage.createFromBuffer(Buffer.from(compressed.image.source.data, "base64")).getSize();
+        largeImageBounded = size.width === 1024 && size.height === 768 && compressed.width === 1024 && compressed.height === 768 && compressed.image.source.media_type === "image/jpeg";
       }
       const sight = sentImage ? await pointBySight(kit, target, sentImage, js) : { error: "no screenshot was sent" };
       settingsWindow.open("claude");
@@ -566,7 +567,8 @@ async function pointBySight(kit, target, sentImage, js) {
     }
   }
   if (!box) return { error: "the blue bar isn't in the picture Buddy sent" };
-  const spot = { x: (box.x0 + box.x1) / 2 / width, y: (box.y0 + box.y1) / 2 / height };
+  // Pixels on the picture as sent, as a model counts them.
+  const spot = { x: Math.round((box.x0 + box.x1) / 2), y: Math.round((box.y0 + box.y1) / 2) };
   // Where the bar really is on screen, from the window's own layout (the bars are unnamed groups a look leaves out).
   const layout = await observe(["snapshot", "--window-id", target.id, "--include-bounds", "--max-depth", "30"], { timeoutMs: 10_000 });
   const bars = [];
@@ -592,7 +594,7 @@ async function pointBySight(kit, target, sentImage, js) {
     return shown;
   };
   try {
-    const reply = (await js(`window.buddy.ask("Point at the blue bar [spot ${spot.x.toFixed(4)},${spot.y.toFixed(4)}]", {})`)).reply;
+    const reply = (await js(`window.buddy.ask("Point at the blue bar [spot ${spot.x},${spot.y}]", {})`)).reply;
     if (!guessed) return { error: `Buddy didn't point by sight: ${reply}` };
     const c = { x: guessed.bounds.x + guessed.bounds.width / 2, y: guessed.bounds.y + guessed.bounds.height / 2 };
     const inside = c.x >= bar.x && c.x <= bar.x + bar.width && c.y >= bar.y && c.y <= bar.y + bar.height;
@@ -790,6 +792,8 @@ function welcomeTest(kit) {
     await until(`!document.getElementById("voice-offer").hidden`, 3_000);
     await js(`document.getElementById("voice-yes").click()`);
     await until(`/Talking is ready/.test(document.getElementById("voice-offer-text").textContent)`, 5_000);
+    // On a fast PC the start-up fetch (4 s after start) comes after the yes, as it did on CI: it mustn't fetch again.
+    kit.startupVoiceFetch();
     r.voiceAccepted = { text: await offerNow(), setting: kit.settings.voiceSetup, fetches, buttons: await js(`document.getElementById("voice-yes").hidden && document.getElementById("voice-no").hidden`) };
     await shot("voice-ready");
     const answered = await js(`window.buddy.ask("Say hello.", {})`);
@@ -1304,7 +1308,9 @@ function settingsAuditTest(kit) {
       if (fromSource) await step("automatic updates (from source)", () => true, async () => is("the update status", await page(`document.getElementById("update-status").textContent`), "Running from source: update with git."));
       else await step("automatic updates: off", () => page(`document.getElementById("auto-update").click()`),
         () => is("saved autoUpdate", saved().autoUpdate, false), async () => is("its switch", await checked("auto-update"), "false"));
-      await step("the close button", () => page(`document.getElementById("close").click()`), () => is("Settings showing", !win.isDestroyed() && win.isVisible(), false));
+      // Closing can take the page away before the click's own call returns: that is the button working, not a failure.
+      await step("the close button", () => page(`document.getElementById("close").click()`).catch((e) => { if (!/disposed|destroyed/i.test(String(e?.message))) throw e; }),
+        () => is("Settings showing", !win.isDestroyed() && win.isVisible(), false));
     } catch (err) {
       problems.push({ step: "audit", problem: String(err?.message ?? err) });
     }

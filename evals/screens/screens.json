@@ -53,5 +53,38 @@
    "height": 64
   },
   "ask": "How do I open this game's settings?"
+ },
+ "design-toolbar": {
+  "width": 1280,
+  "height": 800,
+  "target": {
+   "x": 132,
+   "y": 8,
+   "width": 32,
+   "height": 32
+  },
+  "ask": "In this design app, which button is the pen tool, for drawing my own shapes?"
+ },
+ "3d-viewport": {
+  "width": 1280,
+  "height": 800,
+  "target": {
+   "x": 1206,
+   "y": 222,
+   "width": 28,
+   "height": 28
+  },
+  "ask": "How do I look through the camera in this 3D app?"
+ },
+ "layers-panel": {
+  "width": 1280,
+  "height": 800,
+  "target": {
+   "x": 970,
+   "y": 270,
+   "width": 24,
+   "height": 24
+  },
+  "ask": "How do I hide the Background layer in this photo editor?"
  }
 }

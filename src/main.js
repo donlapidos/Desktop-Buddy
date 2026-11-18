@@ -21,7 +21,7 @@ import { islandView } from "./island-state.js";
 import { dictationPaste, returnFocus } from "./approvals.js";
 import { elementAt, foregroundWindow, listWindows, perform, resolveBinary, windowAt } from "./desktop.js";
 import { createTasks } from "./tasks.js";
-import { asDipPoint, asDipRect, asPhysicalPoint, asPhysicalRect } from "./geometry.js";
+import { asDipPoint, asDipRect, asPhysicalPoint, asPhysicalRect, modelPictureSize } from "./geometry.js";
 import { BUSY, canMove } from "./modes.js";
 import {
   ACCENTS, DEFAULTS, EFFORTS, HOTKEY_NAMES, MODELS, SPEED, VOICES, load as loadSettings, normalize as normalizeSettings,
@@ -1028,6 +1028,8 @@ onFrom(fromBubble, "tour", (_e, event) => {
 let voiceFetch = null;
 /** @type {null | "ready" | "failed"} how the offered download ended, shown for a moment */
 let voiceFetched = null;
+// Whether "Set up talking" started the download: the start-up fetch then has nothing left to do.
+let voiceOfferFetched = false;
 
 /** What the bubble's voice offer shows, or null for nothing. */
 function voiceOfferNow() {
@@ -1061,6 +1063,7 @@ onFrom(fromBubble, "voice-offer", async (_e, answer) => {
   }
   if (answer !== "yes") return;
   changeSettings({ voiceSetup: "yes" });
+  voiceOfferFetched = true;
   voiceFetch = { words: "Getting my voice ready…" };
   sendVoiceOffer();
   try {
@@ -1415,11 +1418,14 @@ function startVoice() {
     onSound: () => questionClock?.audio(),
     trace,
   });
-  // The models are fetched in the background only when the user said yes (or an older profile, which always did);
-  // a new profile is asked once setup is done (voiceOfferNow). Already on this PC: prepare only tidies old caches.
-  setTimeout(() => {
-    if (settings.voiceSetup === "yes" || voice.installed()) voice.prepare();
-  }, 4000);
+  setTimeout(startupVoiceFetch, 4000);
+}
+
+// The models are fetched in the background only when the user said yes (or an older profile, which always did);
+// a new profile is asked once setup is done (voiceOfferNow). Already on this PC: prepare only tidies old caches.
+// Someone who said yes to the offer before this ran (4 s after start) has started the fetch already: not twice.
+function startupVoiceFetch() {
+  if (voice && !voiceOfferFetched && (settings.voiceSetup === "yes" || voice.installed())) voice.prepare();
 }
 
 // Buddy keeps an eye on its own CPU. Normal use measures at 2-3% of one core (an approval waiting, the pointer
@@ -1496,14 +1502,16 @@ function bubbleExplain(plate) {
 }
 
 // What every Brain is made with for the current provider: its key (empty if it needs none) and where it is.
-// Resize in memory before sending: detailed enough to read a window, without uploading a full-resolution 4K PNG.
+// Resize in memory before sending, to the size the model will see it at (geometry.js modelPictureSize): detailed
+// enough to read a window, without uploading a full-resolution 4K PNG. The size goes with it, for spots measured on it.
 function prepareScreenImage(image) {
   const original = nativeImage.createFromBuffer(Buffer.from(image.source.data, "base64"));
   if (original.isEmpty()) throw new Error("Couldn't read the window picture.");
   const { width, height } = original.getSize();
-  const scale = Math.min(1, 1600 / Math.max(width, height));
-  const resized = scale < 1 ? original.resize({ width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)), quality: "good" }) : original;
-  return /** @type {import("./screen-context.js").ScreenImage} */ ({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: resized.toJPEG(82).toString("base64") } });
+  const size = modelPictureSize(width, height);
+  const resized = size.width < width ? original.resize({ ...size, quality: "good" }) : original;
+  const sent = /** @type {import("./screen-context.js").ScreenImage} */ ({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: resized.toJPEG(82).toString("base64") } });
+  return { image: sent, ...resized.getSize() };
 }
 const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, commands: () => settings.commands, readFolders, connectors: connectorsUI,
   screenContext: () => settings.screenContext, advanced: () => settings.advanced, prepareImage: prepareScreenImage, ...spendUI() });
@@ -1992,7 +2000,7 @@ const devKit = () => ({
   here, trace, point, guidePoint, confirm, summon, toggle, ownPids, startMarking, cancelMarking, stopMarkMode, enter, currentMode, grabDisplay,
   toLocalRect, annotationLayer, showAnnotations, releaseLater, openExplainer, changeSettings, settingsState, settingsFile, settingsWindow, runRoutine,
   typeText, saveApiKey, loadApiKey, providerURL, prepareScreenImage, timingLog, documentsDir, startBrain, spendState,
-  bubble, island, tasks, voice, updates, activity, pressHotkey, sendVoiceOffer,
+  bubble, island, tasks, voice, updates, activity, pressHotkey, sendVoiceOffer, startupVoiceFetch,
   useKeyHook: (/** @type {import("./hold-key.js").KeyHook} */ hook) => { keyHook = hook; },
   get settings() { return settings; },
   get lessons() { return lessons; },
