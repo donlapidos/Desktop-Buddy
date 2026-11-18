@@ -605,7 +605,9 @@ export async function runPcTool(name, input, ctx) {
       }
       if (u.protocol !== "https:" && u.protocol !== "http:") return "Only http and https pages can be read.";
       if (privateHost(u.hostname)) return "Not allowed: addresses on this PC or the local network can't be read.";
-      if (!(await ctx.ask(tr("Read a page on {site}", { site: u.hostname }), u.toString().slice(0, 300), `web:${u.hostname}`))) return "The user declined.";
+      // Every page asks, with its whole address on the card: an address can carry what Buddy has read (file names,
+      // an email) to whoever runs the site, so "Allow for this task" on one page mustn't let a later one out unseen.
+      if (!(await ctx.ask(tr("Read a page on {site}", { site: u.hostname }), u.toString().slice(0, 300)))) return "The user declined.";
       ctx.status(`Reading ${u.hostname}…`);
       ctx.record?.({ kind: "read", summary: `Read a page on ${u.hostname}` });
       try {

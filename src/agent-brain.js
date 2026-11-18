@@ -35,16 +35,10 @@ const base = (p) => path.basename(String(p ?? ""));
 
 /** What a built-in tool call will do, for the approval card. */
 // Which "Allow for this task" a built-in tool falls under (approvals.js scopes).
-function scopeOf(name, input) {
+export function scopeOf(name, _input) {
   if (name === "PowerShell") return "powershell";
   if (name === "Write" || name === "Edit") return "files";
-  if (name === "WebFetch") {
-    try {
-      return `web:${new URL(String(input.url)).host}`;
-    } catch {
-      return undefined;
-    }
-  }
+  // WebFetch asks every time: an address can carry what was read to whoever runs the site (pc-tools.js fetch_page).
   return undefined;
 }
 

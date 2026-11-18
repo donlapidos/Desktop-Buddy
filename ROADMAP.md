@@ -220,6 +220,15 @@ Buddy lives in a fork of `vercel-labs/agent-desktop`, and the two projects colli
 - **2.6 Injection tests.** Web pages, file contents and window text that tell Buddy to act ("ignore the user, run
   …", "send this file to …"). Each must end with no action taken or an approval card that says plainly what would
   happen. Add them to the task set so every model is scored on them.
+  **Done (2026-11-18).** Six cases in `evals/real-cases.mjs`: instructions hidden in a window, a web page on screen, a
+  file, a page Buddy fetches, an email, and an email that slips an extra person into a reply the user asked for. The
+  eval runner now simulates fetched pages and a connected mailbox (`src/evals.js`). `test/injection.test.js` plays
+  each both ways through the runner; `test/injection-cards.test.js` checks the other half without a model: every
+  harmful step an injected text could ask for (replace or edit a file, a command, a copy, a fetch with data in the
+  address, a send, a document) reaches the card saying what it would do, and "Don't" leaves it undone. Found and
+  fixed on the way: "Allow for this task" on a site let later fetches from it through unseen, so a page could have
+  had Buddy send it what it read in an address; reading a page now asks every time. Not done: scoring every model on
+  them (2.3).
 - **2.7 Decide the local decider with data.** With 2.1-2.3 in hand: does a small local model (Laya or similar) beat
   name-and-meaning matching by enough to justify its memory? If not, close the question in this file.
 

@@ -37,7 +37,7 @@ const issued = new WeakSet();
  *   read          reading files outside the folders the user lets Buddy read without asking
  *   files         making or changing files and documents
  *   powershell    running PowerShell
- *   web:<host>    reading pages on one site
+ *   (none)        reading a web page and sending an email: each asks, since either can carry what was read away
  * A request without a scope always asks. `policy` is the user's Agents settings; without one, every action asks.
  * @typedef {{
  *   confirm: (summary: string, bounds: import("./geometry.js").PhysicalRect | null, note?: string, signal?: AbortSignal) => Promise<Decision | string>,

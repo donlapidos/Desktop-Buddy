@@ -113,7 +113,8 @@ VS Code and more).
   Word. One approval, no typing into Word.
 - **Do mode:** say "do it for me" and Buddy operates the app. It asks before every action
   (Allow, Allow for this task, Don't), and it points at the target while it asks. "Allow for this task" covers more of
-  the same kind only: screen actions, file changes, PowerShell, and each website, separately.
+  the same kind only: screen actions, file changes and PowerShell, separately. Reading a web page and sending an
+  email always ask.
 - **Beyond the screen:** Buddy can list, read, write and edit your files and read web pages, with every model, when
   that's the quickest way to get something done (making a list or a budget sheet, looking something up). It works in
   **Documents › Buddy** unless you name another place, and a file it makes opens when the answer is done. It reads
@@ -208,7 +209,7 @@ Buddy has no server and no account of its own. What leaves your PC depends on ho
 - **Your AI app** (Claude Code, Codex, …): that app does the thinking under its own terms; Buddy only gives it the
   window's text, screenshots and pointing when it asks. Buddy's look-and-point tools run without a prompt there; acting
   still asks on Buddy's card.
-- **Web pages** Buddy reads are fetched from your PC, after you allow each site. Addresses on your PC or network are
+- **Web pages** Buddy reads are fetched from your PC, after you allow each one. Addresses on your PC or network are
   never fetched.
 - **Voice** runs on your PC; the models are downloaded once from pinned commits and checked.
 - **Updates** are checked against this repository's GitHub releases.
