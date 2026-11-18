@@ -34,8 +34,12 @@ function showTip(next) {
   if (!next) return;
   $("tip-text").textContent = next.text;
   $("tip-do").textContent = next.action;
+  // The first tip can show Buddy at work on their own window; skipping is then the quieter choice.
+  $("tip-show").hidden = !next.show;
+  $("tip-do").classList.toggle("quiet", !!next.show);
 }
 $("tip-do").addEventListener("click", () => tip && window.buddy.tour(tip.event));
+$("tip-show").addEventListener("click", () => { if (!busy) askBuddy(t("Show me what you can do"), { spoken: false, showOff: true }); });
 window.buddy.onTour((next) => showTip(next));
 
 // The one-time voice download, offered after setup: an offer, its progress, then how it went (or nothing).
@@ -299,12 +303,17 @@ $form().addEventListener("submit", async (e) => {
     show(t("Got it. Ask me anything about what's on your screen."));
     return;
   }
+  await askBuddy(text, { spoken: wasSpoken });
+});
+
+/** Asks Buddy and shows the answer: a typed or spoken question, or the tour's "Show me". */
+async function askBuddy(text, opts) {
   setBusy(true);
   const sequence = ++askSequence;
   $("spend").textContent = "";
-  show(wasSpoken ? `“${text}”` : t("Thinking…"), true);
+  show(opts.spoken ? `“${text}”` : t("Thinking…"), true);
   offerLesson(false);
-  const { reply, spend, superseded, lesson } = await window.buddy.ask(text, { spoken: wasSpoken });
+  const { reply, spend, superseded, lesson } = await window.buddy.ask(text, opts);
   if (sequence !== askSequence) return;
   setBusy(false);
   if (!superseded) show(reply);
@@ -312,7 +321,7 @@ $form().addEventListener("submit", async (e) => {
   $("spend").textContent = spend ?? "";
   offerLesson(!superseded && !!lesson);
   $("confirm").classList.remove("on");
-});
+}
 
 $("stop").addEventListener("click", () => window.buddy.cancel());
 $("totask").addEventListener("click", () => window.buddy.newTask());

@@ -47,8 +47,14 @@ function scriptedModel() {
 
 /** An Ollama-style server on "this PC": one model that can use tools, which says hello. */
 function scriptedOllama() {
+  let showMe = 0; // questions asked with the tour's "Show me" note (brain.js SHOW_OFF)
   const server = http.createServer(async (req, res) => {
-    for await (const _ of req);
+    let body = "";
+    for await (const c of req) body += c;
+    // The newest question only: later requests carry the conversation so far.
+    let newest = null;
+    try { newest = (JSON.parse(body || "{}").messages ?? []).filter((m) => m.role === "user").at(-1); } catch {}
+    if (JSON.stringify(newest?.content ?? "").includes('pressed \\"Show me\\" on your first tip')) showMe++;
     if (req.url?.endsWith("/models")) return res.end(JSON.stringify({ data: [{ id: "scripted-local", object: "model" }] }));
     if (req.url === "/api/show") return res.end(JSON.stringify({ capabilities: ["completion", "tools"] }));
     res.setHeader("content-type", "text/event-stream");
@@ -56,7 +62,7 @@ function scriptedOllama() {
     const usage = { choices: [], usage: { prompt_tokens: 1500, completion_tokens: 20 } };
     res.end(`data: ${JSON.stringify(said)}\n\ndata: ${JSON.stringify(usage)}\n\ndata: [DONE]\n\n`);
   });
-  return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, close: () => server.close() })));
+  return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, showMe: () => showMe, close: () => server.close() })));
 }
 
 /** Asks to search the test service's documents, then says what it found: for the connections check. */
@@ -352,9 +358,14 @@ const CHECKS = {
         (!r.localReady?.brain || r.localReady.provider !== "ollama") && `the model on this PC wasn't set up: ${JSON.stringify(r.localReady)}`,
         r.localReply !== "Hello from a model on this PC." && `the model on this PC answered ${JSON.stringify(r.localReply)}`,
         r.localSpend !== "1.5k tokens · free, on this PC" && `the answer's cost line said ${JSON.stringify(r.localSpend)}`,
-        !/1\.5k tokens over 1 model call/.test(r.spendSettings?.month ?? "") && `Settings' month said ${JSON.stringify(r.spendSettings?.month)}`,
+        // Show me and one question: two model calls of 1.5k tokens each.
+        !/3k tokens over 2 model calls/.test(r.spendSettings?.month ?? "") && `Settings' month said ${JSON.stringify(r.spendSettings?.month)}`,
         !/runs on this PC, so it costs nothing/.test(r.spendSettings?.note ?? "") && `Settings' spending note said ${JSON.stringify(r.spendSettings?.note)}`,
         !/^Try it: ask me how to do something in .*Skip tour$/s.test(r.tipAfterSetup ?? "") && `after setup, the tour said ${JSON.stringify(r.tipAfterSetup)}`,
+        r.showMeButton !== "Show me" && `the first tip's Show me button was ${JSON.stringify(r.showMeButton)}`,
+        model.showMe() !== 1 && `Show me sent ${model.showMe()} question(s) with its note, not 1`,
+        r.showMeReply !== "Hello from a model on this PC." && `Show me's answer was ${JSON.stringify(r.showMeReply)}`,
+        !/draw around/.test(r.showMeTip ?? "") && `after Show me, the tour said ${JSON.stringify(r.showMeTip)}`,
         r.voiceSetupAtStart !== "ask" && `a new profile's voice download was ${JSON.stringify(r.voiceSetupAtStart)}, not offered`,
         !/275 MB/.test(r.voiceOffer ?? "") && `after setup, the voice offer said ${JSON.stringify(r.voiceOffer)}`,
         (!r.voiceDeclined?.hidden || r.voiceDeclined.setting !== "no" || r.voiceDeclined.fetches !== 0) && `"Not now" didn't leave the voice alone: ${JSON.stringify(r.voiceDeclined)}`,
