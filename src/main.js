@@ -1028,6 +1028,8 @@ onFrom(fromBubble, "tour", (_e, event) => {
 let voiceFetch = null;
 /** @type {null | "ready" | "failed"} how the offered download ended, shown for a moment */
 let voiceFetched = null;
+// Whether "Set up talking" started the download: the start-up fetch then has nothing left to do.
+let voiceOfferFetched = false;
 
 /** What the bubble's voice offer shows, or null for nothing. */
 function voiceOfferNow() {
@@ -1061,6 +1063,7 @@ onFrom(fromBubble, "voice-offer", async (_e, answer) => {
   }
   if (answer !== "yes") return;
   changeSettings({ voiceSetup: "yes" });
+  voiceOfferFetched = true;
   voiceFetch = { words: "Getting my voice ready…" };
   sendVoiceOffer();
   try {
@@ -1415,11 +1418,14 @@ function startVoice() {
     onSound: () => questionClock?.audio(),
     trace,
   });
-  // The models are fetched in the background only when the user said yes (or an older profile, which always did);
-  // a new profile is asked once setup is done (voiceOfferNow). Already on this PC: prepare only tidies old caches.
-  setTimeout(() => {
-    if (settings.voiceSetup === "yes" || voice.installed()) voice.prepare();
-  }, 4000);
+  setTimeout(startupVoiceFetch, 4000);
+}
+
+// The models are fetched in the background only when the user said yes (or an older profile, which always did);
+// a new profile is asked once setup is done (voiceOfferNow). Already on this PC: prepare only tidies old caches.
+// Someone who said yes to the offer before this ran (4 s after start) has started the fetch already: not twice.
+function startupVoiceFetch() {
+  if (voice && !voiceOfferFetched && (settings.voiceSetup === "yes" || voice.installed())) voice.prepare();
 }
 
 // Buddy keeps an eye on its own CPU. Normal use measures at 2-3% of one core (an approval waiting, the pointer
@@ -1994,7 +2000,7 @@ const devKit = () => ({
   here, trace, point, guidePoint, confirm, summon, toggle, ownPids, startMarking, cancelMarking, stopMarkMode, enter, currentMode, grabDisplay,
   toLocalRect, annotationLayer, showAnnotations, releaseLater, openExplainer, changeSettings, settingsState, settingsFile, settingsWindow, runRoutine,
   typeText, saveApiKey, loadApiKey, providerURL, prepareScreenImage, timingLog, documentsDir, startBrain, spendState,
-  bubble, island, tasks, voice, updates, activity, pressHotkey, sendVoiceOffer,
+  bubble, island, tasks, voice, updates, activity, pressHotkey, sendVoiceOffer, startupVoiceFetch,
   useKeyHook: (/** @type {import("./hold-key.js").KeyHook} */ hook) => { keyHook = hook; },
   get settings() { return settings; },
   get lessons() { return lessons; },

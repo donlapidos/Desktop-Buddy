@@ -28,7 +28,7 @@ import { learnCaps } from "./providers.js";
  *   changeSettings: (patch: object) => any, settingsState: () => any, settingsFile: () => string, runRoutine: Function,
  *   typeText: (text: string) => Promise<void>, saveApiKey: Function, loadApiKey: Function, providerURL: Function,
  *   prepareScreenImage: Function, timingLog: () => string, documentsDir: () => string, startBrain: Function, spendState: Function,
- *   pressHotkey: (name: any) => void, sendVoiceOffer: () => void, useKeyHook: (hook: import("./hold-key.js").KeyHook) => void,
+ *   pressHotkey: (name: any) => void, sendVoiceOffer: () => void, startupVoiceFetch: () => void, useKeyHook: (hook: import("./hold-key.js").KeyHook) => void,
  *   connectors: ReturnType<typeof import("./connectors.js").createConnectors> | null, offerConnection: (win: any) => Promise<void>,
  *   lessons: ReturnType<typeof import("./lessons.js").createLessons> | null, playLesson: (id: string, opts?: { window?: any }) => Promise<any>,
  * }} DevKit
@@ -792,6 +792,8 @@ function welcomeTest(kit) {
     await until(`!document.getElementById("voice-offer").hidden`, 3_000);
     await js(`document.getElementById("voice-yes").click()`);
     await until(`/Talking is ready/.test(document.getElementById("voice-offer-text").textContent)`, 5_000);
+    // On a fast PC the start-up fetch (4 s after start) comes after the yes, as it did on CI: it mustn't fetch again.
+    kit.startupVoiceFetch();
     r.voiceAccepted = { text: await offerNow(), setting: kit.settings.voiceSetup, fetches, buttons: await js(`document.getElementById("voice-yes").hidden && document.getElementById("voice-no").hidden`) };
     await shot("voice-ready");
     const answered = await js(`window.buddy.ask("Say hello.", {})`);
