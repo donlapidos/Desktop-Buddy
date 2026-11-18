@@ -566,5 +566,15 @@
  "The originals stay as they are.": "Los originales se quedan como están.",
  "Copying files…": "Copiando archivos…",
  "Copied {file} into {folder}": "Copió {file} en {folder}",
- "Copied {n} files into {folder}": "Copió {n} archivos en {folder}"
+ "Copied {n} files into {folder}": "Copió {n} archivos en {folder}",
+ "Look through your email": "Revisar tu correo",
+ "Read an email": "Leer un correo",
+ "Save an email as a draft": "Guardar un correo como borrador",
+ "Send an email": "Enviar un correo",
+ "Send a draft": "Enviar un borrador",
+ "read your email, and write and send it": "leer tu correo, y escribirlo y enviarlo",
+ "Signing in took too long. Try again.": "Iniciar sesión tardó demasiado. Inténtalo de nuevo.",
+ "You didn't allow it, so Buddy isn't connected.": "No lo permitiste, así que Buddy no está conectado.",
+ "Your organisation needs to approve Buddy before it can use your account. Ask your IT admin to allow Desktop Buddy.": "Tu organización tiene que aprobar a Buddy antes de que pueda usar tu cuenta. Pide a tu administrador de TI que permita Desktop Buddy.",
+ "Microsoft didn't accept that account for Buddy. Try your other Microsoft account, or ask your IT admin.": "Microsoft no aceptó esa cuenta para Buddy. Prueba con tu otra cuenta de Microsoft o pregunta a tu administrador de TI."
 }

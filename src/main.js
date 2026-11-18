@@ -235,6 +235,7 @@ const connectorsUI = {
   tools: () => connectors?.tools() ?? [],
   describe: (/** @type {string} */ name) => connectors?.describe(name) ?? null,
   call: (/** @type {string} */ name, /** @type {any} */ input, /** @type {AbortSignal | undefined} */ signal) => connectors?.call(name, input, signal) ?? Promise.resolve("That service isn't connected."),
+  note: (/** @type {string} */ name, /** @type {any} */ input) => connectors?.note(name, input) ?? Promise.resolve(""),
 };
 // End-to-end checks have no person to sign in: their stand-in sign-in page on this PC is followed straight through.
 async function openSignIn(/** @type {string} */ url) {
@@ -267,7 +268,7 @@ async function connectService(/** @type {string} */ id) {
   const error = await connectors.connect(id);
   notice(error ? t("Couldn't connect {service}.", { service: t(c.label) }) : t("Connected to {service}.", { service: t(c.label) }));
   settingsWindow?.refresh();
-  return error;
+  return error ? t(error) : null;
 }
 
 

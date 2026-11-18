@@ -325,6 +325,15 @@ Only after Phases 0-3; pick by what users ask for.
   checked by state. Each tool call asks on the card, per service; results are information, keys hidden. Tested
   against a stand-in service with real OAuth (`scripts/samples/test-service.mjs`) in unit tests and the
   `connections` e2e check. Not done: a box to add any server by address (the owner chose not to, for now).
+  **Outlook (2026-11-18):** `src/outlook.js`, a native connection. Microsoft's sign-in has no self-registration and its
+  own AI server (Work IQ) needs an admin and a Copilot licence, so Buddy brings its own tools over Microsoft Graph
+  (look through, read, draft, send, send a draft) and signs in with its own app registration: a public client,
+  redirect `http://localhost/callback` (Microsoft ignores the port for localhost), PKCE S256, refresh tokens. Sends
+  ask every time (`once`), with who and what on the card; at most 20 recipients. Waiting on the owner: the app
+  registration's client id goes in `OUTLOOK_CLIENT_ID`; until then Outlook isn't offered. Before a public release:
+  publisher verification with Microsoft, or organisations that only allow verified apps will refuse it. Gmail
+  (Google's server is a gated preview), Figma (its server only takes approved apps) and Blender (a local add-on,
+  no sign-in) were looked at the same day.
 - **5.4 Languages:** the interface in the user's language (replies already are).
   **Done (2026-11-18).** `src/i18n.js` and `src/ui/strings.js`: English text as the key, `src/locales/es.json`
   for Spanish (148 strings, written by Claude: have a native speaker read it before release). Settings › Look ›

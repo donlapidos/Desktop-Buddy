@@ -100,6 +100,10 @@ VS Code and more).
   and Buddy asks on its card before every action in a service ("Notion: Search"); **Allow for this task** covers that
   service only. What a service sends back is treated as information, never as instructions. **Disconnect** forgets
   the sign-in.
+  **Outlook** (once Buddy is registered with Microsoft; work or personal accounts): Buddy can look through and read
+  your email, save drafts, and send. Sending always asks, and the card says who it goes to and what it says;
+  **Allow for this task** never covers a send. If your organisation hasn't approved Buddy, signing in says so: ask
+  your IT admin to allow Desktop Buddy.
 - **Lessons:** when Buddy has walked you all the way through something, **Save as a lesson** under its answer keeps
   the steps. Play one from the tray (**Play a lesson**) or **Settings › Lessons**, in the app it's for: Buddy points at
   each step and follows you, as it did the first time, without asking the AI, so it costs nothing and needs no key.

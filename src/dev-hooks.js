@@ -1123,6 +1123,44 @@ function connectionsTest(kit) {
   }, 2500);
 }
 
+/** BUDDY_OUTLOOK_E2E_TEST @param {DevKit} kit */
+function outlookTest(kit) {
+  // Outlook through the real app, against a stand-in Microsoft and model on this PC (scripts/e2e.mjs): offered in an
+  // Outlook window, Connect signs in, and the model sends two emails. Each send asks on the card, naming who it goes
+  // to, even after "Allow for this task" on the first.
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const until = async (check, ms = 15_000) => { for (const end = Date.now() + ms; Date.now() < end; await wait(100)) if (await check()) return true; return false; };
+  setTimeout(async () => {
+    const r = { cards: /** @type {{ what: string, why: string }[]} */ ([]) };
+    try {
+      const { bubble } = kit;
+      const js = (code) => bubble.webContents.executeJavaScript(code);
+      await kit.summon();
+      await kit.offerConnection({ title: "Inbox - ana@example.com - Outlook", app_name: "olk.exe" });
+      r.offered = await until(() => js(`!document.getElementById("connect-offer").hidden`), 5000);
+      r.offer = await js(`document.getElementById("connect-offer-text").textContent`);
+      await js(`document.getElementById("connect-yes").click()`);
+      r.connected = await until(() => !!kit.connectors?.connected("outlook"));
+      await wait(500);
+      const answer = js(`window.buddy.ask("Email Ana and Sam that lunch is at noon", {})`);
+      for (const n of [1, 2]) {
+        const up = await until(() => js(`document.getElementById("confirm").classList.contains("on")`));
+        if (!up) break;
+        r.cards.push({ what: await js(`document.getElementById("what").textContent`), why: await js(`document.getElementById("why").textContent`) });
+        await wait(700);
+        await js(`document.querySelector('[data-d="always"]').click()`);
+        if (n === 1) await until(() => js(`!document.getElementById("confirm").classList.contains("on")`), 5000);
+      }
+      r.reply = (await answer)?.reply ?? null;
+      r.listed = kit.settingsState().connections.map((c) => `${c.id}:${c.connected}`);
+    } catch (err) {
+      r.error = String(err?.message ?? err);
+    }
+    console.log("OUTLOOK_TEST", JSON.stringify(r));
+    console.log("OUTLOOK_TEST_DONE");
+  }, 2500);
+}
+
 /** BUDDY_SETTINGS_AUDIT_TEST @param {DevKit} kit */
 function settingsAuditTest(kit) {
   // Every control in Settings, used the way a person does (a click, typing, a key pressed in the shortcut recorder)
@@ -1315,6 +1353,7 @@ function settingsAuditTest(kit) {
 
 const HOOKS = {
   BUDDY_SETTINGS_AUDIT_TEST: settingsAuditTest,
+  BUDDY_OUTLOOK_E2E_TEST: outlookTest,
   BUDDY_CONNECTIONS_TEST: connectionsTest,
   BUDDY_LANGUAGE_TEST: languageTest,
   BUDDY_LESSONS_TEST: lessonsTest,

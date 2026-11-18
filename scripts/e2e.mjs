@@ -76,6 +76,23 @@ function toolModel() {
   return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, close: () => server.close() })));
 }
 
+/** Sends two emails through Outlook, one tool call at a time, then says it's done: for the outlook check. */
+function mailModel() {
+  const server = http.createServer(async (req, res) => {
+    let body = "";
+    for await (const c of req) body += c;
+    if (req.url?.endsWith("/models")) return res.end(JSON.stringify({ data: [{ id: "scripted", object: "model" }] }));
+    const results = (JSON.parse(body || "{}").messages ?? []).filter((m) => m.role === "tool");
+    const send = (id, to) => ({ choices: [{ delta: { tool_calls: [{ index: 0, id, type: "function", function: { name: "outlook__send_mail", arguments: JSON.stringify({ to: [to], subject: "Lunch", body: "Lunch is at noon." }) } }] }, finish_reason: "tool_calls" }] });
+    const chunk = results.length === 0 ? send("call_1", "ana@example.com")
+      : results.length === 1 ? send("call_2", "sam@example.com")
+      : { choices: [{ delta: { content: `Done. ${results.map((m) => String(m.content).split("\n").at(-1)).join(" ")}` }, finish_reason: "stop" }] };
+    res.setHeader("content-type", "text/event-stream");
+    res.end(`data: ${JSON.stringify(chunk)}\n\ndata: [DONE]\n\n`);
+  });
+  return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, close: () => server.close() })));
+}
+
 /** Answers each question with "Answer to: <the question>" and keeps every request, for the restore check. */
 function echoModel() {
   /** @type {string[]} */
@@ -513,6 +530,37 @@ const CHECKS = {
     } finally {
       model.close();
       service.close();
+    }
+  },
+
+  // Outlook connected and used through the real app, against a stand-in Microsoft and model on this PC: each send asks.
+  async outlook() {
+    const { startTestMicrosoft } = await import("./samples/test-microsoft.mjs");
+    const ms = await startTestMicrosoft();
+    const model = await mailModel();
+    try {
+      const seed = { "settings.json": JSON.stringify({ provider: "custom", providerURLs: { custom: model.url }, providerModels: { custom: "scripted" }, advanced: true, launchSetupDone: true, voiceSetup: "no", talkBack: "never" }) };
+      const { markers, timedOut } = await runCopy("outlook", { BUDDY_OUTLOOK_E2E_TEST: "1", BUDDY_OUTLOOK_TEST: ms.url }, "OUTLOOK_TEST_DONE", 90_000, seed);
+      const r = markers.OUTLOOK_TEST?.[0];
+      if (!r) return [timedOut ? "timed out" : "nothing printed"];
+      if (r.error) return [r.error];
+      const cards = r.cards ?? [];
+      return [
+        !r.offered && "the bubble didn't offer to connect in an Outlook window",
+        !/^Connect Buddy to Outlook\?/.test(r.offer ?? "") && `the offer said ${JSON.stringify(r.offer)}`,
+        !r.connected && "Connect didn't sign in",
+        !/^http:\/\/localhost:\d+\/callback$/.test(ms.seen.authorized[0]?.redirect ?? "") && `the sign-in came back to ${JSON.stringify(ms.seen.authorized[0]?.redirect)}`,
+        cards.length !== 2 && `the card asked ${cards.length} times for two sends (Allow for this task must not cover sending)`,
+        cards[0]?.what !== "Outlook: Send an email" && `the card said ${JSON.stringify(cards[0]?.what)}`,
+        cards[0]?.why !== "To ana@example.com · Subject: Lunch · “Lunch is at noon.”" && `the first card's note was ${JSON.stringify(cards[0]?.why)}`,
+        !/^To sam@example\.com/.test(cards[1]?.why ?? "") && `the second card's note was ${JSON.stringify(cards[1]?.why)}`,
+        JSON.stringify(ms.seen.sent.map((m) => m.toRecipients?.[0]?.emailAddress?.address)) !== '["ana@example.com","sam@example.com"]' && `Microsoft was asked to send ${JSON.stringify(ms.seen.sent)}`,
+        !/Sent to ana@example\.com\. Sent to sam@example\.com\./.test(r.reply ?? "") && `the answer was ${JSON.stringify(r.reply)}`,
+        !(r.listed ?? []).includes("outlook:true") && `Settings listed ${JSON.stringify(r.listed)}`,
+      ].filter(Boolean);
+    } finally {
+      model.close();
+      ms.close();
     }
   },
 
