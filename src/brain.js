@@ -72,6 +72,9 @@ export const FAILURES = {
   model_not_found: N("The model chosen in Settings isn't available on your account. Pick another under AI & privacy."),
 };
 
+// What the quick model failing hands the rest of the answer to the main one for.
+const QUICK_FALLBACK = new Set(["no_tools", "model_not_found"]);
+
 // Told to a model that can't see images.
 const BLIND = `This model can't see images. Work from what look and read_page return (the window's controls and text);
 there is no screenshot tool, and any image the user sends arrives as a note that it can't be shown. When they ask
@@ -695,6 +698,7 @@ const spokenNote = (lang) =>
  *   mayCall?: () => string | null,
  *   commands?: () => boolean,
  *   readFolders?: () => string[],   // the folders Buddy reads without asking (Settings › Agents)
+ *   quickModel?: () => string,      // the quick model for everyday answers, or "" (the bubble's Brain only)
  *   spend?: { now: import("./costs.js").Spend },
  *   source?: string,
  *   reveal?: (files: string[]) => Promise<void> | void,
@@ -821,9 +825,16 @@ export class Brain {
     if (this.preview) this.preview.stale = true;
   }
 
+  // The model this call uses: the quick one (Settings › AI & privacy › Quick model for everyday questions) for an
+  // everyday answer, when the user chose one; else the main one. An illustrated explanation, and anything the quick one
+  // turns out unable to do, go to the main one.
+  get activeModel() {
+    return (this.quickNow && this.ui.quickModel?.()) || this.model;
+  }
+
   // Whether the first look at a window should carry a screenshot: the model can see, and Settings allows it.
   wantsImage() {
-    return capsOf(this.provider, this.ui.baseURL, this.model).vision === true && this.ui.screenContext?.() !== false;
+    return capsOf(this.provider, this.ui.baseURL, this.activeModel).vision === true && this.ui.screenContext?.() !== false;
   }
 
   /** The glance, if it can stand in for a fresh read of `target`; it is taken either way, so it's used once. */
@@ -986,6 +997,8 @@ export class Brain {
     this.standing = new Set();
     this.target = target;
     this.explainerReady = explainer;
+    // Everyday answers may use the quick model; an explanation asked for as one starts on the main one.
+    this.quickNow = !explainer;
     this.abort = new AbortController();
     this.made = [];
     // A route this answer walks the user all the way through (guideSteps), which they may keep as a lesson.
@@ -1054,8 +1067,18 @@ export class Brain {
       if (stop) return stop;
       const callStart = Date.now();
       const offeredExplainer = this.explainerReady;
-      const response = await this.turn();
-      this.ui.usage?.(this.provider, this.model, response.usage);
+      let response;
+      try {
+        response = await this.turn();
+      } catch (err) {
+        // The quick model can't do this (it can't use tools, or the account doesn't have it): the main one takes the
+        // rest of the answer.
+        if (!this.quickNow || !this.ui.quickModel?.() || !(err instanceof ProviderError) || !QUICK_FALLBACK.has(err.kind)) throw err;
+        this.ui.trace?.({ kind: "quick-model-fallback", why: err.kind });
+        this.quickNow = false;
+        response = await this.turn();
+      }
+      this.ui.usage?.(this.provider, this.activeModel, response.usage);
       this.timing?.add("modelMs", Date.now() - callStart);
 
       this.ui.trace?.({ kind: "model", ms: Date.now() - callStart, in: response.usage?.input_tokens, cached: response.usage?.cache_read_input_tokens, out: response.usage?.output_tokens, tools: response.content.filter((b) => b.type === "tool_use").map((b) => b.name) });
@@ -1167,18 +1190,18 @@ export class Brain {
     /** @type {{ content: any[], stop_reason: string | null, usage?: any }} */
     let response;
     if (this.provider !== "anthropic") {
-      if (!this.model) throw new ProviderError("model_not_found", 404, "No model chosen.");
+      if (!this.activeModel) throw new ProviderError("model_not_found", 404, "No model chosen.");
       // A model that can't use tools can't drive Buddy at all; one that can't see images works from the window's
       // text, without the screenshot tool, and is told so.
-      const caps = capsOf(this.provider, this.ui.baseURL, this.model);
-      if (caps.tools === false) throw new ProviderError("no_tools", 400, `${this.model} can't use tools.`);
+      const caps = capsOf(this.provider, this.ui.baseURL, this.activeModel);
+      if (caps.tools === false) throw new ProviderError("no_tools", 400, `${this.activeModel} can't use tools.`);
       const blind = caps.vision === false;
       const tools = this.tools();
       response = await chatTurn({
         provider: this.provider,
         baseURL: this.ui.baseURL,
         key: this.ui.apiKey ?? "",
-        model: this.model,
+        model: this.activeModel,
         effort: this.effort,
         system: blind ? `${this.system()}\n\n${BLIND}` : this.system(),
         tools: blind ? tools.filter((t) => t.name !== "screenshot") : tools,
@@ -1194,7 +1217,7 @@ export class Brain {
       response = await this.client.beta.messages
         .stream(
           {
-            model: this.model,
+            model: this.activeModel,
             max_tokens: 32000,
             output_config: { effort: this.effort },
             cache_control: { type: "ephemeral" },
@@ -1354,6 +1377,7 @@ export class Brain {
     switch (name) {
       case "prepare_explainer":
         this.explainerReady = true;
+        this.quickNow = false; // an illustrated explanation is the main model's
         return "Illustrated explanations are ready. Follow the Explaining instructions now supplied and call show_explainer. No screen action was taken.";
       case "annotate": return this.drawAnnotations(input);
       case "clear_annotations": this.ui.clearAnnotations?.(); return "Your drawings are cleared.";
@@ -1539,7 +1563,7 @@ export class Brain {
    * @returns {import("./geometry.js").PhysicalRect | string}
    */
   spotBounds(/** @type {any} */ spot) {
-    if (capsOf(this.provider, this.ui.baseURL, this.model).vision !== true) return "A spot needs a model that can see the screenshot. Point at a ref from a look instead.";
+    if (capsOf(this.provider, this.ui.baseURL, this.activeModel).vision !== true) return "A spot needs a model that can see the screenshot. Point at a ref from a look instead.";
     if (!this.shot || Date.now() - this.shot.at > SHOT_FRESH_MS) return "There's no recent screenshot of this window to measure a spot on. Take a screenshot first.";
     const rect = spotRect(spot, { window: this.shot.window.bounds, width: this.shot.width, height: this.shot.height });
     return rect ?? "A spot is two fractions of the screenshot, x and y, each from 0 to 1.";

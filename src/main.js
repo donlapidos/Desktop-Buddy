@@ -1452,7 +1452,7 @@ const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvide
 
 function startBrain() {
   brain = providerReady()
-    ? makeEngine({ ...providerUI(), point: guidePoint, pointGuess: (bounds, caption, window) => guidePoint(bounds, caption, window), annotate: (items, context) => showAnnotations(items, context), clearAnnotations: (ms = 0) => annotationLayer.release("bubble", ms), confirm, status, stream: (update) => liveReply.receive(update), explain: bubbleExplain, trace, documentsDir: documentsDir(), dataDir: app.getPath("userData"), record: recordChange, reveal: revealMade, isOwnWindow: (w) => ownPids().includes(Number(w.pid)), openFile })
+    ? makeEngine({ ...providerUI(), quickModel: () => settings.quickModels[currentProvider()] ?? "", point: guidePoint, pointGuess: (bounds, caption, window) => guidePoint(bounds, caption, window), annotate: (items, context) => showAnnotations(items, context), clearAnnotations: (ms = 0) => annotationLayer.release("bubble", ms), confirm, status, stream: (update) => liveReply.receive(update), explain: bubbleExplain, trace, documentsDir: documentsDir(), dataDir: app.getPath("userData"), record: recordChange, reveal: revealMade, isOwnWindow: (w) => ownPids().includes(Number(w.pid)), openFile })
     : null;
 }
 

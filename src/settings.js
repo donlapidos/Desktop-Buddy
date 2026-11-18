@@ -94,6 +94,9 @@ export const DEFAULTS = Object.freeze({
   readFolders: null,
   // The language of Buddy's windows: "auto" follows Windows (i18n.js pickLanguage), or a language code.
   uiLanguage: "auto",
+  // A smaller, cheaper model for everyday questions in the bubble, per provider ("" or absent: the main model does
+  // everything). Illustrated explanations, task windows and routines keep the main model (brain.js activeModel).
+  quickModels: Object.freeze({}),
 });
 
 export const VOICE_SETUP = Object.freeze(["ask", "yes", "no"]);
@@ -110,6 +113,7 @@ export const CAP = Object.freeze({ max: 10_000 });
  *   rope: string, trustedApps: string[], blockedApps: string[], routines: Routine[], autoUpdate: boolean,
  *   launchSetupDone: boolean, tour: string, monthlyCap: number, commands: boolean, screenContext: boolean,
  *   holdToTalk: boolean, voiceSetup: string, advanced: boolean, readFolders: string[] | null, uiLanguage: string,
+ *   quickModels: Record<string, string>,
  * }} Settings
  */
 
@@ -211,6 +215,17 @@ function providerModels(value) {
   return out;
 }
 
+/** A quick model per provider: Anthropic's from its fixed list, the others' shaped like a model id. @returns {Record<string, string>} */
+function quickModels(value) {
+  /** @type {Record<string, string>} */
+  const out = {};
+  for (const id of PROVIDER_CHOICES) {
+    const m = value?.[id];
+    if (id === "anthropic" ? MODELS.some((x) => x.id === m) : MODEL_ID.test(m ?? "")) out[id] = m;
+  }
+  return out;
+}
+
 /** @returns {Record<string, string>} */
 function providerURLs(value) {
   /** @type {Record<string, string>} */
@@ -268,6 +283,7 @@ export function normalize(raw) {
     advanced: typeof r.advanced === "boolean" ? r.advanced : DEFAULTS.advanced,
     readFolders: folderList(r.readFolders),
     uiLanguage: pick(r.uiLanguage, ["auto", ...Object.keys(UI_LANGUAGES)], DEFAULTS.uiLanguage),
+    quickModels: quickModels(r.quickModels),
   };
 }
 
@@ -288,11 +304,15 @@ export function update(current, patch) {
   // A provider's model is changed one provider at a time; the others keep theirs.
   const models = p.providerModels && typeof p.providerModels === "object" ? { ...current.providerModels, ...p.providerModels } : current.providerModels;
   const urls = p.providerURLs && typeof p.providerURLs === "object" ? { ...current.providerURLs, ...p.providerURLs } : current.providerURLs;
-  const merged = { ...current, ...p, hotkeys, providerModels: models, providerURLs: urls };
+  // A quick model is set or cleared ("") one provider at a time too.
+  const quick = p.quickModels && typeof p.quickModels === "object" ? { ...current.quickModels, ...p.quickModels } : current.quickModels;
+  const merged = { ...current, ...p, hotkeys, providerModels: models, providerURLs: urls, quickModels: quick };
   const next = normalize(merged);
   const rejected = [];
   for (const [k, v] of Object.entries(p)) {
-    if (k === "providerModels" || k === "providerURLs") {
+    if (k === "quickModels") {
+      for (const [id, value] of Object.entries(v ?? {})) if (value && next.quickModels[id] !== value) rejected.push(`quickModels.${id}`);
+    } else if (k === "providerModels" || k === "providerURLs") {
       for (const [id, value] of Object.entries(v ?? {})) if (next[k][id] !== String(value).replace(/\/+$/, "")) rejected.push(`${k}.${id}`);
     } else if (k === "hotkeys") {
       for (const [name, accel] of Object.entries(v ?? {})) if (next.hotkeys[name] !== accel) rejected.push(`hotkeys.${name}`);

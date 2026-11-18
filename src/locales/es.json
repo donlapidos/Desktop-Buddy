@@ -531,5 +531,8 @@
  "The model chosen in Settings can't use tools, and I need them to read your screen and point. Pick one marked \"works well\" under Settings › AI & privacy.": "El modelo elegido en Configuración no puede usar herramientas, y las necesito para leer tu pantalla y señalar. Elige uno marcado como \"funciona bien\" en Configuración › IA y privacidad.",
  "{provider} isn't running on this PC. Start it, then ask me again.": "{provider} no está en marcha en este PC. Inícialo y vuelve a preguntarme.",
  "I couldn't reach {provider}. Check your connection and the address under Settings › AI & privacy.": "No pude conectar con {provider}. Revisa tu conexión y la dirección en Configuración › IA y privacidad.",
- "{provider} refused my request. Check the key under Settings › AI & privacy.": "{provider} rechazó mi petición. Revisa la clave en Configuración › IA y privacidad."
+ "{provider} refused my request. Check the key under Settings › AI & privacy.": "{provider} rechazó mi petición. Revisa la clave en Configuración › IA y privacidad.",
+ "Quick model for everyday questions": "Modelo rápido para preguntas del día a día",
+ "Optional, to spend less. A smaller model answers your everyday questions in the bubble. The model above still makes illustrated explanations, task windows and routines, and takes over when the quick one can't do something.": "Opcional, para gastar menos. Un modelo más pequeño responde a tus preguntas del día a día en la burbuja. El modelo de arriba sigue haciendo las explicaciones ilustradas, las ventanas de tarea y las rutinas, y toma el relevo cuando el rápido no puede con algo.",
+ "Off: the model above answers everything": "Desactivado: el modelo de arriba responde a todo"
 }

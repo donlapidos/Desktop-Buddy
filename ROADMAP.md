@@ -320,6 +320,11 @@ Only after Phases 0-3; pick by what users ask for.
   shortcut error already on show keep the old language until redrawn; dates follow Windows' locale; model-written
   plates and replies are in the language asked, not the setting.
 - **5.5 A cheap-then-smart mode:** a small model for guiding, the big one for explaining and building.
+  **Built (2026-11-18), off by default.** `settings.quickModels` (per provider), Settings › AI & privacy › Quick model
+  for everyday questions. The bubble's Brain uses it (`Brain.activeModel`); an Explain answer, `prepare_explainer`,
+  and a quick model that can't use tools or isn't on the account switch to the main model for the rest of the answer.
+  Task windows and routines always use the main one. Which small models guide well enough to recommend one is still
+  Phase 2's to measure.
 
 ## Decisions for the owner
 

@@ -361,6 +361,16 @@ function renderClaudeRest() {
     return b;
   }));
   $("model-fixed").hidden = !S.fixed.model;
+  // The quick model: off, or another of this provider's models.
+  const quickIds = s.provider === "anthropic" ? S.models.map((m) => m.id) : S.providerModels.models;
+  const quick = /** @type {HTMLSelectElement} */ ($("quick-model"));
+  const quickNow = s.quickModels[s.provider] ?? "";
+  quick.replaceChildren(
+    el("option", { value: "", textContent: t("Off: the model above answers everything"), selected: !quickNow }),
+    ...quickIds.map((id) => el("option", { value: id, textContent: S.models.find((m) => m.id === id)?.label ?? id, selected: id === quickNow })),
+  );
+  quick.disabled = !quickIds.length;
+  quick.onchange = () => set({ quickModels: { [s.provider]: quick.value } });
   segmented($("effort"), S.efforts.map((e) => [e, EFFORT[e] ? t(EFFORT[e]) : e[0].toUpperCase() + e.slice(1)]), s.effort, (v) => set({ effort: v }), S.fixed.effort);
   $("effort-fixed").hidden = !S.fixed.effort;
 
