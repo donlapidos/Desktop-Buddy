@@ -21,6 +21,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fingerprint, keepCopy } from "./activity.js";
+import { t as tr } from "./i18n.js";
 
 /** @type {{ name: string, description: string, input_schema: { type: "object", properties: Record<string, object>, required?: string[] } }[]} */
 export const PC_TOOLS = [
@@ -218,8 +219,8 @@ export function realPlaces(p) {
 /** A place in words: "budget.csv in Documents\Buddy". */
 export function placeWords(/** @type {string} */ full, /** @type {Places} */ p) {
   const dir = path.dirname(full);
-  const shortDir = inside(dir, p.home) ? path.relative(p.home, dir) || "your home folder" : dir;
-  return `${path.basename(full)} in ${shortDir}`;
+  const shortDir = inside(dir, p.home) ? path.relative(p.home, dir) || tr("your home folder") : dir;
+  return tr("{file} in {folder}", { file: path.basename(full), folder: shortDir });
 }
 
 // ---------- PowerShell and private places ----------
@@ -412,7 +413,7 @@ export async function runPcTool(name, input, ctx) {
     case "list_folder": {
       const j = place(input.path);
       if (j.read === "never") return refused(j);
-      if (j.read === "ask" && !(await ctx.ask(`Look in ${inside(j.full, p.home) ? path.relative(p.home, j.full) || "your home folder" : j.full}`, undefined, "read"))) return "The user declined.";
+      if (j.read === "ask" && !(await ctx.ask(tr("Look in {folder}", { folder: inside(j.full, p.home) ? path.relative(p.home, j.full) || tr("your home folder") : j.full }), undefined, "read"))) return "The user declined.";
       let entries;
       try {
         entries = fs.readdirSync(j.full, { withFileTypes: true });
@@ -435,7 +436,7 @@ export async function runPcTool(name, input, ctx) {
     case "read_file": {
       const j = place(input.path);
       if (j.read === "never") return refused(j);
-      if (j.read === "ask" && !(await ctx.ask(`Read ${placeWords(j.full, p)}`, undefined, "read"))) return "The user declined.";
+      if (j.read === "ask" && !(await ctx.ask(tr("Read {place}", { place: placeWords(j.full, p) }), undefined, "read"))) return "The user declined.";
       let buf;
       try {
         if (fs.statSync(j.full).size > MAX_FILE_BYTES) return "That file is over 20 MB; read it with run_powershell (Get-Content -TotalCount, Select-String).";
@@ -463,7 +464,7 @@ export async function runPcTool(name, input, ctx) {
       if (typeof input.content !== "string") return "write_file needs content.";
       const exists = fs.existsSync(j.full);
       if (exists && fs.statSync(j.full).isDirectory()) return "That's a folder, not a file.";
-      if (!(await ctx.ask(`${exists ? "Replace" : "Create"} ${placeWords(j.full, p)}`, exists ? "The old version is kept for a week." : undefined, "files"))) return "The user declined.";
+      if (!(await ctx.ask(exists ? tr("Replace {place}", { place: placeWords(j.full, p) }) : tr("Create {place}", { place: placeWords(j.full, p) }), exists ? tr("The old version is kept for a week.") : undefined, "files"))) return "The user declined.";
       ctx.status(exists ? "Updating a file…" : "Making a file…");
       const copy = exists ? keepCopy(j.full, ctx.undoDir) : undefined;
       fs.mkdirSync(path.dirname(j.full), { recursive: true });
@@ -487,7 +488,7 @@ export async function runPcTool(name, input, ctx) {
       const times = text.split(old).length - 1;
       if (!times) return "old_text isn't in the file. Read the file again and copy the text exactly.";
       if (times > 1 && !input.replace_all) return `old_text is in the file ${times} times. Include more of the text around it, or set replace_all.`;
-      if (!(await ctx.ask(`Change ${placeWords(j.full, p)}`, "The old version is kept for a week.", "files"))) return "The user declined.";
+      if (!(await ctx.ask(tr("Change {place}", { place: placeWords(j.full, p) }), tr("The old version is kept for a week."), "files"))) return "The user declined.";
       ctx.status("Updating a file…");
       const copy = keepCopy(j.full, ctx.undoDir);
       const next = input.replace_all ? text.split(old).join(String(input.new_text ?? "")) : text.replace(old, () => String(input.new_text ?? ""));
@@ -524,7 +525,7 @@ export async function runPcTool(name, input, ctx) {
       }
       if (u.protocol !== "https:" && u.protocol !== "http:") return "Only http and https pages can be read.";
       if (privateHost(u.hostname)) return "Not allowed: addresses on this PC or the local network can't be read.";
-      if (!(await ctx.ask(`Read a page on ${u.hostname}`, u.toString().slice(0, 300), `web:${u.hostname}`))) return "The user declined.";
+      if (!(await ctx.ask(tr("Read a page on {site}", { site: u.hostname }), u.toString().slice(0, 300), `web:${u.hostname}`))) return "The user declined.";
       ctx.status(`Reading ${u.hostname}…`);
       ctx.record?.({ kind: "read", summary: `Read a page on ${u.hostname}` });
       try {

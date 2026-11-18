@@ -40,10 +40,11 @@
 <div id="frame"></div>
 <div id="bar">
   <span id="count">Click something to explain it, or draw over things to ask</span>
-  <button id="undo" disabled title="Ctrl+Z">Undo</button>
-  <button id="ask" class="primary" disabled>Ask <kbd>Enter</kbd></button>
-  <button id="cancel">Cancel <kbd>Esc</kbd></button>
+  <button id="undo" disabled title="Ctrl+Z" data-t>Undo</button>
+  <button id="ask" class="primary" disabled><span data-t>Ask</span> <kbd>Enter</kbd></button>
+  <button id="cancel"><span data-t>Cancel</span> <kbd>Esc</kbd></button>
 </div>
+<script src="strings.js"></script>
 <script type="module" src="marker.js"></script>
 </body>
 </html>

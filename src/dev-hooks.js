@@ -1001,7 +1001,86 @@ function lessonsTest(kit) {
   }, 2500);
 }
 
+/** BUDDY_LANGUAGE_TEST @param {DevKit} kit */
+function languageTest(kit) {
+  // Buddy's windows in Spanish (this copy starts with uiLanguage "es"), then switched to English while they're open.
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  setTimeout(async () => {
+    const { bubble, island, changeSettings } = kit;
+    const read = async () => ({
+      ask: await bubble.webContents.executeJavaScript(`document.getElementById("submit").textContent`),
+      allow: await bubble.webContents.executeJavaScript(`document.querySelector('[data-d="allow"]').textContent`),
+      placeholder: await bubble.webContents.executeJavaScript(`document.getElementById("input").placeholder`),
+      lang: await bubble.webContents.executeJavaScript(`document.documentElement.lang`),
+      talk: await island.webContents.executeJavaScript(`document.getElementById("talk").textContent`),
+      // For a failure: how many words the page holds, and whether setup was showing.
+      page: await bubble.webContents.executeJavaScript(`({ strings: Object.keys(STRINGS).length, classes: document.body.className, busy })`),
+    });
+    // Each page applies its words when they arrive: wait for them rather than a fixed time.
+    const inLanguage = async (lang) => {
+      for (let i = 0; i < 50 && (await bubble.webContents.executeJavaScript(`document.documentElement.lang`)) !== lang; i++) await wait(100);
+      await wait(200);
+    };
+    await inLanguage("es");
+    const spanish = await read();
+    // Every page of Settings in Spanish: any text on show with common English words in it is a word left behind.
+    kit.settingsWindow.open();
+    let settingsWin;
+    for (let i = 0; i < 50 && !(settingsWin = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("settings.html"))); i++) await wait(100);
+    await wait(1500);
+    const leftEnglish = settingsWin ? await settingsWin.webContents.executeJavaScript(`(async () => {
+      // Common English words that aren't Spanish ones, so a sentence left in English trips at least one. Any letter,
+      // accented or not, is part of a word ("actúan" is no "an").
+      const english = /(?<!\\p{L})(the|and|your|you|with|when|what|which|this|that|from|into|only|isn't|can't|don't|it's|will|would|click|press|choose|none|yet|here|there|asks?|asking|nothing|every|before|after|while|is|are|to|for|of|in|it|or|not|can|without|may|off|on|be|by|an|its|they|them|use|new|add|show|open)(?!\\p{L})/iu;
+      const seen = new Set();
+      for (const page of pages) {
+        show(page);
+        await new Promise((r) => setTimeout(r, 150));
+        const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+          const text = n.textContent.trim();
+          const shown = n.parentElement && n.parentElement.offsetParent !== null;
+          if (text && shown && english.test(text)) seen.add(page + ": " + text.slice(0, 90));
+        }
+        for (const el of document.querySelectorAll("[title], [aria-label], [placeholder]")) {
+          for (const a of ["title", "aria-label", "placeholder"]) {
+            const v = el.getAttribute(a);
+            if (v && el.offsetParent !== null && english.test(v)) seen.add(page + " [" + a + "]: " + v.slice(0, 90));
+          }
+        }
+      }
+      return [...seen];
+    })()`) : ["Settings didn't open"];
+    // Two of the wordiest pages, to see the Spanish fits.
+    for (const page of ["agents", "claude"]) {
+      await settingsWin?.webContents.executeJavaScript(`show(${JSON.stringify(page)})`);
+      await wait(400);
+      if (settingsWin) fs.writeFileSync(path.join(process.env.BUDDY_LANGUAGE_TEST, `settings-${page}-es.png`), (await settingsWin.webContents.capturePage()).toPNG());
+    }
+    settingsWin?.close();
+    changeSettings({ uiLanguage: "en" });
+    await inLanguage("en");
+    const english = await read();
+    // Setup (no AI chosen in this copy) in Spanish, with the approval card up where longer words could crowd the
+    // buttons; then switched while it's showing.
+    changeSettings({ uiLanguage: "es" });
+    await inLanguage("es");
+    await kit.summon();
+    await bubble.webContents.executeJavaScript(`document.getElementById("what").textContent = "Haz clic en Guardar"; document.getElementById("confirm").classList.add("on")`);
+    await wait(700);
+    fs.writeFileSync(path.join(process.env.BUDDY_LANGUAGE_TEST, "bubble-es.png"), (await bubble.webContents.capturePage()).toPNG());
+    const setupSpanish = await bubble.webContents.executeJavaScript(`document.querySelector("#welcome .lede")?.textContent ?? null`);
+    changeSettings({ uiLanguage: "en" });
+    await inLanguage("en");
+    await wait(500);
+    const setupEnglish = await bubble.webContents.executeJavaScript(`document.querySelector("#welcome .lede")?.textContent ?? null`);
+    console.log("LANGUAGE_TEST", JSON.stringify({ spanish, english, setupSpanish, setupEnglish, leftEnglish }));
+    console.log("LANGUAGE_TEST_DONE");
+  }, 2500);
+}
+
 const HOOKS = {
+  BUDDY_LANGUAGE_TEST: languageTest,
   BUDDY_LESSONS_TEST: lessonsTest,
   BUDDY_RESTORE_TEST: restoreTest,
   BUDDY_BRIDGE_TEST: bridgeTest,

@@ -44,6 +44,7 @@ import { createAiAppSetup } from "./ai-app-setup.js";
 import { createAppBridge } from "./app-bridge.js";
 import { createConversations } from "./conversations.js";
 import { appName, createLessons } from "./lessons.js";
+import { LANGUAGES, N, language, pickLanguage, setLanguage, t, table } from "./i18n.js";
 import { appKey } from "./policy.js";
 import { appWords, tourNext, tourTip } from "./welcome.js";
 import { aboutMoney, addCall, capProblem, createLedger, moneyWords, noSpend, priceOf, spendLine, tokenWords } from "./costs.js";
@@ -257,15 +258,16 @@ function spendState() {
   const label = PROVIDERS[provider].label;
   const model = provider === "anthropic" ? settings.model : settings.providerModels[provider] ?? "";
   const price = priceOf(provider, model);
-  const month = m.calls
-    ? `This month so far: ${m.cost > 0 ? aboutMoney(m.cost) : "nothing priced"}, ${tokenWords(m.tokens)} tokens over ${m.calls} model call${m.calls === 1 ? "" : "s"}.`
-    : "Nothing spent this month yet.";
+  const spent = m.cost > 0 ? aboutMoney(m.cost) : t("nothing priced");
+  const month = !m.calls ? t("Nothing spent this month yet.")
+    : m.calls === 1 ? t("This month so far: {spent}, {tokens} tokens over 1 model call.", { spent, tokens: tokenWords(m.tokens) })
+    : t("This month so far: {spent}, {tokens} tokens over {n} model calls.", { spent, tokens: tokenWords(m.tokens), n: m.calls });
   const basis =
-    price === "free" ? `${label} runs on this PC, so it costs nothing.`
-    : price ? `Costs are estimates from ${label}'s published prices; your bill is what ${label} charges.`
-    : `Buddy doesn't know ${label}'s price for this model, so its use shows as tokens only and doesn't count toward a limit.`;
-  const unpriced = m.unpriced ? ` ${m.unpriced} call${m.unpriced === 1 ? "" : "s"} this month had no known price.` : "";
-  const cap = settings.monthlyCap > 0 ? ` Buddy stops when this month's priced spend reaches ${moneyWords(settings.monthlyCap)}.` : "";
+    price === "free" ? t("{provider} runs on this PC, so it costs nothing.", { provider: label })
+    : price ? t("Costs are estimates from {provider}'s published prices; your bill is what {provider} charges.", { provider: label })
+    : t("Buddy doesn't know {provider}'s price for this model, so its use shows as tokens only and doesn't count toward a limit.", { provider: label });
+  const unpriced = !m.unpriced ? "" : m.unpriced === 1 ? ` ${t("1 call this month had no known price.")}` : ` ${t("{n} calls this month had no known price.", { n: m.unpriced })}`;
+  const cap = settings.monthlyCap > 0 ? ` ${t("Buddy stops when this month's priced spend reaches {limit}.", { limit: moneyWords(settings.monthlyCap) })}` : "";
   return { month, note: `${basis}${unpriced}${cap}` };
 }
 
@@ -488,7 +490,7 @@ function createIsland() {
   island.once("ready-to-show", () => island.showInactive());
   island.webContents.on("did-finish-load", () => {
     const taken = takenHotkeys();
-    if (taken.length) notice(`${taken.map((n) => keyLabel(hotkey(n))).join(", ")} is used by another app: change it in Settings`);
+    if (taken.length) notice(t("{keys} is used by another app: change it in Settings", { keys: taken.map((n) => keyLabel(hotkey(n))).join(", ") }));
     showIsland({ force: true });
     if (tasks) island.webContents.send("tasks", tasks.list());
   });
@@ -735,7 +737,7 @@ function explainAt(dipPoint, question) {
 /** @param {DipPoint} dipPoint @param {string} [question] */
 async function runExplain(dipPoint, question) {
   startTurn();
-  progress("Looking at that…");
+  progress(t("Looking at that…"));
   try {
     const physical = toPhysicalPoint(dipPoint);
     const [win, shot] = await Promise.all([windowAt(physical, ownPids()), captureAround(dipPoint)]);
@@ -745,13 +747,13 @@ async function runExplain(dipPoint, question) {
     if (turn.explainerShown) {
       notice(oneLine(reply));
     } else {
-      notice("Answered");
+      notice(t("Answered"));
       bubble.webContents.send("status", "");
       bubble.webContents.send("reply", reply);
       showBubble({ focus: false });
     }
   } catch (err) {
-    notice(`Couldn't explain that: ${err.message}`);
+    notice(t("Couldn't explain that: {why}", { why: err.message }));
   } finally {
     enter("idle");
     releaseLater("bubble");
@@ -819,7 +821,7 @@ const openExplainer = (plate, { near = cursor(), observed = null } = {}) => open
 
 handleFrom(fromBubble, "ask", async (_e, text, opts = {}) => {
   if (typeof text !== "string" || !text.trim()) return { reply: null };
-  if (!["idle", "working", "listening"].includes(mode)) return { reply: BUSY[mode] };
+  if (!["idle", "working", "listening"].includes(mode)) return { reply: t(BUSY[mode]) };
   return bubbleTurns.run((isCurrent) => answerQuestion(text, opts, isCurrent));
 });
 
@@ -827,7 +829,7 @@ async function answerQuestion(text, opts, isCurrent) {
   if (!brain) return { reply: "Choose how I think first, in Settings › AI & privacy: an API key (Anthropic, OpenAI, OpenRouter, Gemini, DeepSeek), or a free model on this PC with Ollama or LM Studio. Or ask me from the AI app you already use (Claude, Codex, Gemini, Copilot): Use with your AI app, in the same place." };
   // Typed while the mic was open: the typing wins.
   if (mode === "listening") voice.cancelListening();
-  else if (mode !== "idle") return { reply: BUSY[mode] };
+  else if (mode !== "idle") return { reply: t(BUSY[mode]) };
   enter("working");
   // "Talking is ready" (or why it isn't) has been read by now; the tour's tip can have the space back.
   if (voiceFetched) {
@@ -844,7 +846,7 @@ async function answerQuestion(text, opts, isCurrent) {
   hushReply();
   replyMuted = false;
   releaseFocus();
-  progress("Thinking…");
+  progress(t("Thinking…"));
   let reply;
   const tally = engine.ui.spend;
   if (tally) tally.now = noSpend();
@@ -854,7 +856,7 @@ async function answerQuestion(text, opts, isCurrent) {
     reply = withMarks ? await engine.askWithMarks(text, withMarks, how) : await engine.ask(text, about.window, how);
   } catch (err) {
     hushReply();
-    notice("Something broke");
+    notice(t("Something broke"));
     return { reply: `Something broke: ${err.message}` };
   } finally {
     answeringBrain = null;
@@ -907,15 +909,15 @@ let lessonBrain = null;
  */
 async function playLesson(/** @type {string} */ id, { window = null } = {}) {
   const lesson = lessons?.get(id);
-  if (!lesson) return notice("That lesson is gone.");
-  if (mode !== "idle") return progress(BUSY[mode]);
+  if (!lesson) return notice(t("That lesson is gone."));
+  if (mode !== "idle") return progress(t(BUSY[mode]));
   const own = ownPids();
   const open = (await listWindows()).filter((w) => !own.includes(w.pid) && String(w.app_name).toLowerCase() === lesson.app.toLowerCase());
   const win = (window && open.find((w) => w.id === window.id)) ?? open.find((w) => w.is_focused) ?? open[0];
-  if (!win) return notice(`Open ${appName(lesson.app)} first, then play the lesson again.`);
+  if (!win) return notice(t("Open {app} first, then play the lesson again.", { app: appName(lesson.app) }));
   enter("working");
   hideBubble({ now: true });
-  progress(`Lesson: ${lesson.title}`);
+  progress(t("Lesson: {title}", { title: lesson.title }));
   trace({ kind: "lesson-play", steps: lesson.steps.length });
   lessonBrain = new Brain({
     point: (bounds, caption) => point(bounds, caption),
@@ -974,18 +976,19 @@ function voiceOfferNow() {
   if (!voice || !brain) return null;
   if (voiceFetch) return { state: "fetching", text: voiceFetch.words };
   if (voiceFetched === "ready") return { state: "done", text: settings.holdToTalk
-    ? `Talking is ready. Hold ${keyLabel(hotkey("ask"))}, say your question, and let go.`
-    : `Talking is ready. Press ${keyLabel(hotkey("talk"))} and say your question.` };
-  if (voiceFetched === "failed") return { state: "done", text: "I couldn't download my voice just now. I'll try again the first time you talk to me." };
+    ? t("Talking is ready. Hold {key}, say your question, and let go.", { key: keyLabel(hotkey("ask")) })
+    : t("Talking is ready. Press {key} and say your question.", { key: keyLabel(hotkey("talk")) }) };
+  if (voiceFetched === "failed") return { state: "done", text: t("I couldn't download my voice just now. I'll try again the first time you talk to me.") };
   if (settings.voiceSetup !== "ask" || voice.installed()) return null;
-  return { state: "offer", text: "Want to talk to me out loud? It needs a one-time download (275 MB, about a minute)." };
+  return { state: "offer", text: t("Want to talk to me out loud? It needs a one-time download (275 MB, about a minute).") };
 }
 const sendVoiceOffer = () => bubble?.webContents.send("voice-offer", voiceOfferNow());
 
 /** Download progress from voice.js, while the offered download runs. */
 function voiceFetchProgress(/** @type {{ what: string, loaded: number, total: number }} */ info) {
   if (!voiceFetch) return;
-  const words = `Getting my ${info.what === "speaking" ? "voice" : "ears"} ready… ${Math.round((100 * info.loaded) / info.total)}%`;
+  const pct = Math.round((100 * info.loaded) / info.total);
+  const words = info.what === "speaking" ? t("Getting my voice ready… {pct}%", { pct }) : t("Getting my ears ready… {pct}%", { pct });
   if (words === voiceFetch.words) return;
   voiceFetch.words = words;
   sendVoiceOffer();
@@ -1021,7 +1024,7 @@ handleFrom(fromBubble, "welcome-state", () => welcomeState(settings.providerURLs
 handleFrom(fromBubble, "welcome-app", async (_e, id) => {
   if (!APP_IDS.includes(id)) return { error: "Buddy doesn't know that app." };
   const error = await setClaude(id, true, "welcome");
-  return { error, after: error ? null : APPS[id].after, state: await welcomeState(settings.providerURLs) };
+  return { error, after: error ? null : t(APPS[id].after), state: await welcomeState(settings.providerURLs) };
 });
 
 handleFrom(fromBubble, "welcome-local", async () => {
@@ -1042,7 +1045,7 @@ onFrom(fromBubble, "cancel", () => {
   bubbleTurns.cancel();
   voice?.cancelListening();
   hushReply();
-  if (mode === "working") { (answeringBrain ?? brain)?.cancel(); notice("Stopped."); }
+  if (mode === "working") { (answeringBrain ?? brain)?.cancel(); notice(t("Stopped.")); }
   else answerApproval("deny");
   annotationLayer.clear("bubble");
 });
@@ -1113,7 +1116,7 @@ const approvals = createApprovalQueue({
   },
   clear: () => {
     bubble.webContents.send("confirm-clear");
-    if (mode === "working") islandFacts.progress = "Working…";
+    if (mode === "working") islandFacts.progress = t("Working…");
     showIsland();
   },
   trace,
@@ -1152,10 +1155,12 @@ function guidePoint(bounds, caption, guessIn = null) {
 const talksBack = (spoken) => !!voice && (settings.talkBack === "always" || (settings.talkBack === "spoken" && spoken));
 
 const HEARD_ERRORS = {
-  silence: "Didn't hear anything",
-  "mic-blocked": "Microphone blocked: Settings › Privacy › Microphone",
-  "no-mic": "No microphone found",
+  silence: N("Didn't hear anything"),
+  "mic-blocked": N("Microphone blocked: Settings › Privacy › Microphone"),
+  "no-mic": N("No microphone found"),
 };
+/** Why Buddy heard nothing, in words. @param {string} error */
+const heardError = (error) => (HEARD_ERRORS[error] ? t(HEARD_ERRORS[error]) : t("Couldn't hear you: {why}", { why: error }));
 
 // The talk hotkey: start listening; pressed again while listening, stop and use what was said. It also cuts
 // Buddy off mid-sentence.
@@ -1170,7 +1175,7 @@ async function talk() {
   }
   const wasSpeaking = voice.speaking;
   hushReply();
-  if (mode !== "idle") return wasSpeaking || progress(BUSY[mode]);
+  if (mode !== "idle") return wasSpeaking || progress(t(BUSY[mode]));
   if (!brain) return summon();
   enter("listening");
   if (bubble.isVisible()) {
@@ -1179,7 +1184,7 @@ async function talk() {
     brain.glance?.(about.window, { keep: true });
   } else await summon();
   bubble.webContents.send("listening", true);
-  progress(talkHold ? "Listening… let go when you're done" : "Listening…");
+  progress(talkHold ? t("Listening… let go when you're done") : t("Listening…"));
   const listening = voice.listen();
   // The Talk key may have been held, or already let go, while the bubble was opening.
   if (talkHold === "held") voice.holdListening();
@@ -1196,7 +1201,7 @@ async function talk() {
   enter("idle");
   if (text) return bubble.webContents.send("voice-text", text);
   if (error === "cancelled") return showIsland();
-  notice(HEARD_ERRORS[error] ?? `Couldn't hear you: ${error}`);
+  notice(heardError(error));
 }
 
 // ---------- Hold to talk: one key, tapped to type or held to talk ----------
@@ -1269,24 +1274,24 @@ async function dictate() {
   if (mode === "dictating") return voice.finishListening();
   const wasSpeaking = voice.speaking;
   hushReply();
-  if (mode !== "idle") return wasSpeaking || progress(BUSY[mode]);
+  if (mode !== "idle") return wasSpeaking || progress(t(BUSY[mode]));
   enter("dictating");
   const continuous = settings.dictateStop === "press";
   const key = keyLabel(hotkey("dictate"));
-  progress(continuous ? `Dictating… ${key} to stop` : "Dictating… pause when you're done");
+  progress(continuous ? t("Dictating… {key} to stop", { key }) : t("Dictating… pause when you're done"));
   let words = 0;
   const result = await voice.dictate({
     continuous,
     onText: async (text) => {
       await typeText(words ? ` ${text}` : text);
       words += text.split(/\s+/).filter(Boolean).length;
-      if (continuous && currentMode() === "dictating") progress(`Dictating… ${words} words · ${key} to stop`);
+      if (continuous && currentMode() === "dictating") progress(t("Dictating… {n} words · {key} to stop", { n: words, key }));
     },
   });
   enter("idle");
-  if (result.pieces) notice(`Typed ${words} word${words === 1 ? "" : "s"}`);
+  if (result.pieces) notice(words === 1 ? t("Typed 1 word") : t("Typed {n} words", { n: words }));
   else if (result.error === "cancelled") showIsland();
-  else notice(HEARD_ERRORS[result.error] ?? `Couldn't hear you: ${result.error}`);
+  else notice(heardError(result.error));
 }
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -1322,13 +1327,14 @@ onFrom(fromBubble, "talk", () => talkByClick());
 
 let downloadSettle = null; // returns the island to rest once download progress stops coming
 function onVoiceState(state, info) {
-  if (state === "listening" && mode === "listening") progress("Listening… pause when you're done");
+  if (state === "listening" && mode === "listening") progress(t("Listening… pause when you're done"));
   else if (state === "transcribing" && mode === "listening") {
     islandFacts.transcribing = true;
     showIsland();
   } else if (state === "downloading") {
     voiceFetchProgress(/** @type {any} */ (info));
-    islandFacts.download = `Getting Buddy's ${info.what === "speaking" ? "voice" : "ears"} ready… ${Math.round((100 * info.loaded) / info.total)}%`;
+    const pct = Math.round((100 * info.loaded) / info.total);
+    islandFacts.download = info.what === "speaking" ? t("Getting Buddy's voice ready… {pct}%", { pct }) : t("Getting Buddy's ears ready… {pct}%", { pct });
     showIsland();
     clearTimeout(downloadSettle);
     downloadSettle = setTimeout(() => {
@@ -1446,7 +1452,7 @@ const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvide
 
 function startBrain() {
   brain = providerReady()
-    ? makeEngine({ ...providerUI(), point: guidePoint, pointGuess: (bounds, caption, window) => guidePoint(bounds, caption, window), annotate: (items, context) => showAnnotations(items, context), clearAnnotations: (ms = 0) => annotationLayer.release("bubble", ms), confirm, status, stream: (update) => liveReply.receive(update), explain: bubbleExplain, trace, documentsDir: documentsDir(), dataDir: app.getPath("userData"), record: recordChange, reveal: revealMade, isOwnWindow: (w) => ownPids().includes(Number(w.pid)), openFile })
+    ? makeEngine({ ...providerUI(), quickModel: () => settings.quickModels[currentProvider()] ?? "", point: guidePoint, pointGuess: (bounds, caption, window) => guidePoint(bounds, caption, window), annotate: (items, context) => showAnnotations(items, context), clearAnnotations: (ms = 0) => annotationLayer.release("bubble", ms), confirm, status, stream: (update) => liveReply.receive(update), explain: bubbleExplain, trace, documentsDir: documentsDir(), dataDir: app.getPath("userData"), record: recordChange, reveal: revealMade, isOwnWindow: (w) => ownPids().includes(Number(w.pid)), openFile })
     : null;
 }
 
@@ -1514,7 +1520,7 @@ function startTasks() {
 // while the bubble is free for something else.
 async function newTask({ fromBubble = false } = {}) {
   if (!brain) return summon();
-  if (fromBubble && mode !== "idle") return progress("Let Buddy finish this answer, then make it a task");
+  if (fromBubble && mode !== "idle") return progress(t("Let Buddy finish this answer, then make it a task"));
   let result;
   if (fromBubble && brain.transcript().length) {
     result = await tasks.create({ brain, target: about.window });
@@ -1570,7 +1576,7 @@ function changeSettings(patch) {
   for (const field of rejected) {
     const name = field.startsWith("hotkeys.") ? field.slice(8) : null;
     const clash = name && HOTKEY_NAMES.find((other) => other !== name && next.hotkeys[other] === patch.hotkeys?.[name]);
-    problems[field] = clash ? `Already used for ${HOTKEY_LABELS[clash]}` : "That value isn't allowed";
+    problems[field] = clash ? t("Already used for {action}", { action: t(HOTKEY_LABELS[clash]) }) : t("That value isn't allowed");
   }
   for (const name of HOTKEY_NAMES) {
     const accel = next.hotkeys[name];
@@ -1591,6 +1597,7 @@ function changeSettings(patch) {
   if (!hotkeysSuspended && JSON.stringify(next.hotkeys) !== JSON.stringify(before.hotkeys)) registerHotkeys();
   if (next.accent !== before.accent) paintAccentEverywhere();
   if (next.appearance !== before.appearance) applyAppearance();
+  if (next.uiLanguage !== before.uiLanguage) applyLanguage();
   if (next.model !== before.model || next.effort !== before.effort || JSON.stringify(next.providerModels) !== JSON.stringify(before.providerModels)) setBrainDefaults(settings);
   if (next.provider !== before.provider || JSON.stringify(next.providerURLs) !== JSON.stringify(before.providerURLs)) {
     startBrain();
@@ -1605,6 +1612,16 @@ function changeSettings(patch) {
   settingsWindow?.refresh();
   return problems;
 }
+
+// The language of Buddy's windows (i18n.js): the one chosen in Settings, or Windows' own. Every open page gets the new
+// words at once; the tray is rebuilt by changeSettings.
+const stringsNow = () => ({ lang: language(), table: table() });
+function applyLanguage() {
+  setLanguage(pickLanguage(settings.uiLanguage, app.getPreferredSystemLanguages()));
+  for (const wc of webContents.getAllWebContents()) if (!wc.isDestroyed()) wc.send("strings", stringsNow());
+}
+// Any of Buddy's pages may ask: the words aren't private.
+ipcMain.handle("strings", () => stringsNow());
 
 function applyAppearance() {
   nativeTheme.themeSource = /** @type {"system" | "light" | "dark"} */ (process.env.BUDDY_THEME ?? settings.appearance);
@@ -1627,7 +1644,7 @@ app.on("web-contents-created", (_e, wc) => wc.on("did-finish-load", () => paintA
 
 // ---------- Global shortcuts ----------
 
-const HOTKEY_LABELS = { ask: "Ask", talk: "Talk", mark: "Mark", explain: "Explain", dictate: "Dictate" };
+const HOTKEY_LABELS = { ask: N("Ask"), talk: N("Talk"), mark: N("Mark"), explain: N("Explain"), dictate: N("Dictate") };
 const HOTKEY_ACTIONS = { ask: () => toggle(), talk: () => talk(), mark: () => startMarking(), explain: () => explainAt(cursor()), dictate: () => dictate() };
 /** @param {import("./settings.js").HotkeyName} name */
 const hotkey = (name) => ENV_HOTKEYS[name] ?? settings.hotkeys[name];
@@ -1678,22 +1695,22 @@ function buildTrayMenu() {
   tray.setToolTip(`Desktop Buddy — ask: ${pretty(keyLabel(hotkey("ask")))} · talk: ${pretty(keyLabel(hotkey("talk")))}`);
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: `Ask Buddy  (${keyLabel(hotkey("ask"))})`, click: () => summon() },
-      { label: `Talk to Buddy  (${keyLabel(hotkey("talk"))})`, click: () => talkByClick() },
-      { label: `Mark or explain something  (${keyLabel(hotkey("mark"))})`, click: () => startMarking() },
-      { label: "New conversation", click: () => resetBubble() },
-      ...(lessons?.list().length ? [{ label: "Play a lesson", submenu: lessons.list().slice(-15).reverse().map((l) => ({ label: `${l.title}  (${appName(l.app)})`, click: () => playLesson(l.id) })) }] : []),
-      ...(settings.advanced ? [{ label: "New task window", click: () => newTask() }] : []),
+      { label: `${t("Ask Buddy")}  (${keyLabel(hotkey("ask"))})`, click: () => summon() },
+      { label: `${t("Talk to Buddy")}  (${keyLabel(hotkey("talk"))})`, click: () => talkByClick() },
+      { label: `${t("Mark or explain something")}  (${keyLabel(hotkey("mark"))})`, click: () => startMarking() },
+      { label: t("New conversation"), click: () => resetBubble() },
+      ...(lessons?.list().length ? [{ label: t("Play a lesson"), submenu: lessons.list().slice(-15).reverse().map((l) => ({ label: `${l.title}  (${appName(l.app)})`, click: () => playLesson(l.id) })) }] : []),
+      ...(settings.advanced ? [{ label: t("New task window"), click: () => newTask() }] : []),
       { type: "separator" },
-      ...(updates?.state().status === "ready" ? [{ label: `Restart to update to ${updates.state().next}`, click: () => updates.install() }] : []),
-      ...(appStatus().code !== "missing" ? [{ label: "Quick chat in Claude Code", click: () => openQuickChat() }] : []),
-      { label: "Recent changes…", click: () => settingsWindow.open("activity") },
-      { label: "Report a problem…", click: () => settingsWindow.open("report") },
-      { label: "Settings…", click: () => settingsWindow.open() },
+      ...(updates?.state().status === "ready" ? [{ label: t("Restart to update to {version}", { version: updates.state().next }), click: () => updates.install() }] : []),
+      ...(appStatus().code !== "missing" ? [{ label: t("Quick chat in Claude Code"), click: () => openQuickChat() }] : []),
+      { label: t("Recent changes…"), click: () => settingsWindow.open("activity") },
+      { label: t("Report a problem…"), click: () => settingsWindow.open("report") },
+      { label: t("Settings…"), click: () => settingsWindow.open() },
       { label: "Recreate shortcuts", visible: process.platform === "win32" && !app.isPackaged, click: writeShortcuts },
       { type: "separator" },
       { label: `agent-desktop: ${path.basename(resolveBinary())}`, enabled: false },
-      { label: "Quit", click: () => app.quit() },
+      { label: t("Quit"), click: () => app.quit() },
     ]),
   );
 }
@@ -1717,12 +1734,12 @@ function settingsState() {
   return {
     settings,
     accents: ACCENTS,
-    models: MODELS,
+    models: MODELS.map((x) => ({ ...x, note: t(x.note) })),
     efforts: EFFORTS,
     voices: VOICES,
     speed: SPEED,
     defaultHotkeys: DEFAULTS.hotkeys,
-    labels: HOTKEY_LABELS,
+    labels: Object.fromEntries(Object.entries(HOTKEY_LABELS).map(([k, v]) => [k, t(v)])),
     // Set by environment variables, which win over Settings; the page shows these as fixed.
     fixed: {
       hotkeys: HOTKEY_NAMES.filter((n) => ENV_HOTKEYS[n]),
@@ -1740,7 +1757,7 @@ function settingsState() {
       const elsewhere = !!saved && !usable && boundToAddress(currentProvider()) ? saved.origin : null;
       return { saved: !!saved && !elsewhere, elsewhere, fromEnv: !!envKey(), env: PROVIDERS[currentProvider()].keyEnv };
     })(),
-    providers: Object.values(PROVIDERS).map((p) => ({ id: p.id, label: p.label, note: p.note, key: p.key, local: !!p.local, keyFrom: p.keyFrom, placeholder: p.placeholder, saved: !!envKey(p.id) || fs.existsSync(keyFile(p.id)), address: providerURL(p.id), defaultAddress: PROVIDERS[p.id].baseURL ?? null, ready: providerReady(p.id) })),
+    providers: Object.values(PROVIDERS).map((p) => ({ id: p.id, label: t(p.label), note: t(p.note), key: p.key, local: !!p.local, keyFrom: p.keyFrom, placeholder: p.placeholder, saved: !!envKey(p.id) || fs.existsSync(keyFile(p.id)), address: providerURL(p.id), defaultAddress: PROVIDERS[p.id].baseURL ?? null, ready: providerReady(p.id) })),
     providerModels: modelListState(),
     modelCheck: ((modelCheck) => modelCheck && { model: modelCheck.model, provider: modelCheck.provider, running: modelCheck.running, stopped: !!modelCheck.stopped, done: modelCheck.done, total: modelCheck.total, passed: modelCheck.passed, missed: modelCheck.missed })(providerState.modelCheck()),
     tested: testedOf(providerURL() ?? undefined, chosenModel() ?? ""),
@@ -1749,9 +1766,10 @@ function settingsState() {
     spend: spendState(),
     startsWithWindows: process.platform === "win32" && startsWithWindows(),
     data: { explainers, logBytes, conversations: conversations?.count() ?? 0 },
+    uiLanguages: LANGUAGES,
     lessons: (lessons?.list() ?? []).slice().reverse().map((l) => ({ id: l.id, title: l.title, app: appName(l.app), steps: l.steps.length })),
     claude: appStatus(),
-    aiApps: APP_IDS.map((id) => ({ id, label: APPS[id].label, after: APPS[id].after })),
+    aiApps: APP_IDS.map((id) => ({ id, label: APPS[id].label, after: t(APPS[id].after) })),
     updates: updates?.state() ?? null,
     routineInfo: Object.fromEntries(
       settings.routines.map((r) => [
@@ -1894,7 +1912,7 @@ function startUpdates() {
       // Say so once, on the island; the tray and Settings keep offering the restart.
       if (state.status === "ready" && announcedUpdate !== state.next) {
         announcedUpdate = state.next;
-        notice(`Buddy ${state.next} is ready: restart from the tray to update`);
+        notice(t("Buddy {version} is ready: restart from the tray to update", { version: state.next }));
       }
     },
     trace,
@@ -1931,6 +1949,7 @@ app.whenReady().then(() => {
   settings = loaded.settings;
   if (loaded.recovered) trace({ kind: "settings-recovered", note: "settings.json couldn't be read; kept as settings.json.bad" });
   applyAppearance();
+  applyLanguage();
   setBrainDefaults(settings);
   loadModelCaps();
   startActivity();

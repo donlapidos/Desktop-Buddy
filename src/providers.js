@@ -2,6 +2,7 @@
 // Responses API, and the rest through Chat Completions, which they all speak. Buddy's conversation stays in
 // Anthropic's message format (text, image, tool_use and tool_result blocks); it is converted on the way out and the
 // reply converted back, so history, trimming and tools work the same whichever provider answers.
+import { N } from "./i18n.js";
 import { fromOpenRouter, rememberPrice } from "./costs.js";
 
 /**
@@ -13,14 +14,14 @@ import { fromOpenRouter, rememberPrice } from "./costs.js";
 
 /** @type {Readonly<Record<ProviderId, Provider>>} */
 export const PROVIDERS = Object.freeze({
-  anthropic: { id: "anthropic", label: "Anthropic", note: "Claude models.", keyFrom: "console.anthropic.com", keyEnv: "ANTHROPIC_API_KEY", placeholder: "sk-ant-…", prefix: /^sk-ant-/, key: "required" },
-  openai: { id: "openai", label: "OpenAI", note: "GPT models.", baseURL: "https://api.openai.com/v1", keyFrom: "platform.openai.com", keyEnv: "OPENAI_API_KEY", placeholder: "sk-…", prefix: /^sk-(proj|svcacct|admin)-/, loose: true, key: "required" },
-  openrouter: { id: "openrouter", label: "OpenRouter", note: "One key for hundreds of models.", baseURL: "https://openrouter.ai/api/v1", keyFrom: "openrouter.ai/keys", keyEnv: "OPENROUTER_API_KEY", placeholder: "sk-or-…", prefix: /^sk-or-/, key: "required" },
-  gemini: { id: "gemini", label: "Google Gemini", note: "Gemini models; Google AI Studio has a free tier.", baseURL: "https://generativelanguage.googleapis.com/v1beta/openai", keyFrom: "aistudio.google.com", keyEnv: "GEMINI_API_KEY", placeholder: "AIza…", prefix: /^AIza/, key: "required" },
-  deepseek: { id: "deepseek", label: "DeepSeek", note: "DeepSeek models.", baseURL: "https://api.deepseek.com/v1", keyFrom: "platform.deepseek.com", keyEnv: "DEEPSEEK_API_KEY", placeholder: "sk-…", loose: true, key: "required" },
-  ollama: { id: "ollama", label: "Ollama", note: "Models on this PC. Free and private; no key.", baseURL: "http://localhost:11434/v1", keyFrom: "ollama.com", placeholder: "", key: "none", local: true },
-  lmstudio: { id: "lmstudio", label: "LM Studio", note: "Models on this PC. Free and private; no key.", baseURL: "http://localhost:1234/v1", keyFrom: "lmstudio.ai", placeholder: "", key: "none", local: true },
-  custom: { id: "custom", label: "Other server", note: "Any OpenAI-compatible server, at an address you give.", keyFrom: "the server's owner", placeholder: "Key, if the server needs one", loose: true, key: "optional" },
+  anthropic: { id: "anthropic", label: "Anthropic", note: N("Claude models."), keyFrom: "console.anthropic.com", keyEnv: "ANTHROPIC_API_KEY", placeholder: "sk-ant-…", prefix: /^sk-ant-/, key: "required" },
+  openai: { id: "openai", label: "OpenAI", note: N("GPT models."), baseURL: "https://api.openai.com/v1", keyFrom: "platform.openai.com", keyEnv: "OPENAI_API_KEY", placeholder: "sk-…", prefix: /^sk-(proj|svcacct|admin)-/, loose: true, key: "required" },
+  openrouter: { id: "openrouter", label: "OpenRouter", note: N("One key for hundreds of models."), baseURL: "https://openrouter.ai/api/v1", keyFrom: "openrouter.ai/keys", keyEnv: "OPENROUTER_API_KEY", placeholder: "sk-or-…", prefix: /^sk-or-/, key: "required" },
+  gemini: { id: "gemini", label: "Google Gemini", note: N("Gemini models; Google AI Studio has a free tier."), baseURL: "https://generativelanguage.googleapis.com/v1beta/openai", keyFrom: "aistudio.google.com", keyEnv: "GEMINI_API_KEY", placeholder: "AIza…", prefix: /^AIza/, key: "required" },
+  deepseek: { id: "deepseek", label: "DeepSeek", note: N("DeepSeek models."), baseURL: "https://api.deepseek.com/v1", keyFrom: "platform.deepseek.com", keyEnv: "DEEPSEEK_API_KEY", placeholder: "sk-…", loose: true, key: "required" },
+  ollama: { id: "ollama", label: "Ollama", note: N("Models on this PC. Free and private; no key."), baseURL: "http://localhost:11434/v1", keyFrom: "ollama.com", placeholder: "", key: "none", local: true },
+  lmstudio: { id: "lmstudio", label: "LM Studio", note: N("Models on this PC. Free and private; no key."), baseURL: "http://localhost:1234/v1", keyFrom: "lmstudio.ai", placeholder: "", key: "none", local: true },
+  custom: { id: "custom", label: N("Other server"), note: N("Any OpenAI-compatible server, at an address you give."), keyFrom: "the server's owner", placeholder: "Key, if the server needs one", loose: true, key: "optional" },
 });
 export const PROVIDER_IDS = /** @type {ProviderId[]} */ (Object.keys(PROVIDERS));
 

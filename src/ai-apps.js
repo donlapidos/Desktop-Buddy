@@ -3,6 +3,7 @@
 // speaks MCP; they differ in where they keep the list of servers. Claude Code and Codex are changed only through
 // their own commands. The rest keep a JSON file, which is edited in place: everything else in it is kept, a copy is
 // saved beside it first, and a file Buddy can't read is left alone.
+import { N } from "./i18n.js";
 import { execFile } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -28,14 +29,14 @@ const HERE = { home: os.homedir(), appData: process.env.APPDATA ?? "", localAppD
  * @type {Readonly<Record<AppId, { label: string, client: string, via: "claude-cli" | "codex-cli" | "json", file: (p: Places) => string, key?: string, entry?: (s: LaunchSpec) => object, after?: string }>>}
  */
 export const APPS = Object.freeze({
-  code: { label: "Claude Code", client: "Claude", via: "claude-cli", file: (p) => path.join(p.home, ".claude.json"), after: "New Claude Code sessions can use Buddy, and Claude won't stop to check before Buddy looks or points." },
-  desktop: { label: "Claude app", client: "Claude", via: "json", file: (p) => path.join(p.appData, "Claude", "claude_desktop_config.json"), key: "mcpServers", after: "Quit and reopen the Claude app to pick it up." },
-  codex: { label: "Codex", client: "Codex", via: "codex-cli", file: (p) => path.join(p.home, ".codex", "config.toml"), after: "New Codex chats can use Buddy, in the Codex app and in the terminal." },
-  gemini: { label: "Gemini CLI", client: "Gemini", via: "json", file: (p) => path.join(p.home, ".gemini", "settings.json"), key: "mcpServers", after: "New Gemini CLI sessions can use Buddy." },
-  cursor: { label: "Cursor", client: "Cursor", via: "json", file: (p) => path.join(p.home, ".cursor", "mcp.json"), key: "mcpServers", after: "Cursor picks it up in a moment; check Settings › MCP in Cursor that it's on." },
-  vscode: { label: "VS Code (Copilot)", client: "Copilot", via: "json", file: (p) => path.join(p.appData, "Code", "User", "mcp.json"), key: "servers", entry: (s) => ({ type: "stdio", ...s }), after: "In Copilot Chat's agent mode, Buddy's tools are under the tools button. VS Code may ask you to start it the first time." },
-  windsurf: { label: "Windsurf", client: "Windsurf", via: "json", file: (p) => path.join(p.home, ".codeium", "windsurf", "mcp_config.json"), key: "mcpServers", after: "Refresh the MCP list in Windsurf's Cascade panel to pick it up." },
-  lmstudio: { label: "LM Studio", client: "LM Studio", via: "json", file: (p) => path.join(p.home, ".lmstudio", "mcp.json"), key: "mcpServers", after: "Buddy's tools appear under Integrations in LM Studio's chat, for models that can use tools." },
+  code: { label: "Claude Code", client: "Claude", via: "claude-cli", file: (p) => path.join(p.home, ".claude.json"), after: N("New Claude Code sessions can use Buddy, and Claude won't stop to check before Buddy looks or points.") },
+  desktop: { label: "Claude app", client: "Claude", via: "json", file: (p) => path.join(p.appData, "Claude", "claude_desktop_config.json"), key: "mcpServers", after: N("Quit and reopen the Claude app to pick it up.") },
+  codex: { label: "Codex", client: "Codex", via: "codex-cli", file: (p) => path.join(p.home, ".codex", "config.toml"), after: N("New Codex chats can use Buddy, in the Codex app and in the terminal.") },
+  gemini: { label: "Gemini CLI", client: "Gemini", via: "json", file: (p) => path.join(p.home, ".gemini", "settings.json"), key: "mcpServers", after: N("New Gemini CLI sessions can use Buddy.") },
+  cursor: { label: "Cursor", client: "Cursor", via: "json", file: (p) => path.join(p.home, ".cursor", "mcp.json"), key: "mcpServers", after: N("Cursor picks it up in a moment; check Settings › MCP in Cursor that it's on.") },
+  vscode: { label: "VS Code (Copilot)", client: "Copilot", via: "json", file: (p) => path.join(p.appData, "Code", "User", "mcp.json"), key: "servers", entry: (s) => ({ type: "stdio", ...s }), after: N("In Copilot Chat's agent mode, Buddy's tools are under the tools button. VS Code may ask you to start it the first time.") },
+  windsurf: { label: "Windsurf", client: "Windsurf", via: "json", file: (p) => path.join(p.home, ".codeium", "windsurf", "mcp_config.json"), key: "mcpServers", after: N("Refresh the MCP list in Windsurf's Cascade panel to pick it up.") },
+  lmstudio: { label: "LM Studio", client: "LM Studio", via: "json", file: (p) => path.join(p.home, ".lmstudio", "mcp.json"), key: "mcpServers", after: N("Buddy's tools appear under Integrations in LM Studio's chat, for models that can use tools.") },
 });
 export const APP_IDS = /** @type {AppId[]} */ (Object.keys(APPS));
 

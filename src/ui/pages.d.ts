@@ -3,3 +3,9 @@
 interface Window {
   buddy: Record<string, (...args: any[]) => any>;
 }
+
+// From ui/strings.js, loaded before each page's own script.
+declare function t(text: string, vars?: Record<string, string | number>): string;
+declare function N(text: string): string;
+declare function applyStrings(root?: ParentNode): void;
+declare function whenStrings(fn: () => void): void;

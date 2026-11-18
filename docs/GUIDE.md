@@ -162,10 +162,14 @@ Open **Settings** from the tray, the sliders icon on the island, or the bubble. 
   detect automatically).
 - **Agents** and **Routines:** see above.
 - **Look:** Buddy's accent colour (pointer, island, chat, task windows and marks) and light or dark explainer plates.
+  **Language** sets the words in Buddy's windows: the same as Windows (the default), English or Español. Every window,
+  Settings and the approval cards follow it. Buddy answers in the language you ask in, whatever this says.
 - **Shortcuts:** click one and press new keys. A shortcut another app already owns, or another Buddy action uses, is
   refused with the reason; while you record one, Buddy lets go of its own so pressing them is recorded.
 - **AI & privacy:** the provider, its key or address, the model (each marked "works well", "can't see images" or
-  "can't use tools", with its last check score) and thinking effort for new conversations, **Use with your AI app**,
+  "can't use tools", with its last check score) and thinking effort for new conversations, an optional **Quick model
+  for everyday questions** (a smaller, cheaper model answers in the bubble; the main one still makes illustrated
+  explanations, task windows and routines, and takes over when the quick one can't do something), **Use with your AI app**,
   start with Windows, and clearing saved explainers or the timing log.
 - **Activity:** see above.
 - **About & updates:** the version, updates, and **Report a problem** (also in the tray menu): Buddy puts together

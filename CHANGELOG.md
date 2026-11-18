@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+* **Spend less on everyday questions:** Settings › AI & privacy › Quick model for everyday questions lets a smaller,
+  cheaper model (Haiku, say) answer in the bubble. Your main model still makes illustrated explanations, task windows
+  and routines, and takes over when the quick one can't do something. Off unless you choose one.
+* **Buddy in Spanish:** Buddy's windows follow Windows' language, or the one chosen in Settings › Look › Language.
+  Spanish is the first translation, across every window: the bubble and first-run setup, the island, task windows,
+  the marker, Settings, approval cards and Activity, the tour, and what Buddy says when the AI can't be reached.
+  Buddy already answered in the language you ask in.
 * **Lessons:** when Buddy has walked you through something, keep it as a lesson. Play it again from the tray or
   Settings › Lessons: Buddy points at each step and follows you, without asking the AI, so it's free. Share a lesson as
   a file, and import ones others share. A lesson only points; it never clicks or types.

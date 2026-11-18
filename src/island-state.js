@@ -12,6 +12,7 @@
 //   a notice                 done       an outcome: the answer, an error, "Typed 12 words" (the island fades it)
 //   the bubble open          active     "Ready"
 //   otherwise                idle
+import { N, t } from "./i18n.js";
 
 /** @typedef {"idle" | "active" | "busy" | "confirm" | "picking" | "listening" | "speaking" | "done"} IslandState */
 
@@ -33,20 +34,20 @@
 
 /** What each mode says before it has said anything of its own. @type {Record<Exclude<import("./modes.js").Mode, "idle">, string>} */
 export const MODE_LINES = {
-  marking: "Getting the screen ready…",
-  "reading-marks": "Reading what you marked…",
-  listening: "Listening…",
-  dictating: "Dictating…",
-  working: "Thinking…",
+  marking: N("Getting the screen ready…"),
+  "reading-marks": N("Reading what you marked…"),
+  listening: N("Listening…"),
+  dictating: N("Dictating…"),
+  working: N("Thinking…"),
 };
 
 /** @param {IslandFacts} f @returns {{ state: IslandState, text?: string }} */
 export function islandView(f) {
-  if (f.approval) return { state: "confirm", text: `Waiting for your OK: ${f.approval}` };
+  if (f.approval) return { state: "confirm", text: t("Waiting for your OK: {what}", { what: f.approval }) };
   if (f.mode !== "idle") {
-    const text = f.progress ?? MODE_LINES[f.mode];
+    const text = f.progress ?? t(MODE_LINES[f.mode]);
     if (f.mode === "marking") return { state: "picking", text };
-    if (f.mode === "listening") return f.transcribing ? { state: "busy", text: "Got it…" } : { state: "listening", text };
+    if (f.mode === "listening") return f.transcribing ? { state: "busy", text: t("Got it…") } : { state: "listening", text };
     if (f.mode === "dictating") return { state: "listening", text };
     return { state: "busy", text };
   }
@@ -54,6 +55,6 @@ export function islandView(f) {
   if (f.download) return { state: "busy", text: f.download };
   if (f.speaking) return { state: "speaking", text: f.saying };
   if (f.notice) return { state: "done", text: f.notice };
-  if (f.bubbleOpen) return { state: "active", text: "Ready" };
+  if (f.bubbleOpen) return { state: "active", text: t("Ready") };
   return { state: "idle" };
 }

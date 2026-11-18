@@ -14,9 +14,9 @@ function setBusy(on) {
   $("reply").setAttribute("aria-busy", String(on));
   $("stop").hidden = !on;
   $input().disabled = false;
-  $("submit").textContent = on ? "Send" : "Ask";
+  $("submit").textContent = on ? t("Send") : t("Ask");
   /** @type {HTMLButtonElement} */ ($("new")).disabled = on;
-  $input().placeholder = on ? "Change direction or ask a follow-up…" : "How do I…?  or  Do it for me";
+  $input().placeholder = on ? t("Change direction or ask a follow-up…") : t("How do I…?  or  Do it for me");
 }
 
 function show(text, status = false) {
@@ -27,16 +27,16 @@ function show(text, status = false) {
 // The tour's tip, or none (null).
 let tip = null;
 let voiceOffer = null; // the voice download's offer (showVoiceOffer)
-function showTip(t) {
-  tip = t;
+function showTip(next) {
+  tip = next;
   // One at a time: the bubble has room for one, and the voice offer comes first.
-  $("tip").hidden = !t || needsKey || !!voiceOffer;
-  if (!t) return;
-  $("tip-text").textContent = t.text;
-  $("tip-do").textContent = t.action;
+  $("tip").hidden = !next || needsKey || !!voiceOffer;
+  if (!next) return;
+  $("tip-text").textContent = next.text;
+  $("tip-do").textContent = next.action;
 }
 $("tip-do").addEventListener("click", () => tip && window.buddy.tour(tip.event));
-window.buddy.onTour((t) => showTip(t));
+window.buddy.onTour((next) => showTip(next));
 
 // The one-time voice download, offered after setup: an offer, its progress, then how it went (or nothing).
 function showVoiceOffer(o) {
@@ -53,13 +53,13 @@ window.buddy.onVoiceOffer((o) => showVoiceOffer(o));
 
 // Without the advanced features there are no task windows to move a conversation into.
 window.buddy.onAdvanced((on) => document.body.classList.toggle("basic", !on));
-window.buddy.onSummon(({ target, needsKey: nk, tip: t, voiceOffer, advanced = true }) => {
+window.buddy.onSummon(({ target, needsKey: nk, tip: nextTip, voiceOffer, advanced = true }) => {
   document.body.classList.toggle("basic", !advanced);
   needsKey = nk;
-  showTip(t);
+  showTip(nextTip);
   showVoiceOffer(voiceOffer);
   $("marks").classList.remove("on");
-  $("where").textContent = nk ? "Welcome to Buddy" : target ? `Looking at ${target}` : "Buddy";
+  $("where").textContent = nk ? t("Welcome to Buddy") : target ? t("Looking at {window}", { window: target }) : "Buddy";
   if (nk) welcome("doors");
   else leaveWelcome();
   if (!busy) { $input().disabled = false; $input().value = ""; if (!nk) $input().focus(); }
@@ -72,44 +72,46 @@ const el = (tag, props = {}, ...kids) => {
   return n;
 };
 const button = (cls, text, onClick) => { const b = el("button", { className: cls, type: "button", textContent: text }); b.addEventListener("click", onClick); return b; };
-const back = () => button("btn ghost", "Back", () => welcome("doors"));
+const back = () => button("btn ghost", t("Back"), () => welcome("doors"));
 let welcomeData = null;
+let welcomePage = "doors"; // the setup page on show, drawn again in a new language
 
 function leaveWelcome() {
   document.body.classList.remove("welcoming");
-  $("submit").textContent = "Ask";
+  $("submit").textContent = t("Ask");
   $("welcome").hidden = true;
   $("reply").hidden = false;
   $form().hidden = false;
   $input().type = "text";
-  $input().placeholder = "How do I…?  or  Do it for me";
+  $input().placeholder = t("How do I…?  or  Do it for me");
   showTip(tip); // a tour tip that came while setting up
   showVoiceOffer(voiceOffer); // and the voice offer
 }
 
 // page: "doors" (the three choices), "apps", "local" or "key".
 async function welcome(page) {
+  welcomePage = page;
   const box = $("welcome");
   document.body.classList.add("welcoming");
-  $("submit").textContent = "Save";
+  $("submit").textContent = t("Save");
   box.hidden = false;
   $("reply").hidden = true;
   $form().hidden = page !== "key";
   console.log("WELCOME_PAGE " + page);
   if (page === "key") {
     $input().type = "password";
-    $input().placeholder = "Paste an API key";
+    $input().placeholder = t("Paste an API key");
     box.replaceChildren(
-      el("p", { textContent: "Paste a key from Anthropic, OpenAI, Google Gemini or OpenRouter. It's kept encrypted on this PC." }),
+      el("p", { textContent: t("Paste a key from Anthropic, OpenAI, Google Gemini or OpenRouter. It's kept encrypted on this PC.") }),
       el("p", { className: "problem" }),
-      el("div", { className: "row" }, back(), button("btn ghost", "DeepSeek or another server…", () => window.buddy.openSettings("claude"))),
-      button("link", "No key? Would you want Buddy Plus, with the AI included?", () => window.buddy.plusInterest()),
+      el("div", { className: "row" }, back(), button("btn ghost", t("DeepSeek or another server…"), () => window.buddy.openSettings("claude"))),
+      button("link", t("No key? Would you want Buddy Plus, with the AI included?"), () => window.buddy.plusInterest()),
     );
     $input().focus();
     return;
   }
   if (page === "doors" || !welcomeData) {
-    box.replaceChildren(el("p", { className: "lede", textContent: "Looking for what's on this PC…" }));
+    box.replaceChildren(el("p", { className: "lede", textContent: t("Looking for what's on this PC…") }));
     welcomeData = await window.buddy.welcomeState();
   }
   const { apps, local } = welcomeData;
@@ -118,10 +120,10 @@ async function welcome(page) {
     const inApp = apps.some((a) => a.added);
     const door = (title, sub, go, ready = false) => { const b = el("button", { className: `door${ready ? " ready" : ""}`, type: "button" }, el("b", { textContent: title }), el("span", { textContent: sub })); b.addEventListener("click", go); b.dataset.door = go.name; return b; };
     box.replaceChildren(
-      el("p", { className: "lede", textContent: "Buddy needs an AI to think with. Pick one way in:" }),
-      door("Use the AI app I already have", found.length ? `${found.slice(0, 3).join(", ")}${found.length > 3 ? "…" : ""} on this PC. No key needed.` : "Claude, Codex, Gemini CLI, Cursor and others. No key needed.", function apps() { welcome("apps"); }, inApp),
-      door("Free, on this PC", local.use ? `${local.use.label} is running. Private: nothing leaves this PC.` : "With Ollama or LM Studio. Private: nothing leaves this PC.", function local() { welcome("local"); }),
-      door("I have an API key", "Anthropic, OpenAI, Google Gemini, OpenRouter…", function key() { welcome("key"); }),
+      el("p", { className: "lede", textContent: t("Buddy needs an AI to think with. Pick one way in:") }),
+      door(t("Use the AI app I already have"), found.length ? t("{apps} on this PC. No key needed.", { apps: `${found.slice(0, 3).join(", ")}${found.length > 3 ? "…" : ""}` }) : t("Claude, Codex, Gemini CLI, Cursor and others. No key needed."), function apps() { welcome("apps"); }, inApp),
+      door(t("Free, on this PC"), local.use ? t("{app} is running. Private: nothing leaves this PC.", { app: local.use.label }) : t("With Ollama or LM Studio. Private: nothing leaves this PC."), function local() { welcome("local"); }),
+      door(t("I have an API key"), "Anthropic, OpenAI, Google Gemini, OpenRouter…", function key() { welcome("key"); }),
     );
     return;
   }
@@ -129,24 +131,24 @@ async function welcome(page) {
     const problem = el("p", { className: "problem" });
     const rows = apps.map((a) => {
       const row = el("div", { className: "app" }, el("span", { textContent: a.label }));
-      if (a.added) row.append(el("span", { className: "added", textContent: "Buddy is in it" }));
-      else row.append(button("btn", "Add Buddy", async (e) => {
+      if (a.added) row.append(el("span", { className: "added", textContent: t("Buddy is in it") }));
+      else row.append(button("btn", t("Add Buddy"), async (e) => {
         e.target.disabled = true;
-        e.target.textContent = "Adding…";
+        e.target.textContent = t("Adding…");
         const res = await window.buddy.welcomeApp(a.id);
         console.log("WELCOME_APP " + JSON.stringify({ id: a.id, error: res.error }));
-        if (res.error) { problem.textContent = res.error; e.target.disabled = false; e.target.textContent = "Add Buddy"; return; }
+        if (res.error) { problem.textContent = res.error; e.target.disabled = false; e.target.textContent = t("Add Buddy"); return; }
         welcomeData = res.state;
         box.replaceChildren(
-          el("p", { textContent: `Buddy is in ${a.label}. ${res.after}` }),
-          el("p", { className: "lede", textContent: `Then ask there, for example: "Use Buddy to show me how to make a chart here." Buddy looks at your screen and points the way. The bubble here can also think on its own, with one of the other two ways.` }),
+          el("p", { textContent: `${t("Buddy is in {app}.", { app: a.label })} ${res.after}` }),
+          el("p", { className: "lede", textContent: t("Then ask there, for example: \"Use Buddy to show me how to make a chart here.\" Buddy looks at your screen and points the way. The bubble here can also think on its own, with one of the other two ways.") }),
           el("div", { className: "row" }, back()),
         );
       }));
       return row;
     });
     box.replaceChildren(
-      el("p", { textContent: apps.length ? "You'll ask in your AI app, and Buddy looks and points for it. It runs on that app's own plan." : "No AI app Buddy works with was found on this PC. Buddy works with Claude (the app or Claude Code), Codex, Gemini CLI, Cursor, VS Code, Windsurf and LM Studio. Install one, or pick another way." }),
+      el("p", { textContent: apps.length ? t("You'll ask in your AI app, and Buddy looks and points for it. It runs on that app's own plan.") : t("No AI app Buddy works with was found on this PC. Buddy works with Claude (the app or Claude Code), Codex, Gemini CLI, Cursor, VS Code, Windsurf and LM Studio. Install one, or pick another way.") }),
       ...rows,
       problem,
       el("div", { className: "row" }, back()),
@@ -156,21 +158,21 @@ async function welcome(page) {
   if (page === "local") {
     const problem = el("p", { className: "problem" });
     const go = local.use
-      ? button("btn", `Use ${local.use.label}`, async (e) => {
+      ? button("btn", t("Use {app}", { app: local.use.label }), async (e) => {
           e.target.disabled = true;
-          e.target.textContent = "Setting up…";
+          e.target.textContent = t("Setting up…");
           const res = await window.buddy.welcomeLocal();
           console.log("WELCOME_LOCAL " + JSON.stringify(res));
-          if (!res.ok) { problem.textContent = res.error ?? "That didn't work."; e.target.disabled = false; e.target.textContent = `Use ${local.use.label}`; return; }
+          if (!res.ok) { problem.textContent = res.error ?? t("That didn't work."); e.target.disabled = false; e.target.textContent = t("Use {app}", { app: local.use.label }); return; }
           needsKey = false;
           leaveWelcome();
           $("where").textContent = "Buddy";
-          show(`Ready. I'm thinking with ${res.label} on this PC. Ask me anything about what's on your screen.`);
+          show(t("Ready. I'm thinking with {app} on this PC. Ask me anything about what's on your screen.", { app: res.label }));
           $input().focus();
         })
-      : button("btn", "Check again", async (e) => {
+      : button("btn", t("Check again"), async (e) => {
           e.target.disabled = true;
-          e.target.textContent = "Checking…";
+          e.target.textContent = t("Checking…");
           welcomeData = await window.buddy.welcomeState();
           welcome("local");
         });
@@ -205,12 +207,12 @@ window.buddy.onMarks((list) => {
   const explain = document.createElement("button");
   explain.className = "btn ghost";
   explain.type = "button";
-  explain.textContent = list.length > 1 ? "Explain these" : "Explain this";
-  explain.addEventListener("click", () => { $input().value = "Explain what I highlighted."; $form().requestSubmit(); });
+  explain.textContent = list.length > 1 ? t("Explain these") : t("Explain this");
+  explain.addEventListener("click", () => { $input().value = t("Explain what I highlighted."); $form().requestSubmit(); });
   box.append(explain);
   box.classList.add("on");
-  $("where").textContent = `${list.length} marked`;
-  $input().placeholder = list.length > 1 ? "Ask about these marks… (e.g. compare 1 and 2)" : "Ask about what you marked…";
+  $("where").textContent = t("{n} marked", { n: list.length });
+  $input().placeholder = list.length > 1 ? t("Ask about these marks… (e.g. compare 1 and 2)") : t("Ask about what you marked…");
   show("");
 });
 window.buddy.onReply((text) => { show(text); $("where").textContent = "Buddy"; });
@@ -243,8 +245,8 @@ let listening = false, spoken = false;
 window.buddy.onListening((on) => {
   listening = on;
   document.body.classList.toggle("listening", on);
-  if (on) show("Listening… pause when you're done.", true);
-  else if ($("reply").textContent.startsWith("Listening")) show("");
+  if (on) show(t("Listening… pause when you're done."), true);
+  else if ($("reply").textContent === t("Listening… pause when you're done.")) show("");
 });
 window.buddy.onVoiceText((text) => {
   if (busy || needsKey) return;
@@ -265,25 +267,25 @@ $form().addEventListener("submit", async (e) => {
     const { ok, error } = await window.buddy.setKey(text);
     console.log("WELCOME_KEY " + JSON.stringify({ ok, error }));
     if (!ok) {
-      $("welcome").querySelector(".problem").textContent = error ?? "That didn't work. Try again.";
+      $("welcome").querySelector(".problem").textContent = error ?? t("That didn't work. Try again.");
       return;
     }
     needsKey = false;
     leaveWelcome();
     $("where").textContent = "Buddy";
-    show("Got it. Ask me anything about what's on your screen.");
+    show(t("Got it. Ask me anything about what's on your screen."));
     return;
   }
   setBusy(true);
   const sequence = ++askSequence;
   $("spend").textContent = "";
-  show(wasSpoken ? `“${text}”` : "Thinking…", true);
+  show(wasSpoken ? `“${text}”` : t("Thinking…"), true);
   offerLesson(false);
   const { reply, spend, superseded, lesson } = await window.buddy.ask(text, { spoken: wasSpoken });
   if (sequence !== askSequence) return;
   setBusy(false);
   if (!superseded) show(reply);
-  else if (!listening) show("Okay, stopped.");
+  else if (!listening) show(t("Okay, stopped."));
   $("spend").textContent = spend ?? "";
   offerLesson(!superseded && !!lesson);
   $("confirm").classList.remove("on");
@@ -302,8 +304,13 @@ function offerLesson(on) {
 }
 $("lesson-save").addEventListener("click", async () => {
   const r = await window.buddy.saveLesson();
-  $("lesson-said").textContent = r?.title ? "Saved. Play it again from the tray, or share it from Settings › Lessons." : r?.error ?? "Couldn't save that.";
+  $("lesson-said").textContent = r?.title ? t("Saved. Play it again from the tray, or share it from Settings › Lessons.") : r?.error ?? t("Couldn't save that.");
   if (r?.title) $("lesson-save").hidden = true;
+});
+// A new language: what the script wrote at rest is written again (marked words change by themselves).
+whenStrings(() => {
+  if (document.body.classList.contains("welcoming")) welcome(welcomePage);
+  else setBusy(busy);
 });
 addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;

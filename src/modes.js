@@ -7,6 +7,7 @@
 //   working       a question or an explain is running (it may be waiting for the user's OK)
 // main.js holds the current mode and changes it only through enter(), which consults canMove(). The tables are typed
 // Record<Mode, …>, so adding a mode doesn't pass `npm run check` until both say what it allows.
+import { N } from "./i18n.js";
 
 /** @typedef {"idle" | "marking" | "reading-marks" | "listening" | "dictating" | "working"} Mode */
 
@@ -23,11 +24,11 @@ export const NEXT = Object.freeze({
 /** What to tell someone who asks for something else while Buddy is in each mode. @type {Readonly<Record<Mode, string>>} */
 export const BUSY = Object.freeze({
   idle: "",
-  marking: "Finish marking first: Enter to ask, Esc to cancel",
-  "reading-marks": "Reading what you marked…",
-  listening: "Listening: pause when you're done",
-  dictating: "Dictating: press the dictation key again to stop",
-  working: "I'm still on the last thing. Give me a moment, or press Esc to stop it.",
+  marking: N("Finish marking first: Enter to ask, Esc to cancel"),
+  "reading-marks": N("Reading what you marked…"),
+  listening: N("Listening: pause when you're done"),
+  dictating: N("Dictating: press the dictation key again to stop"),
+  working: N("I'm still on the last thing. Give me a moment, or press Esc to stop it."),
 });
 
 /** @param {Mode} from @param {Mode} to */

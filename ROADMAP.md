@@ -310,7 +310,21 @@ Only after Phases 0-3; pick by what users ask for.
   Known limit: with several windows of the lesson's app open, it plays in the one in front.
 - **5.3 Integrations:** let Buddy use other MCP servers the user adds (calendar, mail), under the same approvals.
 - **5.4 Languages:** the interface in the user's language (replies already are).
+  **Done (2026-11-18).** `src/i18n.js` and `src/ui/strings.js`: English text as the key, `src/locales/es.json`
+  for Spanish (148 strings, written by Claude: have a native speaker read it before release). Settings › Look ›
+  Language (follows Windows by default), switching live. Translated: bubble (with first-run setup), island, task
+  windows, marker, tray, island status lines; then Settings (its script by a subagent, checked here), the tour and
+  voice offer, approval cards and Activity, the file and web cards, model-call failures, providers' and AI apps'
+  words: 533 strings. `test/strings.test.js` holds completeness and placeholders; the `language` e2e check switches
+  live and reads every Settings page in Spanish for English left behind. Known gaps: an open routine editor and a
+  shortcut error already on show keep the old language until redrawn; dates follow Windows' locale; model-written
+  plates and replies are in the language asked, not the setting.
 - **5.5 A cheap-then-smart mode:** a small model for guiding, the big one for explaining and building.
+  **Built (2026-11-18), off by default.** `settings.quickModels` (per provider), Settings › AI & privacy › Quick model
+  for everyday questions. The bubble's Brain uses it (`Brain.activeModel`); an Explain answer, `prepare_explainer`,
+  and a quick model that can't use tools or isn't on the account switch to the main model for the rest of the answer.
+  Task windows and routines always use the main one. Which small models guide well enough to recommend one is still
+  Phase 2's to measure.
 
 ## Decisions for the owner
 
