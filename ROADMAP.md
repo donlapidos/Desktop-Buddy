@@ -309,6 +309,14 @@ Only after Phases 0-3; pick by what users ask for.
   model call, only pointing, and a plain outcome per step. The `lessons` e2e check plays one in a sample window.
   Known limit: with several windows of the lesson's app open, it plays in the one in front.
 - **5.3 Integrations:** let Buddy use other MCP servers the user adds (calendar, mail), under the same approvals.
+  **Done (2026-11-18), as connections.** `src/connectors.js`: services whose own MCP server lets an app sign in by
+  itself (OAuth 2.1, dynamic client registration, PKCE S256, checked in each server's metadata): Notion, Linear,
+  Atlassian (Jira, Confluence). Asana (no registration endpoint) and GitHub (needs an OAuth app registered for Buddy)
+  wait on the owner registering Buddy with them. On a listed site the bubble offers once (Connect, Not now, Don't ask
+  again); Settings › Connections. Tokens encrypted by Windows; the sign-in returns to a one-off 127.0.0.1 address
+  checked by state. Each tool call asks on the card, per service; results are information, keys hidden. Tested
+  against a stand-in service with real OAuth (`scripts/samples/test-service.mjs`) in unit tests and the
+  `connections` e2e check. Not done: a box to add any server by address (the owner chose not to, for now).
 - **5.4 Languages:** the interface in the user's language (replies already are).
   **Done (2026-11-18).** `src/i18n.js` and `src/ui/strings.js`: English text as the key, `src/locales/es.json`
   for Spanish (148 strings, written by Claude: have a native speaker read it before release). Settings › Look ›

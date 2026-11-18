@@ -97,6 +97,8 @@ export const DEFAULTS = Object.freeze({
   // A smaller, cheaper model for everyday questions in the bubble, per provider ("" or absent: the main model does
   // everything). Illustrated explanations, task windows and routines keep the main model (brain.js activeModel).
   quickModels: Object.freeze({}),
+  // Services the user said "Don't ask again" to connecting, when on their site (connectors.js).
+  connectionsDeclined: Object.freeze([]),
 });
 
 export const VOICE_SETUP = Object.freeze(["ask", "yes", "no"]);
@@ -113,7 +115,7 @@ export const CAP = Object.freeze({ max: 10_000 });
  *   rope: string, trustedApps: string[], blockedApps: string[], routines: Routine[], autoUpdate: boolean,
  *   launchSetupDone: boolean, tour: string, monthlyCap: number, commands: boolean, screenContext: boolean,
  *   holdToTalk: boolean, voiceSetup: string, advanced: boolean, readFolders: string[] | null, uiLanguage: string,
- *   quickModels: Record<string, string>,
+ *   quickModels: Record<string, string>, connectionsDeclined: string[],
  * }} Settings
  */
 
@@ -284,6 +286,7 @@ export function normalize(raw) {
     readFolders: folderList(r.readFolders),
     uiLanguage: pick(r.uiLanguage, ["auto", ...Object.keys(UI_LANGUAGES)], DEFAULTS.uiLanguage),
     quickModels: quickModels(r.quickModels),
+    connectionsDeclined: Array.isArray(r.connectionsDeclined) ? [...new Set(r.connectionsDeclined.filter((x) => typeof x === "string" && /^[a-z0-9]{1,20}$/.test(x)))].slice(0, 30) : [],
   };
 }
 

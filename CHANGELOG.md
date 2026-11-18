@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* **Connections:** Buddy can use Notion, Linear, and Jira and Confluence for you, with your own account. On one of
+  their sites the bubble offers to connect; you sign in in your browser (Buddy never sees your password). Buddy asks
+  before every action in a service. Settings › Connections lists them. Comes with the advanced features.
 * **Spend less on everyday questions:** Settings › AI & privacy › Quick model for everyday questions lets a smaller,
   cheaper model (Haiku, say) answer in the bubble. Your main model still makes illustrated explanations, task windows
   and routines, and takes over when the quick one can't do something. Off unless you choose one.

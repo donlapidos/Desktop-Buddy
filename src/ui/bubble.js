@@ -48,6 +48,27 @@ function showVoiceOffer(o) {
   $("voice-yes").hidden = $("voice-no").hidden = o.state !== "offer";
 }
 $("voice-yes").addEventListener("click", () => window.buddy.voiceOffer("yes"));
+
+// Connecting a service whose site the user is on (connectors.js): an offer, then how it went.
+let connectOffer = null;
+function showConnectOffer(o) {
+  connectOffer = o;
+  $("connect-offer").hidden = !o || needsKey;
+  if (!o) return;
+  $("connect-offer-text").textContent = o.text;
+  for (const id of ["connect-yes", "connect-later", "connect-never"]) $(id).hidden = o.state !== "offer";
+}
+window.buddy.onConnectOffer((o) => showConnectOffer(o));
+const answerConnect = async (answer) => {
+  if (!connectOffer) return;
+  const id = connectOffer.id;
+  if (answer !== "yes") return showConnectOffer(null), window.buddy.connectOfferAnswer(id, answer);
+  showConnectOffer({ id, state: "busy", text: t("Sign in in your browser, then come back here.") });
+  showConnectOffer((await window.buddy.connectOfferAnswer(id, "yes")) ?? null);
+};
+$("connect-yes").addEventListener("click", () => answerConnect("yes"));
+$("connect-later").addEventListener("click", () => answerConnect("later"));
+$("connect-never").addEventListener("click", () => answerConnect("never"));
 $("voice-no").addEventListener("click", () => window.buddy.voiceOffer("no"));
 window.buddy.onVoiceOffer((o) => showVoiceOffer(o));
 
@@ -58,6 +79,8 @@ window.buddy.onSummon(({ target, needsKey: nk, tip: nextTip, voiceOffer, advance
   needsKey = nk;
   showTip(nextTip);
   showVoiceOffer(voiceOffer);
+  // An offer to connect is for the window Buddy was just called to; one that's signing in stays.
+  if (connectOffer?.state !== "busy") showConnectOffer(null);
   $("marks").classList.remove("on");
   $("where").textContent = nk ? t("Welcome to Buddy") : target ? t("Looking at {window}", { window: target }) : "Buddy";
   if (nk) welcome("doors");

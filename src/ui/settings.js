@@ -14,7 +14,7 @@ let recording = null; // the shortcut being recorded
 const problems = {};
 
 // ---------- Navigation: one section at a time; the last one is remembered ----------
-const pages = ["voice", "dictation", "look", "keys", "agents", "lessons", "routines", "claude", "activity", "about"];
+const pages = ["voice", "dictation", "look", "keys", "agents", "connections", "lessons", "routines", "claude", "activity", "about"];
 const navButtons = () => /** @type {NodeListOf<HTMLButtonElement>} */ (document.querySelectorAll("nav button"));
 function show(page) {
   for (const p of pages) $(`page-${p}`).hidden = p !== page;
@@ -709,7 +709,29 @@ function render(state) {
   renderSpend();
   renderActivity();
   renderLessons();
+  renderConnections();
   renderAbout();
+}
+
+// ---------- Connections ----------
+let connectingId = null;
+function renderConnections() {
+  $("connections").replaceChildren(...(S.connections ?? []).map((c) => {
+    const info = el("div", {}, el("b", { textContent: c.label }), el("span", { className: "when", textContent: ` ${c.connected ? t("Connected: Buddy can {does}.", { does: c.does }) : t("Not connected.")}` }));
+    const busy = connectingId === c.id;
+    const btn = el("button", { className: c.connected ? "btn" : "btn primary", textContent: busy ? t("Signing in…") : c.connected ? t("Disconnect") : t("Connect"), disabled: !!connectingId });
+    btn.setAttribute("aria-label", c.connected ? t("Disconnect {service}", { service: c.label }) : t("Connect {service}", { service: c.label }));
+    btn.addEventListener("click", async () => {
+      connectingId = c.connected ? null : c.id;
+      $("connection-problem").textContent = c.connected ? "" : t("Sign in in your browser, then come back here.");
+      renderConnections();
+      const r = await window.buddy.settingsConnection(c.connected ? "disconnect" : "connect", c.id);
+      connectingId = null;
+      $("connection-problem").textContent = r.error ?? "";
+      render(r.state);
+    });
+    return el("div", { className: "routine" }, info, el("div", { className: "row" }, btn));
+  }));
 }
 
 // ---------- Lessons ----------

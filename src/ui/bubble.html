@@ -115,11 +115,11 @@
   #tip span { flex: 1; }
   #tip button { flex: none; border: 0; border-radius: 8px; padding: 5px 9px; background: color-mix(in srgb, var(--buddy) 28%, var(--field)); color: var(--fg); font: inherit; font-weight: 600; cursor: pointer; }
   #tip button:hover { background: color-mix(in srgb, var(--buddy) 40%, var(--field)); }
-  #voice-offer { display: flex; align-items: center; gap: 6px; padding: 7px 8px 7px 10px; border-radius: 10px; background: color-mix(in srgb, var(--buddy) 14%, var(--field)); font-size: 12.5px; line-height: 1.35; }
-  #voice-offer[hidden], #voice-offer button[hidden] { display: none; }
-  #voice-offer span { flex: 1; }
-  #voice-offer button { flex: none; border: 0; border-radius: 8px; padding: 5px 9px; background: color-mix(in srgb, var(--buddy) 28%, var(--field)); color: var(--fg); font: inherit; font-weight: 600; cursor: pointer; }
-  #voice-offer button.quiet { background: transparent; font-weight: 500; }
+  #voice-offer, #connect-offer { display: flex; align-items: center; gap: 6px; padding: 7px 8px 7px 10px; border-radius: 10px; background: color-mix(in srgb, var(--buddy) 14%, var(--field)); font-size: 12.5px; line-height: 1.35; }
+  #voice-offer[hidden], #voice-offer button[hidden], #connect-offer[hidden], #connect-offer button[hidden] { display: none; }
+  #voice-offer span, #connect-offer span { flex: 1; }
+  #voice-offer button, #connect-offer button { flex: none; border: 0; border-radius: 8px; padding: 5px 9px; background: color-mix(in srgb, var(--buddy) 28%, var(--field)); color: var(--fg); font: inherit; font-weight: 600; cursor: pointer; }
+  #voice-offer button.quiet, #connect-offer button.quiet { background: transparent; font-weight: 500; }
   #voice-offer button:hover { background: color-mix(in srgb, var(--buddy) 40%, var(--field)); }
   /* After a route they went all the way through: keep it as a lesson to play again or share. */
   #lesson { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: -4px; font-size: 12px; color: var(--muted); }
@@ -155,6 +155,7 @@
     </div>
   </div>
   <div id="tip" hidden><span id="tip-text"></span><button id="tip-do" type="button"></button></div>
+  <div id="connect-offer" hidden role="status"><span id="connect-offer-text"></span><button id="connect-yes" type="button" data-t>Connect</button><button id="connect-later" class="quiet" type="button" data-t>Not now</button><button id="connect-never" class="quiet" type="button" data-t>Don't ask again</button></div>
   <div id="voice-offer" hidden role="status"><span id="voice-offer-text"></span><button id="voice-yes" type="button" data-t>Set up talking</button><button id="voice-no" class="quiet" type="button" data-t>Not now</button></div>
   <form id="form">
     <input id="input" autocomplete="off" spellcheck="false" data-t-attrs="aria-label" aria-label="Ask Buddy" placeholder="How do I…?  or  Do it for me">

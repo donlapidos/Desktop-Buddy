@@ -29,6 +29,7 @@ import { learnCaps } from "./providers.js";
  *   typeText: (text: string) => Promise<void>, saveApiKey: Function, loadApiKey: Function, providerURL: Function,
  *   prepareScreenImage: Function, timingLog: () => string, documentsDir: () => string, startBrain: Function, spendState: Function,
  *   pressHotkey: (name: any) => void, sendVoiceOffer: () => void, useKeyHook: (hook: import("./hold-key.js").KeyHook) => void,
+ *   connectors: ReturnType<typeof import("./connectors.js").createConnectors> | null, offerConnection: (win: any) => Promise<void>,
  *   lessons: ReturnType<typeof import("./lessons.js").createLessons> | null, playLesson: (id: string, opts?: { window?: any }) => Promise<any>,
  * }} DevKit
  */
@@ -1079,7 +1080,44 @@ function languageTest(kit) {
   }, 2500);
 }
 
+/** BUDDY_CONNECTIONS_TEST @param {DevKit} kit */
+function connectionsTest(kit) {
+  // A service connected and used through the real app: a stand-in service and model on this PC (scripts/e2e.mjs).
+  // On its site the bubble offers to connect; Connect signs in; a question uses its tool after Allow on the card.
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const until = async (check, ms = 15_000) => { for (const end = Date.now() + ms; Date.now() < end; await wait(100)) if (await check()) return true; return false; };
+  setTimeout(async () => {
+    const r = {};
+    try {
+      const { bubble } = kit;
+      const js = (code) => bubble.webContents.executeJavaScript(code);
+      await kit.summon();
+      await kit.offerConnection({ title: "Q3 budget - docs.test - Microsoft Edge", app_name: "msedge.exe" });
+      r.offered = await until(() => js(`!document.getElementById("connect-offer").hidden`), 5000);
+      r.offer = await js(`document.getElementById("connect-offer-text").textContent`);
+      await js(`document.getElementById("connect-yes").click()`);
+      r.connected = await until(() => !!kit.connectors?.connected("testdocs"));
+      await wait(500);
+      r.after = await js(`document.getElementById("connect-offer-text").textContent`);
+      // A second offer for the same site doesn't come: it's connected now.
+      await kit.offerConnection({ title: "Q3 budget - docs.test - Microsoft Edge", app_name: "msedge.exe" });
+      const answer = js(`window.buddy.ask("Find the budget in my documents", {})`);
+      r.carded = await until(() => js(`document.getElementById("confirm").classList.contains("on")`));
+      r.card = await js(`document.getElementById("what").textContent`);
+      await wait(700);
+      await js(`document.querySelector('[data-d="allow"]').click()`);
+      r.reply = (await answer)?.reply ?? null;
+      r.listed = kit.settingsState().connections.map((c) => `${c.id}:${c.connected}`);
+    } catch (err) {
+      r.error = String(err?.message ?? err);
+    }
+    console.log("CONNECTIONS_TEST", JSON.stringify(r));
+    console.log("CONNECTIONS_TEST_DONE");
+  }, 2500);
+}
+
 const HOOKS = {
+  BUDDY_CONNECTIONS_TEST: connectionsTest,
   BUDDY_LANGUAGE_TEST: languageTest,
   BUDDY_LESSONS_TEST: lessonsTest,
   BUDDY_RESTORE_TEST: restoreTest,
