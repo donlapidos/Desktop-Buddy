@@ -25,6 +25,7 @@ Ordinary bugs go through **Report a problem** in the tray, which shows you the w
 | Read files and folders | Freely in the folders listed in Settings › Agents (Documents, Desktop, Downloads to start) and its own Documents › Buddy folder; anywhere else asks first. |
 | Make or change files | Always asks first. A file it replaces or edits is kept for a week, and Activity can undo it. |
 | Read web pages | Asks for each website. Addresses on your PC or your local network are never fetched, redirects included. |
+| Use a connected service (Notion, Linear, Jira and Confluence) | Only after you connect it, signing in in your browser, and only with the advanced features on. Every action asks on Buddy's card, naming the service; "Allow for this task" covers that one service. What it sends back is treated as information, never instructions, and anything shaped like a key is hidden. |
 | Play a lesson (one you saved or one someone shared) | It only points and follows you, like guiding; it never clicks, types or opens anything, and calls no AI. An imported lesson is checked to be only steps and short words. |
 | Run PowerShell commands | Off until you turn it on (Settings › Agents › Let Buddy run commands). On, it asks before every command. |
 
@@ -61,6 +62,14 @@ in what Buddy reads.
 API keys are stored encrypted by Windows (DPAPI), one per provider, and are sent only to their own provider. A key for
 "Another server" is tied to the address it was entered for. PowerShell runs without any keys in its environment. The
 Settings window never receives a saved key, and the problem report leaves keys and your files' paths out.
+
+## Connected services
+
+Buddy only lists services whose own servers let an app sign in by itself, with the safeguards for that (OAuth 2.1
+with PKCE): you sign in on the service's page in your browser, and Buddy never sees your password. What the service
+gives Buddy for that (its sign-in tokens) is kept encrypted by Windows in Buddy's data folder, sent only to that
+service, and deleted when you disconnect. The browser comes back to a one-off address on this PC that accepts a single
+sign-in carrying the code Buddy sent, and Buddy only opens secure (https) sign-in pages.
 
 ## Your AI app
 

@@ -59,6 +59,23 @@ function scriptedOllama() {
   return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, close: () => server.close() })));
 }
 
+/** Asks to search the test service's documents, then says what it found: for the connections check. */
+function toolModel() {
+  const server = http.createServer(async (req, res) => {
+    let body = "";
+    for await (const c of req) body += c;
+    if (req.url?.endsWith("/models")) return res.end(JSON.stringify({ data: [{ id: "scripted", object: "model" }] }));
+    const asked = JSON.parse(body || "{}");
+    const result = (asked.messages ?? []).find((m) => m.role === "tool");
+    const chunk = result
+      ? { choices: [{ delta: { content: `Found it. ${String(result.content).split("\n")[1] ?? ""}` }, finish_reason: "stop" }] }
+      : { choices: [{ delta: { tool_calls: [{ index: 0, id: "call_1", type: "function", function: { name: "testdocs__search_docs", arguments: JSON.stringify({ query: "budget" }) } }] }, finish_reason: "tool_calls" }] };
+    res.setHeader("content-type", "text/event-stream");
+    res.end(`data: ${JSON.stringify(chunk)}\n\ndata: [DONE]\n\n`);
+  });
+  return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, close: () => server.close() })));
+}
+
 /** Answers each question with "Answer to: <the question>" and keeps every request, for the restore check. */
 function echoModel() {
   /** @type {string[]} */
@@ -463,6 +480,34 @@ const CHECKS = {
     const after = machineState();
     return [devHooks && "a Buddy with no test variable loaded dev-hooks.js",
       ...Object.keys({ ...before, ...after }).filter((k) => before[k] !== after[k]).map((k) => `changed ${k}: ${before[k] ?? "(none)"} -> ${after[k] ?? "(none)"}`)].filter(Boolean);
+  },
+
+  // A service connected and used through the real app, against a stand-in service and model on this PC.
+  async connections() {
+    const { startTestService } = await import("./samples/test-service.mjs");
+    const service = await startTestService();
+    const model = await toolModel();
+    try {
+      const seed = { "settings.json": JSON.stringify({ provider: "custom", providerURLs: { custom: model.url }, providerModels: { custom: "scripted" }, advanced: true, launchSetupDone: true, voiceSetup: "no", talkBack: "never" }) };
+      const { markers, timedOut } = await runCopy("connections", { BUDDY_CONNECTIONS_TEST: "1", BUDDY_CONNECTORS_TEST: service.url }, "CONNECTIONS_TEST_DONE", 90_000, seed);
+      const r = markers.CONNECTIONS_TEST?.[0];
+      if (!r) return [timedOut ? "timed out" : "nothing printed"];
+      if (r.error) return [r.error];
+      return [
+        !r.offered && "the bubble didn't offer to connect on the service's site",
+        !/^Connect Buddy to Test Docs\?/.test(r.offer ?? "") && `the offer said ${JSON.stringify(r.offer)}`,
+        !r.connected && "Connect didn't sign in",
+        service.seen.registered !== 1 && `Buddy registered ${service.seen.registered} times`,
+        !/^Connected/.test(r.after ?? "") && `after connecting the bubble said ${JSON.stringify(r.after)}`,
+        r.card !== "Test Docs: Search documents" && `the approval card said ${JSON.stringify(r.card)}`,
+        JSON.stringify(service.seen.calls) !== JSON.stringify([{ name: "search_docs", args: { query: "budget" } }]) && `the service saw ${JSON.stringify(service.seen.calls)}`,
+        !/Forecast sheet/.test(r.reply ?? "") && `the answer was ${JSON.stringify(r.reply)}`,
+        !(r.listed ?? []).includes("testdocs:true") && `Settings listed ${JSON.stringify(r.listed)}`,
+      ].filter(Boolean);
+    } finally {
+      model.close();
+      service.close();
+    }
   },
 
   // Buddy's windows in Spanish, and back to English live.

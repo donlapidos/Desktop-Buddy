@@ -43,7 +43,8 @@ is made, listed in Activity and undone; another window can't answer the card), *
 key that must stay with its server), **explainer**, **voice**, **bridge** (an AI app's calls over its own pipe: answered
 with the token, refused without), **language** (the windows in Spanish, every Settings page read for English left behind, then switched to English
 while open),
-**lessons** (a lesson played in a test-owned window with no model, a missing control
+**connections** (a stand-in service with real OAuth on this PC: the
+bubble's offer, signing in, a tool call through the approval card), **lessons** (a lesson played in a test-owned window with no model, a missing control
 told, a shared file round-tripped), **restore** (Buddy quit and restarted on one data folder: tasks and the bubble's
 conversation come back, closing a task forgets it), and **firstrun** (a plain test copy must leave your
 startup entries and shortcuts as they were). Any check whose copy logged a refused mode or task-state change fails.

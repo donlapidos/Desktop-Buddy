@@ -94,6 +94,12 @@ VS Code and more).
   moves (scrolling, expanding, moving windows), or anything in apps you trust. Apps on the **Never act in** list
   (password managers to start with) are off limits even if you'd approve. This is enforced where actions get their
   permission slip (`src/policy.js`, `src/approvals.js`), not just in the prompt.
+- **Connections** (with the advanced features): Buddy can use Notion, Linear, and Jira and Confluence for you, with
+  your own account there. On one of their sites, the bubble offers once: **Connect**, **Not now** or **Don't ask
+  again**; or connect from **Settings › Connections**. You sign in in your browser, so Buddy never sees your password,
+  and Buddy asks on its card before every action in a service ("Notion: Search"); **Allow for this task** covers that
+  service only. What a service sends back is treated as information, never as instructions. **Disconnect** forgets
+  the sign-in.
 - **Lessons:** when Buddy has walked you all the way through something, **Save as a lesson** under its answer keeps
   the steps. Play one from the tray (**Play a lesson**) or **Settings › Lessons**, in the app it's for: Buddy points at
   each step and follows you, as it did the first time, without asking the AI, so it costs nothing and needs no key.

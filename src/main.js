@@ -44,6 +44,7 @@ import { createAiAppSetup } from "./ai-app-setup.js";
 import { createAppBridge } from "./app-bridge.js";
 import { createConversations } from "./conversations.js";
 import { appName, createLessons } from "./lessons.js";
+import { createConnectors, siteConnector } from "./connectors.js";
 import { LANGUAGES, N, language, pickLanguage, setLanguage, t, table } from "./i18n.js";
 import { appKey } from "./policy.js";
 import { appWords, tourNext, tourTip } from "./welcome.js";
@@ -225,6 +226,51 @@ function startActivity() {
 let ledger = null;
 /** @type {ReturnType<typeof createConversations> | null} the bubble's and tasks' conversations, kept on the PC */
 let conversations = null;
+// ---------- Connections (connectors.js): services Buddy can use as well as the screen ----------
+
+/** @type {ReturnType<typeof createConnectors> | null} */
+let connectors = null;
+// What every Brain is handed: the connected services' tools, named and run (asking first is brain.js's).
+const connectorsUI = {
+  tools: () => connectors?.tools() ?? [],
+  describe: (/** @type {string} */ name) => connectors?.describe(name) ?? null,
+  call: (/** @type {string} */ name, /** @type {any} */ input, /** @type {AbortSignal | undefined} */ signal) => connectors?.call(name, input, signal) ?? Promise.resolve("That service isn't connected."),
+};
+// End-to-end checks have no person to sign in: their stand-in sign-in page on this PC is followed straight through.
+async function openSignIn(/** @type {string} */ url) {
+  if (!process.env.BUDDY_E2E) return shell.openExternal(url);
+  const first = await fetch(url, { redirect: "manual" });
+  const back = first.headers.get("location");
+  if (back) await fetch(back);
+}
+const connectionsOffered = new Set(); // services offered (and put off) since Buddy started
+
+/**
+ * On a site Buddy can connect to (Notion, Linear, Jira…), the bubble offers it once, with the advanced features on:
+ * from the window's title, or the address bar in what Buddy read of it.
+ */
+async function offerConnection(/** @type {any} */ win) {
+  if (!win || !connectors || !settings.advanced) return;
+  const read = await Promise.race([brain?.preview?.text ?? Promise.resolve(""), new Promise((r) => setTimeout(() => r(""), 4000))]).catch(() => "");
+  const c = siteConnector(`${win.title ?? ""}\n${read ?? ""}`, connectors.list().map((x) => /** @type {any} */ (connectors?.get(x.id))));
+  if (!c || connectors.connected(c.id) || settings.connectionsDeclined.includes(c.id) || connectionsOffered.has(c.id)) return;
+  connectionsOffered.add(c.id);
+  trace({ kind: "connector-offered", id: c.id });
+  bubble.webContents.send("connect-offer", { id: c.id, state: "offer", text: t("Connect Buddy to {service}? Then it can {does} for you, asking you first.", { service: t(c.label), does: t(c.does) }) });
+}
+
+/** Connects a service: the browser opens for signing in. Resolves an error in words, or null. */
+async function connectService(/** @type {string} */ id) {
+  const c = connectors?.get(id);
+  if (!c) return t("Buddy doesn't know that service.");
+  notice(t("Sign in to {service} in your browser…", { service: t(c.label) }));
+  const error = await connectors.connect(id);
+  notice(error ? t("Couldn't connect {service}.", { service: t(c.label) }) : t("Connected to {service}.", { service: t(c.label) }));
+  settingsWindow?.refresh();
+  return error;
+}
+
+
 /** @type {ReturnType<typeof createLessons> | null} "teach me this app" lessons, kept on the PC (lessons.js) */
 let lessons = null;
 /** @type {{ title: string, app: string, steps: any[] } | null} the route the bubble's last answer finished, offered as a lesson */
@@ -683,6 +729,7 @@ async function summon() {
     advanced: settings.advanced,
   });
   showBubble();
+  offerConnection(win);
 }
 
 // ---------- Explain: capture around a point, ask the brain, show an infographic ----------
@@ -883,6 +930,17 @@ handleFrom(fromBubble, "set-key", async (_e, key) => {
   const error = await setApiKey(String(key ?? ""));
   if (!error && brain) tourEvent("setup");
   return { ok: !error && !!brain, error };
+});
+
+// The bubble's answer to offering a connection: connect, not now, or don't ask again for that service.
+handleFrom(fromBubble, "connect-offer-answer", async (_e, id, answer) => {
+  const c = connectors?.get(String(id));
+  if (!c) return null;
+  trace({ kind: "connector-answer", id: c.id, answer: String(answer) });
+  if (answer === "never") changeSettings({ connectionsDeclined: [...settings.connectionsDeclined, c.id] });
+  if (answer !== "yes") return null;
+  const error = await connectService(c.id);
+  return { state: "done", text: error ?? t("Connected. Ask me to use {service} whenever you like.", { service: t(c.label) }) };
 });
 
 // ---------- Lessons (lessons.js): a finished route kept, to play again or share ----------
@@ -1447,7 +1505,7 @@ function prepareScreenImage(image) {
   const resized = scale < 1 ? original.resize({ width: Math.max(1, Math.round(width * scale)), height: Math.max(1, Math.round(height * scale)), quality: "good" }) : original;
   return /** @type {import("./screen-context.js").ScreenImage} */ ({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: resized.toJPEG(82).toString("base64") } });
 }
-const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, commands: () => settings.commands, readFolders,
+const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, commands: () => settings.commands, readFolders, connectors: connectorsUI,
   screenContext: () => settings.screenContext, advanced: () => settings.advanced, prepareImage: prepareScreenImage, ...spendUI() });
 
 function startBrain() {
@@ -1767,6 +1825,7 @@ function settingsState() {
     startsWithWindows: process.platform === "win32" && startsWithWindows(),
     data: { explainers, logBytes, conversations: conversations?.count() ?? 0 },
     uiLanguages: LANGUAGES,
+    connections: (connectors?.list() ?? []).map((c) => ({ ...c, label: t(c.label), does: t(c.does) })),
     lessons: (lessons?.list() ?? []).slice().reverse().map((l) => ({ id: l.id, title: l.title, app: appName(l.app), steps: l.steps.length })),
     claude: appStatus(),
     aiApps: APP_IDS.map((id) => ({ id, label: APPS[id].label, after: t(APPS[id].after) })),
@@ -1852,6 +1911,10 @@ const settingsWindow = createSettingsWindow({
   },
   openData: () => shell.openPath(app.getPath("userData")),
   addFolder: addReadFolder,
+  connection: async (action, id) => {
+    if (action === "disconnect") return (await connectors?.disconnect(id), null);
+    return connectService(id);
+  },
   lesson: async (action, id, win) => {
     if (action === "delete") {
       lessons?.remove(id);
@@ -1933,6 +1996,8 @@ const devKit = () => ({
   useKeyHook: (/** @type {import("./hold-key.js").KeyHook} */ hook) => { keyHook = hook; },
   get settings() { return settings; },
   get lessons() { return lessons; },
+  get connectors() { return connectors; },
+  offerConnection,
   playLesson,
   get brain() { return brain; },
   set brain(b) { brain = b; },
@@ -1956,6 +2021,8 @@ app.whenReady().then(() => {
   startLedger();
   conversations = createConversations({ file: path.join(app.getPath("userData"), "conversations.json") });
   lessons = createLessons({ file: path.join(app.getPath("userData"), "lessons.json") });
+  connectors = createConnectors({ dir: path.join(app.getPath("userData"), "connectors"), safeStorage, open: openSignIn, trace });
+  connectors.start().catch(() => {});
   refreshModels().catch(() => {});
   setAgentPolicy(settings);
   app.setAppUserModelId(APP_ID);
