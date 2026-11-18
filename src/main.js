@@ -899,7 +899,7 @@ async function answerQuestion(text, opts, isCurrent) {
   if (tally) tally.now = noSpend();
   try {
     const withMarks = marker.takePending();
-    const how = { spoken: turn.spoken, lang: turn.lang, timing: clock };
+    const how = { spoken: turn.spoken, lang: turn.lang, timing: clock, showOff: !!opts?.showOff };
     reply = withMarks ? await engine.askWithMarks(text, withMarks, how) : await engine.ask(text, about.window, how);
   } catch (err) {
     hushReply();

@@ -106,14 +106,14 @@ export function appWords(win) {
 /**
  * The tip the bubble shows for a step, or null when there's none.
  * @param {TourStep} step @param {{ ask: string, mark: string, app: string | null }} words
- * @returns {{ text: string, action: string, event: "skip" | "gotit" } | null}
+ * @returns {{ text: string, action: string, event: "skip" | "gotit", show?: boolean } | null}
  */
 export function tourTip(step, { ask, mark, app }) {
   if (step === "ask") {
     const text = app
       ? t("Try it: ask me how to do something in {app}, like \"How do I…?\", and I'll point the way. Later, press {key} from any app.", { app, key: ask })
       : t("Try it: ask me how to do something in the app you were using, like \"How do I…?\", and I'll point the way. Later, press {key} from any app.", { key: ask });
-    return { text, action: t("Skip tour"), event: "skip" };
+    return { text, action: t("Skip tour"), event: "skip", show: true };
   }
   if (step === "mark") return { text: t("One more: press {key}, then draw around anything on your screen, and I'll explain what you circled.", { key: mark }), action: t("Got it"), event: "gotit" };
   return null;

@@ -14,6 +14,7 @@ import { CASES, rescoreEvals, runEvals } from "../src/evals.js";
 import { REAL_CASES } from "../evals/real-cases.mjs";
 import { WORKFLOW_CASES } from "../evals/workflow-cases.mjs";
 import { SIGHT_CASES } from "../evals/sight-cases.mjs";
+import { SHOW_ME_CASES } from "../evals/show-me-cases.mjs";
 import { ANTHROPIC_PRICES, aboutMoney, dollars, moneyWords, spendLine, tokenWords } from "../src/costs.js";
 import { PROVIDERS } from "../src/providers.js";
 
@@ -31,8 +32,8 @@ const { values: o } = parseArgs({
   },
 });
 const provider = /** @type {import("../src/providers.js").ProviderId} */ (o.provider);
-const sets = { "made-up": CASES, real: REAL_CASES, workflows: WORKFLOW_CASES, sight: SIGHT_CASES, all: [...CASES, ...REAL_CASES, ...WORKFLOW_CASES, ...SIGHT_CASES] };
-if (!Object.hasOwn(sets, o.set)) { console.error(`Unknown set: ${o.set}. Choose made-up, real, workflows, sight or all.`); process.exit(2); }
+const sets = { "made-up": CASES, real: REAL_CASES, workflows: WORKFLOW_CASES, sight: SIGHT_CASES, "show-me": SHOW_ME_CASES, all: [...CASES, ...REAL_CASES, ...WORKFLOW_CASES, ...SIGHT_CASES, ...SHOW_ME_CASES] };
+if (!Object.hasOwn(sets, o.set)) { console.error(`Unknown set: ${o.set}. Choose made-up, real, workflows, sight, show-me or all.`); process.exit(2); }
 const wanted = o.cases !== undefined ? o.cases.split(",").map((id) => id.trim()) : null;
 const set = sets[o.set];
 if (wanted?.some((id) => !set.some((c) => c.id === id))) { console.error("Unknown case ID for this set. Use --list to see the available cases."); process.exit(2); }
@@ -51,7 +52,7 @@ if (o.rescore) {
   } catch (err) { console.error(`Couldn't rescore the saved run: ${err.message}`); process.exit(2); }
 }
 if (!provider || !PROVIDERS[provider] || !o.model) {
-  console.error(`Usage: npm run eval -- --provider <${Object.keys(PROVIDERS).join("|")}> --model <id> [--base-url <url>] [--effort low|medium|high] [--set made-up|real|workflows|sight|all] [--cases <ids>] [--json out.json]\nList without a model call: npm run eval -- --set workflows --list\nRescore without a model call: npm run eval -- --set workflows --rescore run.json --json rescored.json`);
+  console.error(`Usage: npm run eval -- --provider <${Object.keys(PROVIDERS).join("|")}> --model <id> [--base-url <url>] [--effort low|medium|high] [--set made-up|real|workflows|sight|show-me|all] [--cases <ids>] [--json out.json]\nList without a model call: npm run eval -- --set workflows --list\nRescore without a model call: npm run eval -- --set workflows --rescore run.json --json rescored.json`);
   process.exit(2);
 }
 const apiKey = process.env.BUDDY_EVAL_KEY ?? process.env[PROVIDERS[provider].keyEnv ?? ""] ?? "";

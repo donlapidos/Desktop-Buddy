@@ -518,6 +518,8 @@
  "Try it: ask me how to do something in {app}, like \"How do I…?\", and I'll point the way. Later, press {key} from any app.": "Pruébalo: pregúntame cómo hacer algo en {app}, por ejemplo \"¿Cómo hago…?\", y te señalaré el camino. Más tarde, pulsa {key} desde cualquier app.",
  "Try it: ask me how to do something in the app you were using, like \"How do I…?\", and I'll point the way. Later, press {key} from any app.": "Pruébalo: pregúntame cómo hacer algo en la app que estabas usando, por ejemplo \"¿Cómo hago…?\", y te señalaré el camino. Más tarde, pulsa {key} desde cualquier app.",
  "Skip tour": "Saltar el recorrido",
+ "Show me": "Muéstrame",
+ "Show me what you can do": "Muéstrame lo que sabes hacer",
  "One more: press {key}, then draw around anything on your screen, and I'll explain what you circled.": "Una más: pulsa {key}, dibuja alrededor de cualquier cosa en tu pantalla y te explicaré lo que rodeaste.",
  "Got it": "Entendido",
  "Your Anthropic account is out of credit. Add some at console.anthropic.com under Billing, or ask me from the AI app you already use, on your own plan (Settings › AI & privacy › Use with your AI app).": "Tu cuenta de Anthropic se ha quedado sin crédito. Añade más en console.anthropic.com, en Billing, o pregúntame desde la app de IA que ya usas, con tu propio plan (Configuración › IA y privacidad › Usar con tu app de IA).",

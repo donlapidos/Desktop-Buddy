@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* **Show me:** the first tip after setup has a **Show me** button. Buddy points at one thing in the app you were
+  using and says what it's for, so you see what the pointer does before you think of a question.
 * **Pointing by sight works with GPT:** in apps with nothing Buddy can name (a drawing canvas, a design tool's
   icons, a 3D view, a scanned PDF), GPT models now point at the spot instead of only describing where it is, and
   sooner. Window pictures go at a size the AI doesn't shrink again, so the spot lands where the model meant.

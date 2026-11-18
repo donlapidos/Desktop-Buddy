@@ -787,6 +787,14 @@ function welcomeTest(kit) {
     // One at a time: the tour's first tip comes once the voice offer is answered.
     r.tipAfterSetup = await tipNow();
     await shot("tour-ask");
+    // "Show me" on that tip: Buddy's first look at their window, asked with the note that makes it a show (the
+    // scripted model counts it), and the tour moves on to Mark as after any first answer.
+    r.showMeButton = await js(`(() => { const b = document.getElementById("tip-show"); return b.hidden ? null : b.textContent; })()`);
+    await js(`document.getElementById("tip-show").click()`);
+    await until(`document.getElementById("reply").textContent === "Hello from a model on this PC."`, 10_000);
+    r.showMeReply = await js(`document.getElementById("reply").textContent`);
+    await until(`/draw around/.test(document.getElementById("tip").innerText) && !document.getElementById("tip").hidden`, 3_000);
+    r.showMeTip = await tipNow();
     changeSettings({ voiceSetup: "ask" });
     kit.sendVoiceOffer();
     await until(`!document.getElementById("voice-offer").hidden`, 3_000);

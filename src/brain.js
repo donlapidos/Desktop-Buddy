@@ -682,6 +682,11 @@ function trimBlock(b) {
 const SPOKEN =
   "\n\n(They said this out loud; it was transcribed by speech recognition, so allow for misheard words. Your reply and your point_at captions will be read aloud: answer in short, natural spoken sentences, lead with the answer, and skip Markdown, tables and long lists. Anything they need to read or copy belongs in a document or an explainer.)";
 
+// The tour's "Show me" (welcome.js): their first look at Buddy, on the window they were in. From Clicky's onboarding,
+// which points at one real thing on screen to show what the pointer is for.
+const SHOW_OFF =
+  "\n\n(They pressed \"Show me\" on your first tip, so this is their first look at you. Pick ONE specific thing in their window with a clear name, such as a button, a tab, a menu, a heading or a file name, ideally one that's handy to know about, and point_at it, the caption a few words saying what it's for. Then reply in one or two short sentences: what it does, and that they can ask you how to do anything here. Don't act, don't walk through steps, and don't take a screenshot if the window's read names things.)";
+
 const languageName = (code) => {
   try {
     return new Intl.DisplayNames(["en"], { type: "language" }).of(code) ?? code;
@@ -965,9 +970,11 @@ export class Brain {
   }
 
   // `spoken` marks a question said out loud; `lang` is the language it was said in (two letters), when not English.
-  // `timing` is the question's ask-to-pointer clock (latency.js), when the caller keeps one.
-  async ask(text, target, { spoken = false, lang = "en", timing = null } = {}) {
+  // `timing` is the question's ask-to-pointer clock (latency.js), when the caller keeps one. `showOff`: the tour's
+  // "Show me" (SHOW_OFF).
+  async ask(text, target, { spoken = false, lang = "en", timing = null, showOff = false } = {}) {
     this.log.push({ role: "user", text });
+    const note = `${showOff ? SHOW_OFF : ""}${spoken ? spokenNote(lang) : ""}`;
     this.clearContextImages({ readings: true });
     return this.run(target, "", async (signal) => {
       const contextStart = Date.now();
@@ -976,8 +983,8 @@ export class Brain {
       const window = reading ? `\n\nTheir window when they asked (already looked; its refs work, so skip your first look):\n${reading}` : "";
       const size = image && this.shot ? ` ${pictureSize(this.shot.seen)}` : "";
       const visual = image ? `\n\nThe attached image shows this window when they asked. Use it for visual context; use the tree's refs for controls.${size}` : "\n\nNo fresh screenshot is attached. Don't assume an older image shows the current screen.";
-      const content = `${describeTarget(target)}${window}${visual}\n\n${text}${spoken ? spokenNote(lang) : ""}`;
-      if (reading || image) this.contextReadings.set(content, `${describeTarget(target)}\n\n[Earlier automatic window observation omitted; use current observations and refs.]\n\n${text}${spoken ? spokenNote(lang) : ""}`);
+      const content = `${describeTarget(target)}${window}${visual}\n\n${text}${note}`;
+      if (reading || image) this.contextReadings.set(content, `${describeTarget(target)}\n\n[Earlier automatic window observation omitted; use current observations and refs.]\n\n${text}${note}`);
       if (image) this.contextImages.add(image);
       return image ? [image, { type: "text", text: content }] : content;
     }, { timing });

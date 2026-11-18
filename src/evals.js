@@ -74,8 +74,8 @@ const NOTEPAD = windowTree(["window", "notes.txt - Notepad", [
 
 /**
  * @typedef {{ kind: "point" | "guide" | "act" | "explainer" | "file" | "service" | "other", name: string, input?: any }} Call
- * @typedef {{ ask: string, window?: any, check: (calls: Call[], reply: string) => string | null }} EvalFollowUp
- * @typedef {{ id: string, title: string, app: string, window: any, ask: string, check: (calls: Call[], reply: string) => string | null, next?: [RegExp, any][], strict?: boolean, followUps?: EvalFollowUp[], files?: Record<string, string>, pages?: Record<string, string>, mail?: { id: string, from: string, subject: string, body: string }[], image?: { data: string, width: number, height: number } }} EvalCase
+ * @typedef {{ ask: string, window?: any, check: (calls: Call[], reply: string) => string | null, showOff?: boolean }} EvalFollowUp
+ * @typedef {{ id: string, title: string, app: string, window: any, ask: string, check: (calls: Call[], reply: string) => string | null, next?: [RegExp, any][], strict?: boolean, followUps?: EvalFollowUp[], files?: Record<string, string>, pages?: Record<string, string>, mail?: { id: string, from: string, subject: string, body: string }[], image?: { data: string, width: number, height: number }, showOff?: boolean }} EvalCase
  * next: screens that follow. Showing (pointing or guiding to) a control whose name matches switches the window to that
  * screen, as if the user had clicked it.
  * check returns null when the case passed, else what was wrong, in words.
@@ -453,7 +453,7 @@ export async function runEvals({ provider, apiKey, baseURL, cases = CASES, timeo
     /** @type {EvalStage[]} */
     const stages = [];
     try {
-      for (const stage of [{ ask: c.ask, check: c.check }, ...(c.followUps ?? [])]) {
+      for (const stage of /** @type {EvalFollowUp[]} */ ([{ ask: c.ask, check: c.check, showOff: c.showOff }, ...(c.followUps ?? [])])) {
         if (stopped || signal?.aborted) break;
         if (brain.replay) brain.replay.pending = null;
         if (stage.window) {
@@ -466,7 +466,7 @@ export async function runEvals({ provider, apiKey, baseURL, cases = CASES, timeo
         firstGuidanceMs = null;
         const turnsBefore = turns;
         let failure = null;
-        try { reply = await brain.ask(stage.ask, target); }
+        try { reply = await brain.ask(stage.ask, target, { showOff: !!stage.showOff }); }
         catch (err) { failure = `model check failed: ${err?.message ?? err}`; reply = `(failed: ${err?.message ?? err})`; }
         const stageCalls = calls.slice(stageCallStart);
         const problem = failure ?? (brain.abort?.signal.aborted ? signal?.aborted ? "cancelled" : "took too long" : turns === turnsBefore ? "no model response was received" : stage.check(stageCalls, reply));

@@ -153,6 +153,11 @@ Buddy keeps itself up to date: it checks the releases now and then, downloads a 
 (checked against its SHA-512), and installs it when you restart Buddy or choose **Restart to update** in the tray or
 in Settings › About & updates, where automatic checks can also be turned off.
 
+Once Buddy is set up, two tips show you around. The first says to ask how to do something in the app you were
+using; press **Show me** there and Buddy points at one thing in that window and says what it's for. Like any
+question, that sends the window's contents to your AI (nothing, with a model on your PC). The second tip is about
+Mark. **Skip tour** or **Got it** ends the tips for good.
+
 ### Buddy Plus (an idea)
 
 Buddy needs an AI to think with: the AI app you already use, a free model on your PC, or an API key. **Buddy Plus**

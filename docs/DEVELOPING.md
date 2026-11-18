@@ -78,6 +78,11 @@ those passes are not a live model score.
 To apply corrected checks to saved replies without another API call, use
 `npm run eval -- --set workflows --rescore workflow-results.json --json workflow-rescored.json`.
 Choose a new output file: existing files cannot be overwritten. Transport failures and cancellations remain failures.
+
+Two smaller sets: `--set sight` (eight made-up screens with nothing the accessibility tree names; a case passes
+when the spot Buddy points at is inside the target's box) and `--set show-me` (the tour's **Show me** on three
+recorded windows; a case passes when Buddy points at one named control with a caption, does nothing, and keeps its
+reply to a sentence or two).
 The saved-key runner uses a temporary runtime profile. It reads the saved key and the OS-encrypted key metadata
 needed to unlock it, without rewriting Buddy's saved key or copying unrelated profile data.
 
