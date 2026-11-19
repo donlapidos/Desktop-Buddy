@@ -72,6 +72,19 @@ gives Buddy for that (its sign-in tokens) is kept encrypted by Windows in Buddy'
 service, and deleted when you disconnect. The browser comes back to a one-off address on this PC that accepts a single
 sign-in carrying the code Buddy sent, and Buddy only opens secure (https) sign-in pages.
 
+## Blender
+
+Building in Blender goes through Blender Lab's MCP add-on, which listens on this PC only (localhost, port 9876) and
+runs the Python it is sent, without guards. Buddy never sends Python the AI wrote: the AI picks from Buddy's fixed
+building steps, its names, sizes, positions and colours are checked, and they reach Blender only as data that Buddy's
+own code reads (`json.loads`), never as code (`src/blender.js`, with a unit test that a name full of Python stays a
+name). Building asks on Buddy's card, deleting asks every time, and each change is one undo step in Blender.
+
+While the add-on's server is running, any program on this PC can send Blender code through that port: that's the
+add-on's design, not Buddy's. When Buddy opens Blender, it turns the server on for that session only (and Blender's
+online-access setting with it, through `--online-mode`); nothing is saved. If you start the server yourself, stop it
+in Blender's Preferences › Add-ons › MCP when you're done.
+
 ## Your AI app
 
 When you use Buddy from an AI app (Claude Code, Codex, Cursor and others), that app talks to Buddy over a pipe on this

@@ -83,6 +83,12 @@ Two smaller sets: `--set sight` (eight made-up screens with nothing the accessib
 when the spot Buddy points at is inside the target's box) and `--set show-me` (the tour's **Show me** on three
 recorded windows; a case passes when Buddy points at one named control with a caption, does nothing, and keeps its
 reply to a sentence or two).
+
+`--set blender` builds in Blender: a cabin from scratch, opening Blender then a snowman, and changing a table. It runs on
+a stand-in Blender that keeps the scene (`src/evals.js` `blenderScene`); a check reads what was built (parts present,
+standing on the ground or on each other, lit, the camera placed, nothing of the user's deleted). Add `--live-blender`
+to build in the Blender open on your PC instead (Blender 5.1+ with Blender Lab's MCP add-on running): nothing is asked
+there, so use a scene you don't mind changing.
 The saved-key runner uses a temporary runtime profile. It reads the saved key and the OS-encrypted key metadata
 needed to unlock it, without rewriting Buddy's saved key or copying unrelated profile data.
 

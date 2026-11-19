@@ -326,6 +326,7 @@ async function askBuddy(text, opts) {
 $("stop").addEventListener("click", () => window.buddy.cancel());
 $("totask").addEventListener("click", () => window.buddy.newTask());
 $("settings").addEventListener("click", () => window.buddy.openSettings());
+$("close").addEventListener("click", () => window.buddy.hide());
 $("new").addEventListener("click", () => { window.buddy.reset(); show(""); $("spend").textContent = ""; offerLesson(false); $input().focus(); });
 
 /** Shows (or hides) "Save as a lesson" under an answer that walked them through a whole route. */

@@ -55,6 +55,8 @@ VS Code and more).
 - **Island:** a pill at the top center that stays on screen whenever Buddy is running, so it doubles as the "on"
   light. A dim dot means idle, a bright dot means active; **Ctrl+Alt+B** switches between them. It also shows
   what Buddy is doing (looking, drawing, waiting for your OK).
+  The chat opens out of the island; the **⌃** at its top right (or Esc, or clicking elsewhere) folds it back in.
+  Anything Buddy is doing carries on, and the chat comes back by itself when it needs your OK.
   Hover it for **Ask**, **Talk**, **Mark** and **Task**. A new Buddy starts with the essentials (Ask, Talk and
   Mark); task windows, routines and working with files, web pages and Word documents come with Settings › Agents ›
   **Show advanced features**.
@@ -100,6 +102,14 @@ VS Code and more).
   and Buddy asks on its card before every action in a service ("Notion: Search"); **Allow for this task** covers that
   service only. What a service sends back is treated as information, never as instructions. **Disconnect** forgets
   the sign-in.
+- **Build in Blender** (with the advanced features): ask Buddy to build something ("a cozy cabin in the woods", "a
+  snowman", "make the table red and twice as long") and it builds it in your open Blender scene while you watch, one
+  part after another, with colours, lights and the camera, and checks its work with a picture of the view. It needs
+  Blender 5.1 or later with Blender Lab's free **MCP** add-on ([blender.org/lab/mcp-server](https://www.blender.org/lab/mcp-server/))
+  installed and enabled. If Blender isn't open, Buddy offers to open it with its connection on, for that session only.
+  Building asks once on Buddy's card (**Allow for this task** covers the rest of that answer), every change is one
+  **Ctrl+Z** in Blender, and deleting anything asks every time. Buddy never sends Blender code the AI wrote: the AI
+  picks from Buddy's own building steps and gives only names, sizes, positions and colours.
 - **Lessons:** when Buddy has walked you all the way through something, **Save as a lesson** under its answer keeps
   the steps. Play one from the tray (**Play a lesson**) or **Settings › Lessons**, in the app it's for: Buddy points at
   each step and follows you, as it did the first time, without asking the AI, so it costs nothing and needs no key.
