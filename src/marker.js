@@ -1,10 +1,12 @@
-// Marker: highlight things on screen with a pen, then ask about them. Marking draws on a still of the screen in an
-// opaque window (like the Snipping Tool): drawing straight on the transparent overlay meant Windows repainted the
-// whole screen for every stroke segment, which lagged. What the user marked waits here for their question.
+// Marker: highlight things on screen with a pen, then ask about them. Live first: the user draws on a native overlay
+// over their running apps (marker-live.js), which hands Windows only the few pixels each pen move changes. If that
+// can't start, on a still of the screen in an opaque window (like the Snipping Tool): drawing straight on a
+// transparent Electron window made Windows repaint the whole screen for every stroke segment, which lagged. What the
+// user marked waits here for their question.
 import { BrowserWindow, globalShortcut, ipcMain, screen } from "electron";
 import path from "node:path";
 import { elementsAt, windowsAt } from "./desktop.js";
-import { asDipPoint, asDipRect } from "./geometry.js";
+import { asDipPoint, asDipRect, asPhysicalPoint } from "./geometry.js";
 import { prepareMarker } from "./marker-startup.js";
 
 /** @typedef {import("./geometry.js").DipPoint} DipPoint */
@@ -24,6 +26,28 @@ function bboxOf(points, pad = 10) {
   const x = Math.min(...xs) - pad;
   const y = Math.min(...ys) - pad;
   return asDipRect({ x, y, width: Math.max(...xs) + pad - x, height: Math.max(...ys) + pad - y });
+}
+
+/**
+ * The image that goes with the question, from a capture of the display with the strokes on it: the marked area,
+ * padded for context, at most 1600 px on its longest side. The same framing as the still's (ui/marker.js compose).
+ * @param {Electron.NativeImage} shot @param {{ points: { x: number, y: number }[] }[]} strokes points in DIP, on the display
+ * @param {Electron.Display} display @returns {string} base64 PNG
+ */
+export function cropMarked(shot, strokes, display) {
+  const PEN = 18, MAX_IMAGE = 1600;
+  const { width: W, height: H } = shot.getSize();
+  const sf = W / display.bounds.width;
+  const pts = strokes.flatMap((s) => s.points);
+  const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+  const u = { x: (Math.min(...xs) - PEN) * sf, y: (Math.min(...ys) - PEN) * sf, r: (Math.max(...xs) + PEN) * sf, b: (Math.max(...ys) + PEN) * sf };
+  const w = Math.round(Math.min(W, Math.max(u.r - u.x + 240 * sf, 900)));
+  const h = Math.round(Math.min(H, Math.max(u.b - u.y + 200 * sf, 600)));
+  const x = Math.round(Math.min(Math.max((u.x + u.r) / 2 - w / 2, 0), W - w));
+  const y = Math.round(Math.min(Math.max((u.y + u.b) / 2 - h / 2, 0), H - h));
+  const k = Math.min(1, MAX_IMAGE / Math.max(w, h));
+  const crop = shot.crop({ x, y, width: w, height: h });
+  return (k < 1 ? crop.resize({ width: Math.round(w * k), height: Math.round(h * k), quality: "good" }) : crop).toPNG().toString("base64");
 }
 
 const dedupe = (els) => [...new Map(els.map((e) => [e.path, e])).values()];
@@ -55,6 +79,8 @@ const markLabel = (m) => {
  *   ownPids: () => number[],
  *   explain: (at: DipPoint) => void,                        // a single click explains the thing clicked
  *   trace: (entry: object) => void,
+ *   live?: (display: Electron.Display, onEvent: (e: import("./marker-live.js").LiveEvent) => void) => Promise<import("./marker-live.js").LiveOverlay>, // marker-live.js
+ *   toDipPoint?: (p: PhysicalPoint) => DipPoint,
  * }} deps
  */
 export function createMarker(deps) {
@@ -68,6 +94,10 @@ export function createMarker(deps) {
   /** @type {Electron.Display | null} */
   let markDisplay = null;
   let markStartup = null;
+  /** @type {import("./marker-live.js").LiveOverlay | null} live marking's overlay, while it's up (marker-live.js) */
+  let live = null;
+  /** @type {Electron.BrowserWindow | null} live marking's toolbar (marker-bar.html) */
+  let bar = null;
 
   async function start({ capture = deps.grabDisplay, display = screen.getDisplayNearestPoint(deps.cursor()), timeoutMs = 10000 } = {}) {
     if (mode() !== "idle") return;
@@ -78,6 +108,9 @@ export function createMarker(deps) {
     deps.hideBubble();
     progress("Getting the screen ready…");
     markDisplay = display;
+    // Live first: the user draws over their running apps. Only if that can't start, on a still of the screen.
+    if (deps.live && capture === deps.grabDisplay && (await startLive(display))) return;
+    if (mode() !== "marking" || markDisplay !== display) return;
     const job = { abort: new AbortController(), started: Date.now(), display, ready: false, readyTimer: null };
     markStartup = job;
     globalShortcut.register("Escape", cancel);
@@ -122,8 +155,120 @@ export function createMarker(deps) {
     }
   }
 
-  // Takes the still down; the caller decides what mode comes next.
-  // `delay` keeps the still up a moment so the overlay can paint the finished marks underneath first.
+  // ---------- Live marking (marker-live.js): drawing over the running apps ----------
+
+  /** Starts the overlay and its toolbar. Resolves whether it's up (false: use the still instead). @param {Electron.Display} display */
+  async function startLive(display) {
+    const job = { abort: new AbortController(), started: Date.now(), display, ready: false, readyTimer: null };
+    markStartup = job;
+    globalShortcut.register("Escape", cancel);
+    let handle;
+    try {
+      handle = await /** @type {NonNullable<typeof deps.live>} */ (deps.live)(display, (e) => onLive(e, handle));
+    } catch (err) {
+      trace({ kind: "mark-live-failed", why: String(err?.message ?? err).slice(0, 300) });
+      if (markStartup === job) markStartup = null;
+      return false;
+    }
+    // Cancelled while it was starting: it goes, and nothing else happens.
+    if (markStartup !== job || mode() !== "marking") {
+      handle.quit();
+      return true;
+    }
+    live = handle;
+    job.ready = true;
+    trace({ kind: "mark-ready", live: true, ms: Date.now() - job.started });
+    showBar(display);
+    deps.keepIsland();
+    progress("Click to explain · draw to ask");
+    // The overlay never takes the keyboard (so the toolbar stays above it): its keys come as shortcuts while marking.
+    globalShortcut.register("Return", () => finishLive());
+    globalShortcut.register("CommandOrControl+Z", () => live?.send({ cmd: "undo" }));
+    return true;
+  }
+
+  /** @param {import("./marker-live.js").LiveEvent} e @param {import("./marker-live.js").LiveOverlay | undefined} from */
+  function onLive(e, from) {
+    if (!from || from !== live || mode() !== "marking") return;
+    if (e.ev === "count") {
+      progress(e.n ? `${e.n} marked · Enter to ask` : "Click to explain · draw to ask");
+      if (bar && !bar.isDestroyed()) bar.webContents.send("mark-bar-count", e.n);
+    } else if (e.ev === "click" && deps.toDipPoint) {
+      const dip = deps.toDipPoint(asPhysicalPoint({ x: e.x, y: e.y }));
+      stop();
+      enter("working");
+      progress("Looking at that…");
+      setTimeout(() => deps.explain(dip), 120);
+    } else if (e.ev === "key") {
+      if (e.key === "enter") finishLive();
+      else cancel();
+    } else if (e.ev === "exit") {
+      live = null;
+      cancel();
+    }
+  }
+
+  /** The toolbar, at the top of the display, above the overlay; it never takes the keyboard unless clicked. @param {Electron.Display} display */
+  function showBar(display) {
+    const width = 720, height = 52;
+    bar = new BrowserWindow({
+      x: Math.round(display.bounds.x + display.bounds.width / 2 - width / 2), y: display.bounds.y + 44, width, height,
+      frame: false, transparent: true, resizable: false, movable: false, minimizable: false, maximizable: false, fullscreenable: false,
+      skipTaskbar: true, hasShadow: false, show: false, focusable: true,
+      webPreferences: { preload: path.join(here, "preload.cjs"), backgroundThrottling: false },
+    });
+    bar.setAlwaysOnTop(true, "screen-saver");
+    bar.once("ready-to-show", () => bar?.showInactive());
+    bar.loadFile(path.join(here, "ui/marker-bar.html"));
+  }
+
+  function closeBar() {
+    const b = bar;
+    bar = null;
+    if (b && !b.isDestroyed()) b.destroy();
+  }
+
+  // Ask: the overlay stops taking the mouse and keeps the strokes on screen; the display is captured with them on it,
+  // and the marked part goes with the question, as from the still.
+  async function finishLive() {
+    if (mode() !== "marking" || !live || !markDisplay) return;
+    const handle = live;
+    const display = markDisplay;
+    closeBar();
+    handle.send({ cmd: "finish" });
+    let done;
+    try {
+      done = await handle.next("finished", 3000);
+    } catch {
+      return cancel();
+    }
+    if (handle !== live || mode() !== "marking") return;
+    const toDip = /** @type {NonNullable<typeof deps.toDipPoint>} */ (deps.toDipPoint);
+    const strokes = (done.strokes ?? []).map((/** @type {any} */ s) => ({
+      n: s.n,
+      points: (s.points ?? []).map((/** @type {[number, number]} */ [x, y]) => {
+        const d = toDip(asPhysicalPoint({ x, y }));
+        return { x: d.x - display.bounds.x, y: d.y - display.bounds.y };
+      }),
+    }));
+    if (!strokes.length) return cancel();
+    progress("Reading what you marked…");
+    let image;
+    try {
+      image = cropMarked(await deps.grabDisplay(display, new AbortController().signal), strokes, display);
+    } catch (err) {
+      if (handle !== live) return;
+      stop();
+      enter("idle");
+      clear();
+      return notice(`Couldn't capture what you marked: ${err.message}`);
+    }
+    if (handle !== live || mode() !== "marking") return;
+    await finish({ image, strokes });
+  }
+
+  // Takes the still (or the live overlay and its toolbar) down; the caller decides what mode comes next.
+  // `delay` keeps it up a moment so the overlay can paint the finished marks underneath first.
   function stop(delay = 0) {
     const startup = markStartup;
     markStartup = null;
@@ -131,9 +276,14 @@ export function createMarker(deps) {
     startup?.abort.abort();
     globalShortcut.unregister("Return");
     globalShortcut.unregister("Escape");
+    globalShortcut.unregister("CommandOrControl+Z");
     const win = markWin;
     markWin = null;
     if (win && !win.isDestroyed()) setTimeout(() => win.isDestroyed() || win.destroy(), delay);
+    closeBar();
+    const overlay = live;
+    live = null;
+    if (overlay) setTimeout(() => overlay.quit(), delay);
   }
 
   function clear() {
@@ -232,6 +382,13 @@ export function createMarker(deps) {
     if (fromMarker(e)) finish(result);
   });
   ipcMain.on("mark-cancel", (e) => fromMarker(e) && cancel());
+  // Live marking's toolbar (marker-bar.html), taken only from that window.
+  ipcMain.on("mark-bar", (e, command) => {
+    if (!bar || bar.isDestroyed() || e.sender !== bar.webContents || mode() !== "marking") return;
+    if (command === "undo") live?.send({ cmd: "undo" });
+    else if (command === "ask") finishLive();
+    else if (command === "cancel") cancel();
+  });
   // A single click in mark mode (before anything is drawn) explains the thing clicked.
   ipcMain.on("mark-click", (e, local) => {
     if (!fromMarker(e) || !local) return;
@@ -255,5 +412,8 @@ export function createMarker(deps) {
     },
     window: () => markWin,
     display: () => markDisplay,
+    /** Live marking's overlay and toolbar, while they're up (for the dev checks). */
+    liveOverlay: () => live,
+    liveBar: () => bar,
   };
 }

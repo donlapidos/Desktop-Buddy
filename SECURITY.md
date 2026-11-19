@@ -92,6 +92,13 @@ PC, and is served only after presenting a token that changes each time Buddy sta
 folder, which the file tools never open.
 Looking and pointing run without a card there; acting still asks on Buddy's card, under the same rules.
 
+## Mark's overlay
+
+Marking on the live screen uses a small native program (`src/marker-overlay.cs`) that Buddy compiles on first use
+with the C# compiler that comes with Windows, into its own data folder, named after the source's fingerprint, so only
+the source that shipped with this Buddy is ever built and run. The overlay draws and reports what you drew; it reads
+nothing from the screen. The picture that goes with your question is taken by Buddy when you ask, as before.
+
 ## Limits we know about
 
 - **Commands run walled off, and can't be undone.** A PowerShell command runs inside a Windows sandbox (an

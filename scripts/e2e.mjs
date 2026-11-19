@@ -201,6 +201,26 @@ const CHECKS = {
     return [r.error, ...["loadedDuringCapture", "cancelledPromptly", "replacementSurvived", "imageReady", "closed", "unreadyRecovered", "sharedCaptureStarted",
       "captureCancelled", "newCaptureStillHidden", "lateCaptureIgnored", "captureReleased", "missingDisplayRejected"].filter((key) => !r[key]).map((key) => `${key} failed`)].filter(Boolean);
   },
+  async markerLive() {
+    const problems = [];
+    const { markers, timedOut } = await runCopy("marker-live", { BUDDY_MARK_LIVE_TEST: "1", ANTHROPIC_API_KEY: "sk-ant-e2e-not-used-0000000000" }, "MARK_LIVE_TEST_DONE", 150_000);
+    const r = markers.MARK_LIVE_TEST?.[0];
+    if (!r) return [timedOut ? "timed out" : "no live marker result"];
+    problems.push(...[r.error,
+      !r.live && "the live overlay didn't start", !r.bar && "its toolbar didn't show", !r.barCounted && "the toolbar didn't count the stroke",
+      !(r.onStroke >= 80) && `the stroke wasn't drawn (alpha ${r.onStroke})`, !(r.beside <= 2) && `the overlay drew where nothing was marked (alpha ${r.beside})`,
+      !(r.afterUndo <= 2) && `Undo left the stroke on screen (alpha ${r.afterUndo})`,
+      !(r.stats?.avgMs < 8) && `drawing was slow: ${JSON.stringify(r.stats)}`,
+      !r.asked && "Ask didn't hand the marks to the question", r.marks !== 1 && `${r.marks} marks, not 1`,
+      !(r.bluePixels - r.bluePixelsWithout > 1500) && `the picture for the question doesn't show the stroke (${r.bluePixels} blue pixels with it, ${r.bluePixelsWithout} without)`,
+      !r.overlayGone && "the overlay stayed after Ask", !r.barGone && "the toolbar stayed after Ask",
+      !r.cancelled && "Cancel didn't end marking", !r.cancelOverlayGone && "the overlay stayed after Cancel",
+      !r.clickLeft && "a quick click didn't explain", !r.clickOverlayGone && "the overlay stayed after a click"].filter(Boolean));
+    const fallback = await runCopy("marker-live-fallback", { BUDDY_MARK_LIVE_TEST: "1", BUDDY_MARK_LIVE_FAIL: "1", ANTHROPIC_API_KEY: "sk-ant-e2e-not-used-0000000000" }, "MARK_LIVE_TEST_DONE", 60_000);
+    const f = fallback.markers.MARK_LIVE_TEST?.[0];
+    if (!f?.fellBack || !f.noLive) problems.push(`when the overlay can't start, the still didn't take over: ${JSON.stringify(f)}`);
+    return problems;
+  },
   async markerRender() {
     const { markers, timedOut } = await runCopy("marker-render", { BUDDY_MARK_RENDER_TEST: out }, "MARK_RENDER_TEST_DONE", 60000);
     const r = markers.MARK_RENDER_TEST?.[0];

@@ -47,6 +47,9 @@ contextBridge.exposeInMainWorld("buddy", {
   markFinish: (result) => ipcRenderer.send("mark-finish", result),
   markCancel: () => ipcRenderer.send("mark-cancel"),
   markClick: (point) => ipcRenderer.send("mark-click", point),
+  // The toolbar over live marking (marker-bar.html).
+  onMarkBarCount: on("mark-bar-count"),
+  markBar: (command) => ipcRenderer.send("mark-bar", command),
   onTaskInit: on("task-init"),
   onTaskStream: on("task-stream"),
   onTaskState: on("task-state"),

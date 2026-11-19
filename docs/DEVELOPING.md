@@ -34,7 +34,9 @@ run keeps `e2e-out/` as a download for a week).
 
 `npm run e2e` runs the real app end to end, each check in a separate test copy with its own data folder (your Buddy,
 settings and files are left alone): **markerStartup** (generated captures, parallel preparation, cancellation,
-late-window ownership and timeout recovery), **markerRender** (generated sample content, standard/high-DPI pixels, long strokes,
+late-window ownership and timeout recovery, all on the still), **markerLive** (the native overlay: a stroke drawn and
+undone through its test commands, toolbar buttons, the picture for the question carrying the stroke, Cancel and a quick
+click closing it, drawing speed, and the still taking over when the overlay can't start), **markerRender** (generated sample content, standard/high-DPI pixels, long strokes,
 pointer cancellation, Undo and composed-image marks; no real mouse input or desktop capture), **annotations** (all five drawing types, safe labels, task ownership, a real
 guided step with its expected result, interruption and focus/anchor cleanup), **context** (a test-owned chart window supplies a real screenshot and accessibility
 refs; turning screenshots off removes images from the next request), **conversation** (streaming and mid-answer
@@ -51,7 +53,7 @@ bubble's offer, signing in, a tool call through the approval card), **lessons** 
 told, a shared file round-tripped), **restore** (Buddy quit and restarted on one data folder: tasks and the bubble's
 conversation come back, closing a task forgets it), and **firstrun** (a plain test copy must leave your
 startup entries and shortcuts as they were). Any check whose copy logged a refused mode or task-state change fails.
-`npm run e2e -- --exe "<path to Desktop Buddy.exe>"` runs them against a built or installed copy. `npm run e2e -- --interactive` adds the marker (a full-screen freeze frame) and the approval
+`npm run e2e -- --exe "<path to Desktop Buddy.exe>"` runs them against a built or installed copy. `npm run e2e -- --interactive` adds the marker (drawn on the live screen) and the approval
 clicks below (it moves the mouse). `--no-voice` is for a PC without the voice models: it leaves out the voice check
 and the settings check's language part. Screenshots and logs go to `e2e-out/`.
 

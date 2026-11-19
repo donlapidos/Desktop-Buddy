@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* **Mark draws on your live screen:** press Ctrl+Alt+M and draw straight away, over your apps as they keep running,
+  instead of on a frozen picture that took a moment to appear. The strokes go into the picture Buddy sees when you ask.
+  Built with a small Windows-native overlay that Buddy compiles on first use; if that can't start, Mark draws on a still
+  as before.
+
 * **Close the chat:** a **⌃** button at the top right of the chat folds it back into the island. Anything Buddy is
   doing carries on, and the chat comes back by itself when it needs your OK.
 * **Build in Blender:** ask Buddy to build something and it appears in your open Blender scene, part by part, with
