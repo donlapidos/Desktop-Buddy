@@ -5,6 +5,7 @@
 // in the right order (or does the right action), the way a person checking its answer would judge it.
 import { Brain, pictureSize, withoutBlanks } from "./brain.js";
 import { PC_TOOL_NAMES } from "./pc-tools.js";
+import { BLENDER_TOOL_NAMES } from "./blender.js";
 import { ReplayDesktop } from "./eval-replay.js";
 import { renderTree } from "./desktop.js";
 import { addCall, noSpend, tokensOf } from "./costs.js";
@@ -73,9 +74,9 @@ const NOTEPAD = windowTree(["window", "notes.txt - Notepad", [
 // ---------- Cases ----------
 
 /**
- * @typedef {{ kind: "point" | "guide" | "act" | "explainer" | "file" | "service" | "other", name: string, input?: any }} Call
+ * @typedef {{ kind: "point" | "guide" | "act" | "explainer" | "file" | "service" | "blender" | "other", name: string, input?: any }} Call
  * @typedef {{ ask: string, window?: any, check: (calls: Call[], reply: string) => string | null, showOff?: boolean }} EvalFollowUp
- * @typedef {{ id: string, title: string, app: string, window: any, ask: string, check: (calls: Call[], reply: string) => string | null, next?: [RegExp, any][], strict?: boolean, followUps?: EvalFollowUp[], files?: Record<string, string>, pages?: Record<string, string>, mail?: { id: string, from: string, subject: string, body: string }[], image?: { data: string, width: number, height: number }, showOff?: boolean }} EvalCase
+ * @typedef {{ id: string, title: string, app: string, window: any, ask: string, check: (calls: Call[], reply: string) => string | null, next?: [RegExp, any][], strict?: boolean, followUps?: EvalFollowUp[], files?: Record<string, string>, pages?: Record<string, string>, mail?: { id: string, from: string, subject: string, body: string }[], image?: { data: string, width: number, height: number }, showOff?: boolean, blender?: { state?: "connected" | "installed", objects?: Record<string, { kind: string, location?: number[], size?: number[] }> } }} EvalCase
  * next: screens that follow. Showing (pointing or guiding to) a control whose name matches switches the window to that
  * screen, as if the user had clicked it.
  * check returns null when the case passed, else what was wrong, in words.
@@ -208,6 +209,54 @@ function mailbox(c, calls) {
   };
 }
 
+/**
+ * A stand-in Blender for a case that builds (blender.js): it keeps the scene as the operations change it and records
+ * each one, so a check can see what was built. It draws nothing, so a picture of the view isn't available.
+ * @param {EvalCase} c @param {Call[]} calls
+ */
+function blenderScene(c, calls) {
+  let state = c.blender?.state ?? "connected";
+  const objects = new Map(Object.entries(c.blender?.objects ?? { Cube: { kind: "mesh", location: [0, 0, 0], size: [2, 2, 2] }, Light: { kind: "light" }, Camera: { kind: "camera" } }));
+  const known = (name) => {
+    if (!objects.has(name)) throw new Error(`There's no object called '${name}' in the scene.`);
+  };
+  return {
+    pause: 0,
+    state: async () => state,
+    forget() {},
+    open: async () => (calls.push({ kind: "blender", name: "open" }), (state = "connected"), true),
+    picturePath: () => "",
+    run: async (/** @type {string} */ op, /** @type {any} */ args) => {
+      calls.push({ kind: "blender", name: op, input: args });
+      switch (op) {
+        case "scene": return { objects: [...objects].map(([name, o]) => ({ name, ...o })), count: objects.size, camera: "Camera" };
+        case "add": objects.set(args.name, { kind: "mesh", location: args.location ?? [0, 0, 0], size: args.size ?? [1, 1, 1], ...(args.color ? { color: args.color } : {}) }); return { added: args.name };
+        case "change": {
+          known(args.name);
+          const o = { ...objects.get(args.name), ...Object.fromEntries(["location", "size", "color"].filter((k) => args[k]).map((k) => [k, args[k]])) };
+          objects.delete(args.name);
+          objects.set(args.rename ?? args.name, o);
+          return { changed: args.rename ?? args.name };
+        }
+        case "modifier": known(args.name); return { modifier: args.kind, on: args.name };
+        case "light": objects.set(args.name, { kind: "light" }); return { light: args.name };
+        case "camera": return { camera: "Camera" };
+        case "world": return { world: "World" };
+        case "delete": for (const n of args.names) objects.delete(n); return { deleted: args.names };
+        case "view": throw new Error("There's no picture in this check: use blender_scene to see what's there.");
+        default: throw new Error(`no ${op} here`);
+      }
+    },
+  };
+}
+
+/** A real Blender (blender.js createBlender) whose operations are recorded as the stand-in's are, for the checks. */
+const recordedBlender = (/** @type {import("./blender.js").BlenderClient} */ live, /** @type {Call[]} */ calls) => ({
+  ...live,
+  open: async (/** @type {AbortSignal | undefined} */ signal) => (calls.push({ kind: "blender", name: "open" }), live.open(signal)),
+  run: async (/** @type {string} */ op, /** @type {any} */ args) => (calls.push({ kind: "blender", name: op, input: args }), live.run(op, args)),
+});
+
 /** A Brain whose desktop is the case's window: looking reads it, pointing and acting are recorded. */
 
 class EvalBrain extends Brain {
@@ -268,6 +317,8 @@ class EvalBrain extends Brain {
 
   async runTool(name, input) {
     if (name === "prepare_explainer") return super.runTool(name, input);
+    // Blender goes through Buddy's own path (checks, the card), to a stand-in scene (blenderScene below).
+    if (BLENDER_TOOL_NAMES.has(name) && this.case.blender) return super.runTool(name, input);
     if (!name.includes("__") && !PC_TOOL_NAMES.has(name)) input = withoutBlanks(input); // as Brain.runTool does
     // A connected mailbox goes through Buddy's own path (the card, then connectors.call below).
     if (name.startsWith("mail__") && this.case.mail) return super.runTool(name, input);
@@ -396,11 +447,13 @@ notes.txt · 1 KB · 2026-11-10 17:40`;
  */
 
 /**
- * Runs the cases on one provider and model. `onCase` hears each result as it lands.
- * @param {{ provider: import("./providers.js").ProviderId, apiKey: string, baseURL?: string, cases?: EvalCase[], timeoutMs?: number, onCase?: (r: EvalResult, i: number, n: number) => void, signal?: AbortSignal }} o
+ * Runs the cases on one provider and model. `onCase` hears each result as it lands. `liveBlender`: building cases use
+ * this real Blender instead of the stand-in (a rehearsal on the developer's own PC; nothing is asked, so it builds and
+ * deletes in whatever scene is open).
+ * @param {{ provider: import("./providers.js").ProviderId, apiKey: string, baseURL?: string, cases?: EvalCase[], timeoutMs?: number, onCase?: (r: EvalResult, i: number, n: number) => void, signal?: AbortSignal, liveBlender?: import("./blender.js").BlenderClient }} o
  * @returns {Promise<{ results: EvalResult[], passed: number, total: number, avgMs: number }>}
  */
-export async function runEvals({ provider, apiKey, baseURL, cases = CASES, timeoutMs = 120_000, onCase, signal }) {
+export async function runEvals({ provider, apiKey, baseURL, cases = CASES, timeoutMs = 120_000, onCase, signal, liveBlender }) {
   const results = [];
   for (const [i, c] of cases.entries()) {
     if (signal?.aborted) break;
@@ -441,6 +494,7 @@ export async function runEvals({ provider, apiKey, baseURL, cases = CASES, timeo
       },
     };
     if (c.mail) /** @type {any} */ (ui).connectors = mailbox(c, calls);
+    if (c.blender) /** @type {any} */ (ui).blender = liveBlender ? recordedBlender(liveBlender, calls) : blenderScene(c, calls);
     const brain = new EvalBrain(ui, c, calls);
     const target = { id: "w-1", app_name: c.app, title: c.window.name };
     const start = Date.now();

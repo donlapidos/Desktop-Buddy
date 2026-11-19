@@ -31,6 +31,7 @@ import { createSettingsWindow } from "./settings-window.js";
 import { lockExplainerSession, openExplainer as openPlate } from "./explainer-window.js";
 import { setStartsWithWindows, startsWithWindows, writeShortcuts as writeLaunchShortcuts } from "./launch.js";
 import { PLUS_INTEREST, RELEASES, problemReport, requestFeature, sendProblemReport } from "./feedback.js";
+import { createBlender } from "./blender.js";
 import { createUpdates } from "./updates.js";
 import { describe as describeSchedule, nextRun, verdict as routineVerdict } from "./routines.js";
 import os from "node:os";
@@ -1513,7 +1514,10 @@ function prepareScreenImage(image) {
   const sent = /** @type {import("./screen-context.js").ScreenImage} */ ({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: resized.toJPEG(82).toString("base64") } });
   return { image: sent, ...resized.getSize() };
 }
-const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, commands: () => settings.commands, readFolders, connectors: connectorsUI,
+// One Blender client for every conversation (blender.js). A test copy never reaches the user's own Blender: it talks
+// to the test's stand-in, or to a port nothing listens on (port 1), and finds no Blender to open.
+const blender = createBlender(process.env.BUDDY_E2E ? { port: Number(process.env.BUDDY_BLENDER_TEST_PORT) || 1, find: () => null } : {});
+const providerUI = () => ({ apiKey: loadApiKey() ?? "", provider: currentProvider(), baseURL: providerURL() ?? undefined, commands: () => settings.commands, readFolders, connectors: connectorsUI, blender,
   screenContext: () => settings.screenContext, advanced: () => settings.advanced, prepareImage: prepareScreenImage, ...spendUI() });
 
 function startBrain() {

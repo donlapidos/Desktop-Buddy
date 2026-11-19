@@ -9,6 +9,7 @@ import { LOOK_ARGS, findControl, nearestNames, observe, perform, renderReading, 
 import { writeDocx } from "./documents.js";
 import { PROVIDERS, ProviderError, capsOf, chatTurn } from "./providers.js";
 import { PC_TOOL_NAMES, beyondScreen, hideSecrets, pcTools, placesHere, runPcTool } from "./pc-tools.js";
+import { BLENDER_NOTE, BLENDER_OPEN, BLENDER_TOOLS, BLENDER_TOOL_NAMES, runBlenderTool } from "./blender.js";
 import { fingerprint } from "./activity.js";
 import { spotRect } from "./geometry.js";
 import { earlyInput } from "./early-tools.js";
@@ -724,6 +725,7 @@ const spokenNote = (lang) =>
  *   commands?: () => boolean,
  *   readFolders?: () => string[],   // the folders Buddy reads without asking (Settings › Agents)
  *   quickModel?: () => string,      // the quick model for everyday answers, or "" (the bubble's Brain only)
+ *   blender?: import("./blender.js").BlenderClient, // building in the user's Blender (blender.js), when it's on this PC
  *   connectors?: {                  // connected services (connectors.js): their tools, named and run
  *     tools: () => any[], describe: (name: string) => { service: string, action: string } | null,
  *     call: (name: string, input: any, signal?: AbortSignal) => Promise<string>,
@@ -760,6 +762,8 @@ export class Brain {
     this.preview?.abort?.abort();
     this.preview = null;
     this.contextImages = new WeakSet();
+    /** @type {"connected" | "installed" | "absent"} whether Blender can be built in this answer (checkBlender) */
+    this.blenderState = "absent";
     /** @type {WeakMap<object, Shot>} what each screenshot image shows (shotFacts), for spots on it */
     this.shotOf = new WeakMap();
     /** @type {Shot | null} the latest screenshot the model was given: spots (point_at, annotate) are measured on it */
@@ -1046,6 +1050,7 @@ export class Brain {
     // A route this answer walks the user all the way through (guideSteps), which they may keep as a lesson.
     this.lastRoute = null;
     try {
+      await this.checkBlender();
       if (prepare) content = await prepare(this.abort.signal);
       if (this.abort.signal.aborted) return "Okay, stopped.";
       // The first question after a restart carries what was said before it.
@@ -1182,9 +1187,20 @@ export class Brain {
     const offered = this.advanced ? OWN_TOOLS : OWN_TOOLS.filter((t) => !ADVANCED_TOOLS.has(t.name));
     const own = this.explainerReady ? offered : [...offered.filter((t) => t.name !== "show_explainer"), PREPARE_EXPLAINER];
     const local = this.pcReady ? [...own, ...pcTools(this.commands)] : own;
-    // Connected services' tools come with the advanced features, like the file and web tools.
-    const tools = this.advanced ? [...local, ...(this.ui.connectors?.tools() ?? [])] : local;
+    // Connected services' tools come with the advanced features, like the file and web tools, and so does building in
+    // Blender: its tools while it's connected, or opening it while it's only installed.
+    const blender = this.blenderState === "connected" ? BLENDER_TOOLS : this.blenderState === "installed" ? [BLENDER_OPEN] : [];
+    const tools = this.advanced ? [...local, ...(this.ui.connectors?.tools() ?? []), ...blender] : local;
     return this.ui.screenContext?.() === false ? tools.filter((t) => t.name !== "screenshot") : tools;
+  }
+  // Whether Blender can be built in this answer (blender.js): checked when an answer starts, with the advanced features.
+  async checkBlender() {
+    this.blenderState = this.advanced && this.ui.blender ? await this.ui.blender.state() : "absent";
+  }
+  blenderNote() {
+    if (!this.advanced) return "";
+    if (this.blenderState === "connected") return `\n\n${BLENDER_NOTE}`;
+    return this.blenderState === "installed" ? "\n\nBlender is on this PC. If the user wants something built in Blender, call blender_open first." : "";
   }
   // What the model is told about connected services, when there are any.
   servicesNote() {
@@ -1194,8 +1210,26 @@ export class Brain {
   system() {
     const instructions = this.explainerReady ? SYSTEM : GUIDANCE_SYSTEM;
     const pack = guidanceFor(this.target?.app_name);
-    const base = `${instructions}\n\n${CLOSING}\n\n${FOLLOW_UP_GUIDANCE}${pack ? `\n\nActive-app guidance (confirm against the current screen): ${pack.text}` : ""}${this.pcReady ? `\n\n${beyondScreen(this.commands)}` : ""}${this.advanced ? "" : `\n\n${BASIC}`}${this.servicesNote()}`;
+    const base = `${instructions}\n\n${CLOSING}\n\n${FOLLOW_UP_GUIDANCE}${pack ? `\n\nActive-app guidance (confirm against the current screen): ${pack.text}` : ""}${this.pcReady ? `\n\n${beyondScreen(this.commands)}` : ""}${this.advanced ? "" : `\n\n${BASIC}`}${this.servicesNote()}${this.blenderNote()}`;
     return this.ui.screenContext?.() === false ? `${base}\nWindow screenshots are turned off. Read text with look or read_page instead. Mark and Explain can still carry an image the user explicitly chose.` : base;
+  }
+
+  /** Building in Blender (blender.js): the same card as everything else, and a picture of the view as an image. */
+  async blenderTool(/** @type {string} */ name, /** @type {any} */ input) {
+    if (!this.advanced || !this.ui.blender) return BASIC;
+    const result = await runBlenderTool(name, input, {
+      blender: this.ui.blender,
+      ask: (summary, note, scope) => askUser(summary, { ...this.asking({ note }), scope }),
+      status: (text) => this.ui.status(text),
+      signal: this.abort?.signal,
+      image: (png) => {
+        const shot = /** @type {import("./screen-context.js").ScreenImage} */ ({ type: "image", source: { type: "base64", media_type: "image/png", data: png.toString("base64") } });
+        return this.ui.prepareImage?.(shot)?.image ?? shot;
+      },
+    });
+    // Opened just now: its building tools are offered from the next turn on.
+    if (name === "blender_open") await this.checkBlender();
+    return result;
   }
 
   /** @param {string} name @param {any} input */
@@ -1425,6 +1459,7 @@ export class Brain {
   async runTool(name, input) {
     if (!this.advanced && (ADVANCED_TOOLS.has(name) || PC_TOOL_NAMES.has(name))) return BASIC;
     if (PC_TOOL_NAMES.has(name)) return this.pcTool(name, input);
+    if (BLENDER_TOOL_NAMES.has(name)) return this.blenderTool(name, input);
     const service = this.advanced ? this.ui.connectors?.describe(name) : null;
     if (service) return this.serviceTool(name, input, service);
     input = withoutBlanks(input);

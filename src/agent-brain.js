@@ -6,6 +6,7 @@ import { createSdkMcpServer, query, tool } from "@anthropic-ai/claude-agent-sdk"
 import { z } from "zod";
 import { askUser } from "./approvals.js";
 import { Brain, FAILURES, SYSTEM, TOOLS } from "./brain.js";
+import { BLENDER_OPEN, BLENDER_TOOLS } from "./blender.js";
 
 // The built-in tools an everyday Buddy offers. The developer ones (cron, worktrees, workflows, notebooks...) stay off.
 const BUILT_IN = ["Read", "Write", "Edit", "Glob", "Grep", "PowerShell", "WebFetch", "WebSearch", "TodoWrite"];
@@ -21,7 +22,8 @@ Beyond the screen:
   words. Every PowerShell call needs a short plain description of what it does for them, like "Rename 3 photos".
 - Never delete permanently: move things to the Recycle Bin instead
   ([Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile(path, 'OnlyErrorDialogs', 'SendToRecycleBin')).
-- Your Buddy tools are named mcp__buddy__<name> (mcp__buddy__point_at, mcp__buddy__look, ...).`;
+- Your Buddy tools are named mcp__buddy__<name> (mcp__buddy__point_at, mcp__buddy__look, ...).
+- To build something in Blender, use the mcp__buddy__blender_ tools (blender_open first if it isn't connected).`;
 
 /** Buddy's tool results as MCP content: text stays text, screenshots become MCP images. */
 function toMcp(result) {
@@ -69,7 +71,8 @@ export class AgentBrain extends Brain {
     this.mcp = createSdkMcpServer({
       name: "buddy",
       alwaysLoad: true,
-      tools: TOOLS.map((t) =>
+      // Buddy's own tools, and Blender's (each one says so when Blender isn't connected, as the session's tools are fixed).
+      tools: [...TOOLS, ...BLENDER_TOOLS, BLENDER_OPEN].map((t) =>
         tool(t.name, t.description, /** @type {any} */ (z.fromJSONSchema(/** @type {any} */ (t.input_schema))).shape, async (input) => {
           const start = Date.now();
           const result = await this.runTool(t.name, input ?? {});
