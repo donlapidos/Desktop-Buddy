@@ -15,6 +15,8 @@ import { REAL_CASES } from "../evals/real-cases.mjs";
 import { WORKFLOW_CASES } from "../evals/workflow-cases.mjs";
 import { SIGHT_CASES } from "../evals/sight-cases.mjs";
 import { SHOW_ME_CASES } from "../evals/show-me-cases.mjs";
+import { BLENDER_CASES } from "../evals/blender-cases.mjs";
+import { createBlender } from "../src/blender.js";
 import { ANTHROPIC_PRICES, aboutMoney, dollars, moneyWords, spendLine, tokenWords } from "../src/costs.js";
 import { PROVIDERS } from "../src/providers.js";
 
@@ -29,11 +31,13 @@ const { values: o } = parseArgs({
     json: { type: "string" },
     list: { type: "boolean", default: false },
     rescore: { type: "string" },
+    // Building cases in the real Blender open on this PC, instead of the stand-in: a rehearsal you watch.
+    "live-blender": { type: "boolean", default: false },
   },
 });
 const provider = /** @type {import("../src/providers.js").ProviderId} */ (o.provider);
-const sets = { "made-up": CASES, real: REAL_CASES, workflows: WORKFLOW_CASES, sight: SIGHT_CASES, "show-me": SHOW_ME_CASES, all: [...CASES, ...REAL_CASES, ...WORKFLOW_CASES, ...SIGHT_CASES, ...SHOW_ME_CASES] };
-if (!Object.hasOwn(sets, o.set)) { console.error(`Unknown set: ${o.set}. Choose made-up, real, workflows, sight, show-me or all.`); process.exit(2); }
+const sets = { "made-up": CASES, real: REAL_CASES, workflows: WORKFLOW_CASES, sight: SIGHT_CASES, "show-me": SHOW_ME_CASES, blender: BLENDER_CASES, all: [...CASES, ...REAL_CASES, ...WORKFLOW_CASES, ...SIGHT_CASES, ...SHOW_ME_CASES] };
+if (!Object.hasOwn(sets, o.set)) { console.error(`Unknown set: ${o.set}. Choose made-up, real, workflows, sight, show-me, blender or all.`); process.exit(2); }
 const wanted = o.cases !== undefined ? o.cases.split(",").map((id) => id.trim()) : null;
 const set = sets[o.set];
 if (wanted?.some((id) => !set.some((c) => c.id === id))) { console.error("Unknown case ID for this set. Use --list to see the available cases."); process.exit(2); }
@@ -52,7 +56,7 @@ if (o.rescore) {
   } catch (err) { console.error(`Couldn't rescore the saved run: ${err.message}`); process.exit(2); }
 }
 if (!provider || !PROVIDERS[provider] || !o.model) {
-  console.error(`Usage: npm run eval -- --provider <${Object.keys(PROVIDERS).join("|")}> --model <id> [--base-url <url>] [--effort low|medium|high] [--set made-up|real|workflows|sight|show-me|all] [--cases <ids>] [--json out.json]\nList without a model call: npm run eval -- --set workflows --list\nRescore without a model call: npm run eval -- --set workflows --rescore run.json --json rescored.json`);
+  console.error(`Usage: npm run eval -- --provider <${Object.keys(PROVIDERS).join("|")}> --model <id> [--base-url <url>] [--effort low|medium|high] [--set made-up|real|workflows|sight|show-me|blender|all] [--cases <ids>] [--json out.json] [--live-blender]\nList without a model call: npm run eval -- --set workflows --list\nRescore without a model call: npm run eval -- --set workflows --rescore run.json --json rescored.json`);
   process.exit(2);
 }
 const apiKey = process.env.BUDDY_EVAL_KEY ?? process.env[PROVIDERS[provider].keyEnv ?? ""] ?? "";
@@ -68,6 +72,7 @@ const run = await runEvals({
   apiKey,
   baseURL: o["base-url"] ?? PROVIDERS[provider].baseURL,
   cases,
+  liveBlender: o["live-blender"] ? createBlender() : undefined,
   onCase: (r, i, n) => {
     console.log(`${r.passed ? "PASS" : "FAIL"}  ${String(i + 1).padStart(2)}/${n}  ${r.title.padEnd(44)} ${(r.ms / 1000).toFixed(1).padStart(5)} s  ${r.turns} model turn(s)  ${spendLine(r.spend) ?? ""}${r.problem ? `\n      ${r.problem}\n      reply: ${r.reply.replace(/\s+/g, " ").slice(0, 160)}` : ""}`);
     for (const [j, stage] of r.stages.entries()) console.log(`      request ${j + 1}: first text ${stage.firstTextMs ?? "none"} ms; first guidance ${stage.firstGuidanceMs ?? "none"} ms; total ${stage.ms} ms`);

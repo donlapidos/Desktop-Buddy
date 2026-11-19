@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* **Build in Blender:** ask Buddy to build something and it appears in your open Blender scene, part by part, with
+  colours, lights and the camera, while you watch. Needs Blender 5.1+ with Blender Lab's free MCP add-on; Buddy can
+  open Blender for you. Building asks once, every change is one Ctrl+Z, and deleting asks every time.
+
 ## 0.4.0 (2026-11-19)
 
 Buddy can now draw on your screen (circles, arrows, labels, drag paths) to show you what goes where.
