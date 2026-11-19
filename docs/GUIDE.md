@@ -34,10 +34,10 @@ VS Code and more).
   minimized windows, Buddy's own windows and apps on **Never act in**, and never falls back to capturing a whole
   display. Settings › AI & privacy › **Window screenshots** turns window screenshots off immediately; Mark and
   Explain still send the area you explicitly choose. Text-only and unverified models start from text.
-- **Mark:** press **Ctrl+Alt+M** (or **Mark** on the island). The screen becomes a still with a blue frame.
-  Esc also cancels while the screen is being prepared. Preparation and image loading have a ten-second deadline.
-  Completed marks stay on a separate canvas while the pen draws, avoiding repeated redraws as marks accumulate.
-  Long strokes keep following the pen; a cancelled stroke is discarded.
+- **Mark:** press **Ctrl+Alt+M** (or **Mark** on the island). A blue frame goes round the screen and you draw straight
+  on it while your apps keep running underneath; a toolbar at the top counts what you've marked. When you ask, Buddy
+  takes a picture of the marked area with your strokes on it. (If live marking can't start on a PC, Mark falls back to
+  drawing on a still of the screen, which takes a moment to prepare.) Long strokes keep following the pen.
   - **Click** something to explain it right away.
   - **Draw** over one or more things with the highlighter; each stroke gets a number. Press Enter and ask about
     them ("compare 1 and 2", "what does 1 do?"), or tap **Explain these**. Buddy sees the area with your strokes

@@ -1,5 +1,6 @@
 // Checks that buddy-mcp runs from inside the packed app (resources/app.asar) on the installed exe, as Claude's apps
-// start it. Run after `electron-builder --dir`: node scripts/check-packed-helper.mjs
+// start it, and that the files read from disk at run time (the commands' wall, live marking's overlay source) are
+// outside the archive. Run after `electron-builder --dir`: node scripts/check-packed-helper.mjs
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -16,7 +17,8 @@ const start = Date.now();
 await client.connect(new StdioClientTransport({ command: exe, args: [script], env: { ...process.env, ELECTRON_RUN_AS_NODE: "1", BUDDY_DATA_DIR: dir }, stderr: "inherit" }));
 const tools = (await client.listTools()).tools;
 const res = await client.callTool({ name: "look", arguments: {} });
-console.log({ startedMs: Date.now() - start, tools: tools.length, expected: BRIDGE_TOOLS.length, reply: res.content[0].text });
+const unpacked = ["wall.ps1", "marker-overlay.cs"].map((f) => [f, fs.existsSync(path.resolve("dist/win-unpacked/resources/app.asar.unpacked/src", f))]);
+console.log({ startedMs: Date.now() - start, tools: tools.length, expected: BRIDGE_TOOLS.length, reply: res.content[0].text, unpacked: Object.fromEntries(unpacked) });
 await client.close();
 bridge.close();
-process.exit(tools.length === BRIDGE_TOOLS.length && res.content[0].text === "ran look" ? 0 : 1);
+process.exit(tools.length === BRIDGE_TOOLS.length && res.content[0].text === "ran look" && unpacked.every(([, there]) => there) ? 0 : 1);

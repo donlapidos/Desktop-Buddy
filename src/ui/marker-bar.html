@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'self'">
+<style>
+  @font-face { font-family: "Schibsted Grotesk"; src: url("fonts/schibsted-grotesk-var.woff2") format("woff2"); font-weight: 400 900; }
+  /* The toolbar over live marking (marker-live.js): the same bar as the freeze-frame marker (marker.html), in a small
+     window of its own above the native overlay the user draws on. */
+  html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; user-select: none; font-family: "Schibsted Grotesk", "Segoe UI", sans-serif; }
+  :root { --buddy: #2f7aff; }
+  body { display: flex; justify-content: center; align-items: flex-start; padding-top: 4px; box-sizing: border-box; }
+  #bar { display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px 14px; border-radius: 14px; background: #0c0d10; color: #f2f3f5;
+    font-size: 13px; box-shadow: 0 4px 14px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.06); }
+  #count { padding-right: 6px; color: #d9dce2; white-space: nowrap; }
+  button { border: 0; border-radius: 9px; height: 28px; padding: 0 11px; font: 600 12px "Schibsted Grotesk", "Segoe UI", sans-serif; cursor: pointer; background: #23262d; color: #f2f3f5; display: inline-flex; align-items: center; gap: 6px; }
+  button:hover:not(:disabled) { background: #30343d; }
+  button.primary { background: var(--buddy); }
+  button.primary:hover:not(:disabled) { background: color-mix(in srgb, var(--buddy) 82%, white); }
+  button:disabled { opacity: .4; cursor: default; }
+  kbd { font: 10.5px "Schibsted Grotesk", sans-serif; opacity: .7; }
+  button:focus-visible { outline: 2px solid color-mix(in srgb, var(--buddy) 80%, white); outline-offset: 2px; }
+  @media (forced-colors: active) { #bar, button { border: 1px solid CanvasText; } button:focus-visible { outline: 2px solid Highlight; } }
+</style>
+</head>
+<body>
+<div id="bar" role="toolbar" data-t-attrs="aria-label" aria-label="Mark">
+  <span id="count" role="status">Click something to explain it, or draw over things to ask</span>
+  <button id="undo" disabled title="Ctrl+Z" data-t>Undo</button>
+  <button id="ask" class="primary" disabled><span data-t>Ask</span> <kbd>Enter</kbd></button>
+  <button id="cancel"><span data-t>Cancel</span> <kbd>Esc</kbd></button>
+</div>
+<script src="strings.js"></script>
+<script type="module" src="marker-bar.js"></script>
+</body>
+</html>

@@ -73,6 +73,7 @@
     "asar": true,
     "asarUnpack": [
       "src/wall.ps1",
+      "src/marker-overlay.cs",
       "node_modules/uiohook-napi/**",
       "node_modules/sherpa-onnx-node/**",
       "node_modules/sherpa-onnx-win-x64/**"

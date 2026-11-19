@@ -40,6 +40,7 @@ import { createReplyStream } from "./reply-stream.js";
 import { createTurnQueue } from "./turn-queue.js";
 import { centerOf, createAnnotationLayer, guessGone, insideBox, sameBox } from "./annotations.js";
 import { abortable } from "./marker-startup.js";
+import { overlayProgram, startOverlay } from "./marker-live.js";
 import { createMarker } from "./marker.js";
 import { createAiAppSetup } from "./ai-app-setup.js";
 import { createAppBridge } from "./app-bridge.js";
@@ -180,6 +181,8 @@ const ownPids = () => [process.pid, ...app.getAppMetrics().map((m) => m.pid)];
 const toPhysicalPoint = (p) => asPhysicalPoint(process.platform === "win32" ? screen.dipToScreenPoint(p) : p);
 /** @param {DipRect} r @returns {PhysicalRect} */
 const toPhysicalRect = (r) => asPhysicalRect(process.platform === "win32" ? screen.dipToScreenRect(null, r) : r);
+/** @param {PhysicalPoint} p @returns {DipPoint} */
+const toDipPoint = (p) => asDipPoint(process.platform === "win32" ? screen.screenToDipPoint(p) : p);
 /** @param {PhysicalRect} r @returns {DipRect} */
 const toDipRect = (r) => asDipRect(process.platform === "win32" ? screen.screenToDipRect(null, r) : r);
 const cursor = () => asDipPoint(screen.getCursorScreenPoint());
@@ -841,6 +844,14 @@ const marker = createMarker({
   ownPids,
   explain: (at) => runExplain(at),
   trace: (entry) => trace(entry),
+  // Live marking (marker-live.js): the overlay, built once into Buddy's data folder, over the display's physical pixels.
+  // A test copy can make it fail, to check the still takes over.
+  live: async (display, onEvent) => {
+    if (process.env.BUDDY_E2E && process.env.BUDDY_MARK_LIVE_FAIL) throw new Error("live marking turned off for this check");
+    const exe = await overlayProgram({ cacheDir: path.join(app.getPath("userData"), "native") });
+    return startOverlay(exe, toPhysicalRect(asDipRect(display.bounds)), { scale: display.scaleFactor, color: ACCENTS[settings.accent].hex, onEvent });
+  },
+  toDipPoint,
 });
 const { start: startMarking, stop: stopMarkMode, clear: clearMarks, cancel: cancelMarking } = marker;
 
@@ -2017,6 +2028,8 @@ const devKit = () => ({
   set about(a) { about = a; },
   get markDisplay() { return marker.display(); },
   get markWin() { return marker.window(); },
+  get markLive() { return marker.liveOverlay(); },
+  get markBar() { return marker.liveBar(); },
   get pendingMarks() { return marker.pending(); },
   get displayCaptures() { return displayCaptures; },
 });

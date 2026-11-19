@@ -20,6 +20,7 @@ import { learnCaps } from "./providers.js";
  *   trace: (entry: object) => void,
  *   settings: any, brain: any, about: { window: any, point: any },
  *   markDisplay: Electron.Display | null, markWin: Electron.BrowserWindow | null, pendingMarks: any, displayCaptures: number,
+ *   markLive: import("./marker-live.js").LiveOverlay | null, markBar: Electron.BrowserWindow | null,
  *   bubble: Electron.BrowserWindow, island: Electron.BrowserWindow, tasks: any, voice: any, updates: any, activity: any,
  *   settingsWindow: { open: (page?: string) => void },
  *   point: Function, guidePoint: Function, confirm: Function, summon: Function, toggle: Function, ownPids: () => number[],
@@ -59,6 +60,13 @@ function markTest(kit) {
       s.map((p) => ({ x: p.x - kit.markDisplay.bounds.x, y: p.y - kit.markDisplay.bounds.y })),
     );
     const ready = setInterval(() => {
+      // Live marking: the strokes go to the native overlay (physical pixels on the screen), then Ask on its toolbar.
+      if (kit.markLive && kit.markBar?.isVisible()) {
+        clearInterval(ready);
+        for (const s of JSON.parse(process.env.BUDDY_MARK_TEST ?? "[]")) kit.markLive.send({ cmd: "stroke", points: s.map((p) => { const q = screen.dipToScreenPoint(p); return [q.x, q.y]; }) });
+        setTimeout(() => kit.markBar?.webContents.executeJavaScript(`document.getElementById("ask").click()`).catch(() => {}), 500);
+        return;
+      }
       if (!kit.markWin?.isVisible()) return;
       clearInterval(ready);
       kit.markWin.webContents.send("mark-inject", strokes);
@@ -448,6 +456,115 @@ function explainerTest(kit) {
     console.log("EXPLAINER_SHOWN", JSON.stringify({ windows: plates.length, visible: plates.some((w) => w.isVisible()), chars: text.length, title: text.split("\n").find((l) => l.trim()) ?? "", appearance: kit.settings.appearance, opened, switched }));
     console.log("EXPLAINER_TEST_DONE");
   }, 4000);
+}
+
+/**
+ * BUDDY_MARK_LIVE_TEST: live marking (marker-live.js) without a mouse. Strokes and a click go to the native overlay
+ * through its test commands, the same path as the mouse; the toolbar's buttons are clicked; the overlay is asked what a
+ * pixel holds. With BUDDY_MARK_LIVE_FAIL, the overlay can't start and the still must take over.
+ * @param {DevKit} kit
+ */
+function markLiveTest(kit) {
+  const { startMarking, cancelMarking, currentMode } = kit;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const until = async (fn, ms = 8000) => {
+    for (let t = 0; t < ms; t += 100) {
+      if (await fn()) return true;
+      await wait(100);
+    }
+    return false;
+  };
+  const alive = (pid) => {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const probe = async (x, y) => (kit.markLive?.send({ cmd: "probe", x, y }), (await kit.markLive?.next("probe"))?.alpha);
+  const counted = (n) => kit.markBar?.webContents.executeJavaScript(`document.getElementById("count").textContent`).then((t) => new RegExp(`^${n} `).test(t));
+  setTimeout(async () => {
+    const r = {};
+    try {
+      if (process.env.BUDDY_MARK_LIVE_FAIL) {
+        startMarking();
+        r.fellBack = await until(() => kit.markWin?.isVisible(), 15000);
+        r.noLive = !kit.markLive;
+        cancelMarking();
+      } else {
+        const started = Date.now();
+        startMarking();
+        r.live = await until(() => !!kit.markLive, 60000); // the first time, it's built
+        r.startMs = Date.now() - started;
+        r.bar = await until(() => kit.markBar?.isVisible());
+        const d = /** @type {Electron.Display} */ (kit.markDisplay).bounds;
+        const pts = [];
+        for (let i = 0; i <= 60; i++) {
+          const p = screen.dipToScreenPoint({ x: Math.round(d.x + d.width * 0.3 + i * 4), y: Math.round(d.y + d.height * 0.55 + Math.sin(i / 6) * 30) });
+          pts.push([p.x, p.y]);
+        }
+        const mid = pts[30];
+        kit.markLive?.send({ cmd: "stroke", points: pts });
+        r.barCounted = await until(() => counted(1));
+        r.onStroke = await probe(mid[0], mid[1]);
+        r.beside = await probe(mid[0], mid[1] - 200);
+        await kit.markBar?.webContents.executeJavaScript(`document.getElementById("undo").click()`);
+        // With nothing marked, the toolbar shows its hint again.
+        r.undoCounted = await until(async () => !(await counted(1)));
+        r.afterUndo = await probe(mid[0], mid[1]);
+        kit.markLive?.send({ cmd: "stroke", points: pts });
+        await until(() => counted(1));
+        kit.markLive?.send({ cmd: "stats" });
+        r.stats = await kit.markLive?.next("stats");
+        const pid = kit.markLive?.pid;
+        // Ask closes the toolbar, which can be gone before this call returns: that's it working.
+        await kit.markBar?.webContents.executeJavaScript(`document.getElementById("ask").click()`).catch((e) => { if (!/disposed|destroyed/i.test(String(e?.message))) throw e; });
+        r.asked = await until(() => !!kit.pendingMarks, 20000);
+        r.marks = kit.pendingMarks?.marks.length;
+        const blueIn = (/** @type {string} */ png) => {
+          const px = nativeImage.createFromBuffer(Buffer.from(png, "base64")).toBitmap();
+          let blue = 0;
+          for (let i = 0; i < px.length; i += 4) if (px[i] > px[i + 2] + 40 && px[i] > px[i + 1] + 10) blue++;
+          return blue;
+        };
+        // The picture for the AI has the stroke in it: far more Buddy-blue than the same area once the overlay is gone
+        // (whatever blue the desktop itself has is in both).
+        if (kit.pendingMarks) r.bluePixels = blueIn(kit.pendingMarks.image);
+        r.overlayGone = await until(() => !alive(pid), 5000);
+        if (kit.pendingMarks) {
+          const display = screen.getDisplayMatching(d);
+          const local = [{ points: pts.map(([x, y]) => { const p = screen.screenToDipPoint({ x, y }); return { x: p.x - d.x, y: p.y - d.y }; }) }];
+          const { cropMarked } = await import("./marker.js");
+          // Buddy's own overlay keeps the marks up while the question is typed: taken down for this capture.
+          for (const w of BrowserWindow.getAllWindows().filter((w) => w.webContents.getURL().endsWith("overlay.html"))) w.webContents.send("marks-clear");
+          await wait(400);
+          r.bluePixelsWithout = blueIn(cropMarked(await kit.grabDisplay(display), local, display));
+        }
+        r.barGone = !kit.markBar;
+        // Cancel: the overlay and the toolbar go, back to idle.
+        await until(() => currentMode() === "idle", 10000);
+        startMarking();
+        await until(() => !!kit.markLive, 15000);
+        const pid2 = kit.markLive?.pid;
+        cancelMarking();
+        r.cancelled = currentMode() === "idle" && !kit.markBar && !kit.markLive;
+        r.cancelOverlayGone = await until(() => !alive(pid2), 5000);
+        // A quick first click explains what's under it: marking ends and the overlay goes.
+        startMarking();
+        await until(() => !!kit.markLive, 15000);
+        const pid3 = kit.markLive?.pid;
+        const c = screen.dipToScreenPoint({ x: Math.round(d.x + d.width / 2), y: Math.round(d.y + d.height / 2) });
+        kit.markLive?.send({ cmd: "click", x: c.x, y: c.y });
+        r.clickLeft = await until(() => currentMode() !== "marking");
+        r.clickOverlayGone = await until(() => !alive(pid3), 5000);
+      }
+    } catch (err) {
+      r.error = err.message;
+    }
+    console.log("MARK_LIVE_TEST", JSON.stringify(r));
+    console.log("MARK_LIVE_TEST_DONE");
+  }, 2500);
 }
 
 /** BUDDY_MARK_STARTUP_TEST @param {DevKit} kit */
@@ -1348,6 +1465,7 @@ const HOOKS = {
   BUDDY_SETTINGS_TEST: settingsTest,
   BUDDY_EXPLAINER_TEST: explainerTest,
   BUDDY_MARK_STARTUP_TEST: markStartupTest,
+  BUDDY_MARK_LIVE_TEST: markLiveTest,
   BUDDY_MARK_RENDER_TEST: markRenderTest,
   BUDDY_ANNOTATIONS_TEST: annotationsTest,
   BUDDY_SCREEN_CONTEXT_TEST: screenContextTest,
