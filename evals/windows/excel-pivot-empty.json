@@ -1,0 +1,1758 @@
+{
+ "name": "excel-pivot-empty",
+ "app": "EXCEL.EXE",
+ "title": "Regional sales - Excel",
+ "note": "A new PivotTable sheet with the PivotTable Fields pane, nothing ticked (Excel's Document Recovery pane, left over from an earlier run, taken out)",
+ "recordedAt": "2026-11-19",
+ "agentDesktop": "1.2.0",
+ "refCount": 62,
+ "complete": false,
+ "replaced": {},
+ "tree": {
+  "available_actions": [
+   "SetFocus"
+  ],
+  "bounds": {
+   "height": 1158,
+   "width": 1938,
+   "x": -9,
+   "y": -9
+  },
+  "children": [
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 806,
+     "width": 438,
+     "x": 1482,
+     "y": 307
+    },
+    "children": [
+     {
+      "bounds": {
+       "height": 806,
+       "width": 438,
+       "x": 1482,
+       "y": 307
+      },
+      "children": [
+       {
+        "bounds": {
+         "height": 35,
+         "width": 422,
+         "x": 1490,
+         "y": 314
+        },
+        "children": [
+         {
+          "bounds": {
+           "height": 35,
+           "width": 422,
+           "x": 1490,
+           "y": 314
+          },
+          "children": [
+           {
+            "bounds": {
+             "height": 35,
+             "width": 422,
+             "x": 1490,
+             "y": 314
+            },
+            "children": [
+             {
+              "available_actions": [
+               "Expand",
+               "Collapse",
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 30,
+               "width": 30,
+               "x": 1837,
+               "y": 319
+              },
+              "name": "Task Pane Options",
+              "ref_id": "@s19y03jcsxueec:e1",
+              "role": "menuitem",
+              "role_description": "Menu Item",
+              "states": [
+               "haspopup"
+              ]
+             },
+             {
+              "available_actions": [
+               "Click",
+               "SetFocus"
+              ],
+              "bounds": {
+               "height": 30,
+               "width": 30,
+               "x": 1877,
+               "y": 319
+              },
+              "description": "Close",
+              "name": "Close pane",
+              "ref_id": "@s19y03jcsxueec:e2",
+              "role": "button",
+              "role_description": "Button"
+             }
+            ],
+            "role": "group",
+            "role_description": "Title Bar"
+           }
+          ],
+          "role": "dialog",
+          "role_description": "Pane"
+         }
+        ],
+        "name": "PivotTable Fields",
+        "role": "group",
+        "role_description": "pane"
+       },
+       {
+        "available_actions": [
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 757,
+         "width": 422,
+         "x": 1490,
+         "y": 349
+        },
+        "children": [
+         {
+          "bounds": {
+           "height": 757,
+           "width": 422,
+           "x": 1490,
+           "y": 349
+          },
+          "children": [
+           {
+            "bounds": {
+             "height": 757,
+             "width": 422,
+             "x": 1490,
+             "y": 349
+            },
+            "children": [
+             {
+              "bounds": {
+               "height": 757,
+               "width": 423,
+               "x": 1490,
+               "y": 349
+              },
+              "children": [
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 35,
+                 "width": 57,
+                 "x": 1848,
+                 "y": 358
+                },
+                "description": "Tools",
+                "name": "PivotTable Field List Layout Tools",
+                "ref_id": "@s19y03jcsxueec:e3",
+                "role": "menuitem",
+                "role_description": "Menu Item",
+                "states": [
+                 "haspopup"
+                ]
+               },
+               {
+                "available_actions": [
+                 "SetValue",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 28,
+                 "width": 377,
+                 "x": 1499,
+                 "y": 410
+                },
+                "name": "Type field name to search for",
+                "ref_id": "@s19y03jcsxueec:e4",
+                "role": "textfield",
+                "role_description": "Edit Box",
+                "value": "Search"
+               },
+               {
+                "available_actions": [
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 28,
+                 "width": 28,
+                 "x": 1876,
+                 "y": 410
+                },
+                "name": "Search",
+                "ref_id": "@s19y03jcsxueec:e5",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Scroll"
+                ],
+                "bounds": {
+                 "height": 248,
+                 "width": 407,
+                 "x": 1498,
+                 "y": 459
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "ScrollTo"
+                  ],
+                  "bounds": {
+                   "height": 27,
+                   "width": 384,
+                   "x": 1499,
+                   "y": 460
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click",
+                     "ScrollTo",
+                     "SetFocus"
+                    ],
+                    "bounds": {
+                     "height": 27,
+                     "width": 384,
+                     "x": 1499,
+                     "y": 460
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "ScrollTo",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 26,
+                       "width": 23,
+                       "x": 1502,
+                       "y": 461
+                      },
+                      "name": "Order",
+                      "ref_id": "@s19y03jcsxueec:e8",
+                      "role": "checkbox",
+                      "role_description": "CheckBox"
+                     }
+                    ],
+                    "name": "Order. CheckboxUnchecked",
+                    "ref_id": "@s19y03jcsxueec:e7",
+                    "role": "statictext",
+                    "role_description": "Text"
+                   }
+                  ],
+                  "name": "Order. CheckboxUnchecked",
+                  "role": "group",
+                  "role_description": "Group"
+                 },
+                 {
+                  "available_actions": [
+                   "ScrollTo"
+                  ],
+                  "bounds": {
+                   "height": 27,
+                   "width": 384,
+                   "x": 1499,
+                   "y": 487
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click",
+                     "ScrollTo",
+                     "SetFocus"
+                    ],
+                    "bounds": {
+                     "height": 27,
+                     "width": 384,
+                     "x": 1499,
+                     "y": 487
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "ScrollTo",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 26,
+                       "width": 23,
+                       "x": 1502,
+                       "y": 488
+                      },
+                      "name": "Date",
+                      "ref_id": "@s19y03jcsxueec:e10",
+                      "role": "checkbox",
+                      "role_description": "CheckBox"
+                     }
+                    ],
+                    "name": "Date. CheckboxUnchecked",
+                    "ref_id": "@s19y03jcsxueec:e9",
+                    "role": "statictext",
+                    "role_description": "Text"
+                   }
+                  ],
+                  "name": "Date. CheckboxUnchecked",
+                  "role": "group",
+                  "role_description": "Group"
+                 },
+                 {
+                  "available_actions": [
+                   "ScrollTo"
+                  ],
+                  "bounds": {
+                   "height": 27,
+                   "width": 384,
+                   "x": 1499,
+                   "y": 514
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click",
+                     "ScrollTo",
+                     "SetFocus"
+                    ],
+                    "bounds": {
+                     "height": 27,
+                     "width": 384,
+                     "x": 1499,
+                     "y": 514
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "ScrollTo",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 26,
+                       "width": 23,
+                       "x": 1502,
+                       "y": 515
+                      },
+                      "name": "Quarter",
+                      "ref_id": "@s19y03jcsxueec:e12",
+                      "role": "checkbox",
+                      "role_description": "CheckBox"
+                     }
+                    ],
+                    "name": "Quarter. CheckboxUnchecked",
+                    "ref_id": "@s19y03jcsxueec:e11",
+                    "role": "statictext",
+                    "role_description": "Text"
+                   }
+                  ],
+                  "name": "Quarter. CheckboxUnchecked",
+                  "role": "group",
+                  "role_description": "Group"
+                 },
+                 {
+                  "available_actions": [
+                   "ScrollTo"
+                  ],
+                  "bounds": {
+                   "height": 27,
+                   "width": 384,
+                   "x": 1499,
+                   "y": 541
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click",
+                     "ScrollTo",
+                     "SetFocus"
+                    ],
+                    "bounds": {
+                     "height": 27,
+                     "width": 384,
+                     "x": 1499,
+                     "y": 541
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "ScrollTo",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 26,
+                       "width": 23,
+                       "x": 1502,
+                       "y": 542
+                      },
+                      "name": "Region",
+                      "ref_id": "@s19y03jcsxueec:e14",
+                      "role": "checkbox",
+                      "role_description": "CheckBox"
+                     }
+                    ],
+                    "name": "Region. CheckboxUnchecked",
+                    "ref_id": "@s19y03jcsxueec:e13",
+                    "role": "statictext",
+                    "role_description": "Text"
+                   }
+                  ],
+                  "name": "Region. CheckboxUnchecked",
+                  "role": "group",
+                  "role_description": "Group"
+                 },
+                 {
+                  "available_actions": [
+                   "ScrollTo"
+                  ],
+                  "bounds": {
+                   "height": 27,
+                   "width": 384,
+                   "x": 1499,
+                   "y": 568
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click",
+                     "ScrollTo",
+                     "SetFocus"
+                    ],
+                    "bounds": {
+                     "height": 27,
+                     "width": 384,
+                     "x": 1499,
+                     "y": 568
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "ScrollTo",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 26,
+                       "width": 23,
+                       "x": 1502,
+                       "y": 569
+                      },
+                      "name": "Sales rep",
+                      "ref_id": "@s19y03jcsxueec:e16",
+                      "role": "checkbox",
+                      "role_description": "CheckBox"
+                     }
+                    ],
+                    "name": "Sales rep. CheckboxUnchecked",
+                    "ref_id": "@s19y03jcsxueec:e15",
+                    "role": "statictext",
+                    "role_description": "Text"
+                   }
+                  ],
+                  "name": "Sales rep. CheckboxUnchecked",
+                  "role": "group",
+                  "role_description": "Group"
+                 },
+                 {
+                  "available_actions": [
+                   "ScrollTo"
+                  ],
+                  "bounds": {
+                   "height": 27,
+                   "width": 384,
+                   "x": 1499,
+                   "y": 595
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click",
+                     "ScrollTo",
+                     "SetFocus"
+                    ],
+                    "bounds": {
+                     "height": 27,
+                     "width": 384,
+                     "x": 1499,
+                     "y": 595
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "ScrollTo",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 26,
+                       "width": 23,
+                       "x": 1502,
+                       "y": 596
+                      },
+                      "name": "Product",
+                      "ref_id": "@s19y03jcsxueec:e18",
+                      "role": "checkbox",
+                      "role_description": "CheckBox"
+                     }
+                    ],
+                    "name": "Product. CheckboxUnchecked",
+                    "ref_id": "@s19y03jcsxueec:e17",
+                    "role": "statictext",
+                    "role_description": "Text"
+                   }
+                  ],
+                  "name": "Product. CheckboxUnchecked",
+                  "role": "group",
+                  "role_description": "Group"
+                 },
+                 {
+                  "available_actions": [
+                   "ScrollTo"
+                  ],
+                  "bounds": {
+                   "height": 27,
+                   "width": 384,
+                   "x": 1499,
+                   "y": 622
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click",
+                     "ScrollTo",
+                     "SetFocus"
+                    ],
+                    "bounds": {
+                     "height": 27,
+                     "width": 384,
+                     "x": 1499,
+                     "y": 622
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "ScrollTo",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 26,
+                       "width": 23,
+                       "x": 1502,
+                       "y": 623
+                      },
+                      "name": "Units",
+                      "ref_id": "@s19y03jcsxueec:e20",
+                      "role": "checkbox",
+                      "role_description": "CheckBox"
+                     }
+                    ],
+                    "name": "Units. CheckboxUnchecked",
+                    "ref_id": "@s19y03jcsxueec:e19",
+                    "role": "statictext",
+                    "role_description": "Text"
+                   }
+                  ],
+                  "name": "Units. CheckboxUnchecked",
+                  "role": "group",
+                  "role_description": "Group"
+                 },
+                 {
+                  "available_actions": [
+                   "ScrollTo"
+                  ],
+                  "bounds": {
+                   "height": 27,
+                   "width": 384,
+                   "x": 1499,
+                   "y": 649
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click",
+                     "ScrollTo",
+                     "SetFocus"
+                    ],
+                    "bounds": {
+                     "height": 27,
+                     "width": 384,
+                     "x": 1499,
+                     "y": 649
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "ScrollTo",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 26,
+                       "width": 23,
+                       "x": 1502,
+                       "y": 650
+                      },
+                      "name": "Unit price",
+                      "ref_id": "@s19y03jcsxueec:e22",
+                      "role": "checkbox",
+                      "role_description": "CheckBox"
+                     }
+                    ],
+                    "name": "Unit price. CheckboxUnchecked",
+                    "ref_id": "@s19y03jcsxueec:e21",
+                    "role": "statictext",
+                    "role_description": "Text"
+                   }
+                  ],
+                  "name": "Unit price. CheckboxUnchecked",
+                  "role": "group",
+                  "role_description": "Group"
+                 },
+                 {
+                  "available_actions": [
+                   "ScrollTo"
+                  ],
+                  "bounds": {
+                   "height": 27,
+                   "width": 384,
+                   "x": 1499,
+                   "y": 676
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click",
+                     "ScrollTo",
+                     "SetFocus"
+                    ],
+                    "bounds": {
+                     "height": 27,
+                     "width": 384,
+                     "x": 1499,
+                     "y": 676
+                    },
+                    "children": [
+                     {
+                      "available_actions": [
+                       "Toggle",
+                       "ScrollTo",
+                       "Click",
+                       "SetFocus"
+                      ],
+                      "bounds": {
+                       "height": 26,
+                       "width": 23,
+                       "x": 1502,
+                       "y": 677
+                      },
+                      "name": "Revenue",
+                      "ref_id": "@s19y03jcsxueec:e24",
+                      "role": "checkbox",
+                      "role_description": "CheckBox"
+                     }
+                    ],
+                    "name": "Revenue. CheckboxUnchecked",
+                    "ref_id": "@s19y03jcsxueec:e23",
+                    "role": "statictext",
+                    "role_description": "Text"
+                   }
+                  ],
+                  "name": "Revenue. CheckboxUnchecked",
+                  "role": "group",
+                  "role_description": "Group"
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "ScrollTo",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 30,
+                   "width": 97,
+                   "x": 1499,
+                   "y": 703
+                  },
+                  "name": "More Tables...",
+                  "ref_id": "@s19y03jcsxueec:e25",
+                  "role": "button",
+                  "role_description": "Button"
+                 },
+                 {
+                  "available_actions": [
+                   "SetValue"
+                  ],
+                  "bounds": {
+                   "height": 246,
+                   "width": 21,
+                   "x": 1883,
+                   "y": 460
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click"
+                    ],
+                    "bounds": {
+                     "height": 21,
+                     "width": 21,
+                     "x": 1883,
+                     "y": 460
+                    },
+                    "description": "Moves the vertical position up one line",
+                    "name": "Line up",
+                    "ref_id": "@s19y03jcsxueec:e27",
+                    "role": "button",
+                    "role_description": "Button",
+                    "states": [
+                     "readonly"
+                    ]
+                   },
+                   {
+                    "available_actions": [
+                     "Click"
+                    ],
+                    "bounds": {
+                     "height": 0,
+                     "width": 0,
+                     "x": 0,
+                     "y": 0
+                    },
+                    "description": "Moves the vertical position up a couple of lines",
+                    "name": "Page up",
+                    "ref_id": "@s19y03jcsxueec:e28",
+                    "role": "button",
+                    "role_description": "Button",
+                    "states": [
+                     "offscreen",
+                     "readonly"
+                    ]
+                   },
+                   {
+                    "available_actions": [
+                     "Click"
+                    ],
+                    "bounds": {
+                     "height": 21,
+                     "width": 21,
+                     "x": 1883,
+                     "y": 664
+                    },
+                    "description": "Moves the vertical position down a couple of lines",
+                    "name": "Page down",
+                    "ref_id": "@s19y03jcsxueec:e29",
+                    "role": "button",
+                    "role_description": "Button",
+                    "states": [
+                     "readonly"
+                    ]
+                   },
+                   {
+                    "available_actions": [
+                     "Click"
+                    ],
+                    "bounds": {
+                     "height": 21,
+                     "width": 21,
+                     "x": 1883,
+                     "y": 685
+                    },
+                    "description": "Moves the vertical position down one line",
+                    "name": "Line down",
+                    "ref_id": "@s19y03jcsxueec:e30",
+                    "role": "button",
+                    "role_description": "Button",
+                    "states": [
+                     "readonly"
+                    ]
+                   }
+                  ],
+                  "name": "Used to change the vertical viewing area",
+                  "ref_id": "@s19y03jcsxueec:e26",
+                  "role": "scrollbar",
+                  "role_description": "ScrollBar"
+                 }
+                ],
+                "ref_id": "@s19y03jcsxueec:e6",
+                "role": "group",
+                "role_description": "Pane"
+               },
+               {
+                "available_actions": [
+                 "Scroll"
+                ],
+                "bounds": {
+                 "height": 103,
+                 "width": 194,
+                 "x": 1502,
+                 "y": 798
+                },
+                "name": "Filters",
+                "ref_id": "@s19y03jcsxueec:e31",
+                "role": "group",
+                "role_description": "Pane"
+               },
+               {
+                "available_actions": [
+                 "Scroll"
+                ],
+                "bounds": {
+                 "height": 103,
+                 "width": 200,
+                 "x": 1706,
+                 "y": 798
+                },
+                "name": "Columns",
+                "ref_id": "@s19y03jcsxueec:e32",
+                "role": "group",
+                "role_description": "Pane"
+               },
+               {
+                "available_actions": [
+                 "Scroll"
+                ],
+                "bounds": {
+                 "height": 103,
+                 "width": 194,
+                 "x": 1502,
+                 "y": 942
+                },
+                "name": "Rows",
+                "ref_id": "@s19y03jcsxueec:e33",
+                "role": "group",
+                "role_description": "Pane"
+               },
+               {
+                "available_actions": [
+                 "Scroll"
+                ],
+                "bounds": {
+                 "height": 103,
+                 "width": 200,
+                 "x": 1706,
+                 "y": 942
+                },
+                "name": "Values",
+                "ref_id": "@s19y03jcsxueec:e34",
+                "role": "group",
+                "role_description": "Pane"
+               },
+               {
+                "available_actions": [
+                 "Toggle",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 33,
+                 "width": 173,
+                 "x": 1502,
+                 "y": 1069
+                },
+                "name": "Defer Layout Update",
+                "ref_id": "@s19y03jcsxueec:e35",
+                "role": "checkbox",
+                "role_description": "CheckBox"
+               },
+               {
+                "available_actions": [
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 32,
+                 "width": 63,
+                 "x": 1843,
+                 "y": 1069
+                },
+                "name": "Update",
+                "ref_id": "@s19y03jcsxueec:e36",
+                "role": "button",
+                "role_description": "Button",
+                "states": [
+                 "disabled"
+                ]
+               }
+              ],
+              "name": "PivotTable Fields",
+              "role": "unknown",
+              "role_description": "Custom Control"
+             }
+            ],
+            "role": "dialog",
+            "role_description": "Pane"
+           }
+          ],
+          "role": "group",
+          "role_description": "pane"
+         }
+        ],
+        "name": "PivotTable Fields",
+        "role": "window",
+        "role_description": "window"
+       }
+      ],
+      "name": "PivotTable Field List toolbar",
+      "role": "toolbar",
+      "role_description": "tool bar"
+     }
+    ],
+    "role": "group",
+    "role_description": "pane"
+   },
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 806,
+     "width": 336,
+     "x": 0,
+     "y": 307
+    },
+    "children": [
+     {
+      "bounds": {
+       "height": 806,
+       "width": 336,
+       "x": 0,
+       "y": 307
+      },
+      "children": [],
+      "name": "Document Recovery toolbar",
+      "role": "toolbar",
+      "role_description": "tool bar"
+     }
+    ],
+    "role": "group",
+    "role_description": "pane"
+   },
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 27,
+     "width": 1920,
+     "x": 0,
+     "y": 1113
+    },
+    "children": [
+     {
+      "bounds": {
+       "height": 27,
+       "width": 1920,
+       "x": 0,
+       "y": 1113
+      },
+      "children": [
+       {
+        "available_actions": [
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 27,
+         "width": 1920,
+         "x": 0,
+         "y": 1113
+        },
+        "children": [
+         {
+          "bounds": {
+           "height": 27,
+           "width": 1920,
+           "x": 0,
+           "y": 1113
+          },
+          "children": [
+           {
+            "bounds": {
+             "height": 27,
+             "width": 1920,
+             "x": 0,
+             "y": 1113
+            },
+            "children": [
+             {
+              "bounds": {
+               "height": 27,
+               "width": 1920,
+               "x": 0,
+               "y": 1113
+              },
+              "children": [
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 57,
+                 "x": 5,
+                 "y": 1114
+                },
+                "description": "In Ready mode",
+                "name": "Cell Mode Ready",
+                "ref_id": "@s19y03jcsxueec:e51",
+                "role": "statictext",
+                "role_description": "Text"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 186,
+                 "x": 66,
+                 "y": 1114
+                },
+                "description": "Accessibility check unavailable for this document type. Learn more.",
+                "name": "Accessibility Checker Accessibility: Unavailable",
+                "ref_id": "@s19y03jcsxueec:e52",
+                "role": "button",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Toggle",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 50,
+                 "x": 1547,
+                 "y": 1114
+                },
+                "name": "Normal",
+                "ref_id": "@s19y03jcsxueec:e53",
+                "role": "switch",
+                "role_description": "Button",
+                "states": [
+                 "checked"
+                ]
+               },
+               {
+                "available_actions": [
+                 "Toggle",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 50,
+                 "x": 1597,
+                 "y": 1114
+                },
+                "name": "Page Layout",
+                "ref_id": "@s19y03jcsxueec:e54",
+                "role": "switch",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Toggle",
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 50,
+                 "x": 1647,
+                 "y": 1114
+                },
+                "name": "Page Break Preview",
+                "ref_id": "@s19y03jcsxueec:e55",
+                "role": "switch",
+                "role_description": "Button"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 22,
+                 "x": 1698,
+                 "y": 1114
+                },
+                "name": "Zoom Out",
+                "ref_id": "@s19y03jcsxueec:e56",
+                "role": "button",
+                "role_description": "Button",
+                "states": [
+                 "readonly"
+                ],
+                "value": "100"
+               },
+               {
+                "available_actions": [
+                 "SetValue"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 125,
+                 "x": 1720,
+                 "y": 1114
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Click"
+                  ],
+                  "bounds": {
+                   "height": 26,
+                   "width": 60,
+                   "x": 1720,
+                   "y": 1114
+                  },
+                  "description": "Moves the horizontal position left a couple of columns",
+                  "name": "Zoom Out",
+                  "ref_id": "@s19y03jcsxueec:e58",
+                  "role": "button",
+                  "role_description": "Button",
+                  "states": [
+                   "readonly"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Click"
+                  ],
+                  "bounds": {
+                   "height": 26,
+                   "width": 59,
+                   "x": 1786,
+                   "y": 1114
+                  },
+                  "description": "Moves the horizontal position right a couple of columns",
+                  "name": "Zoom In",
+                  "ref_id": "@s19y03jcsxueec:e59",
+                  "role": "button",
+                  "role_description": "Button",
+                  "states": [
+                   "readonly"
+                  ]
+                 }
+                ],
+                "name": "Zoom",
+                "ref_id": "@s19y03jcsxueec:e57",
+                "role": "slider",
+                "role_description": "Slider",
+                "value": "100"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 22,
+                 "x": 1845,
+                 "y": 1114
+                },
+                "name": "Zoom In",
+                "ref_id": "@s19y03jcsxueec:e60",
+                "role": "button",
+                "role_description": "Button",
+                "states": [
+                 "readonly"
+                ],
+                "value": "100"
+               },
+               {
+                "available_actions": [
+                 "Click",
+                 "SetFocus"
+                ],
+                "bounds": {
+                 "height": 26,
+                 "width": 53,
+                 "x": 1867,
+                 "y": 1114
+                },
+                "description": "Zoom level. Click to open the Zoom dialog box.",
+                "name": "Zoom 100%",
+                "ref_id": "@s19y03jcsxueec:e61",
+                "role": "statictext",
+                "role_description": "Text"
+               }
+              ],
+              "name": "Status Bar",
+              "role": "status",
+              "role_description": "Status Bar"
+             }
+            ],
+            "role": "dialog",
+            "role_description": "Pane"
+           }
+          ],
+          "role": "group",
+          "role_description": "pane"
+         }
+        ],
+        "name": "Status Bar",
+        "role": "group",
+        "role_description": "pane"
+       }
+      ],
+      "name": "Status Bar toolbar",
+      "role": "toolbar",
+      "role_description": "tool bar"
+     }
+    ],
+    "role": "group",
+    "role_description": "pane"
+   },
+   {
+    "available_actions": [
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 259,
+     "width": 1920,
+     "x": 0,
+     "y": 0
+    },
+    "children": [
+     {
+      "bounds": {
+       "height": 38,
+       "width": 1920,
+       "x": 0,
+       "y": 221
+      },
+      "children": [
+       {
+        "available_actions": [
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 38,
+         "width": 1920,
+         "x": 0,
+         "y": 221
+        },
+        "children": [
+         {
+          "bounds": {
+           "height": 38,
+           "width": 1920,
+           "x": 0,
+           "y": 221
+          },
+          "children": [
+           {
+            "bounds": {
+             "height": 38,
+             "width": 1920,
+             "x": 0,
+             "y": 221
+            },
+            "children": [
+             {
+              "bounds": {
+               "height": 38,
+               "width": 1920,
+               "x": 0,
+               "y": 221
+              },
+              "children": [
+               {
+                "bounds": {
+                 "height": 38,
+                 "width": 1900,
+                 "x": 10,
+                 "y": 221
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 22,
+                   "width": 990,
+                   "x": 208,
+                   "y": 229
+                  },
+                  "description": "Click for more details",
+                  "name": "Some features might be lost if you save this workbook in the comma-delimited (.csv) format. To preserve these features, save it in an Excel file format.",
+                  "ref_id": "@s19y03jcsxueec:e62",
+                  "role": "link",
+                  "role_description": "Hyperlink",
+                  "states": [
+                   "readonly"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 32,
+                   "width": 137,
+                   "x": 1208,
+                   "y": 224
+                  },
+                  "name": "Don't show again",
+                  "ref_id": "@s19y03jcsxueec:e63",
+                  "role": "button",
+                  "role_description": "Button"
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 32,
+                   "width": 82,
+                   "x": 1356,
+                   "y": 224
+                  },
+                  "name": "Save As...",
+                  "ref_id": "@s19y03jcsxueec:e64",
+                  "role": "button",
+                  "role_description": "Button"
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 22,
+                   "width": 22,
+                   "x": 1879,
+                   "y": 229
+                  },
+                  "name": "Close this message",
+                  "ref_id": "@s19y03jcsxueec:e65",
+                  "role": "button",
+                  "role_description": "Button"
+                 }
+                ],
+                "name": "Possible Data Loss",
+                "role": "group",
+                "role_description": "Group"
+               }
+              ],
+              "name": "Message Bars",
+              "role": "unknown",
+              "role_description": "Custom Control"
+             }
+            ],
+            "role": "dialog",
+            "role_description": "Pane"
+           }
+          ],
+          "role": "group",
+          "role_description": "pane"
+         }
+        ],
+        "name": "Business Bar",
+        "role": "group",
+        "role_description": "pane"
+       }
+      ],
+      "name": "Business Bar toolbar",
+      "role": "toolbar",
+      "role_description": "tool bar"
+     },
+     {
+      "bounds": {
+       "height": 221,
+       "width": 1920,
+       "x": 0,
+       "y": 0
+      },
+      "children": [
+       {
+        "available_actions": [
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 221,
+         "width": 1920,
+         "x": 0,
+         "y": 0
+        },
+        "children": [
+         {
+          "bounds": {
+           "height": 221,
+           "width": 1920,
+           "x": 0,
+           "y": 0
+          },
+          "children": [
+           {
+            "bounds": {
+             "height": 221,
+             "width": 1920,
+             "x": 0,
+             "y": 0
+            },
+            "children": [
+             {
+              "bounds": {
+               "height": 221,
+               "width": 1920,
+               "x": 0,
+               "y": 0
+              },
+              "children": [
+               {
+                "bounds": {
+                 "height": 60,
+                 "width": 303,
+                 "x": 53,
+                 "y": 0
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Toggle",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 36,
+                   "width": 137,
+                   "x": 53,
+                   "y": 12
+                  },
+                  "description": "Click to turn on AutoSave for this file",
+                  "name": "AutoSave",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "AutoSaveSwitch"
+                  },
+                  "ref_id": "@s19y03jcsxueec:e66",
+                  "role": "switch",
+                  "role_description": "Toggle Switch"
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 35,
+                   "width": 34,
+                   "x": 191,
+                   "y": 12
+                  },
+                  "description": "Save (Ctrl+S)",
+                  "name": "Save",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "FileSave"
+                  },
+                  "ref_id": "@s19y03jcsxueec:e67",
+                  "role": "button",
+                  "role_description": "Button"
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "Expand",
+                   "Collapse",
+                   "SetValue",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 35,
+                   "width": 47,
+                   "x": 226,
+                   "y": 12
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click"
+                    ],
+                    "bounds": {
+                     "height": 35,
+                     "width": 31,
+                     "x": 226,
+                     "y": 12
+                    },
+                    "description": "Undo PivotTable report Add (Ctrl+Z)",
+                    "name": "Undo",
+                    "ref_id": "@s19y03jcsxueec:e69",
+                    "role": "button",
+                    "role_description": "Button"
+                   },
+                   {
+                    "available_actions": [
+                     "Expand",
+                     "Collapse",
+                     "Click"
+                    ],
+                    "bounds": {
+                     "height": 35,
+                     "width": 16,
+                     "x": 257,
+                     "y": 12
+                    },
+                    "description": "Undo PivotTable report Add (Ctrl+Z)",
+                    "name": "More Options",
+                    "native_id": {
+                     "kind": "automation_id",
+                     "value": "Undo_Dropdown"
+                    },
+                    "ref_id": "@s19y03jcsxueec:e70",
+                    "role": "menuitem",
+                    "role_description": "Menu Item",
+                    "states": [
+                     "haspopup"
+                    ]
+                   }
+                  ],
+                  "description": "Undo PivotTable report Add (Ctrl+Z)",
+                  "name": "Undo",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "Undo"
+                  },
+                  "ref_id": "@s19y03jcsxueec:e68",
+                  "role": "menubutton",
+                  "role_description": "SplitButton"
+                 },
+                 {
+                  "available_actions": [
+                   "Click",
+                   "Expand",
+                   "Collapse",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 35,
+                   "width": 47,
+                   "x": 274,
+                   "y": 12
+                  },
+                  "children": [
+                   {
+                    "available_actions": [
+                     "Click"
+                    ],
+                    "bounds": {
+                     "height": 35,
+                     "width": 31,
+                     "x": 274,
+                     "y": 12
+                    },
+                    "description": "Can't Redo (Ctrl+Y)",
+                    "name": "Redo",
+                    "ref_id": "@s19y03jcsxueec:e72",
+                    "role": "button",
+                    "role_description": "Button",
+                    "states": [
+                     "disabled"
+                    ]
+                   },
+                   {
+                    "available_actions": [
+                     "Expand",
+                     "Collapse",
+                     "Click"
+                    ],
+                    "bounds": {
+                     "height": 35,
+                     "width": 16,
+                     "x": 305,
+                     "y": 12
+                    },
+                    "description": "Can't Redo (Ctrl+Y)",
+                    "name": "More Options",
+                    "native_id": {
+                     "kind": "automation_id",
+                     "value": "Redo_Dropdown"
+                    },
+                    "ref_id": "@s19y03jcsxueec:e73",
+                    "role": "menuitem",
+                    "role_description": "Menu Item",
+                    "states": [
+                     "disabled",
+                     "haspopup"
+                    ]
+                   }
+                  ],
+                  "description": "Can't Redo (Ctrl+Y)",
+                  "name": "Redo",
+                  "native_id": {
+                   "kind": "automation_id",
+                   "value": "Redo"
+                  },
+                  "ref_id": "@s19y03jcsxueec:e71",
+                  "role": "menubutton",
+                  "role_description": "SplitButton",
+                  "states": [
+                   "disabled",
+                   "readonly"
+                  ]
+                 },
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 38,
+                   "width": 34,
+                   "x": 322,
+                   "y": 11
+                  },
+                  "name": "Customize Quick Access Toolbar",
+                  "ref_id": "@s19y03jcsxueec:e74",
+                  "role": "menuitem",
+                  "role_description": "Menu Item",
+                  "states": [
+                   "haspopup"
+                  ]
+                 }
+                ],
+                "name": "Quick Access Toolbar",
+                "role": "toolbar",
+                "role_description": "ToolBar"
+               },
+               {
+                "bounds": {
+                 "height": 60,
+                 "width": 383,
+                 "x": 357,
+                 "y": 0
+                },
+                "children": [
+                 {
+                  "available_actions": [
+                   "Expand",
+                   "Collapse",
+                   "Click",
+                   "SetFocus"
+                  ],
+                  "bounds": {
+                   "height": 60,
+                   "width": 147,
+                   "x": 357,
+                   "y": 0
+                  },
+                  "name": "‪Regional sales‬",
+                  "ref_id": "@s19y03jcsxueec:e75",
+                  "role": "menuitem",
+                  "role_description": "Menu Item",
+                  "states": [
+                   "haspopup"
+                  ]
+                 }
+                ],
+                "name": "‪Regional sales‬",
+                "role": "group",
+                "role_description": "Title Bar"
+               },
+               {
+                "available_actions": [
+                 "Expand",
+                 "Collapse",
+                 "Click"
+                ],
+                "bounds": {
+                 "height": 40,
+                 "width": 460,
+                 "x": 740,
+                 "y": 10
+                },
+                "description": "Just start typing here to bring features to your fingertips and get help.",
+                "name": "Type to search and use the up and down arrow keys to navigate",
+                "native_id": {
+                 "kind": "automation_id",
+                 "value": "TellMeControlAnchor"
+                },
+                "ref_id": "@s19y03jcsxueec:e76",
+                "role": "menuitem",
+                "role_description": "Menu Item",
+                "states": [
+                 "haspopup"
+                ],
+                "subtree_truncated": true
+               }
+              ],
+              "name": "Ribbon",
+              "role": "group",
+              "role_description": "Pane",
+              "subtree_truncated": true
+             }
+            ],
+            "role": "dialog",
+            "role_description": "Pane",
+            "subtree_truncated": true
+           }
+          ],
+          "role": "group",
+          "role_description": "pane",
+          "subtree_truncated": true
+         }
+        ],
+        "name": "Ribbon",
+        "role": "group",
+        "role_description": "pane",
+        "subtree_truncated": true
+       }
+      ],
+      "name": "Ribbon toolbar",
+      "role": "toolbar",
+      "role_description": "tool bar",
+      "subtree_truncated": true
+     }
+    ],
+    "role": "group",
+    "role_description": "pane",
+    "subtree_truncated": true
+   }
+  ],
+  "name": "Regional sales - Excel",
+  "role": "window",
+  "role_description": "window",
+  "subtree_truncated": true
+ }
+}

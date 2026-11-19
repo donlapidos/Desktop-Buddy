@@ -1,0 +1,283 @@
+{
+ "name": "excel-pivot-dialog",
+ "app": "EXCEL.EXE",
+ "title": "PivotTable from table or range",
+ "note": "Excel's PivotTable from table or range dialog, over the demo sales",
+ "recordedAt": "2026-11-19",
+ "agentDesktop": "1.2.0",
+ "refCount": 11,
+ "complete": true,
+ "replaced": {},
+ "tree": {
+  "available_actions": [
+   "SetFocus"
+  ],
+  "bounds": {
+   "height": 297,
+   "width": 513,
+   "x": 704,
+   "y": 451
+  },
+  "children": [
+   {
+    "bounds": {
+     "height": 250,
+     "width": 495,
+     "x": 713,
+     "y": 489
+    },
+    "children": [
+     {
+      "bounds": {
+       "height": 66,
+       "width": 481,
+       "x": 720,
+       "y": 498
+      },
+      "children": [
+       {
+        "available_actions": [
+         "Click"
+        ],
+        "bounds": {
+         "height": 20,
+         "width": 481,
+         "x": 720,
+         "y": 498
+        },
+        "name": "Select a table or range",
+        "ref_id": "@s3d0sk33sk3cwr:e1",
+        "role": "statictext",
+        "role_description": "Text"
+       },
+       {
+        "available_actions": [
+         "Expand",
+         "Collapse",
+         "SetValue",
+         "SetFocus"
+        ],
+        "bounds": {
+         "height": 28,
+         "width": 362,
+         "x": 828,
+         "y": 527
+        },
+        "name": "Table/Range",
+        "ref_id": "@s3d0sk33sk3cwr:e2",
+        "role": "textfield",
+        "role_description": "Edit Box",
+        "states": [
+         "focused",
+         "haspopup"
+        ],
+        "value": "'Regional sales'!$A$1:$I$2001"
+       }
+      ],
+      "name": "Select a table or range",
+      "role": "group",
+      "role_description": "Group"
+     },
+     {
+      "bounds": {
+       "height": 128,
+       "width": 481,
+       "x": 720,
+       "y": 568
+      },
+      "children": [
+       {
+        "available_actions": [
+         "Click"
+        ],
+        "bounds": {
+         "height": 20,
+         "width": 481,
+         "x": 720,
+         "y": 568
+        },
+        "name": "Choose where you want the PivotTable to be placed",
+        "ref_id": "@s3d0sk33sk3cwr:e3",
+        "role": "statictext",
+        "role_description": "Text"
+       },
+       {
+        "bounds": {
+         "height": 54,
+         "width": 459,
+         "x": 731,
+         "y": 601
+        },
+        "children": [
+         {
+          "available_actions": [
+           "Select",
+           "Click",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 25,
+           "width": 128,
+           "x": 731,
+           "y": 601
+          },
+          "name": "New Worksheet",
+          "ref_id": "@s3d0sk33sk3cwr:e4",
+          "role": "radiobutton",
+          "role_description": "Radio Button",
+          "states": [
+           "selected"
+          ]
+         },
+         {
+          "available_actions": [
+           "Select",
+           "Click",
+           "SetFocus"
+          ],
+          "bounds": {
+           "height": 25,
+           "width": 149,
+           "x": 731,
+           "y": 630
+          },
+          "name": "Existing Worksheet",
+          "ref_id": "@s3d0sk33sk3cwr:e5",
+          "role": "radiobutton",
+          "role_description": "Radio Button"
+         }
+        ],
+        "role": "group",
+        "role_description": "Group"
+       },
+       {
+        "available_actions": [
+         "Expand",
+         "Collapse"
+        ],
+        "bounds": {
+         "height": 28,
+         "width": 388,
+         "x": 802,
+         "y": 659
+        },
+        "name": "Location",
+        "ref_id": "@s3d0sk33sk3cwr:e6",
+        "role": "textfield",
+        "role_description": "Edit Box",
+        "states": [
+         "disabled",
+         "haspopup"
+        ]
+       }
+      ],
+      "name": "Choose where you want the PivotTable to be placed",
+      "role": "group",
+      "role_description": "Group"
+     },
+     {
+      "available_actions": [
+       "Click",
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 30,
+       "width": 64,
+       "x": 1062,
+       "y": 700
+      },
+      "name": "OK",
+      "ref_id": "@s3d0sk33sk3cwr:e7",
+      "role": "button",
+      "role_description": "Button"
+     },
+     {
+      "available_actions": [
+       "Click",
+       "SetFocus"
+      ],
+      "bounds": {
+       "height": 30,
+       "width": 64,
+       "x": 1137,
+       "y": 700
+      },
+      "name": "Cancel",
+      "ref_id": "@s3d0sk33sk3cwr:e8",
+      "role": "button",
+      "role_description": "Button"
+     }
+    ],
+    "name": "PivotTable from table or range",
+    "role": "window",
+    "role_description": "Window"
+   },
+   {
+    "available_actions": [
+     "SetValue",
+     "SetFocus"
+    ],
+    "bounds": {
+     "height": 35,
+     "width": 495,
+     "x": 713,
+     "y": 454
+    },
+    "children": [
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 37,
+       "width": 60,
+       "x": 1089,
+       "y": 452
+      },
+      "name": "Context help",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Help"
+      },
+      "ref_id": "@s3d0sk33sk3cwr:e10",
+      "role": "button",
+      "role_description": "button"
+     },
+     {
+      "available_actions": [
+       "Click"
+      ],
+      "bounds": {
+       "height": 37,
+       "width": 60,
+       "x": 1149,
+       "y": 452
+      },
+      "name": "Close",
+      "native_id": {
+       "kind": "automation_id",
+       "value": "Close"
+      },
+      "ref_id": "@s3d0sk33sk3cwr:e11",
+      "role": "button",
+      "role_description": "button"
+     }
+    ],
+    "native_id": {
+     "kind": "automation_id",
+     "value": "TitleBar"
+    },
+    "ref_id": "@s3d0sk33sk3cwr:e9",
+    "role": "group",
+    "role_description": "title bar",
+    "value": "PivotTable from table or range"
+   }
+  ],
+  "name": "PivotTable from table or range",
+  "role": "window",
+  "role_description": "window",
+  "states": [
+   "focused"
+  ]
+ }
+}
