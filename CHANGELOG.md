@@ -2,16 +2,20 @@
 
 ## Unreleased
 
+## 0.5.0 (2026-11-19)
+
+Mark now draws on your live screen, with no wait and no frozen picture. Buddy can build things in Blender while
+you watch. And a ⌃ button folds the chat back into the island.
+
 * **Mark draws on your live screen:** press Ctrl+Alt+M and draw straight away, over your apps as they keep running,
   instead of on a frozen picture that took a moment to appear. The strokes go into the picture Buddy sees when you ask.
   Built with a small Windows-native overlay that Buddy compiles on first use; if that can't start, Mark draws on a still
   as before.
-
-* **Close the chat:** a **⌃** button at the top right of the chat folds it back into the island. Anything Buddy is
-  doing carries on, and the chat comes back by itself when it needs your OK.
 * **Build in Blender:** ask Buddy to build something and it appears in your open Blender scene, part by part, with
   colours, lights and the camera, while you watch. Needs Blender 5.1+ with Blender Lab's free MCP add-on; Buddy can
   open Blender for you. Building asks once, every change is one Ctrl+Z, and deleting asks every time.
+* **Close the chat:** a **⌃** button at the top right of the chat folds it back into the island. Anything Buddy is
+  doing carries on, and the chat comes back by itself when it needs your OK.
 
 ## 0.4.0 (2026-11-19)
 
