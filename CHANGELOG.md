@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* **Close the chat:** a **⌃** button at the top right of the chat folds it back into the island. Anything Buddy is
+  doing carries on, and the chat comes back by itself when it needs your OK.
 * **Build in Blender:** ask Buddy to build something and it appears in your open Blender scene, part by part, with
   colours, lights and the camera, while you watch. Needs Blender 5.1+ with Blender Lab's free MCP add-on; Buddy can
   open Blender for you. Building asks once, every change is one Ctrl+Z, and deleting asks every time.

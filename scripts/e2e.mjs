@@ -482,6 +482,7 @@ const CHECKS = {
       if (JSON.stringify(r.actions) !== JSON.stringify(want)) problems.push(`${name}: the island offered ${JSON.stringify(r.actions)}, not ${JSON.stringify(want)}`);
       if (r.routines !== advanced) problems.push(`${name}: Settings ${r.routines ? "showed" : "hid"} Routines`);
       if (r.makeTask !== advanced) problems.push(`${name}: the bubble ${r.makeTask ? "showed" : "hid"} Make task`);
+      if (!r.closeShown || !r.closed) problems.push(`${name}: the bubble's close button ${r.closeShown ? "didn't fold it back into the island" : "wasn't there"}`);
       if (r.advanced !== advanced) problems.push(`${name}: the advanced setting was ${r.advanced}`);
       if (!fs.existsSync(path.join(out, `${name}.png`))) problems.push(`${name}: no picture of the island`);
     }

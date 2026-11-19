@@ -850,6 +850,11 @@ function islandTest(kit) {
       await summon();
       await wait(800);
       r.makeTask = await shown(bubble.webContents, "#totask");
+      // Its close button folds the chat back up into the island, which stays.
+      r.closeShown = await shown(bubble.webContents, "#close");
+      await bubble.webContents.executeJavaScript(`document.getElementById("close").click()`);
+      for (let i = 0; i < 30 && bubble.isVisible(); i++) await wait(100);
+      r.closed = !bubble.isVisible() && island.isVisible();
       settingsWindow.open();
       let win;
       for (let i = 0; i < 50 && !win; i++) {

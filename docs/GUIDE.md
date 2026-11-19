@@ -55,6 +55,8 @@ VS Code and more).
 - **Island:** a pill at the top center that stays on screen whenever Buddy is running, so it doubles as the "on"
   light. A dim dot means idle, a bright dot means active; **Ctrl+Alt+B** switches between them. It also shows
   what Buddy is doing (looking, drawing, waiting for your OK).
+  The chat opens out of the island; the **⌃** at its top right (or Esc, or clicking elsewhere) folds it back in.
+  Anything Buddy is doing carries on, and the chat comes back by itself when it needs your OK.
   Hover it for **Ask**, **Talk**, **Mark** and **Task**. A new Buddy starts with the essentials (Ask, Talk and
   Mark); task windows, routines and working with files, web pages and Word documents come with Settings › Agents ›
   **Show advanced features**.
