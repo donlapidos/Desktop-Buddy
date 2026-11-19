@@ -51,16 +51,16 @@ const PLANS = [
     ],
   },
   {
-    // The demo's route (docs/DEMO.md): a sales export, Insert, PivotTable and its dialog, then the field list as
-    // fields are ticked. Run with --samples scripts/samples/demo (scripts/make-demo-sales.mjs makes the file).
+    // The demo's route (docs/DEMO.md): the sales workbook, Insert, PivotTable and its dialog, then the field list as
+    // fields are ticked. Run with --samples scripts/samples/demo (make-demo-sales.mjs, then make-demo-workbook.ps1).
     id: "pivot",
     app: "EXCEL.EXE",
-    start: () => run("excel.exe", ["/x", sample("Regional sales.csv")]),
+    start: () => run("excel.exe", ["/x", sample("Regional sales.xlsx")]),
     title: /^Regional sales - Excel/,
     ours: "process",
     steps: [
       // 2,000 rows take a while: read too early, the sheet has no cells yet.
-      { maximize: true, record: "excel-sales-home", settle: 20000, note: "Demo sales export (2,000 made-up orders) in Excel, Home tab" },
+      { maximize: true, record: "excel-sales-home", settle: 20000, note: "Demo sales workbook (2,000 made-up orders) in Excel, Home tab" },
       { click: "Insert", role: "tab", record: "excel-sales-insert", note: "Demo sales export in Excel, Insert tab" },
       { click: "PivotTable", role: "button", record: "excel-pivot-dialog", dialog: true, keep: true, note: "Excel's PivotTable from table or range dialog, over the demo sales" },
       { click: "OK", role: "button", inDialog: true, record: "excel-pivot-empty", settle: 3000, note: "A new PivotTable sheet with the PivotTable Fields pane, nothing ticked" },
