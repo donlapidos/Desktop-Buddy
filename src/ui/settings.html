@@ -60,6 +60,9 @@
   .routine .status { grid-column: 1 / -1; color: var(--faint); font-size: 12px; }
   .routine .status:empty { display: none; }
   .routine .actions { grid-column: 1 / -1; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  /* Connections that need the user's own app set up first (HubSpot) */
+  .routine .setup { grid-column: 1 / -1; display: grid; gap: 8px; }
+  .routine .setup .hint { margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
   .empty { padding: 14px 16px; border-radius: 12px; background: var(--field); color: var(--muted); font-size: 12.5px; line-height: 1.5; }
   .editor { display: grid; gap: 12px; padding: 16px; border-radius: 14px; background: #121418; box-shadow: inset 0 0 0 1px var(--line); margin-top: 12px; }
   .editor label { display: grid; gap: 5px; font-weight: 600; font-size: 12.5px; }

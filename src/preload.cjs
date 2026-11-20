@@ -66,7 +66,7 @@ contextBridge.exposeInMainWorld("buddy", {
   saveLesson: () => ipcRenderer.invoke("save-lesson"),
   onConnectOffer: on("connect-offer"),
   connectOfferAnswer: (id, answer) => ipcRenderer.invoke("connect-offer-answer", id, answer),
-  settingsConnection: (action, id) => ipcRenderer.invoke("settings-connection", action, id),
+  settingsConnection: (action, id, app) => ipcRenderer.invoke("settings-connection", action, id, app),
   onBubbleOpen: on("bubble-open"),
   onBubbleClose: on("bubble-close"),
   // Settings: opened from the bubble or island; the rest is answered only for the settings window itself
