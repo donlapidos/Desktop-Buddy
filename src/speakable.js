@@ -25,16 +25,19 @@ export function speakable(text) {
 
 // Speakable pieces: sentences, with long ones cut at commas (and the first one cut early) so Buddy starts talking
 // sooner and each piece is synthesized while the one before it plays. Synthesis runs at roughly the speed of
-// speech on battery, so short pieces are what keep the pauses between them short.
+// speech on battery, so short pieces are what keep the pauses between them short. Supertonic takes about 0.7 s for
+// any piece plus a little per character (measured: 23 characters 0.9 s, 52 characters 1.2 s), so a first sentence
+// longer than FIRST_PIECE_CHARS is cut at a comma. Text that follows on from what Buddy is already saying
+// (`first: false`) has no first piece.
 const PIECE_CHARS = 140;
-const FIRST_PIECE_CHARS = 60;
+const FIRST_PIECE_CHARS = 30;
 
-export function pieces(text) {
+export function pieces(text, { first = true } = {}) {
   // A sentence ends at . ! ? ; : followed by a space, so "2.5" and "$24.99" stay whole.
   const sentences = speakable(text).split(/(?<=[.!?;:])\s+/).filter(Boolean);
   const out = [];
   for (const s of sentences) {
-    const limit = () => (out.length ? PIECE_CHARS : FIRST_PIECE_CHARS);
+    const limit = () => (out.length || !first ? PIECE_CHARS : FIRST_PIECE_CHARS);
     if (s.length <= limit()) {
       out.push(s);
       continue;

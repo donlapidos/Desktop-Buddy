@@ -20,23 +20,34 @@ test("text arrives immediately; speech waits for a sentence and doesn't repeat t
   assert.ok(!s.covers("Okay, stopped."));
 });
 
-test("cancelling stops current speech and discards queued and late sentences", { timeout: 5000 }, async () => {
-  const spoken = [];
+test("a sentence that completes while Buddy is still speaking is handed over at once, to follow on", { timeout: 5000 }, async () => {
+  const handed = [];
   let finish;
-  let hushes = 0;
-  const s = createReplyStream({ display() {}, speak: async (t) => {
-    spoken.push(t);
-    await new Promise((resolve) => { finish = resolve; });
-  }, hush: () => { hushes++; finish?.(); }, canSpeak: () => true });
+  const s = createReplyStream({ display() {}, speak: (t, how) => {
+    handed.push([t, how.join]);
+    return new Promise((resolve) => { finish = resolve; });
+  }, hush() {}, canSpeak: () => true });
   s.receive({ text: "", done: false });
   s.receive({ text: "First. ", done: false });
-  await Promise.resolve();
-  s.receive({ text: "First. Second.", done: true });
-  const pending = s.settled();
+  s.receive({ text: "First. Second. ", done: false });
+  // The first is still playing (its promise hasn't settled), and the second was handed over anyway, joining it.
+  assert.deepEqual(handed, [["First.", false], ["Second.", true]]);
+  finish();
+  s.receive({ text: "", done: false });
+  s.receive({ text: "New answer.", done: true });
+  assert.deepEqual(handed.at(-1), ["New answer.", false], "a new reply starts afresh");
+});
+
+test("cancelling hushes the voice and nothing late is handed over", { timeout: 5000 }, async () => {
+  const handed = [];
+  let hushes = 0;
+  const s = createReplyStream({ display() {}, speak: async (t) => { handed.push(t); }, hush: () => { hushes++; }, canSpeak: () => true });
+  s.receive({ text: "", done: false });
+  s.receive({ text: "First. ", done: false });
   s.cancel();
   s.receive({ text: "First. Second. Late.", done: true });
-  await pending;
-  assert.deepEqual(spoken, ["First."]);
+  await s.settled();
+  assert.deepEqual(handed, ["First."]);
   assert.equal(hushes, 1);
   assert.ok(!s.covers("First. Second."));
 });
