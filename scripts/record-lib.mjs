@@ -16,6 +16,9 @@ export const whoToHide = (extra = []) => ({
   pc: os.hostname(),
 });
 
+/** Whether a window shows Office's Document Recovery pane. @param {any} node @returns {boolean} */
+export const hasRecoveryPane = (node) => node?.name === "Document Recovery" || (node?.children ?? []).some(hasRecoveryPane);
+
 /**
  * Records one window. Resolves the saved record, or throws with what went wrong.
  * @param {{ app: string, windowId: string, name: string, note?: string, who: ReturnType<typeof whoToHide> }} o
@@ -23,6 +26,8 @@ export const whoToHide = (extra = []) => ({
 export async function recordWindow({ app, windowId, name, note = "", who }) {
   const res = await snapshotResilient(["--app", app, "--window-id", windowId], [...LOOK_ARGS], { timeoutMs: 30_000 });
   if (!res.ok) throw new Error(`Couldn't read the window: ${JSON.stringify(res.error)}`);
+  // Office's Document Recovery pane lists other workbooks and documents by name, the user's own work: never kept.
+  if (hasRecoveryPane(res.data.tree)) throw new Error("Office is showing Document Recovery, which names other files. Close that pane (or open and save or discard them) and record again.");
   const tree = scrubTree(res.data.tree, who);
   const before = JSON.stringify(res.data.tree);
   const after = JSON.stringify(tree);

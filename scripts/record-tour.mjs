@@ -28,7 +28,10 @@ const sample = (/** @type {string} */ f) => path.join(samples, f);
  * A step clicks a control (exact name, and role if given), or presses keys, then records the window it lands on
  * (`dialog: true` records the newest window of ours instead, then closes it with Escape).
  * `select` picks a list's option by its exact name (a list option doesn't answer the press action a click uses).
- * @typedef {{ click?: string, select?: string, role?: string, record?: string, note?: string, dialog?: boolean, settle?: number }} Step
+ * `inDialog` looks for the control in the newest window of ours instead of the main one (a dialog's OK).
+ * `keep` leaves a recorded dialog open for the next step instead of closing it with Escape. `maximize` fills the screen
+ * with the window first, so the ribbon shows every button as it does full-screen.
+ * @typedef {{ click?: string, select?: string, role?: string, record?: string, note?: string, dialog?: boolean, inDialog?: boolean, keep?: boolean, maximize?: boolean, settle?: number }} Step
  * @typedef {{ id: string, app: string, start: () => void, title: RegExp, ours: "process" | "title", steps: Step[] }} Plan
  */
 /** @type {Plan[]} */
@@ -45,6 +48,28 @@ const PLANS = [
       { click: "Data", role: "tab", record: "excel-budget-data", note: "Sample budget in Excel, Data tab" },
       { click: "Sort...", role: "button", record: "excel-sort-dialog", dialog: true, note: "Excel's Sort dialog, over the sample budget" },
       { click: "Review", role: "tab", record: "excel-budget-review", note: "Sample budget in Excel, Review tab" },
+    ],
+  },
+  {
+    // The demo's route (docs/DEMO.md): the sales workbook, Insert, PivotTable and its dialog, then the field list as
+    // fields are ticked. Run with --samples scripts/samples/demo (make-demo-sales.mjs, then make-demo-workbook.ps1).
+    id: "pivot",
+    app: "EXCEL.EXE",
+    start: () => run("excel.exe", ["/x", sample("Regional sales.xlsx")]),
+    title: /^Regional sales - Excel/,
+    ours: "process",
+    steps: [
+      // 2,000 rows take a while: read too early, the sheet has no cells yet.
+      { maximize: true, record: "excel-sales-home", settle: 20000, note: "Demo sales workbook (2,000 made-up orders) in Excel, Home tab" },
+      { click: "Insert", role: "tab", record: "excel-sales-insert", note: "Demo sales export in Excel, Insert tab" },
+      { click: "PivotTable", role: "button", record: "excel-pivot-dialog", dialog: true, keep: true, note: "Excel's PivotTable from table or range dialog, over the demo sales" },
+      { click: "OK", role: "button", inDialog: true, record: "excel-pivot-empty", settle: 3000, note: "A new PivotTable sheet with the PivotTable Fields pane, nothing ticked" },
+      { click: "Region", role: "check", record: "excel-pivot-region", settle: 2000, note: "The PivotTable with Region in Rows" },
+      { click: "Revenue", role: "check", record: "excel-pivot-revenue", settle: 2000, note: "The PivotTable with Region in Rows and Sum of Revenue in Values" },
+      // Ticked, Quarter lands in Rows; its menu moves it across the top (the demo draws a drag there instead).
+      { click: "Quarter", role: "check", record: "excel-pivot-quarter-rows", settle: 2000, note: "The PivotTable with Region and Quarter in Rows" },
+      { click: "Quarter", role: "button", settle: 1500 },
+      { click: "Move to Column Labels", record: "excel-pivot-final", settle: 2500, note: "The PivotTable: Region down the side, Quarter across the top, Sum of Revenue" },
     ],
   },
   {
@@ -113,6 +138,9 @@ function exact(/** @type {any} */ tree, /** @type {string} */ name, /** @type {s
     for (const c of n.children ?? []) walk(c);
   };
   walk(tree);
+  // A split button is two controls of one name ("button" and its "menubutton" arrow): the exact role picks the button.
+  const exactly = role && found.length > 1 ? found.filter((n) => String(n.role ?? "").toLowerCase() === role) : [];
+  if (exactly.length === 1) return exactly[0];
   return found.length === 1 ? found[0] : found.length ? `${found.length} controls named "${name}"` : `no control named "${name}"`;
 }
 
@@ -176,8 +204,14 @@ for (const plan of chosen) {
       const now = (await listWindows()).find((w) => String(w.id) === String(main.id));
       if (!now || !ours(now)) throw new Error("its window went away");
       // Once more, from a fresh read, when agent-desktop says it couldn't yet tell the control apart and a retry is safe.
+      if (step.maximize) {
+        const done = cli(["maximize", "--app", plan.app, "--window-id", String(main.id)]);
+        if (!done.ok) throw new Error(`maximizing failed: ${JSON.stringify(done.error)}`);
+      }
       for (let attempt = 1; step.click || step.select; attempt++) {
-        const look = await observe(["snapshot", "--app", plan.app, "--window-id", String(main.id), "-i", "--compact", "--max-depth", "30", "--timeout-ms", "15000"], { timeoutMs: 30_000, session: SESSION });
+        const where = step.inDialog ? (await listWindows()).filter((w) => ours(w) && String(w.id) !== String(main.id))[0] : main;
+        if (!where) throw new Error(`no dialog of ours to find "${step.click}" in`);
+        const look = await observe(["snapshot", "--app", plan.app, "--window-id", String(where.id), "-i", "--compact", "--max-depth", "30", "--timeout-ms", "15000"], { timeoutMs: 30_000, session: SESSION });
         if (!look.ok) throw new Error(`couldn't read it: ${JSON.stringify(look.error)}`);
         const name = /** @type {string} */ (step.click ?? step.select);
         const target = exact(look.data.tree, name, step.click ? step.role : "option");
@@ -203,7 +237,7 @@ for (const plan of chosen) {
       const { record } = await recordWindow({ app: plan.app, windowId: String(win.id), name: step.record, note: step.note, who });
       saved.push(step.record);
       console.log(`  ${step.record}: "${record.title}", ${record.refCount} refs${record.complete ? "" : " (partial)"}, replaced ${JSON.stringify(record.replaced)}`);
-      if (step.dialog) {
+      if (step.dialog && !step.keep) {
         cli(["press", "escape", "--app", plan.app, "--window-id", String(win.id)]);
         await wait(800);
       }
