@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* **Buddy talks without pauses between sentences:** the next sentence of a spoken answer is made ready while the one
+  before is still playing, instead of after it ends (that left about a second of silence between sentences). The
+  first words also come sooner: a first sentence is spoken from its first comma.
+
 ## 0.5.0 (2026-11-19)
 
 Mark now draws on your live screen, with no wait and no frozen picture. Buddy can build things in Blender while

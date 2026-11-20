@@ -33,6 +33,7 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
   let played = new Map();
   let gen = 0; // bumps on hush, so a reply being spoken stops between pieces
   let speaking = false;
+  let line = null; // what Buddy is saying now, which more of the same reply can join (say's `join`)
 
   function startSpeech() {
     const proc = fork(path.join(here, "speech.js"), [], {
@@ -211,44 +212,74 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
 
   const warm = () => request("warm", { language: getLanguage() }).catch((err) => trace({ kind: "voice-warm-failed", error: err.message }));
 
-  /** Speaks text, a piece at a time, cutting off whatever Buddy was saying. Resolves when done or hushed. */
-  async function say(text, how = getVoice()) {
-    const parts = pieces(text);
+  /**
+   * Speaks text, a piece at a time, cutting off whatever Buddy was saying. With `join`, text that comes while Buddy is
+   * still speaking follows on instead: its first piece is made while the one before plays, so a reply that streams in
+   * a sentence at a time has no silence between sentences. Resolves when done or hushed; when done, with the longest
+   * silence between two pieces (`gapMs`), which is how long the next one took to be ready after the last one ended.
+   */
+  async function say(text, how = getVoice(), { join = false } = {}) {
+    const following = join && line?.mine === gen ? line : null;
+    const parts = pieces(text, { first: !following });
     if (!parts.length) return;
+    if (following) {
+      following.parts.push(...parts);
+      following.ahead();
+      return following.done;
+    }
     hush();
     const mine = ++gen;
     speaking = true;
     onState("speaking");
     const synth = (s) => request("speak", { text: s, ...how }).catch(() => null);
-    try {
-      let next = synth(parts[0]);
-      for (let i = 0; i < parts.length; i++) {
-        const clip = await next;
-        if (mine !== gen) return;
-        next = i + 1 < parts.length ? synth(parts[i + 1]) : null;
-        if (!clip) continue;
-        const id = ++seq;
-        // If the voice page never reports the clip finished (it reloaded or crashed), move on once the clip's own
-        // length and a grace period have passed rather than waiting forever.
-        await new Promise((resolve) => {
-          const timer = setTimeout(() => {
-            played.delete(id);
-            trace({ kind: "voice-play-timeout" });
-            resolve(undefined);
-          }, (clip.audio.length / clip.rate) * 1000 + PLAY_GRACE_MS);
-          played.set(id, () => {
-            clearTimeout(timer);
-            resolve(undefined);
+    /** @type {{ mine: number, parts: string[], clips: Promise<any>[], at: number, ahead: () => void, done?: Promise<{ gapMs: number } | undefined> }} */
+    const l = { mine, parts, clips: [], at: -1, ahead: () => {} };
+    // Only one piece is made ahead, and only once the one before it is ready, so the two never share the CPU.
+    l.ahead = () => {
+      const next = l.at + 1;
+      if (l.at >= 0 && next < l.parts.length) l.clips[next] ??= synth(l.parts[next]);
+    };
+    line = l;
+    l.done = run();
+    return l.done;
+
+    async function run() {
+      let ended = 0;
+      let gapMs = 0;
+      try {
+        for (let i = 0; i < l.parts.length; i++) {
+          const clip = await (l.clips[i] ??= synth(l.parts[i]));
+          if (mine !== gen) return;
+          if (ended) gapMs = Math.max(gapMs, Date.now() - ended);
+          l.at = i;
+          l.ahead();
+          if (!clip) continue;
+          const id = ++seq;
+          // If the voice page never reports the clip finished (it reloaded or crashed), move on once the clip's own
+          // length and a grace period have passed rather than waiting forever.
+          await new Promise((resolve) => {
+            const timer = setTimeout(() => {
+              played.delete(id);
+              trace({ kind: "voice-play-timeout" });
+              resolve(undefined);
+            }, (clip.audio.length / clip.rate) * 1000 + PLAY_GRACE_MS);
+            played.set(id, () => {
+              clearTimeout(timer);
+              resolve(undefined);
+            });
+            send({ cmd: "play", id, audio: clip.audio, rate: clip.rate });
+            onSound();
           });
-          send({ cmd: "play", id, audio: clip.audio, rate: clip.rate });
-          onSound();
-        });
-        if (mine !== gen) return;
-      }
-    } finally {
-      if (mine === gen) {
-        speaking = false;
-        onState("quiet");
+          if (mine !== gen) return;
+          ended = Date.now();
+        }
+        return { gapMs };
+      } finally {
+        if (line === l) line = null;
+        if (mine === gen) {
+          speaking = false;
+          onState("quiet");
+        }
       }
     }
   }

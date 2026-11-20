@@ -1,18 +1,17 @@
-// Display model text as it arrives, and speak complete sentences in order. A generation owns its speech queue:
-// cancelling drops every queued sentence, including one waiting for the preceding audio to finish.
+// Display model text as it arrives, and speak complete sentences in order. Each sentence is handed over the moment
+// it's complete, the ones after the first joining what Buddy is already saying (voice.js say's `join`), so the next one
+// is made into audio while the one before plays. Cancelling hushes the voice, which drops everything handed over.
 import { speakable } from "./speakable.js";
 
-/** @param {{ display: (text: string) => void, speak: (text: string) => Promise<void>, hush: () => void, canSpeak: () => boolean }} ui */
+/** @param {{ display: (text: string) => void, speak: (text: string, how: { join: boolean }) => Promise<void>, hush: () => void, canSpeak: () => boolean }} ui */
 export function createReplyStream(ui) {
-  let generation = 0;
   let text = "";
   let consumed = 0;
   let spoken = false;
   let active = false;
-  let queue = Promise.resolve();
+  let queue = Promise.resolve(); // the speech handed over last: settled when it has been said
 
   function cancel() {
-    generation++;
     active = false;
     queue = Promise.resolve();
     if (spoken) ui.hush();
@@ -40,11 +39,9 @@ export function createReplyStream(ui) {
     const sentence = speakable(text.slice(consumed, end));
     consumed = end;
     if (!sentence) return;
+    const join = spoken;
     spoken = true;
-    const mine = generation;
-    queue = queue.then(async () => {
-      if (mine === generation && active && ui.canSpeak()) await ui.speak(sentence);
-    }).catch(() => {});
+    queue = ui.speak(sentence, { join }).catch(() => {});
   }
 
   return {
