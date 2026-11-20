@@ -250,15 +250,14 @@ Settings' voice list, `scripts/voice-bench.mjs`.
 **Build:**
 1. **Compare the voices sherpa-onnx can run** (the engine Buddy already uses): Supertonic 3, Kokoro (multi-lang
    v1.0 and v1.1), Kitten, Kyutai's Pocket TTS and Piper. `npm run voice:bench` times the first sentence, speed and
-   memory on this PC, and writes samples of Buddy-like sentences to listen to side by side.
-2. **The owner picks by ear** among the voices fast enough to keep the first sentence under 1 s.
-3. **Switch to it**, pinned and checked like the others, with its licence in THIRD_PARTY_NOTICES.md. Settings' voice
-   list shows its voices. Anyone who already has Supertonic downloads the new voice once, with the same offer.
+   memory on this PC, and writes samples of Buddy-like sentences to listen to side by side. **Done**; see Results.
+2. **The owner picks by ear.** **Done:** Supertonic 3 stays (2026-11-20). Chatterbox was weighed and left out: it
+   needs a GPU to be quick, a second engine, and a download several times larger.
+3. **Speak sooner.** Every voice on the PC takes 1.2 to 2 s to make a first sentence, so the first piece Buddy
+   speaks is the reply's first phrase (up to a comma), not its first sentence.
 
-**Done when:** `voice` e2e check passes on the new voice; a unit test holds the new model's files and checksums
-(change one on purpose and see it fail); first audio of a spoken answer is no slower than with Supertonic.
-
-**Owner:** listen to the samples and pick.
+**Done when:** a unit test holds the first-phrase split (break it on purpose and see it fail); the `voice` e2e check
+passes; `firstAudioMs` on spoken answers is lower than before.
 
 ---
 
@@ -415,3 +414,12 @@ however written (with the redaction removed on purpose, 3 failed). The `settings
 the version and the log in it, and finds neither the saved key nor the home folder. In the final full e2e run,
 `annotations` failed once at its focus step and passed twice when rerun alone: it depends on which window Windows
 lets come to the front.
+
+**2026-11-20 · package 9 · which voice.** `npm run voice:bench` on the owner's laptop (4 threads, after a warm-up),
+six Buddy-like lines, one in Spanish. Clarity is the share of each line's words that Buddy's own listening models
+(Moonshine; Whisper base for Spanish) heard back. Supertonic 3: first sentence 1.2 to 2.1 s, 0.4x real time,
+clarity 0.86 to 0.95 (Spanish 0.64 to 1.0), 240 MB; voices 0, 5 and 9 clearest. Pocket TTS (Kyutai, CC-BY-4.0, int8):
+1.4 to 2.3 s, clarity 0.91 to 0.94 (Spanish 0.55 to 0.64), 520 MB, and its voices are copied from a recording whose
+licence would need checking. Kokoro v1.0: sherpa-onnx 2 no longer carries eSpeak, so words outside its dictionary are
+dropped ("Click the tab" for "Click the Formulas tab", numbers gone, Spanish unintelligible); Kitten and Piper made
+no sound for the same reason. Owner's choice by ear: Supertonic 3.
