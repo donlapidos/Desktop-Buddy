@@ -45,6 +45,7 @@ under 3 seconds, in any app, without a credit card.
 | 7 | Point by sight when there is no tree | no | yes |
 | 8 | Problem report | no | some |
 | 9 | A natural voice that answers sooner | listening test | a little |
+| 10 | Meeting notes, in any meeting app | a real meeting to try it in | yes |
 
 Do 0 and 1 first: 0 gives the number every later package is judged by, and 1 makes `main.js` safe to change. 2 can
 run beside them (it changes docs and release files only). 3, 4, 5 and 7 all touch `main.js`: do them one at a time.
@@ -259,6 +260,50 @@ Settings' voice list, `scripts/voice-bench.mjs`.
 **Done when:** a unit test holds the first-phrase split (break it on purpose and see it fail); the `voice` e2e check
 passes; `firstAudioMs` on spoken answers is lower than before.
 
+## 10. Meeting notes, in any meeting app
+
+**Why:** the owner wants Buddy to take notes of a meeting on request: a transcript, then a summary with decisions
+and action items. Meetings happen in Teams, Zoom, Google Meet, Webex and more, and Buddy is for anyone, not one
+company, so it can't depend on one platform's own transcripts or on a bot joining the call.
+
+**How:** Buddy listens at the Windows level, so every meeting app works the same and nobody is admitted to the call:
+the PC's sound output (Electron's `audio: "loopback"` through `setDisplayMediaRequestHandler`: what the others say)
+and the microphone (what the user says). Both are transcribed on the PC by the voice engine Buddy already has
+(Moonshine; multilingual Whisper base when Settings detects the language). The spike on 2026-11-21 proved the parts;
+see Results.
+
+**Owner's decisions (2026-11-21), for everyone, not one company:**
+- Only on request ("take notes", a shortcut, or the bubble). With the advanced features on, Buddy may offer once when
+  it sees a meeting window, as it offers connections. It never starts by itself.
+- The summary is written by the AI the user chose; on a local model (Ollama, LM Studio) the whole meeting stays on
+  the PC.
+- Only text is kept. Keeping the audio is a setting, off by default.
+- Starting shows a neutral reminder that some places require everyone's consent, with a one-click line to paste into
+  the meeting chat. The island shows that notes are on the whole time.
+
+**Where:** a new `src/meeting.js` (capture, the duplicate filter, pieces to transcribe, the transcript), `src/speech.js`
+(transcribing a stream of pieces), the hidden voice page or a capture page of its own, `src/main.js` (start, stop, the
+island), `src/documents.js` (the notes document), Settings › Voice (the audio setting).
+
+**Build:**
+1. **Capture and transcribe.** Both streams, cut into pieces at pauses, transcribed as they come, each piece marked
+   You (microphone) or Others (the PC's sound) with its time. Buddy doesn't speak while taking notes.
+2. **The duplicate filter.** On speakers the microphone hears the others too (the spike's microphone peaked at full
+   scale while the passage played): a microphone piece that overlaps the PC's sound and matches it is dropped.
+3. **A live transcript** in a small window, and questions about it while the meeting goes on ("what did Sarah say
+   about the budget?").
+4. **On stop:** a notes document in Documents › Buddy: summary, decisions, action items with owners, then the full
+   transcript.
+5. **Later:** voices told apart (sherpa-onnx's speaker diarization: Speaker 1, 2…), names from the meeting app's own
+   window, offering when a meeting window appears, action items sent to a connected service.
+
+**Done when:** a meeting e2e check plays a recorded two-voice passage through the PC's sound while a second plays as
+the microphone, and the notes hold both, marked right, with nothing doubled; unit tests cover the duplicate filter
+and the pieces (break each on purpose and see a test fail); an hour of audio transcribes faster than it plays; the
+spike's numbers hold on the owner's laptop.
+
+**Owner:** try it in a real meeting, with a headset and on speakers.
+
 ---
 
 ## Decisions for the owner
@@ -270,6 +315,7 @@ passes; `firstAudioMs` on spoken answers is lower than before.
 | 4.1 | A native keyboard-hook dependency for hold-to-talk | Yes, live only while the key is held |
 | 6 | Which accounts fund the model runs | Personal Gemini and Anthropic keys, one local model |
 | 9 | An online voice, or the best one on the PC | Decided: on the PC (2026-11-20) |
+| 10 | Meeting notes: when it starts, what's kept, who writes the summary | Decided (2026-11-21): on request only (an offer when a meeting window appears, with advanced features on); text only; the user's chosen AI |
 | - | Compete as a hosted product (relay, accounts, billing) or as the open, private alternative | The open alternative first; revisit Buddy Plus when downloads pass 100 a release |
 
 ## Not checked for this plan
@@ -423,3 +469,11 @@ clarity 0.86 to 0.95 (Spanish 0.64 to 1.0), 240 MB; voices 0, 5 and 9 clearest. 
 licence would need checking. Kokoro v1.0: sherpa-onnx 2 no longer carries eSpeak, so words outside its dictionary are
 dropped ("Click the tab" for "Click the Formulas tab", numbers gone, Spanish unintelligible); Kitten and Piper made
 no sound for the same reason. Owner's choice by ear: Supertonic 3.
+
+**2026-11-21 · package 10 · meeting notes spike.** A throwaway Electron script (outside the repo) on the owner's
+laptop: Supertonic read a 12-second, four-sentence meeting passage into a WAV that another program (PowerShell's
+SoundPlayer, standing in for a meeting app) played. Buddy captured the PC's sound with `audio: "loopback"` and no
+prompt, opened the microphone alongside (loudness only, nothing kept), and Moonshine transcribed the 14.8 s captured
+in 0.45 s (3% of real time) with every word right. On the laptop's speakers the microphone peaked at full scale
+while the passage played: without a headset it hears the others too, hence the duplicate filter. Clean synthetic
+speech is a best case; real meetings will be harder.
