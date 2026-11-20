@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* **Buddy talks without pauses between sentences:** the next sentence of a spoken answer is made ready while the one
+  before is still playing, instead of after it ends (that left about a second of silence between sentences). The
+  first words also come sooner: a first sentence is spoken from its first comma.
 * **Nothing is compiled on your PC any more:** Mark's overlay and the launcher that keeps commands in their sandbox
   now come built with the installer. 0.5.0 compiled the overlay the first time you marked, which security software
   such as SentinelOne flags as suspicious; this version removes that copy.

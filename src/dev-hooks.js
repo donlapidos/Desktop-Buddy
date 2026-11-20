@@ -178,10 +178,38 @@ function voiceTest(kit) {
     t0 = Date.now();
     await voice.say(`**${line}** It's under the *Formulas* tab → Insert Function.`);
     console.log("VOICE_SAID", Date.now() - t0, "ms");
+    console.log("VOICE_JOIN", JSON.stringify(await joinCheck(voice)));
     if (process.env.BUDDY_VOICE_TEST_MIC) console.log("VOICE_MIC", JSON.stringify(await voice.listen()));
     console.log("VOICE_HOLD", JSON.stringify(await holdToTalkCheck(kit)));
     console.log("VOICE_TEST_DONE");
   }, 1500);
+}
+
+// A streamed reply's second sentence joining the first while it plays (say's `join`): it must be made into audio during
+// the first, so the silence between them (`gapMs`) is short, and both must be played in full (`playMs` is their
+// audio's length). A joined pair hushed as it starts ends without playing on.
+/** @param {DevKit["voice"]} voice */
+async function joinCheck(voice) {
+  const a = "The Formulas tab is at the top.";
+  const b = "Insert Function is on its left.";
+  const length = async (s) => {
+    const clip = await voice.synthesize(s);
+    return (clip.audio.length / clip.rate) * 1000;
+  };
+  const playMs = Math.round((await length(a)) + (await length(b)));
+  let t0 = Date.now();
+  const first = voice.say(a);
+  await new Promise((r) => setTimeout(r, 50));
+  voice.say(b, undefined, { join: true });
+  const said = await first;
+  const joinedMs = Date.now() - t0;
+  t0 = Date.now();
+  const hushed = voice.say(a);
+  voice.say(b, undefined, { join: true });
+  await new Promise((r) => setTimeout(r, 50));
+  voice.hush();
+  await hushed;
+  return { playMs, joinedMs, gapMs: said?.gapMs ?? null, hushedMs: Date.now() - t0 };
 }
 
 // Hold to talk through the real shortcut handling, with a stand-in for the keyboard hook and for the microphone (the

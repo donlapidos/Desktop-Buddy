@@ -24,6 +24,13 @@ test("the first piece is short so Buddy starts talking sooner", () => {
   assert.equal(parts.join(" "), "Click the Formulas tab at the top of the window, then choose Insert Function from the ribbon, then search for VLOOKUP and press OK.");
 });
 
+test("a short first step is cut at its comma, but text following on from Buddy's speech isn't", () => {
+  const step = "Click the Formulas tab, then choose Insert Function.";
+  assert.deepEqual(pieces(step), ["Click the Formulas tab,", "then choose Insert Function."]);
+  assert.deepEqual(pieces(step, { first: false }), [step]);
+  assert.deepEqual(pieces("Sure, here's how."), ["Sure, here's how."]);
+});
+
 test("a very long run without commas is still cut between words", () => {
   const long = Array.from({ length: 80 }, (_, i) => `word${i}`).join(" ");
   const parts = pieces(long);

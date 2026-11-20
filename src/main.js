@@ -110,9 +110,10 @@ const startTurn = ({ spoken = false, lang = "en" } = {}) => (turn = { spoken, la
 let replyMuted = false;
 const liveReply = createReplyStream({
   display: (text) => bubble?.webContents.send("reply-stream", text),
-  speak: async (text) => {
-    saying = oneLine(text);
-    await voice?.say(text);
+  // The island shows the sentence that started the reply; the ones that follow on join it.
+  speak: async (text, how) => {
+    if (!how.join) saying = oneLine(text);
+    await voice?.say(text, undefined, how);
   },
   hush: () => voice?.hush(),
   canSpeak: () => !replyMuted && talksBack(turn.spoken),

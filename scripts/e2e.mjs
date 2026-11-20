@@ -478,7 +478,12 @@ const CHECKS = {
     const heard = String(markers.VOICE_HEARD?.[0] ?? "").toLowerCase();
     if (!markers.VOICE_SYNTH) return [timedOut ? "timed out (are the voice models downloaded?)" : "nothing spoken"];
     const hold = markers.VOICE_HOLD?.[0];
+    const join = markers.VOICE_JOIN?.[0];
     return [!heard.includes("formulas") && `heard ${heard || "nothing"}`, !markers.VOICE_SAID && "the reply wasn't played",
+      !join && "the follow-on check printed nothing",
+      join && !(join.gapMs < 300) && `a sentence joining the one being said left a silence of ${join.gapMs} ms before it`,
+      join && join.joinedMs < join.playMs - 200 && `joining cut a sentence short (${join.joinedMs} ms for ${join.playMs} ms of audio)`,
+      join && join.hushedMs > join.playMs / 2 && `a joined reply went on after being hushed (${join.hushedMs} ms)`,
       !hold && "the hold-to-talk check printed nothing",
       hold && !hold.idleBefore && "the keyboard hook was installed before any key was pressed",
       hold && !hold.installedWhileDown && "the keyboard hook wasn't installed while the key was down",
