@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.5.1 (2026-11-20)
+
+Buddy talks without pausing between sentences, and nothing is compiled on your PC any more.
+
 * **Buddy talks without pauses between sentences:** the next sentence of a spoken answer is made ready while the one
   before is still playing, instead of after it ends (that left about a second of silence between sentences). The
   first words also come sooner: a first sentence is spoken from its first comma.
