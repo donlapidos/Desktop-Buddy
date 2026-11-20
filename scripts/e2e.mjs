@@ -9,6 +9,7 @@
 // Windows appear briefly while it runs. Nothing touches the clipboard, real files or the mouse unless --interactive.
 import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import net from "node:net";
 import http from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -532,10 +533,18 @@ const CHECKS = {
   async connections() {
     const { startTestService } = await import("./samples/test-service.mjs");
     const service = await startTestService();
+    // And one that takes only the user's own app, as HubSpot does, coming back to a fixed port.
+    const ownPort = await new Promise((resolve) => {
+      const s = net.createServer().listen(0, "127.0.0.1", () => {
+        const p = s.address().port;
+        s.close(() => resolve(p));
+      });
+    });
+    const own = await startTestService({ app: { clientId: "hub-client", clientSecret: "hub-secret-123", redirect: `http://localhost:${ownPort}/callback` } });
     const model = await toolModel();
     try {
       const seed = { "settings.json": JSON.stringify({ provider: "custom", providerURLs: { custom: model.url }, providerModels: { custom: "scripted" }, advanced: true, launchSetupDone: true, voiceSetup: "no", talkBack: "never" }) };
-      const { markers, timedOut } = await runCopy("connections", { BUDDY_CONNECTIONS_TEST: "1", BUDDY_CONNECTORS_TEST: service.url }, "CONNECTIONS_TEST_DONE", 90_000, seed);
+      const { markers, timedOut } = await runCopy("connections", { BUDDY_CONNECTIONS_TEST: "1", BUDDY_CONNECTORS_TEST: service.url, BUDDY_CONNECTORS_OWN_TEST: `${own.url} ${ownPort}`, BUDDY_CONNECTIONS_TEST_OUT: path.join(out, "connections-setup.png") }, "CONNECTIONS_TEST_DONE", 120_000, seed);
       const r = markers.CONNECTIONS_TEST?.[0];
       if (!r) return [timedOut ? "timed out" : "nothing printed"];
       if (r.error) return [r.error];
@@ -549,10 +558,21 @@ const CHECKS = {
         JSON.stringify(service.seen.calls) !== JSON.stringify([{ name: "search_docs", args: { query: "budget" } }]) && `the service saw ${JSON.stringify(service.seen.calls)}`,
         !/Forecast sheet/.test(r.reply ?? "") && `the answer was ${JSON.stringify(r.reply)}`,
         !(r.listed ?? []).includes("testdocs:true") && `Settings listed ${JSON.stringify(r.listed)}`,
+        // The service that takes only the user's own app, set up in Settings.
+        !r.own && "the own-app connection printed nothing", r.own?.error,
+        r.own && r.own.before?.buttons?.includes("Connect") && "Connect was offered before the service was set up",
+        r.own && r.own.before?.returnUrl !== `http://localhost:${ownPort}/callback` && `Settings showed the return address ${JSON.stringify(r.own.before?.returnUrl)}`,
+        r.own && !/both/.test(r.own.emptyRefused ?? "") && `an empty secret wasn't refused (${JSON.stringify(r.own.emptyRefused)})`,
+        r.own && !r.own.saved && "Save didn't set it up (no Connect button after)",
+        r.own && !r.own.connected && "Connect didn't sign in with the app that was set up",
+        own.seen.registered !== 0 && `Buddy tried to register with the own-app service (${own.seen.registered} times)`,
+        r.own?.connected && own.seen.tokens !== 1 && `the own-app service issued ${own.seen.tokens} tokens`,
+        r.own && !/Connected/.test(r.own.after ?? "") && `after connecting, Settings said ${JSON.stringify(r.own.after)}`,
       ].filter(Boolean);
     } finally {
       model.close();
       service.close();
+      own.close();
     }
   },
 

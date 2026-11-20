@@ -1,6 +1,8 @@
 // A stand-in for a service's MCP server, on this PC, for tests (test/connectors.test.js, the e2e "connections"
 // check): OAuth 2.1 the way Notion's and Linear's servers do it (metadata, dynamic client registration, PKCE S256, an
-// authorize page that says yes at once), and two tools behind a bearer token. Nothing here is used by Buddy itself.
+// authorize page that says yes at once), and two tools behind a bearer token. With `app`, it signs in the way HubSpot's
+// does instead: no registration, only the client id and secret the user's own app was given (sent in the token request),
+// and only the return address entered in that app. Nothing here is used by Buddy itself.
 import crypto from "node:crypto";
 import http from "node:http";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -12,8 +14,11 @@ const TOOLS = [
   { name: "add_note", description: "Add a note to a document.", inputSchema: { type: "object", properties: { text: { type: "string" } }, required: ["text"] }, annotations: { title: "Add a note" } },
 ];
 
-/** Starts the service. Resolves its MCP address, what it has seen, and close(). */
-export async function startTestService() {
+/**
+ * Starts the service. Resolves its MCP address, what it has seen, and close().
+ * @param {{ app?: { clientId: string, clientSecret: string, redirect: string } }} [o]
+ */
+export async function startTestService({ app } = {}) {
   const seen = { registered: 0, tokens: 0, calls: /** @type {any[]} */ ([]), refusedTokens: 0 };
   /** @type {Map<string, { challenge: string, redirect: string }>} */
   const codes = new Map();
@@ -42,14 +47,16 @@ export async function startTestService() {
     const u = new URL(req.url ?? "/", base);
     if (u.pathname.startsWith("/.well-known/oauth-protected-resource")) return json(res, 200, { resource: `${base}/mcp`, authorization_servers: [base] });
     if (u.pathname === "/.well-known/oauth-authorization-server") {
-      return json(res, 200, { issuer: base, authorization_endpoint: `${base}/authorize`, token_endpoint: `${base}/token`, registration_endpoint: `${base}/register`,
-        response_types_supported: ["code"], grant_types_supported: ["authorization_code", "refresh_token"], code_challenge_methods_supported: ["S256"], token_endpoint_auth_methods_supported: ["none"] });
+      return json(res, 200, { issuer: base, authorization_endpoint: `${base}/authorize`, token_endpoint: `${base}/token`, ...(!app && { registration_endpoint: `${base}/register` }),
+        response_types_supported: ["code"], grant_types_supported: ["authorization_code", "refresh_token"], code_challenge_methods_supported: ["S256"], token_endpoint_auth_methods_supported: [app ? "client_secret_post" : "none"] });
     }
-    if (u.pathname === "/register" && req.method === "POST") {
+    if (u.pathname === "/register" && req.method === "POST" && !app) {
       seen.registered++;
       return json(res, 201, { ...JSON.parse(await body(req)), client_id: `client-${seen.registered}` });
     }
     if (u.pathname === "/authorize") {
+      // Only the app's own client and the return address entered in it.
+      if (app && (u.searchParams.get("client_id") !== app.clientId || u.searchParams.get("redirect_uri") !== app.redirect)) return json(res, 400, { error: "invalid_request" });
       // Says yes at once, as a person signing in would, and sends the browser back with a code.
       const code = crypto.randomBytes(8).toString("hex");
       codes.set(code, { challenge: u.searchParams.get("code_challenge") ?? "", redirect: u.searchParams.get("redirect_uri") ?? "" });
@@ -60,6 +67,7 @@ export async function startTestService() {
     }
     if (u.pathname === "/token" && req.method === "POST") {
       const form = new URLSearchParams(await body(req));
+      if (app && (form.get("client_id") !== app.clientId || form.get("client_secret") !== app.clientSecret)) return json(res, 401, { error: "invalid_client" });
       if (form.get("grant_type") === "refresh_token") return json(res, 200, { access_token: token, token_type: "Bearer", expires_in: 3600, refresh_token: "refresh" });
       const issued = codes.get(form.get("code") ?? "");
       const verifier = form.get("code_verifier") ?? "";

@@ -715,8 +715,10 @@ function render(state) {
 
 // ---------- Connections ----------
 let connectingId = null;
+let settingUpId = null; // a service that needs the user's own app (HubSpot), with its setup open
 function renderConnections() {
   $("connections").replaceChildren(...(S.connections ?? []).map((c) => {
+    if (c.returnUrl && (!c.setUp || settingUpId === c.id)) return setupRow(c);
     const info = el("div", {}, el("b", { textContent: c.label }), el("span", { className: "when", textContent: ` ${c.connected ? t("Connected: Buddy can {does}.", { does: c.does }) : t("Not connected.")}` }));
     const busy = connectingId === c.id;
     const btn = el("button", { className: c.connected ? "btn" : "btn primary", textContent: busy ? t("Signing in…") : c.connected ? t("Disconnect") : t("Connect"), disabled: !!connectingId });
@@ -730,8 +732,53 @@ function renderConnections() {
       $("connection-problem").textContent = r.error ?? "";
       render(r.state);
     });
-    return el("div", { className: "routine" }, info, el("div", { className: "row" }, btn));
+    const row = el("div", { className: "row" }, btn);
+    if (c.returnUrl && !c.connected) {
+      const change = el("button", { className: "btn", textContent: t("Change setup"), disabled: !!connectingId });
+      change.setAttribute("aria-label", t("Change the {service} setup", { service: c.label }));
+      change.addEventListener("click", () => ((settingUpId = c.id), renderConnections()));
+      row.prepend(change);
+    }
+    return el("div", { className: "routine" }, info, row);
   }));
+}
+
+/** A service that only works with an app the user sets up in it: what to do there, the address to enter, its keys. */
+function setupRow(/** @type {any} */ c) {
+  const info = el("div", {}, el("b", { textContent: c.label }), el("span", { className: "when", textContent: ` ${t("Needs a one-time setup, then Buddy can {does}.", { does: c.does })}` }));
+  const back = el("input", { className: "field", readOnly: true, value: c.returnUrl });
+  back.setAttribute("aria-label", t("Return address for {service}", { service: c.label }));
+  const copy = el("button", { className: "btn", textContent: t("Copy") });
+  copy.addEventListener("click", async () => {
+    back.select();
+    try {
+      await navigator.clipboard.writeText(c.returnUrl);
+      copy.textContent = t("Copied");
+    } catch {}
+  });
+  const id = el("input", { className: "field", placeholder: t("Client ID"), autocomplete: "off", spellcheck: false });
+  const secret = el("input", { className: "field", type: "password", placeholder: t("Client secret"), autocomplete: "off" });
+  id.setAttribute("aria-label", t("{service} Client ID", { service: c.label }));
+  secret.setAttribute("aria-label", t("{service} Client secret", { service: c.label }));
+  const save = el("button", { className: "btn primary", textContent: t("Save") });
+  save.addEventListener("click", async () => {
+    const r = await window.buddy.settingsConnection("setup", c.id, { clientId: id.value, clientSecret: secret.value });
+    $("connection-problem").textContent = r.error ?? t("Saved. Choose Connect to sign in to {service}.", { service: c.label });
+    if (!r.error) settingUpId = null;
+    render(r.state);
+  });
+  const actions = el("div", { className: "row" }, save);
+  if (c.setUp) {
+    const cancel = el("button", { className: "btn", textContent: t("Cancel") });
+    cancel.addEventListener("click", () => ((settingUpId = null), renderConnections()));
+    actions.append(cancel);
+  }
+  const steps = el("div", { className: "setup" },
+    el("p", { className: "hint", textContent: c.setup }),
+    el("div", { className: "row" }, back, copy),
+    el("div", { className: "row" }, id, secret),
+    actions);
+  return el("div", { className: "routine" }, info, steps);
 }
 
 // ---------- Lessons ----------

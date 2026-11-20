@@ -1283,12 +1283,49 @@ function connectionsTest(kit) {
       await js(`document.querySelector('[data-d="allow"]').click()`);
       r.reply = (await answer)?.reply ?? null;
       r.listed = kit.settingsState().connections.map((c) => `${c.id}:${c.connected}`);
+      r.own = await ownAppConnection(kit);
     } catch (err) {
       r.error = String(err?.message ?? err);
     }
     console.log("CONNECTIONS_TEST", JSON.stringify(r));
     console.log("CONNECTIONS_TEST_DONE");
   }, 2500);
+}
+
+/**
+ * A service that only takes the user's own app (as HubSpot does), set up and connected through Settings › Connections
+ * as a person would: Connect isn't offered until it's set up, an empty secret is refused, Save keeps it, and Connect
+ * signs in at the return address shown.
+ * @param {DevKit} kit
+ */
+async function ownAppConnection(kit) {
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const until = async (check, ms = 15_000) => { for (const end = Date.now() + ms; Date.now() < end; await wait(100)) if (await check()) return true; return false; };
+  kit.settingsWindow.open();
+  let win;
+  for (let i = 0; i < 50 && !(win = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("settings.html"))); i++) await wait(100);
+  if (!win) return { error: "Settings didn't open" };
+  await wait(1200);
+  const page = (code) => win.webContents.executeJavaScript(code);
+  await page(`show("connections")`);
+  await wait(300);
+  // The rows of the Hub Test service: its buttons, fields and words.
+  const row = `[...document.querySelectorAll("#connections .routine")].find((x) => x.querySelector("b")?.textContent === "Hub Test")`;
+  const r = {};
+  r.before = await page(`(() => { const x = ${row}; return { text: x?.textContent ?? "", buttons: [...(x?.querySelectorAll("button") ?? [])].map((b) => b.textContent), returnUrl: x?.querySelector("input[readonly]")?.value ?? null }; })()`);
+  if (process.env.BUDDY_CONNECTIONS_TEST_OUT) fs.writeFileSync(process.env.BUDDY_CONNECTIONS_TEST_OUT, (await win.webContents.capturePage()).toPNG());
+  const fill = (id, secret) => page(`(() => { const f = ${row}.querySelectorAll("input:not([readonly])"); f[0].value = ${JSON.stringify(id)}; f[1].value = ${JSON.stringify(secret)}; [...${row}.querySelectorAll("button")].find((b) => b.textContent === "Save").click(); })()`);
+  await fill("hub-client", "");
+  await wait(500);
+  r.emptyRefused = await page(`document.getElementById("connection-problem").textContent`);
+  await fill("hub-client", "hub-secret-123");
+  r.saved = await until(() => page(`!!${row} && [...${row}.querySelectorAll("button")].some((b) => b.textContent === "Connect")`), 5000);
+  await page(`[...${row}.querySelectorAll("button")].find((b) => b.textContent === "Connect").click()`);
+  r.connected = await until(() => !!kit.connectors?.connected("hubtest"));
+  await wait(500);
+  r.after = await page(`${row}?.textContent ?? ""`);
+  win.close();
+  return r;
 }
 
 /** BUDDY_SETTINGS_AUDIT_TEST @param {DevKit} kit */

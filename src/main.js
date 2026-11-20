@@ -1849,7 +1849,7 @@ function settingsState() {
     startsWithWindows: process.platform === "win32" && startsWithWindows(),
     data: { explainers, logBytes, conversations: conversations?.count() ?? 0 },
     uiLanguages: LANGUAGES,
-    connections: (connectors?.list() ?? []).map((c) => ({ ...c, label: t(c.label), does: t(c.does) })),
+    connections: (connectors?.list() ?? []).map((c) => ({ ...c, label: t(c.label), does: t(c.does), ...(c.setup && { setup: t(c.setup) }) })),
     lessons: (lessons?.list() ?? []).slice().reverse().map((l) => ({ id: l.id, title: l.title, app: appName(l.app), steps: l.steps.length })),
     claude: appStatus(),
     aiApps: APP_IDS.map((id) => ({ id, label: APPS[id].label, after: t(APPS[id].after) })),
@@ -1935,8 +1935,12 @@ const settingsWindow = createSettingsWindow({
   },
   openData: () => shell.openPath(app.getPath("userData")),
   addFolder: addReadFolder,
-  connection: async (action, id) => {
+  connection: async (action, id, app) => {
     if (action === "disconnect") return (await connectors?.disconnect(id), null);
+    if (action === "setup") {
+      const error = (await connectors?.setUp(id, app ?? {})) ?? null;
+      return error && t(error);
+    }
     return connectService(id);
   },
   lesson: async (action, id, win) => {

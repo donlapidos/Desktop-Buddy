@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+* **Connect HubSpot:** Buddy can look up and update your HubSpot contacts, companies, deals, tickets and notes, and
+  read marketing reports, asking on its card before each action. HubSpot only lets in apps a company sets up for
+  itself, so someone sets up a connector in HubSpot once and pastes its two codes into Settings › Connections; then
+  everyone signs in as themselves.
+
 ## 0.5.1 (2026-11-20)
 
 Buddy talks without pausing between sentences, and nothing is compiled on your PC any more.

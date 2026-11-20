@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
@@ -24,7 +25,9 @@ test("each service is recognised by its site, in a window's title or address bar
   assert.equal(siteConnector("Q3 plan | Notion — Microsoft Edge\nAddress and search bar: www.notion.so/acme/Q3-plan")?.id, "notion");
   assert.equal(siteConnector("edit value=\"linear.app/acme/issue/ENG-12\"")?.id, "linear");
   assert.equal(siteConnector("acme.atlassian.net/jira/software/projects/ENG")?.id, "atlassian");
-  for (const not of ["Notion is great - Google Search", "notlinear.app", "evilnotion.so.example", "atlassian.net.example.com/x", "Budget.xlsx - Excel", ""]) {
+  assert.equal(siteConnector("Contacts | HubSpot\nAddress and search bar: app.hubspot.com/contacts/4401/objects/0-1")?.id, "hubspot");
+  assert.equal(siteConnector("app-eu1.hubspot.com/contacts/4401")?.id, "hubspot");
+  for (const not of ["Notion is great - Google Search", "notlinear.app", "evilnotion.so.example", "atlassian.net.example.com/x", "Budget.xlsx - Excel", "www.hubspot.com/products/crm", "app.hubspot.com.example.com/x", "linear.app.example.com/x", "acme.notion.so.example.com", "acme.atlassian.net.evil.com", ""]) {
     assert.equal(siteConnector(not), null, not);
   }
   assert.ok(CATALOG.every((c) => c.url.startsWith("https://")), "real services only over https");
@@ -75,6 +78,56 @@ test("connecting signs in the way the services do (registration, PKCE), keeps it
   await again.disconnect("testdocs");
   assert.ok(!fs.existsSync(path.join(dir, "testdocs.bin")), "disconnecting forgets it");
   assert.equal(again.tools().length, 0);
+});
+
+// A sign-in the service turns away never comes back, so this test has a limit of its own, well short of the
+// five minutes Buddy gives a person.
+test("a service that only takes the user's own app (HubSpot) signs in as that app, at the address entered in it", { timeout: 30_000 }, async (t) => {
+  // A free port, as the service's fixed return address would be.
+  const port = await new Promise((resolve) => {
+    const s = net.createServer().listen(0, "127.0.0.1", () => {
+      const p = /** @type {import("node:net").AddressInfo} */ (s.address()).port;
+      s.close(() => resolve(p));
+    });
+  });
+  const app = { clientId: "hub-client", clientSecret: "hub-secret-123", redirect: `http://localhost:${port}/callback` };
+  const service = await startTestService({ app });
+  t.after(() => service.close());
+  const dir = tempDir(t);
+  const list = [{ id: "hubtest", label: "Hub Test", url: service.url, sites: /hub\.test/, does: "x", own: { port, setup: "Set it up." } }];
+  process.env.BUDDY_E2E = "1";
+  t.after(() => delete process.env.BUDDY_E2E);
+  /** @type {string[]} */
+  const opened = [];
+  const conn = createConnectors({ dir, safeStorage: fakeStorage, open: async (url) => (opened.push(url), browser(url)), list });
+  assert.deepEqual(conn.list()[0], { id: "hubtest", label: "Hub Test", does: "x", connected: false, setup: "Set it up.", returnUrl: app.redirect, setUp: false });
+  assert.match(String(await conn.connect("hubtest")), /needs setting up first/);
+  assert.equal(opened.length, 0, "no sign-in before it's set up");
+  assert.match(String(await conn.setUp("hubtest", { clientId: "hub-client", clientSecret: "" })), /both/);
+  assert.match(String(await conn.setUp("hubtest", { clientId: "hub client", clientSecret: "x" })), /doesn't look like/);
+  assert.equal(await conn.setUp("hubtest", { clientId: " hub-client ", clientSecret: "hub-secret-123\n" }), null);
+  assert.equal(conn.list()[0].setUp, true);
+  assert.ok(!JSON.stringify(conn.list()).includes("hub-secret"), "the secret isn't handed out");
+
+  assert.equal(await conn.connect("hubtest"), null);
+  assert.equal(service.seen.registered, 0, "nothing registered: it signs in as the user's app");
+  assert.equal(service.seen.tokens, 1, "the code, the verifier and the app's secret got a token");
+  assert.equal(new URL(opened[0]).searchParams.get("redirect_uri"), app.redirect, "the browser comes back to the address entered in the app");
+  assert.equal(new URL(opened[0]).searchParams.get("client_id"), "hub-client");
+  assert.match(fs.readFileSync(path.join(dir, "hubtest.bin"), "utf8"), /^enc:/, "the app and tokens are kept encrypted");
+  assert.deepEqual(conn.tools().map((x) => x.name), ["hubtest__search_docs", "hubtest__add_note"]);
+
+  // Signing out keeps the setup, so connecting again is just signing in.
+  await conn.disconnect("hubtest");
+  assert.deepEqual([conn.connected("hubtest"), conn.list()[0].setUp], [false, true]);
+  assert.equal(await conn.connect("hubtest"), null);
+  assert.equal(service.seen.tokens, 2);
+
+  // A wrong secret is said plainly, and the setup stays to be corrected.
+  assert.equal(await conn.setUp("hubtest", { clientId: "hub-client", clientSecret: "wrong" }), null);
+  assert.equal(conn.connected("hubtest"), false, "a new app signs out");
+  assert.match(String(await conn.connect("hubtest")), /didn't accept the Client ID and secret/);
+  assert.equal(conn.list()[0].setUp, true);
 });
 
 test("a sign-in that comes back without Buddy's state is refused, and only https sign-in pages are opened", async (t) => {

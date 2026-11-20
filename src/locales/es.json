@@ -568,5 +568,17 @@
  "The originals stay as they are.": "Los originales se quedan como están.",
  "Copying files…": "Copiando archivos…",
  "Copied {file} into {folder}": "Copió {file} en {folder}",
- "Copied {n} files into {folder}": "Copió {n} archivos en {folder}"
+ "Copied {n} files into {folder}": "Copió {n} archivos en {folder}",
+ "look up and update your HubSpot contacts, companies, deals and tickets": "consultar y actualizar tus contactos, empresas, negocios y tickets de HubSpot",
+ "In HubSpot, go to Development › MCP Connectors and create one. Paste the return address below into it, then copy its Client ID and Client secret here.": "En HubSpot, ve a Desarrollo › Conectores MCP y crea uno. Pega en él la dirección de retorno de abajo y luego copia aquí su ID de cliente y su secreto de cliente.",
+ "Change setup": "Cambiar la configuración",
+ "Change the {service} setup": "Cambiar la configuración de {service}",
+ "Needs a one-time setup, then Buddy can {does}.": "Necesita configurarse una vez; después Buddy podrá {does}.",
+ "Return address for {service}": "Dirección de retorno de {service}",
+ "Copied": "Copiado",
+ "Client ID": "ID de cliente",
+ "Client secret": "Secreto de cliente",
+ "{service} Client ID": "ID de cliente de {service}",
+ "{service} Client secret": "Secreto de cliente de {service}",
+ "Saved. Choose Connect to sign in to {service}.": "Guardado. Elige Conectar para iniciar sesión en {service}."
 }

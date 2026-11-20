@@ -96,12 +96,19 @@ VS Code and more).
   moves (scrolling, expanding, moving windows), or anything in apps you trust. Apps on the **Never act in** list
   (password managers to start with) are off limits even if you'd approve. This is enforced where actions get their
   permission slip (`src/policy.js`, `src/approvals.js`), not just in the prompt.
-- **Connections** (with the advanced features): Buddy can use Notion, Linear, and Jira and Confluence for you, with
-  your own account there. On one of their sites, the bubble offers once: **Connect**, **Not now** or **Don't ask
-  again**; or connect from **Settings › Connections**. You sign in in your browser, so Buddy never sees your password,
-  and Buddy asks on its card before every action in a service ("Notion: Search"); **Allow for this task** covers that
-  service only. What a service sends back is treated as information, never as instructions. **Disconnect** forgets
-  the sign-in.
+- **Connections** (with the advanced features): Buddy can use Notion, Linear, HubSpot, and Jira and Confluence for
+  you, with your own account there. On one of their sites, the bubble offers once: **Connect**, **Not now** or
+  **Don't ask again**; or connect from **Settings › Connections**. You sign in in your browser, so Buddy never sees
+  your password, and Buddy asks on its card before every action in a service ("Notion: Search"); **Allow for this
+  task** covers that service only. What a service sends back is treated as information, never as instructions.
+  **Disconnect** forgets the sign-in.
+  - **HubSpot needs a one-time setup**, because HubSpot only lets in apps that each company sets up for itself.
+    Someone with access to HubSpot's developer tools does it once: in HubSpot, **Development › MCP Connectors ›
+    Create**, paste the return address Buddy shows in **Settings › Connections** (`http://localhost:41870/callback`),
+    and copy the connector's **Client ID** and **Client secret** into Buddy and choose **Save**. Colleagues use the
+    same two codes. Then each person chooses **Connect** and signs in as themselves, so HubSpot's own permissions
+    apply. Buddy can look up and update contacts, companies, deals, tickets and notes, and read marketing reports.
+    The codes are kept encrypted on the PC; **Disconnect** keeps them, and **Change setup** replaces them.
 - **Build in Blender** (with the advanced features): ask Buddy to build something ("a cozy cabin in the woods", "a
   snowman", "make the table red and twice as long") and it builds it in your open Blender scene while you watch, one
   part after another, with colours, lights and the camera, and checks its work with a picture of the view. It needs
