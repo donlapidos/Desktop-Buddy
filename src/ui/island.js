@@ -29,6 +29,7 @@ $("talk").addEventListener("click", () => act("talk"));
 $("mark").addEventListener("click", () => act("mark"));
 $("task").addEventListener("click", () => act("task"));
 $("settings").addEventListener("click", () => act("settings"));
+$("notes-stop").addEventListener("click", () => act("notes-stop"));
 
 // A task chip's state, in words (translated where shown).
 const STATE_WORDS = { idle: N("ready"), working: N("working"), confirm: N("needs your OK"), done: N("finished"), error: N("hit a problem") };

@@ -29,6 +29,10 @@
   body[data-state="confirm"] #dot { background: var(--amber); box-shadow: 0 0 10px var(--amber); animation: breathe .8s ease-in-out infinite; }
   body[data-state="picking"] #dot { background: var(--amber); box-shadow: 0 0 10px var(--amber); }
   body[data-state="done"] #dot { background: var(--green); box-shadow: 0 0 10px var(--green); }
+  /* Meeting notes: a recording light, and the one button that matters then */
+  body[data-state="notes"] #dot { background: #ff5a5a; box-shadow: 0 0 10px #ff5a5a; animation: breathe 1.6s ease-in-out infinite; }
+  #notes-stop { display: none; }
+  body[data-state="notes"] #notes-stop { display: inline-flex; }
   @keyframes breathe { 50% { transform: scale(.6); opacity: .55; } }
   /* Listening and speaking: the dot becomes a small level meter. Listening follows the mic; speaking pulses. */
   #meter { display: none; align-items: center; gap: 2px; height: 14px; flex: none; }
@@ -109,6 +113,7 @@
     <span id="label" role="status" aria-live="polite">Buddy</span>
     <span id="hint"></span>
     <span id="chips"></span>
+    <button id="notes-stop" data-t>Stop notes</button>
     <span id="actions">
       <button id="ask" data-t>Ask</button>
       <button id="talk" data-t title="Ctrl+Alt+T: say it instead of typing. Pause when you're done.">Talk</button>

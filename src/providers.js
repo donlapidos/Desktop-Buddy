@@ -378,7 +378,8 @@ export const toChatTools = (tools) => tools.map((t) => ({ type: "function", func
  */
 export function chatRequest({ provider, model, effort, system, tools, messages, maxTokens, drop = new Set() }) {
   /** @type {Record<string, unknown>} */
-  const body = { model, messages: toChatMessages(system, messages), tools: toChatTools(tools), stream: true };
+  // A request with no tools (meeting notes) leaves the field out: some servers refuse an empty list.
+  const body = { model, messages: toChatMessages(system, messages), ...(tools.length && { tools: toChatTools(tools) }), stream: true };
   const tokens = provider === "openai" ? "max_completion_tokens" : "max_tokens";
   if (!drop.has(tokens)) body[tokens] = maxTokens;
   if (!drop.has("reasoning_effort")) body.reasoning_effort = effort;
@@ -482,7 +483,7 @@ export function responsesRequest({ model, effort, system, tools, messages, maxTo
     model,
     instructions: system,
     input: toResponsesInput(messages),
-    tools: tools.map((t) => ({ type: "function", name: t.name, description: t.description, parameters: t.input_schema })),
+    ...(tools.length && { tools: tools.map((t) => ({ type: "function", name: t.name, description: t.description, parameters: t.input_schema })) }),
     store: false,
     stream: true,
   };

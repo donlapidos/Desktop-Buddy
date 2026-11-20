@@ -83,6 +83,28 @@ function toolModel() {
   return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, close: () => server.close() })));
 }
 
+/** Writes known meeting notes and keeps every request, for the meeting check. */
+function notesModel() {
+  /** @type {any[]} */
+  const requests = [];
+  const server = http.createServer(async (req, res) => {
+    let body = "";
+    for await (const c of req) body += c;
+    if (req.url?.endsWith("/models")) return res.end(JSON.stringify({ data: [{ id: "scripted", object: "model" }] }));
+    requests.push(JSON.parse(body || "{}"));
+    const said = { choices: [{ delta: { content: "## Summary\n\nSarah sends the revised budget on Friday; Tom has the vendor contract." }, finish_reason: "stop" }] };
+    res.setHeader("content-type", "text/event-stream");
+    res.end(`data: ${JSON.stringify(said)}\n\ndata: [DONE]\n\n`);
+  });
+  return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, requests, close: () => server.close() })));
+}
+
+/** The words in a Word document (its document.xml, tags dropped). */
+function docxText(/** @type {string} */ file) {
+  const ps = `Add-Type -AssemblyName System.IO.Compression.FileSystem; $z = [IO.Compression.ZipFile]::OpenRead('${file.replace(/'/g, "''")}'); $r = New-Object IO.StreamReader($z.GetEntry('word/document.xml').Open()); $x = $r.ReadToEnd(); $r.Close(); $z.Dispose(); [Console]::OutputEncoding = [Text.Encoding]::UTF8; $x -replace '</w:p>', [Environment]::NewLine -replace '<[^>]+>', ''`;
+  return spawnSync("powershell.exe", ["-NoProfile", "-Command", ps], { encoding: "utf8", windowsHide: true }).stdout ?? "";
+}
+
 /** Answers each question with "Answer to: <the question>" and keeps every request, for the restore check. */
 function echoModel() {
   /** @type {string[]} */
@@ -530,6 +552,46 @@ const CHECKS = {
   },
 
   // A service connected and used through the real app, against a stand-in service and model on this PC.
+  // Meeting notes: the PC's sound (a passage another program plays out loud) and a recording as the microphone, then a
+  // Word document with notes from a stand-in model and the whole transcript (src/meeting.js). Needs the voice models
+  // and speakers, so --no-voice leaves it out.
+  async meeting() {
+    const model = await notesModel();
+    const docs = fs.mkdtempSync(path.join(os.tmpdir(), "buddy-e2e-meeting-docs-"));
+    try {
+      const seed = { "settings.json": JSON.stringify({ provider: "custom", providerURLs: { custom: model.url }, providerModels: { custom: "scripted" }, launchSetupDone: true, voiceSetup: "no", talkBack: "always" }) };
+      const { markers, timedOut, log } = await runCopy("meeting", { BUDDY_MEETING_TEST: "1", BUDDY_DOCUMENTS_DIR: docs }, "MEETING_TEST_DONE", 150_000, seed);
+      const r = markers.MEETING_TEST?.[0];
+      if (!r) return [timedOut ? `timed out after step ${JSON.stringify((markers.MEETING_STEP ?? []).at(-1) ?? "none")} (are the voice models downloaded?)` : "nothing printed"];
+      if (r.error) return [r.error];
+      const file = r.stopped?.file;
+      const text = file && fs.existsSync(file) ? docxText(file) : "";
+      const lines = text.split(/\r?\n/);
+      const asked = model.requests[0];
+      const sent = JSON.stringify(asked?.messages ?? []);
+      return [
+        !(r.started?.you && r.started?.others) && `Buddy didn't hear both sides: ${JSON.stringify(r.started)}`,
+        !/^notes\|Taking notes\|(?!none)/.test(r.island ?? "") && `the island didn't show notes being taken with a Stop button (${r.island})`,
+        !/revised budget/i.test(r.soFar ?? "") && `questions during the meeting couldn't see what was said (${JSON.stringify(r.soFar)})`,
+        !file && `no document: ${JSON.stringify(r.stopped)}`,
+        file && !text && "the document couldn't be read",
+        text && !/Sarah sends the revised budget on Friday/.test(text) && "the document doesn't have the notes",
+        text && !lines.some((l) => /Others:.*revised budget/i.test(l)) && "the transcript doesn't have what the others said",
+        text && !lines.some((l) => /You:.*book the room/i.test(l)) && "the transcript doesn't have what the user said",
+        text && lines.some((l) => /You:.*(revised budget|vendor contract)/i.test(l)) && "the microphone's echo of the others was kept as the user's words",
+        model.requests.length !== 1 && `the AI was asked ${model.requests.length} times, not once`,
+        asked && "tools" in asked && "the notes request offered tools",
+        asked && !/revised budget/i.test(sent) && "the notes request didn't carry the transcript",
+        r.islandAfter === "notes" && "the island still showed notes after stopping",
+        r.progressLeft && "the in-progress transcript was left behind",
+        !/REVEALED/.test(log ?? "") && "the notes weren't opened",
+      ].filter(Boolean);
+    } finally {
+      model.close();
+      fs.rmSync(docs, { recursive: true, force: true });
+    }
+  },
+
   async connections() {
     const { startTestService } = await import("./samples/test-service.mjs");
     const service = await startTestService();
@@ -704,7 +766,7 @@ const exeAt = args.indexOf("--exe");
 if (exeAt >= 0) args.splice(exeAt, 2);
 const interactive = args.includes("--interactive");
 const named = args.filter((a) => !a.startsWith("--"));
-const chosen = Object.entries(CHECKS).filter(([name, c]) => (named.length ? named.includes(name) : typeof c === "function" || (interactive && c.interactive)) && !(noVoice && name === "voice"));
+const chosen = Object.entries(CHECKS).filter(([name, c]) => (named.length ? named.includes(name) : typeof c === "function" || (interactive && c.interactive)) && !(noVoice && (name === "voice" || name === "meeting")));
 if (!chosen.length) {
   console.error(`No such check. Checks: ${Object.keys(CHECKS).join(", ")}`);
   process.exit(2);

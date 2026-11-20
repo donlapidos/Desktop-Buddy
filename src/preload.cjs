@@ -116,4 +116,8 @@ contextBridge.exposeInMainWorld("buddy", {
   voiceHeard: (result) => ipcRenderer.send("voice-heard", result),
   voiceSegment: (result) => ipcRenderer.send("voice-segment", result),
   voicePlayed: (id) => ipcRenderer.send("voice-played", id),
+  // Meeting notes: the hidden meeting page
+  onMeeting: on("meeting"),
+  meetingPiece: (piece) => ipcRenderer.send("meeting-piece", piece),
+  meetingState: (state) => ipcRenderer.send("meeting-state", state),
 });
