@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -33,6 +34,26 @@ test("a source that doesn't build says so, and nothing half-built is left to run
   fs.writeFileSync(source, "class Broken { void Main( }");
   await assert.rejects(overlayProgram({ source, cacheDir: path.join(dir, "native") }), /didn't build/);
   assert.deepEqual(fs.readdirSync(path.join(dir, "native")).filter((f) => f.endsWith(".exe")), []);
+});
+
+test("an installed Buddy runs the overlay it shipped with, compiling nothing, and removes one an earlier Buddy compiled", async (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "buddy-overlay-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const source = path.join(dir, "marker-overlay.cs");
+  fs.copyFileSync(OVERLAY_SOURCE, source);
+  const shipped = path.join(dir, "resources-native");
+  const cache = path.join(dir, "native");
+  // Named by its source's fingerprint, as build-native.mjs names it.
+  const name = `marker-overlay-${crypto.createHash("sha256").update(fs.readFileSync(source)).digest("hex").slice(0, 12)}.exe`;
+  fs.mkdirSync(shipped);
+  fs.writeFileSync(path.join(shipped, name), "shipped");
+  fs.mkdirSync(cache, { recursive: true });
+  fs.writeFileSync(path.join(cache, "marker-overlay-0bdabd8f3d3b.exe"), "compiled by 0.5.0");
+  assert.equal(await overlayProgram({ source, cacheDir: cache, shipped, compiler: null }), path.join(shipped, name));
+  assert.deepEqual(fs.readdirSync(cache), [], "the copy compiled on this PC is gone");
+  // A shipped overlay from another version is never used: this one would have to be compiled.
+  fs.appendFileSync(source, "\n// a new version\n");
+  await assert.rejects(overlayProgram({ source, cacheDir: cache, shipped, compiler: null }), /C# compiler/);
 });
 
 test("without the compiler, it says why instead of failing oddly (Mark then uses the still)", async (t) => {

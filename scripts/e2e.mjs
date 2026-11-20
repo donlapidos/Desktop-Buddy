@@ -215,7 +215,10 @@ const CHECKS = {
       !(r.bluePixels - r.bluePixelsWithout > 1500) && `the picture for the question doesn't show the stroke (${r.bluePixels} blue pixels with it, ${r.bluePixelsWithout} without)`,
       !r.overlayGone && "the overlay stayed after Ask", !r.barGone && "the toolbar stayed after Ask",
       !r.cancelled && "Cancel didn't end marking", !r.cancelOverlayGone && "the overlay stayed after Cancel",
-      !r.clickLeft && "a quick click didn't explain", !r.clickOverlayGone && "the overlay stayed after a click"].filter(Boolean));
+      !r.clickLeft && "a quick click didn't explain", !r.clickOverlayGone && "the overlay stayed after a click",
+      // An installed Buddy runs the overlay built at release and compiles nothing on the PC (src/native.js).
+      installed && !/[\\/]resources[\\/]native[\\/]marker-overlay-[0-9a-f]{12}\.exe$/i.test(r.exe ?? "") && `the installed copy didn't run its shipped overlay (${r.exe})`,
+      installed && r.compiled?.length && `the installed copy compiled ${r.compiled.join(", ")}`].filter(Boolean));
     const fallback = await runCopy("marker-live-fallback", { BUDDY_MARK_LIVE_TEST: "1", BUDDY_MARK_LIVE_FAIL: "1", ANTHROPIC_API_KEY: "sk-ant-e2e-not-used-0000000000" }, "MARK_LIVE_TEST_DONE", 60_000);
     const f = fallback.markers.MARK_LIVE_TEST?.[0];
     if (!f?.fellBack || !f.noLive) problems.push(`when the overlay can't start, the still didn't take over: ${JSON.stringify(f)}`);

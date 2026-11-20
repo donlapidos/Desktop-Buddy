@@ -497,6 +497,12 @@ function markLiveTest(kit) {
         startMarking();
         r.live = await until(() => !!kit.markLive, 60000); // the first time, it's built
         r.startMs = Date.now() - started;
+        // Which program is drawing, and whether one was compiled into this copy's data folder: an installed Buddy must
+        // run the overlay it shipped with (native.js) and compile nothing.
+        const { execFileSync } = await import("node:child_process");
+        r.exe = kit.markLive?.pid ? execFileSync("powershell.exe", ["-NoProfile", "-Command", `(Get-Process -Id ${kit.markLive.pid}).Path`], { encoding: "utf8", windowsHide: true }).trim() : null;
+        const compiledDir = path.join(app.getPath("userData"), "native");
+        r.compiled = fs.existsSync(compiledDir) ? fs.readdirSync(compiledDir) : [];
         r.bar = await until(() => kit.markBar?.isVisible());
         const d = /** @type {Electron.Display} */ (kit.markDisplay).bounds;
         const pts = [];

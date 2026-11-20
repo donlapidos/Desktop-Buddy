@@ -379,3 +379,19 @@ test("stopping the wall's launcher stops the command inside at once, however it'
   assert.ok(Date.now() - killedAt < 10_000, `the command ran on for ${Date.now() - killedAt} ms`);
   assert.doesNotMatch(out, /finished/);
 });
+
+test("an installed Buddy's commands use the wall launcher it shipped with, and compile nothing", { timeout: 180_000 }, async (t) => {
+  const { spawnSync } = await import("node:child_process");
+  const { places, ctx } = pc();
+  const wallScript = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")), "..", "src", "wall.ps1");
+  const shipped = fs.mkdtempSync(path.join(os.tmpdir(), "buddy-shipped-"));
+  const cache = fs.mkdtempSync(path.join(os.tmpdir(), "buddy-wallcache-"));
+  t.after(() => [shipped, cache].forEach((d) => fs.rmSync(d, { recursive: true, force: true })));
+  // Built as the release builds it (scripts/build-native.mjs).
+  const built = spawnSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", wallScript, "-WorkDir", shipped, "-Cache", shipped, "-Build"], { encoding: "utf8", windowsHide: true });
+  assert.equal(built.status, 0, built.stderr);
+  assert.equal(fs.readdirSync(shipped).filter((f) => /^BuddyWall-[0-9A-F]{16}\.dll$/.test(f)).length, 1);
+  const out = await runPcTool("run_powershell", { command: "'inside the wall'", description: "Say hi" }, { ...ctx(), wall: { name: "DesktopBuddy.Test", cache, shipped } });
+  assert.match(out, /inside the wall/);
+  assert.deepEqual(fs.readdirSync(cache), [], "nothing was compiled into Buddy's folder");
+});

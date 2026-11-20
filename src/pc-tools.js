@@ -25,6 +25,7 @@ import os from "node:os";
 import path from "node:path";
 import { fingerprint, keepCopy } from "./activity.js";
 import { t as tr } from "./i18n.js";
+import { SHIPPED_NATIVE } from "./native.js";
 
 /** @type {{ name: string, description: string, input_schema: { type: "object", properties: Record<string, object>, required?: string[] } }[]} */
 export const PC_TOOLS = [
@@ -373,13 +374,18 @@ const WALL = path.join(path.dirname(fileURLToPath(import.meta.url)).replace(/app
 export const WALL_NAME = "DesktopBuddy.Commands";
 
 /** Runs a command inside the wall: it reaches the working folder (`cwd`, as $Work) and nothing else of the user's. */
-/** @param {string} command @param {{ cwd: string, timeoutMs: number, signal?: AbortSignal, wall?: { name?: string, cache?: string } }} opts */
+/**
+ * `wall.shipped` is the folder with the launcher built at release (native.js); `wall.cache` where one is compiled
+ * when that isn't there.
+ * @param {string} command @param {{ cwd: string, timeoutMs: number, signal?: AbortSignal, wall?: { name?: string, cache?: string, shipped?: string | null } }} opts
+ */
 function runPowerShell(command, { cwd, timeoutMs, signal, wall = {} }) {
   return new Promise((resolve) => {
     const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !SECRET_ENV.test(k)));
     // The command goes in encoded, so nothing in it is parsed by a shell on the way. Output is UTF-8.
     const encoded = Buffer.from(command, "utf16le").toString("base64");
-    const args = ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", WALL, "-WorkDir", cwd, "-Name", wall.name ?? WALL_NAME, ...(wall.cache ? ["-Cache", wall.cache] : []), "-Encoded", encoded];
+    const shipped = "shipped" in wall ? wall.shipped : SHIPPED_NATIVE;
+    const args = ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", WALL, "-WorkDir", cwd, "-Name", wall.name ?? WALL_NAME, ...(shipped ? ["-Shipped", shipped] : []), ...(wall.cache ? ["-Cache", wall.cache] : []), "-Encoded", encoded];
     const child = spawn("powershell.exe", args, { cwd, env, windowsHide: true });
     let out = "";
     const take = (d) => {
@@ -416,7 +422,7 @@ function runPowerShell(command, { cwd, timeoutMs, signal, wall = {} }) {
  *   status: (text: string) => void,
  *   record?: (change: Omit<import("./activity.js").Change, "id" | "at" | "from">) => void,
  *   commands?: boolean,                                                         // the user lets Buddy run commands
- *   wall?: { name?: string, cache?: string },                                   // the commands' container (wall.ps1)
+ *   wall?: { name?: string, cache?: string, shipped?: string | null },         // the commands' container (wall.ps1)
  *   signal?: AbortSignal,
  *   fetchImpl?: typeof fetch,
  *   lookup?: (host: string) => Promise<boolean>,

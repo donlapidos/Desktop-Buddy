@@ -92,12 +92,17 @@ PC, and is served only after presenting a token that changes each time Buddy sta
 folder, which the file tools never open.
 Looking and pointing run without a card there; acting still asks on Buddy's card, under the same rules.
 
-## Mark's overlay
+## Native helpers
 
-Marking on the live screen uses a small native program (`src/marker-overlay.cs`) that Buddy compiles on first use
-with the C# compiler that comes with Windows, into its own data folder, named after the source's fingerprint, so only
-the source that shipped with this Buddy is ever built and run. The overlay draws and reports what you drew; it reads
-nothing from the screen. The picture that goes with your question is taken by Buddy when you ask, as before.
+Two small native programs come with Buddy: the overlay you draw on with Mark (`src/marker-overlay.cs`) and the
+launcher that starts commands inside their sandbox (in `src/wall.ps1`). They are compiled when Buddy is released, on
+GitHub's build machine (`npm run native`), and installed in `resources\native`, each named after a fingerprint of its
+source, so Buddy only runs the ones built from the source it shipped with. Nothing is compiled on your PC. (0.5.0
+compiled the overlay on first use, which security tools rightly flag; 0.5.1 removes the copy it left in Buddy's data
+folder.) Buddy run from source compiles them itself, once, with the C# compiler that comes with Windows.
+
+The overlay draws and reports what you drew; it reads nothing from the screen. The picture that goes with your
+question is taken by Buddy when you ask, as before.
 
 ## Limits we know about
 

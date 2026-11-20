@@ -52,6 +52,7 @@
     "src/marker-stroke.js",
     "src/marker-startup.js",
     "src/marker-live.js",
+    "src/native.js",
     "src/explainer.js",
     "src/documents.js",
     "src/mcp-server.js",

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* **Nothing is compiled on your PC any more:** Mark's overlay and the launcher that keeps commands in their sandbox
+  now come built with the installer. 0.5.0 compiled the overlay the first time you marked, which security software
+  such as SentinelOne flags as suspicious; this version removes that copy.
+
 ## 0.5.0 (2026-11-19)
 
 Mark now draws on your live screen, with no wait and no frozen picture. Buddy can build things in Blender while

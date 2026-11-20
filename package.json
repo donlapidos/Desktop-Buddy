@@ -11,8 +11,9 @@
     "measure:latency": "node scripts/measure-latency.mjs",
     "measure:idle": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/measure-idle.ps1",
     "test": "node --test \"test/*.test.js\"",
-    "dist": "npm run setup && electron-builder --win --publish never",
-    "dist:dir": "npm run setup && electron-builder --win --dir",
+    "dist": "npm run setup && npm run native && electron-builder --win --publish never",
+    "dist:dir": "npm run setup && npm run native && electron-builder --win --dir",
+    "native": "node scripts/build-native.mjs",
     "eval": "node scripts/eval.mjs",
     "e2e": "node scripts/e2e.mjs",
     "setup": "node scripts/fetch-agent-desktop.mjs",
@@ -82,6 +83,14 @@
       {
         "from": "bin/agent-desktop.exe",
         "to": "bin/agent-desktop.exe"
+      },
+      {
+        "from": "build/native",
+        "to": "native",
+        "filter": [
+          "marker-overlay-*.exe",
+          "BuddyWall-*.dll"
+        ]
       },
       {
         "from": "THIRD_PARTY_NOTICES.md",

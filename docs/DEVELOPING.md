@@ -200,8 +200,13 @@ retried on Anthropic's recommended fallback model rather than failing outright.
 
 1. Bump `version` in `package.json`, add the release to `CHANGELOG.md`, and commit.
 2. Push a matching tag: `git tag v0.2.1 && git push origin v0.2.1`.
-3. `.github/workflows/release.yml` fetches the pinned agent-desktop, runs the checks and tests, builds the installer on
-   Windows, and uploads it with `latest.yml` to a **draft** release `v0.2.1`.
+3. `.github/workflows/release.yml` fetches the pinned agent-desktop, runs the checks and tests, builds the native
+   helpers (`npm run native`: Mark's overlay and the commands' wall launcher, into `build/native`, shipped as
+   `resources\native`; see `src/native.js`), builds the installer on Windows, and uploads it with `latest.yml` to a
+   **draft** release `v0.2.1`. `npm run dist` and `npm run dist:dir` build the helpers too; after `dist:dir`,
+   `node scripts/check-packed-helper.mjs` checks they're in the app and match its sources, and
+   `npm run e2e -- --exe "dist/win-unpacked/Desktop Buddy.exe" markerLive` checks the app runs the shipped overlay
+   and compiles nothing.
 4. Review the draft, add notes, and publish it. Installed copies only see published releases.
 5. Check that `https://github.com/donlapidos/desktop-buddy/releases/latest/download/latest.yml` names the new version.
    Installed copies check about a minute after they start, download in the background, and install when Buddy quits
