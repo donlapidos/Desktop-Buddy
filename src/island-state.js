@@ -10,11 +10,12 @@
 //   a voice download         busy       "Getting Buddy's voice ready… 40%"
 //   Buddy speaking           speaking   what it's saying
 //   a notice                 done       an outcome: the answer, an error, "Typed 12 words" (the island fades it)
+//   meeting notes            notes      "Taking notes · 12 min", with a Stop button
 //   the bubble open          active     "Ready"
 //   otherwise                idle
 import { N, t } from "./i18n.js";
 
-/** @typedef {"idle" | "active" | "busy" | "confirm" | "picking" | "listening" | "speaking" | "done"} IslandState */
+/** @typedef {"idle" | "active" | "busy" | "confirm" | "picking" | "listening" | "speaking" | "done" | "notes"} IslandState */
 
 /**
  * @typedef {{
@@ -27,9 +28,11 @@ import { N, t } from "./i18n.js";
  *   speaking: boolean,
  *   saying: string,
  *   notice: string | null,
+ *   meeting?: string | null,
  *   bubbleOpen: boolean,
  * }} IslandFacts
  * approval: the summary on the card. progress: the running activity's latest line. appCall: "Codex: Looking…".
+ * meeting: the line while meeting notes are being taken (meeting.js).
  */
 
 /** What each mode says before it has said anything of its own. @type {Record<Exclude<import("./modes.js").Mode, "idle">, string>} */
@@ -55,6 +58,7 @@ export function islandView(f) {
   if (f.download) return { state: "busy", text: f.download };
   if (f.speaking) return { state: "speaking", text: f.saying };
   if (f.notice) return { state: "done", text: f.notice };
+  if (f.meeting) return { state: "notes", text: f.meeting };
   if (f.bubbleOpen) return { state: "active", text: t("Ready") };
   return { state: "idle" };
 }

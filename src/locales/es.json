@@ -580,5 +580,22 @@
  "Client secret": "Secreto de cliente",
  "{service} Client ID": "ID de cliente de {service}",
  "{service} Client secret": "Secreto de cliente de {service}",
- "Saved. Choose Connect to sign in to {service}.": "Guardado. Elige Conectar para iniciar sesión en {service}."
+ "Saved. Choose Connect to sign in to {service}.": "Guardado. Elige Conectar para iniciar sesión en {service}.",
+ "Taking notes": "Tomando notas",
+ "Taking notes · {n} min": "Tomando notas · {n} min",
+ "Buddy is already taking notes.": "Buddy ya está tomando notas.",
+ "No AI is set up, so only the transcript was saved.": "No hay ninguna IA configurada, así que solo se guardó la transcripción.",
+ "Writing up the meeting notes…": "Redactando las notas de la reunión…",
+ "Wrote meeting notes": "Redactó notas de una reunión",
+ "Meeting transcript saved (no notes: {why})": "Transcripción de la reunión guardada (sin notas: {why})",
+ "Meeting notes saved": "Notas de la reunión guardadas",
+ "Stop meeting notes": "Dejar de tomar notas de la reunión",
+ "Take meeting notes": "Tomar notas de una reunión",
+ "Saved the transcript of a meeting Buddy closed during": "Se guardó la transcripción de una reunión durante la que Buddy se cerró",
+ "Stop notes": "Parar notas",
+ "Buddy's listening isn't available, so it can't take notes.": "La escucha de Buddy no está disponible, así que no puede tomar notas.",
+ "Buddy couldn't hear the meeting: neither the microphone nor the PC's sound would open.": "Buddy no pudo oír la reunión: no se abrió ni el micrófono ni el sonido del PC.",
+ "Buddy isn't taking notes.": "Buddy no está tomando notas.",
+ "Couldn't save the meeting notes": "No se pudieron guardar las notas de la reunión",
+ "Taking notes. Let everyone know: in some places they have to agree to it.": "Tomando notas. Avisa a todos: en algunos lugares tienen que estar de acuerdo."
 }

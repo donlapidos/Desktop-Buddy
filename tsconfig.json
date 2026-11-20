@@ -41,6 +41,8 @@
     "src/conversations.js",
     "src/lessons.js",
     "src/connectors.js",
+    "src/meeting.js",
+    "src/meeting-capture.js",
     "src/i18n.js",
     "src/updates.js",
     "src/speakable.js",
@@ -82,6 +84,7 @@
     "src/ui/island.js",
     "src/ui/task.js",
     "src/ui/voice.js",
+    "src/ui/meeting.js",
     "src/ui/marker.js",
     "src/ui/marker-bar.js",
     "src/ui/overlay.js"

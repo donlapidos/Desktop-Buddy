@@ -477,3 +477,17 @@ prompt, opened the microphone alongside (loudness only, nothing kept), and Moons
 in 0.45 s (3% of real time) with every word right. On the laptop's speakers the microphone peaked at full scale
 while the passage played: without a headset it hears the others too, hence the duplicate filter. Clean synthetic
 speech is a best case; real meetings will be harder.
+
+**2026-11-21 · package 10 · meeting notes, first version.** `src/meeting.js` keeps the transcript, drops what the
+microphone hears from the speakers (a "You" piece whose words are mostly in what the PC played within 1.5 s, in either
+order of transcription), transcribes one piece at a time, saves the transcript as it grows and recovers it after a
+crash; `src/meeting-capture.js` runs the hidden meeting page in a session of its own, the only one allowed the PC's
+sound; the island shows **Taking notes** with **Stop notes**; the bubble's Brain has `meeting_notes` (start, stop, read)
+and `Brain.complete` writes the notes with no tools (requests without tools now leave the field out). The `meeting`
+e2e check plays a passage through the PC's sound and a recording as the microphone (the passage at a third of its
+volume, as speakers leak, then the user's words): both sides heard, the echo dropped, notes and transcript in the
+Word document. A loud start once hid the PC's sound (its background level was learned from the first frames, which
+were speech); the level now starts low and rises slowly, and the check passed 6 times in a row after. Breaking the
+echo filter, the loopback audio, the one-at-a-time queue, the wait for the last pieces, and a failed write-up keeping
+the transcript each failed a test. Left for later: telling voices apart, names from the meeting app, offering when a
+meeting window appears, a live transcript window, keeping the audio as a setting.

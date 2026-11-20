@@ -50,6 +50,8 @@ More models (Claude, Gemini's free tier, a model on your PC) are being checked.
 - **Explain:** hover over anything and press **Ctrl+Alt+E** for an illustrated one-page explanation.
 - **Do it for me:** say "do it for me" and Buddy works the app itself, asking before each click, keystroke or file
   change. **Settings › Activity** lists what it changed and can undo it.
+- **Meeting notes:** "take notes" in any meeting app (Teams, Zoom, Meet…), transcribed on your PC; when you stop, a
+  Word document with the summary, decisions, action items and the whole transcript.
 - **Connections:** on Notion, Linear, HubSpot or Jira, Buddy offers to connect, so it can read and update things there
   for you, asking first. You sign in in your browser (HubSpot needs a one-time setup first; see the guide).
 - **Lessons:** when Buddy has walked you through something, keep it as a lesson to be shown again (free: no AI call)

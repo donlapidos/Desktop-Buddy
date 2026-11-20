@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* **Meeting notes, in any meeting app:** say "take notes" (or use the tray menu) in Teams, Zoom, Meet or anything
+  else. Buddy transcribes your microphone and your PC's sound on your PC, lets you ask about the meeting as it goes,
+  and when you stop, saves a Word document with notes written by your AI (summary, decisions, action items) and the
+  whole transcript. Only text is kept; the island shows when notes are on.
 * **Connect HubSpot:** Buddy can look up and update your HubSpot contacts, companies, deals, tickets and notes, and
   read marketing reports, asking on its card before each action. HubSpot only lets in apps a company sets up for
   itself, so someone sets up a connector in HubSpot once and pastes its two codes into Settings › Connections; then

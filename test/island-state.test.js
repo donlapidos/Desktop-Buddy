@@ -36,3 +36,12 @@ test("what matters most wins: an approval over everything, a running mode over a
 test("a guide step spoken while an answer runs doesn't take the island from the answer's progress", () => {
   assert.deepEqual(view({ mode: "working", progress: "Pointing at Data", speaking: true, saying: "Click Data" }), { state: "busy", text: "Pointing at Data" });
 });
+
+test("meeting notes show while they're taken, under an approval, a running answer or an outcome, over rest", () => {
+  const notes = { meeting: "Taking notes · 12 min", bubbleOpen: true };
+  assert.deepEqual(view(notes), { state: "notes", text: "Taking notes · 12 min" });
+  assert.equal(view({ ...notes, approval: "Click Save" }).state, "confirm", "an approval still asks first");
+  assert.equal(view({ ...notes, mode: "working" }).state, "busy", "a question asked during the meeting shows its progress");
+  assert.deepEqual(view({ ...notes, notice: "Answered" }), { state: "done", text: "Answered" }, "its answer shows, then fades back to notes");
+  assert.deepEqual(view({ ...notes, meeting: null }), { state: "active", text: "Ready" });
+});

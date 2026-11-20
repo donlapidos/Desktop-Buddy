@@ -231,3 +231,18 @@ test("Ollama not running, or a server out of reach, is told apart from a refusal
 test("a key for another server stays with that server, even one shaped like OpenAI's", () => {
   assert.equal(providerForKey("sk-proj-abcdefghijklmnopqrstuvwxyz", "custom"), "custom");
 });
+
+test("a request with no tools leaves the field out, for Chat Completions and Responses alike", async () => {
+  const bodies = [];
+  const fetchImpl = async (url, init) => {
+    bodies.push(JSON.parse(init.body));
+    return String(url).endsWith("/responses")
+      ? sse({ type: "response.output_text.delta", delta: "Notes" }, { type: "response.completed", response: { status: "completed", usage: {} } })
+      : sse({ choices: [{ delta: { content: "Notes" }, finish_reason: "stop" }] });
+  };
+  for (const provider of /** @type {const} */ (["deepseek", "openai"])) {
+    await chatTurn({ provider, key: "k", model: `${provider}-notes`, effort: "low", system: "Write notes.", tools: [], messages: [{ role: "user", content: "transcript" }], maxTokens: 100, fetchImpl });
+  }
+  assert.equal(bodies.length, 2);
+  for (const b of bodies) assert.ok(!("tools" in b), JSON.stringify(Object.keys(b)));
+});

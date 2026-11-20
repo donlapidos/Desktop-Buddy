@@ -32,6 +32,7 @@ import { learnCaps } from "./providers.js";
  *   pressHotkey: (name: any) => void, sendVoiceOffer: () => void, startupVoiceFetch: () => void, useKeyHook: (hook: import("./hold-key.js").KeyHook) => void,
  *   connectors: ReturnType<typeof import("./connectors.js").createConnectors> | null, offerConnection: (win: any) => Promise<void>,
  *   lessons: ReturnType<typeof import("./lessons.js").createLessons> | null, playLesson: (id: string, opts?: { window?: any }) => Promise<any>,
+ *   startMeetingNotes: (o?: { testMic?: Uint8Array }) => Promise<any>, stopMeetingNotes: () => Promise<any>, meetingUI: { transcript: () => string },
  * }} DevKit
  */
 
@@ -1520,7 +1521,62 @@ function settingsAuditTest(kit) {
   }, 2500);
 }
 
+/** A WAV file's bytes: 16-bit mono. @param {Float32Array} samples @param {number} rate */
+function wavBytes(samples, rate) {
+  const data = Buffer.alloc(samples.length * 2);
+  samples.forEach((s, i) => data.writeInt16LE(Math.round(Math.max(-1, Math.min(1, s)) * 32767), i * 2));
+  const h = Buffer.alloc(44);
+  h.write("RIFF", 0); h.writeUInt32LE(36 + data.length, 4); h.write("WAVEfmt ", 8); h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(1, 22);
+  h.writeUInt32LE(rate, 24); h.writeUInt32LE(rate * 2, 28); h.writeUInt16LE(2, 32); h.writeUInt16LE(16, 34); h.write("data", 36); h.writeUInt32LE(data.length, 40);
+  return Buffer.concat([h, data]);
+}
+
+/** BUDDY_MEETING_TEST @param {DevKit} kit */
+function meetingTest(kit) {
+  // Meeting notes through the real app. The others: a passage another program plays through the PC's sound, as a
+  // meeting app would, which Buddy hears through Windows (this plays out loud). The user: a recording standing in for
+  // the microphone, with the passage in it first, quieter, as laptop speakers leak into a microphone, then the user's
+  // own words. Then the notes, from a stand-in model (scripts/e2e.mjs).
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  setTimeout(async () => {
+    const r = {};
+    try {
+      const { voice } = kit;
+      // Each step is printed, so a check that times out says where it stopped.
+      const step = (/** @type {string} */ what) => console.log("MEETING_STEP", what);
+      step("warm");
+      await voice.warm();
+      step("synthesize");
+      const others = await voice.synthesize("Thanks everyone for joining. Sarah will send the revised budget by Friday. Tom owns the vendor contract.", { sid: 5, speed: 1 });
+      const mine = await voice.synthesize("Great. I will book the room for Monday morning.", { sid: 0, speed: 1 });
+      const rate = others.rate;
+      const othersFile = path.join(app.getPath("userData"), "others.wav");
+      fs.writeFileSync(othersFile, wavBytes(others.audio, rate));
+      const gap = Math.round(rate * 1.5);
+      const mic = new Float32Array(others.audio.length + gap + mine.audio.length);
+      others.audio.forEach((v, i) => (mic[i] = v * 0.35));
+      mic.set(mine.audio, others.audio.length + gap);
+      step("start");
+      r.started = await kit.startMeetingNotes({ testMic: new Uint8Array(wavBytes(mic, rate)) });
+      spawn("powershell.exe", ["-NoProfile", "-Command", `(New-Object Media.SoundPlayer '${othersFile}').PlaySync()`], { windowsHide: true });
+      await wait(1500);
+      r.island = await kit.island.webContents.executeJavaScript(`document.body.dataset.state + "|" + document.getElementById("label").textContent + "|" + getComputedStyle(document.getElementById("notes-stop")).display`);
+      await wait((mic.length / rate) * 1000 + 2500);
+      r.soFar = kit.meetingUI.transcript();
+      step("stop");
+      r.stopped = await kit.stopMeetingNotes();
+      r.islandAfter = await kit.island.webContents.executeJavaScript(`document.body.dataset.state`);
+      r.progressLeft = fs.existsSync(path.join(app.getPath("userData"), "meeting-in-progress.json"));
+    } catch (err) {
+      r.error = String(err?.message ?? err);
+    }
+    console.log("MEETING_TEST", JSON.stringify(r));
+    console.log("MEETING_TEST_DONE");
+  }, 2500);
+}
+
 const HOOKS = {
+  BUDDY_MEETING_TEST: meetingTest,
   BUDDY_SETTINGS_AUDIT_TEST: settingsAuditTest,
   BUDDY_CONNECTIONS_TEST: connectionsTest,
   BUDDY_LANGUAGE_TEST: languageTest,

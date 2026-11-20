@@ -96,6 +96,15 @@ VS Code and more).
   moves (scrolling, expanding, moving windows), or anything in apps you trust. Apps on the **Never act in** list
   (password managers to start with) are off limits even if you'd approve. This is enforced where actions get their
   permission slip (`src/policy.js`, `src/approvals.js`), not just in the prompt.
+- **Meeting notes:** say or type "take notes" in a meeting (or choose **Take meeting notes** in the tray menu), in
+  Teams, Zoom, Google Meet, Webex or any other app: no bot joins the call. Buddy hears your microphone ("You") and
+  your PC's sound ("Others") and transcribes both on your PC. The island shows **Taking notes** with a **Stop notes**
+  button, and Buddy stays silent meanwhile. Ask about the meeting while it goes on ("what did they say about the
+  budget?"). When you stop, your AI writes the notes (summary, decisions, action items) and Buddy saves a Word
+  document in Documents › Buddy with the notes and the whole transcript, and opens it. Only the text is kept, never
+  the sound. On speakers the microphone also hears the others; Buddy drops those lines, but a headset gives the
+  cleanest transcript. In some places everyone in a meeting has to agree to it being transcribed: let them know.
+  If Buddy closes mid-meeting, the transcript so far is saved as a document the next time it starts.
 - **Connections** (with the advanced features): Buddy can use Notion, Linear, HubSpot, and Jira and Confluence for
   you, with your own account there. On one of their sites, the bubble offers once: **Connect**, **Not now** or
   **Don't ask again**; or connect from **Settings › Connections**. You sign in in your browser, so Buddy never sees
