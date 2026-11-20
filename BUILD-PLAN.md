@@ -44,6 +44,7 @@ under 3 seconds, in any app, without a credit card.
 | 6 | Free start and proof on more models | keys | no |
 | 7 | Point by sight when there is no tree | no | yes |
 | 8 | Problem report | no | some |
+| 9 | A natural voice that answers sooner | listening test, a voice-service key | some |
 
 Do 0 and 1 first: 0 gives the number every later package is judged by, and 1 makes `main.js` safe to change. 2 can
 run beside them (it changes docs and release files only). 3, 4, 5 and 7 all touch `main.js`: do them one at a time.
@@ -233,6 +234,38 @@ is sent without the user pressing the button.
 **Done when:** a unit test proves keys, key-shaped text and file paths under the user's profile are left out;
 the `settings` e2e check opens the preview.
 
+## 9. A natural voice that answers sooner
+
+**Why:** the owner finds heyclicky's voice more natural and quicker to answer. heyclicky streams the microphone to
+AssemblyAI and speaks through ElevenLabs, both in the cloud. Buddy uses Moonshine and Supertonic 3 on the PC, which
+is private and free but sounds flatter. It also waits for the whole reply before saying anything: `speak(reply)`
+in `src/main.js` runs once the turn ends.
+
+**Where:** `src/main.js` (`speak`, the turn's end), `src/voice.js` (`say`, which already speaks a piece while the
+next is made), `src/speakable.js`, `src/speech.js`, `src/models.js`, `src/reply-stream.js`.
+
+**Build, in this order, measuring after each step:**
+1. **Measure the voice path.** Add `heardMs` (release to text), `firstWordMs` (text to the reply's first sentence)
+   and `firstSoundMs` (that sentence to sound) to the voice turns in timing.log. Then it's clear how much is the
+   model, how much is listening and how much is the voice.
+2. **Speak while the reply is still coming.** Hand each finished sentence of the streamed reply to `say` instead
+   of the whole reply at the end. This is likely the biggest win and costs nothing in privacy.
+3. **A better voice on the PC.** Compare Supertonic 3 against Kokoro-82M (Apache 2.0, the most recommended CPU voice
+   this year) and Kyutai's Pocket TTS on the same sentences: time to first sound on the owner's laptop, and the
+   owner's ear. Keep whichever wins as the default.
+4. **An optional cloud voice.** "Natural voice (online)" in Settings, off by default, using the user's own key:
+   ElevenLabs Flash, Cartesia Sonic or OpenAI's TTS, streamed. Settings says plainly that replies are then sent to
+   that service to be read aloud. The local voice stays the fallback when offline or when the key fails.
+5. **Optional cloud listening**, only if step 1 shows listening is slow: streaming transcription (AssemblyAI or
+   Deepgram) with the same opt-in and fallback.
+
+**Done when:** a voice turn's first sound comes under 1.5 s after the reply's first sentence (median, owner's
+laptop); a unit test holds sentence splitting of a streamed reply; the `voice` e2e check covers speaking before the
+reply ends and falling back to the local voice when the online one fails (break the fallback on purpose and see
+it fail); nothing is sent to a voice service unless the setting is on.
+
+**Owner:** pick the voice by ear from recorded samples; supply a key for the online voice if that step goes ahead.
+
 ---
 
 ## Decisions for the owner
@@ -243,6 +276,7 @@ the `settings` e2e check opens the preview.
 | 2 | Buy a signing certificate | Yes, in your own name |
 | 4.1 | A native keyboard-hook dependency for hold-to-talk | Yes, live only while the key is held |
 | 6 | Which accounts fund the model runs | Personal Gemini and Anthropic keys, one local model |
+| 9 | An online voice (replies leave the PC to be read aloud) | Yes, as an opt-in with the user's own key; the PC voice stays the default |
 | - | Compete as a hosted product (relay, accounts, billing) or as the open, private alternative | The open alternative first; revisit Buddy Plus when downloads pass 100 a release |
 
 ## Not checked for this plan
