@@ -1,13 +1,15 @@
 // Live marking: the native overlay (marker-overlay.cs) the user draws on while their apps keep running underneath.
-// It's compiled once on this PC by the C# compiler that comes with Windows (.NET Framework 4), into Buddy's data folder,
-// named after its source's fingerprint so a new version builds again. If it can't be built or started, Mark falls back
-// to drawing on a still of the screen (marker.js).
+// An installed Buddy runs the one built at release (native.js). From source, it's compiled once on this PC by the C#
+// compiler that comes with Windows (.NET Framework 4), into Buddy's data folder. Either way it's named after its
+// source's fingerprint, so a new version is never mixed up with an old one. If it can't be found, built or started,
+// Mark falls back to drawing on a still of the screen (marker.js).
 import { execFile, spawn } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline";
 import { fileURLToPath } from "node:url";
+import { SHIPPED_NATIVE } from "./native.js";
 
 // A file the C# compiler reads from disk, so an installed Buddy keeps it outside its app archive (as wall.ps1).
 export const OVERLAY_SOURCE = path.join(path.dirname(fileURLToPath(import.meta.url)).replace(/app\.asar([\\/])/, "app.asar.unpacked$1"), "marker-overlay.cs");
@@ -23,12 +25,19 @@ export function findCompiler(env = process.env) {
 }
 
 /**
- * The overlay program, built if this version isn't yet. Resolves its path, or throws saying why it couldn't be built.
- * @param {{ source?: string, cacheDir: string, compiler?: string | null }} o
+ * The overlay program: the one shipped with Buddy for this version, or one built if this version isn't yet. Resolves
+ * its path, or throws saying why it couldn't be built.
+ * @param {{ source?: string, cacheDir: string, shipped?: string | null, compiler?: string | null }} o
  */
-export async function overlayProgram({ source = OVERLAY_SOURCE, cacheDir, compiler = findCompiler() }) {
+export async function overlayProgram({ source = OVERLAY_SOURCE, cacheDir, shipped = SHIPPED_NATIVE, compiler = findCompiler() }) {
   const code = fs.readFileSync(source);
-  const exe = path.join(cacheDir, `marker-overlay-${crypto.createHash("sha256").update(code).digest("hex").slice(0, 12)}.exe`);
+  const name = `marker-overlay-${crypto.createHash("sha256").update(code).digest("hex").slice(0, 12)}.exe`;
+  if (shipped && fs.existsSync(path.join(shipped, name))) {
+    // One compiled here by an earlier Buddy isn't needed any more.
+    removeBuilt(cacheDir);
+    return path.join(shipped, name);
+  }
+  const exe = path.join(cacheDir, name);
   if (fs.existsSync(exe)) return exe;
   if (!compiler) throw new Error("Windows' C# compiler (.NET Framework 4) isn't on this PC.");
   fs.mkdirSync(cacheDir, { recursive: true });
@@ -39,8 +48,14 @@ export async function overlayProgram({ source = OVERLAY_SOURCE, cacheDir, compil
   });
   fs.renameSync(tmp, exe);
   // Older versions go: only this one is used from now on.
-  for (const old of fs.readdirSync(cacheDir)) if (/^marker-overlay-[0-9a-f]{12}\.exe$/.test(old) && path.join(cacheDir, old) !== exe) fs.rmSync(path.join(cacheDir, old), { force: true });
+  removeBuilt(cacheDir, exe);
   return exe;
+}
+
+/** Removes overlays compiled into `cacheDir`, all but `keep`. Only Buddy's own overlay files are touched. */
+function removeBuilt(/** @type {string} */ cacheDir, /** @type {string} */ keep = "") {
+  if (!fs.existsSync(cacheDir)) return;
+  for (const old of fs.readdirSync(cacheDir)) if (/^marker-overlay-[0-9a-f]{12}\.exe$/.test(old) && path.join(cacheDir, old) !== keep) fs.rmSync(path.join(cacheDir, old), { force: true });
 }
 
 /**

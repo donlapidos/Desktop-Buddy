@@ -8,14 +8,20 @@
 # but not deleted, and the Recycle Bin is outside: commands set files aside in a "Removed" folder instead.
 #
 #   powershell -File wall.ps1 -WorkDir <folder> -Encoded <base64 UTF-16 command> [-Name <container>] [-Cache <folder>]
-# The command's output (errors as plain text) and exit code are this script's. -Cache keeps the compiled launcher, so
-# later commands skip compiling it. -Remove deletes the container and its grant on -WorkDir.
+#                             [-Shipped <folder>]
+# The command's output (errors as plain text) and exit code are this script's. -Shipped is where the installer put the
+# launcher, built when Buddy was released, so nothing is compiled on the user's PC. Otherwise (Buddy run from source,
+# or a launcher that doesn't match this script) it's compiled into -Cache once, so later commands skip compiling it.
+# -Remove deletes the container and its grant on -WorkDir. -Build only compiles the launcher into -Cache (the release
+# does this: scripts/build-native.mjs).
 param(
   [Parameter(Mandatory = $true)][string]$WorkDir,
   [string]$Encoded = "",
   [string]$Name = "DesktopBuddy.Commands",
   [string]$Cache = "",
-  [switch]$Remove
+  [string]$Shipped = "",
+  [switch]$Remove,
+  [switch]$Build
 )
 $ErrorActionPreference = "Stop"
 
@@ -118,15 +124,20 @@ public static class BuddyWall {
   }
 }
 '@
-# The launcher, compiled once into -Cache (named by its source, so a changed launcher is compiled again).
-if ($Cache) {
-  $hash = [BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes($source))).Replace("-", "").Substring(0, 16)
+# The launcher is named by its source, so one built from a different version of this script is never loaded: the
+# shipped one if it matches, else one compiled once into -Cache.
+$hash = [BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes($source))).Replace("-", "").Substring(0, 16)
+$prebuilt = if ($Shipped) { Join-Path $Shipped "BuddyWall-$hash.dll" } else { "" }
+if ($prebuilt -and (Test-Path -LiteralPath $prebuilt)) {
+  Add-Type -Path $prebuilt
+} elseif ($Cache) {
   $dll = Join-Path $Cache "BuddyWall-$hash.dll"
   if (-not (Test-Path -LiteralPath $dll)) {
     New-Item -ItemType Directory -Force -Path $Cache | Out-Null
     Add-Type -TypeDefinition $source -OutputAssembly "$dll.tmp" -OutputType Library
     Move-Item -LiteralPath "$dll.tmp" -Destination $dll -Force
   }
+  if ($Build) { return }
   Add-Type -Path $dll
 } else {
   Add-Type -TypeDefinition $source

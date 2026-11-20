@@ -46,6 +46,11 @@ jobs:
       - name: Fetch agent-desktop
         run: npm run setup
 
+      # Live marking's overlay and the commands' wall launcher, compiled here so Buddy never compiles anything on a
+      # user's PC (src/native.js). The installer carries them in resources/native.
+      - name: Build the native helpers
+        run: npm run native
+
       - name: Type check
         run: npm run check
 
