@@ -607,5 +607,6 @@
  "Sign in to {service} again": "Volver a iniciar sesión en {service}",
  "Try again": "Reintentar",
  "Try {service} again": "Reintentar {service}",
- "Cancel signing in to {service}": "Cancelar el inicio de sesión en {service}"
+ "Cancel signing in to {service}": "Cancelar el inicio de sesión en {service}",
+ "Something went wrong on Buddy's side. Try again.": "Algo falló del lado de Buddy. Inténtalo de nuevo."
 }

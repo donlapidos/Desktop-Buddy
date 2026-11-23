@@ -395,3 +395,23 @@ test("an installed Buddy's commands use the wall launcher it shipped with, and c
   assert.match(out, /inside the wall/);
   assert.deepEqual(fs.readdirSync(cache), [], "nothing was compiled into Buddy's folder");
 });
+
+test("a file that changes or appears while its card is open is left as it is", async () => {
+  const { places, ctx } = pc();
+  const notes = path.join(places.workDir, "notes.md");
+  fs.writeFileSync(notes, "- milk\n- eggs\n");
+  // The user types into the file while the card asks about it.
+  let typed = 0;
+  const typing = { ...ctx(), ask: async () => (fs.appendFileSync(notes, typed++ ? "- jam\n" : "- bread (typed while deciding)\n"), true) };
+  assert.match(await runPcTool("edit_file", { path: "notes.md", old_text: "- eggs", new_text: "- oat milk" }, typing), /changed while the user was deciding/);
+  assert.equal(fs.readFileSync(notes, "utf8"), "- milk\n- eggs\n- bread (typed while deciding)\n", "their edit is kept, Buddy's isn't written over it");
+  assert.match(await runPcTool("write_file", { path: "notes.md", content: "replaced" }, typing), /changed while the user was deciding/);
+  assert.match(fs.readFileSync(notes, "utf8"), /- jam/, "the replacement wasn't written over their typing");
+  // A file that appears while the card says "Create" isn't replaced without an undo copy.
+  const report = path.join(places.workDir, "report.txt");
+  const appearing = { ...ctx(), ask: async () => (fs.writeFileSync(report, "the user's own report"), true) };
+  assert.match(await runPcTool("write_file", { path: "report.txt", content: "Buddy's report" }, appearing), /changed while the user was deciding/);
+  assert.equal(fs.readFileSync(report, "utf8"), "the user's own report");
+  // Unchanged, the edit goes ahead as before.
+  assert.match(await runPcTool("edit_file", { path: "notes.md", old_text: "- eggs", new_text: "- oat milk" }, ctx()), /Changed/);
+});

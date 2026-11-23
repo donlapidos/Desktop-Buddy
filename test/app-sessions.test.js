@@ -72,3 +72,21 @@ test("a failed call doesn't block the next, Allow for this task lapses after a q
   assert.equal(s.size(), 0);
   assert.notEqual(await s.call(1, "Claude", live, async (brain) => brain), b);
 });
+
+test("Allow for this task lapses after a quiet spell counted from when the last call ended, not when it began", async () => {
+  let clock = 0;
+  const s = createAppSessions({ makeBrain: fakeBrain, gapMs: 120_000, now: () => clock });
+  const live = new AbortController().signal;
+  // A guided route that waits on the user for three minutes, then the next step of the same task.
+  const brain = await s.call(1, "Claude", live, async (b) => {
+    b.standing.add("act");
+    clock += 180_000;
+    return b;
+  });
+  clock += 10_000;
+  await s.call(1, "Claude", live, async () => {});
+  assert.ok(brain.standing.has("act"), "ten seconds after the long call ended, it's the same task");
+  clock += 121_000;
+  await s.call(1, "Claude", live, async () => {});
+  assert.equal(brain.standing.size, 0, "two quiet minutes later, it's a new task");
+});

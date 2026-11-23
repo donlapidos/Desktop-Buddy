@@ -567,6 +567,23 @@ const CHECKS = {
   },
 
   // A service connected and used through the real app, against a stand-in service and model on this PC.
+  // When Buddy's side fails, the bubble, a task window and Settings' Undo come back usable and say so.
+  async failures() {
+    const { markers, timedOut } = await runCopy("failures", { BUDDY_FAILURES_TEST: "1", ANTHROPIC_API_KEY: "sk-ant-e2e-not-used-0000000000" }, "FAILURES_TEST_DONE", 90_000);
+    const r = markers.FAILURES_TEST?.[0];
+    if (!r) return [timedOut ? "timed out" : "nothing printed"];
+    const wentWrong = /Something went wrong on Buddy's side/;
+    return [r.error,
+      !r.bubble?.stopHidden && "the bubble's Stop stayed up after its question failed",
+      !r.bubble?.newOn && "the bubble's New conversation stayed off after its question failed",
+      !wentWrong.test(r.bubble?.reply ?? "") && `the bubble didn't say what happened (${JSON.stringify(r.bubble?.reply)})`,
+      r.task?.send !== "Ask" && `the task window stayed busy after its question failed (${JSON.stringify(r.task?.send)})`,
+      !wentWrong.test(r.task?.said ?? "") && `the task window didn't say what happened (${JSON.stringify(r.task?.said)})`,
+      !(r.undo?.buttons ?? []).includes("Undo") && `Settings' Undo didn't come back (${JSON.stringify(r.undo?.buttons)})`,
+      !wentWrong.test(r.undo?.problem ?? "") && `Settings didn't say the undo failed (${JSON.stringify(r.undo?.problem)})`,
+    ].filter(Boolean);
+  },
+
   // Meeting notes: the PC's sound (a passage another program plays out loud) and a recording as the microphone, then a
   // Word document with notes from a stand-in model and the whole transcript (src/meeting.js). Needs the voice models
   // and speakers, so --no-voice leaves it out.

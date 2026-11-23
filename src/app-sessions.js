@@ -2,7 +2,8 @@
 // Brain of its own, so one session's window, "Allow for this task", pointer and cancel never reach another's. Within
 // a session, calls run one at a time, each with its own abort: the Brain's tools read `brain.abort`, so two calls at
 // once would share it. A call cancelled while it waits its turn never runs. A session's "Allow for this task" lapses
-// after `gapMs` without a call (the next request is a new task), and its Brain goes when the connection closes.
+// after `gapMs` without a call (the next request is a new task), counted from when the last call ended: a long one
+// (waiting for the user, a guided route) is still the same task. Its Brain goes when the connection closes.
 
 /**
  * @template B
@@ -36,7 +37,11 @@ export function createAppSessions({ makeBrain, gapMs, now = Date.now }) {
         const abort = new AbortController();
         signal.addEventListener("abort", () => abort.abort(), { once: true });
         brain.abort = abort;
-        return work(session.brain);
+        try {
+          return await work(session.brain);
+        } finally {
+          session.lastCall = now();
+        }
       });
       // The next call waits for this one to settle, whether it worked or not.
       session.queue = turn.catch(() => {});

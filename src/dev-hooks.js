@@ -2,7 +2,7 @@
 // starts test copies with them). main.js imports this file only when one of those variables is set, so a normal
 // Buddy never loads it, and hands it what it needs as one kit (DevKit). Members main.js reassigns (settings, brain,
 // about, the marker's state) are read through the kit each time; the rest are fixed once the app is ready.
-import { app, BrowserWindow, clipboard, desktopCapturer, globalShortcut, nativeImage, nativeTheme, screen } from "electron";
+import { app, BrowserWindow, clipboard, desktopCapturer, globalShortcut, ipcMain, nativeImage, nativeTheme, screen } from "electron";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import net from "node:net";
@@ -1690,7 +1690,61 @@ function meetingTest(kit) {
   }, 2500);
 }
 
+/** BUDDY_FAILURES_TEST @param {DevKit} kit */
+function failuresTest(kit) {
+  // When Buddy's side fails, each window comes back usable and says so: the bubble's question, a task's, and Settings'
+  // Undo. Their handlers are swapped for ones that fail (this copy is closed afterwards), and the real pages are used.
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const fail = (/** @type {string} */ channel) => {
+    ipcMain.removeHandler(channel);
+    ipcMain.handle(channel, () => {
+      throw new Error("broken on purpose");
+    });
+  };
+  setTimeout(async () => {
+    const r = {};
+    try {
+      // The bubble.
+      fail("ask");
+      await kit.summon();
+      const bubble = (/** @type {string} */ code) => kit.bubble.webContents.executeJavaScript(code);
+      await bubble(`document.getElementById("input").value = "Hello"; document.getElementById("form").requestSubmit();`);
+      await wait(1000);
+      r.bubble = await bubble(`({ stopHidden: document.getElementById("stop").hidden, newOn: !document.getElementById("new").disabled, reply: document.getElementById("reply").textContent })`);
+      // A task window.
+      fail("task-ask");
+      await kit.tasks.create({ brain: { ui: {}, transcript: () => [], cancel() {}, ask: async () => "unused" } });
+      let task;
+      for (let i = 0; i < 50 && !(task = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("task.html") && !w.webContents.isLoading())); i++) await wait(100);
+      await wait(800);
+      const inTask = (/** @type {string} */ code) => task?.webContents.executeJavaScript(code);
+      await inTask(`document.getElementById("input").value = "Tidy my downloads"; document.getElementById("form").requestSubmit();`);
+      await wait(1000);
+      r.task = await inTask(`({ send: document.getElementById("send").textContent, said: document.getElementById("log").textContent.slice(-120) })`);
+      // Settings › Activity: Undo.
+      fail("settings-undo");
+      const file = path.join(kit.documentsDir(), "failures-check.txt");
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, "made by the check");
+      kit.activity.add({ kind: "created", summary: "Created failures-check.txt", from: "Buddy", file, after: null });
+      kit.settingsWindow.open("activity");
+      let win;
+      for (let i = 0; i < 50 && !(win = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("settings.html") && !w.webContents.isLoading())); i++) await wait(100);
+      await wait(1200);
+      const page = (/** @type {string} */ code) => win?.webContents.executeJavaScript(code);
+      await page(`[...document.querySelectorAll("#activity button")].find((b) => b.textContent === "Undo").click()`);
+      await wait(1000);
+      r.undo = await page(`({ buttons: [...document.querySelectorAll("#activity button")].map((b) => b.textContent + (b.disabled ? " (off)" : "")), problem: document.getElementById("activity-problem").textContent })`);
+    } catch (err) {
+      r.error = String(err?.message ?? err);
+    }
+    console.log("FAILURES_TEST", JSON.stringify(r));
+    console.log("FAILURES_TEST_DONE");
+  }, 2500);
+}
+
 const HOOKS = {
+  BUDDY_FAILURES_TEST: failuresTest,
   BUDDY_MEETING_TEST: meetingTest,
   BUDDY_SETTINGS_AUDIT_TEST: settingsAuditTest,
   BUDDY_CONNECTIONS_TEST: connectionsTest,

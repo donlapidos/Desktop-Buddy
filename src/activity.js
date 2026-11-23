@@ -43,7 +43,8 @@ export function keepCopy(/** @type {string} */ file, /** @type {string} */ undoD
 /**
  * One change. `file` is what changed; `copy` its earlier version (replaced, edited); `after` the fingerprint Buddy
  * left it with, so undo can tell whether the user changed it since. `from` is who did it: "Buddy", a task, a routine.
- * @typedef {{ id: string, at: string, from: string, kind: "created" | "replaced" | "edited" | "document" | "ran" | "read" | "acted", summary: string, file?: string, copy?: string, after?: string | null, undone?: string }} Change
+ * `made`: the files a copy made (copy_files), each with its fingerprint; `file` is then the folder they went into.
+ * @typedef {{ id: string, at: string, from: string, kind: "created" | "replaced" | "edited" | "document" | "ran" | "read" | "acted", summary: string, file?: string, copy?: string, after?: string | null, made?: { file: string, after: string | null }[], undone?: string }} Change
  */
 
 /** What can be undone, by kind. */
@@ -100,6 +101,21 @@ export function createActivity({ file, undoDir, trash, onChange }) {
       if (e.undone) return { ok: false, message: "That's already undone." };
       if (!UNDOABLE.has(e.kind) || !e.file) return { ok: false, message: "Buddy can't undo this one by itself." };
       const name = path.basename(e.file);
+      // Copies into a folder: exactly the files made, each only if it's still as it was made, unless `force`. The
+      // folder itself stays: it may hold the user's own files.
+      if (e.made) {
+        const left = e.made.filter((m) => fs.existsSync(m.file));
+        const changed = left.filter((m) => fingerprint(m.file) !== m.after);
+        if (changed.length && !force) return { ok: false, changed: true, message: changed.length === 1 ? `${path.basename(changed[0].file)} has changed since Buddy copied it. Undoing would lose those changes.` : `${changed.length} of the copies have changed since Buddy made them. Undoing would lose those changes.` };
+        try {
+          for (const m of left) await trash(m.file);
+        } catch (err) {
+          return { ok: false, message: `Couldn't move the copies to the Recycle Bin: ${err?.message ?? err}` };
+        }
+        e.undone = new Date().toISOString();
+        save();
+        return { ok: true, message: left.length === 1 ? `${path.basename(left[0].file)} is in the Recycle Bin.` : `The ${left.length} copies are in the Recycle Bin.` };
+      }
       const now = fingerprint(e.file);
       if (now && e.after && now !== e.after && !force) return { ok: false, changed: true, message: `${name} has changed since Buddy did this. Undoing would lose those changes.` };
       if (e.kind === "created" || e.kind === "document") {

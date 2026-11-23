@@ -73,8 +73,15 @@ export function createProviderState({ dataDir, safeStorage, settings, change, re
       return `That doesn't look like a key from ${PROVIDERS[provider].label}. Get one at ${PROVIDERS[provider].keyFrom}.`;
     }
     if (provider !== "anthropic") {
+      // Only tried: a key that doesn't work leaves the provider's list as it was (its saved key may well work).
+      const before = providerModelLists.get(provider);
       const error = await refreshModels(provider, k);
-      if (error && !providerModelLists.get(provider)?.models.length) return error;
+      if (error && !providerModelLists.get(provider)?.models.length) {
+        if (before) providerModelLists.set(provider, before);
+        else providerModelLists.delete(provider);
+        refresh();
+        return error;
+      }
     }
     saveApiKey(k, provider);
     if (provider !== currentProvider()) change({ provider });
@@ -110,6 +117,8 @@ export function createProviderState({ dataDir, safeStorage, settings, change, re
   // the provider changes. Anthropic's are the fixed list in settings.js.
   /** @type {Map<ProviderId, { models: string[], error: string | null, loading: boolean }>} */
   const providerModelLists = new Map();
+  /** @type {Map<ProviderId, number>} the latest refresh of each provider's list */
+  const refreshing = new Map();
 
   // What each model of the current provider can do (providers.js verdict), for Settings to show beside it. One that can
   // do everything Buddy needs is "good" (works well) only once it has passed the bar in a measured run (model-results.js);
@@ -131,6 +140,10 @@ export function createProviderState({ dataDir, safeStorage, settings, change, re
   async function refreshModels(/** @type {ProviderId} */ provider = currentProvider(), key = loadApiKey(provider) ?? "") {
     const baseURL = providerURL(provider);
     if (provider === "anthropic" || !baseURL || (PROVIDERS[provider].key === "required" && !key)) return null;
+    // Only the latest refresh for a provider writes its list: an older, slower one (a key pasted, then the address
+    // changed) mustn't replace the newer answer.
+    const mine = (refreshing.get(provider) ?? 0) + 1;
+    refreshing.set(provider, mine);
     providerModelLists.set(provider, { models: providerModelLists.get(provider)?.models ?? [], error: null, loading: true });
     refresh();
     let error = null;
@@ -142,6 +155,7 @@ export function createProviderState({ dataDir, safeStorage, settings, change, re
     } catch (err) {
       error = err instanceof ProviderError ? (failureFor(err.kind, provider) ?? err.message) : `Couldn't reach ${PROVIDERS[provider].label}: ${err?.message ?? err}`;
     }
+    if (refreshing.get(provider) !== mine) return error;
     providerModelLists.set(provider, { models, error, loading: false });
     const chosen = settings().providerModels[provider];
     // The default is the best-placed model known to work well, else the first that isn't known to lack tools.

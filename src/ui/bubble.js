@@ -313,7 +313,15 @@ async function askBuddy(text, opts) {
   $("spend").textContent = "";
   show(opts.spoken ? `“${text}”` : t("Thinking…"), true);
   offerLesson(false);
-  const { reply, spend, superseded, lesson } = await window.buddy.ask(text, opts);
+  /** @type {any} */
+  let r;
+  try {
+    r = await window.buddy.ask(text, opts);
+  } catch {
+    // Buddy's side failed: the bubble mustn't stay "Thinking…" with Stop up.
+    r = { reply: t("Something went wrong on Buddy's side. Try again.") };
+  }
+  const { reply, spend, superseded, lesson } = r;
   if (sequence !== askSequence) return;
   setBusy(false);
   if (!superseded) show(reply);

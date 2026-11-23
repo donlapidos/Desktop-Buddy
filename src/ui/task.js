@@ -89,7 +89,15 @@ $form().addEventListener("submit", async (e) => {
   turn.append(el("div", "steps"));
   log.append(turn);
   setBusy(true);
-  const { reply, title } = await window.buddy.taskAsk(text);
+  /** @type {any} */
+  let r;
+  try {
+    r = await window.buddy.taskAsk(text);
+  } catch {
+    // Buddy's side failed: the task mustn't stay busy with typing locked.
+    r = { reply: t("Something went wrong on Buddy's side. Try again.") };
+  }
+  const { reply, title } = r;
   setBusy(false);
   $("confirm").classList.remove("on");
   if (title) $("title").textContent = title;
