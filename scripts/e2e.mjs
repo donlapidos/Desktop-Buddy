@@ -350,6 +350,7 @@ const CHECKS = {
       const fp = r.firstPointer;
       return [!r.partial && "text wasn't visible before completion", !r.editable && "the input was disabled while answering", !r.corrected && "the correction didn't replace the old answer", r.error,
         !r.cardKept && "an AI app's approval card came down when an answer in the chat ended",
+        r.outsideAnswered !== "deny" && `the AI app's card didn't take its answer (${JSON.stringify(r.outsideAnswered)})`,
         !(r.card?.shown && r.card.exact === "dir⏎\nformat d: /q⏎\n") && `the card didn't show the exact text to be typed (${JSON.stringify(r.card)})`,
         !r.card?.oldAnswerIgnored && "an answer meant for the card before answered the one showing",
         r.card?.answered !== "deny" && `the card's own answer didn't count (${JSON.stringify(r.card?.answered)})`,
