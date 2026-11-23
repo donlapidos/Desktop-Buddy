@@ -79,6 +79,9 @@ export const PC_TOOL_NAMES = new Set(PC_TOOLS.map((t) => t.name));
 // Running commands is the one thing here Buddy can't undo or fence in for certain (powershellProblem is best effort),
 // so it is off until the user turns it on (Settings › Agents › Let Buddy run commands). Off, the model isn't offered
 // the tool, is told what to say instead, and a call that comes anyway is refused.
+// A file that changed (or appeared) while its approval card was open is left as it is.
+const CHANGED_MEANWHILE = "Nothing was written: the file changed while the user was deciding. Read it again, then make the change to the file as it is now.";
+
 export const COMMANDS_OFF = "Running commands is turned off, so nothing was run. Tell the user in one line that this job needs it, and that they can turn it on in Settings › Agents › Let Buddy run commands. Don't try another way round.";
 
 /** The PC tools on offer: all of them, or all but running commands. @param {boolean} commands */
@@ -496,7 +499,11 @@ export async function runPcTool(name, input, ctx) {
       if (typeof input.content !== "string") return "write_file needs content.";
       const exists = fs.existsSync(j.full);
       if (exists && fs.statSync(j.full).isDirectory()) return "That's a folder, not a file.";
+      const before = exists ? fingerprint(j.full) : null;
       if (!(await ctx.ask(exists ? tr("Replace {place}", { place: placeWords(j.full, p) }) : tr("Create {place}", { place: placeWords(j.full, p) }), exists ? tr("The old version is kept for a week.") : undefined, "files"))) return "The user declined.";
+      // The user agreed to what the card said, about the file as it was then: if it appeared or changed while the card
+      // was open, that isn't what they agreed to.
+      if (fs.existsSync(j.full) !== exists || (exists && fingerprint(j.full) !== before)) return CHANGED_MEANWHILE;
       ctx.status(exists ? "Updating a file…" : "Making a file…");
       const copy = exists ? keepCopy(j.full, ctx.undoDir) : undefined;
       fs.mkdirSync(path.dirname(j.full), { recursive: true });
@@ -521,6 +528,15 @@ export async function runPcTool(name, input, ctx) {
       if (!times) return "old_text isn't in the file. Read the file again and copy the text exactly.";
       if (times > 1 && !input.replace_all) return `old_text is in the file ${times} times. Include more of the text around it, or set replace_all.`;
       if (!(await ctx.ask(tr("Change {place}", { place: placeWords(j.full, p) }), tr("The old version is kept for a week."), "files"))) return "The user declined.";
+      // The change is made to the text read before the card: if the file changed while it was open (the user typing
+      // in it), writing would undo their edits.
+      let now;
+      try {
+        now = fs.readFileSync(j.full, "utf8");
+      } catch {
+        now = null;
+      }
+      if (now !== text) return CHANGED_MEANWHILE;
       ctx.status("Updating a file…");
       const copy = keepCopy(j.full, ctx.undoDir);
       const next = input.replace_all ? text.split(old).join(String(input.new_text ?? "")) : text.replace(old, () => String(input.new_text ?? ""));
@@ -591,14 +607,18 @@ export async function runPcTool(name, input, ctx) {
         : tr("Copy {n} files from {from} into {folder}", { n: files.length, from: folderWords(stat.isDirectory() ? j.full : path.dirname(j.full), p), folder: folderWords(dest, p) });
       if (!(await ctx.ask(words, tr("The originals stay as they are."), "files"))) return "The user declined.";
       ctx.status(tr("Copying files…"));
+      // Each copy and its fingerprint, so undoing it takes back exactly these files, and only as they were made.
+      /** @type {{ file: string, after: string | null }[]} */
+      const made = [];
       for (const f of files) {
         let to = path.join(dest, f.rel);
         fs.mkdirSync(path.dirname(to), { recursive: true });
         // Never over a file already there: "name (2).jpg".
         for (let k = 2; fs.existsSync(to); k++) to = path.join(path.dirname(to), `${path.parse(f.rel).name} (${k})${path.extname(f.rel)}`);
         fs.copyFileSync(f.from, to);
+        made.push({ file: to, after: fingerprint(to) });
       }
-      ctx.record?.({ kind: "created", summary: files.length === 1 ? tr("Copied {file} into {folder}", { file: path.basename(files[0].from), folder: folderWords(dest, p) }) : tr("Copied {n} files into {folder}", { n: files.length, folder: folderWords(dest, p) }), file: dest });
+      ctx.record?.({ kind: "created", summary: files.length === 1 ? tr("Copied {file} into {folder}", { file: path.basename(files[0].from), folder: folderWords(dest, p) }) : tr("Copied {n} files into {folder}", { n: files.length, folder: folderWords(dest, p) }), file: dest, made });
       return `Copied ${files.length} file${files.length === 1 ? "" : "s"} into ${dest}. In a command that's (Join-Path $Work '${name}').`;
     }
 

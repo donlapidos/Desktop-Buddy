@@ -421,10 +421,17 @@ function renderClaudeApps() {
     btn.addEventListener("click", async () => {
       claudeBusy = a.id;
       renderClaudeApps();
-      const res = await window.buddy.settingsClaude(a.id, status !== "added");
-      claudeBusy = null;
-      $("claude-problem").textContent = res.error ?? "";
-      render(res.state);
+      try {
+        const res = await window.buddy.settingsClaude(a.id, status !== "added");
+        $("claude-problem").textContent = res.error ?? "";
+        claudeBusy = null;
+        render(res.state);
+      } catch {
+        $("claude-problem").textContent = t("Something went wrong on Buddy's side. Try again.");
+      } finally {
+        claudeBusy = null;
+        renderClaudeApps();
+      }
     });
     const row = el("div", { className: "data-row" }, el("div", {}, el("b", { textContent: a.label }), el("span", { textContent: ` ${text}` })), btn);
     if (status === "missing") row.classList.add("dim");
@@ -892,11 +899,18 @@ function renderActivity() {
       btn.addEventListener("click", async () => {
         undoing = e.id;
         renderActivity();
-        const res = await window.buddy.settingsUndo(e.id, again);
-        undoing = null;
-        confirmUndo = res.changed ? e.id : null;
-        $("activity-problem").textContent = res.ok ? "" : res.message;
-        render(res.state);
+        try {
+          const res = await window.buddy.settingsUndo(e.id, again);
+          undoing = null;
+          confirmUndo = res.changed ? e.id : null;
+          $("activity-problem").textContent = res.ok ? "" : res.message;
+          render(res.state);
+        } catch {
+          $("activity-problem").textContent = t("Something went wrong on Buddy's side. Try again.");
+        } finally {
+          undoing = null;
+          renderActivity();
+        }
       });
       row.append(btn);
     } else if (!e.undone && (e.kind === "ran" || e.kind === "read" || e.kind === "acted")) {

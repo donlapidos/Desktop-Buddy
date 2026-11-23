@@ -15,6 +15,13 @@
   * Connections say what's true: a service that signed you out shows **Sign in again** instead of "Connected" (and
     stops being offered to the AI), one that can't be reached shows **Try again**, and signing in twice at once,
     cancelling mid-sign-in or a failed reconnect can no longer leave a stale connection behind.
+  * Buddy no longer writes over a file you changed while its approval card was open, and doesn't replace one that
+    appeared meanwhile.
+  * Trying a mistyped API key no longer makes a working provider look broken in Settings.
+  * An AI app's "Allow for this task" no longer lapses in the middle of a long task (waiting for you, a guided route).
+  * Undoing copied files moves exactly those copies to the Recycle Bin (it said it had, but left them), and leaves the
+    folder's other files alone.
+  * The chat, task windows and Settings no longer get stuck busy when something fails on Buddy's side.
 * **Meeting notes, in any meeting app:** say "take notes" (or use the tray menu) in Teams, Zoom, Meet or anything
   else. Buddy transcribes your microphone and your PC's sound on your PC, lets you ask about the meeting as it goes,
   and when you stop, saves a Word document with notes written by your AI (summary, decisions, action items) and the

@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { KEEP_MS, createActivity } from "../src/activity.js";
+import { KEEP_MS, createActivity, fingerprint } from "../src/activity.js";
 import { runPcTool } from "../src/pc-tools.js";
 
 /** A made-up PC (see pc-tools.test.js) with an activity log; trashed files are moved to a stand-in bin. */
@@ -134,4 +134,30 @@ test("undo copies over a week old are cleared on their own, without waiting for 
   for (const at of [now - KEEP_MS - 60_000, now - 3600_000]) fs.mkdirSync(path.join(dir, `${at}-abcde`));
   pruneUndo(dir, now);
   assert.deepEqual(fs.readdirSync(dir), [`${now - 3600_000}-abcde`]);
+});
+
+test("undoing a copy takes back exactly the files it made, keeps the folder's own files, and checks each copy", async (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "buddy-copyundo-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const folder = path.join(dir, "copies");
+  fs.mkdirSync(folder);
+  fs.writeFileSync(path.join(folder, "mine.txt"), "the user's own file, already here");
+  const made = ["a.jpg", "b.jpg"].map((n) => {
+    const file = path.join(folder, n);
+    fs.writeFileSync(file, `copy of ${n}`);
+    return { file, after: fingerprint(file) };
+  });
+  const binned = [];
+  const log = createActivity({ file: path.join(dir, "activity.json"), undoDir: path.join(dir, "undo"), trash: async (f) => (binned.push(path.basename(f)), fs.rmSync(f)) });
+  const e = log.add({ kind: "created", summary: "Copied 2 files into copies", from: "Buddy", file: folder, made });
+  // One copy changed since: asks first.
+  fs.appendFileSync(made[1].file, " (edited)");
+  const first = await log.undo(e.id);
+  assert.equal(first.changed, true);
+  assert.deepEqual(binned, [], "nothing binned until the user says so");
+  const forced = await log.undo(e.id, { force: true });
+  assert.equal(forced.ok, true);
+  assert.match(forced.message, /2 copies are in the Recycle Bin/);
+  assert.deepEqual(binned.sort(), ["a.jpg", "b.jpg"]);
+  assert.ok(fs.existsSync(path.join(folder, "mine.txt")), "the folder's own file stays");
 });
