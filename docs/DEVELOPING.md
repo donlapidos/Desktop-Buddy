@@ -32,8 +32,9 @@ document. CI (`.github/workflows/ci.yml`) runs `npm run check`, `npm test` and `
 to `main` and every pull request, and, beside them, `npm run e2e -- --no-voice` (every check below but voice; a failed
 run keeps `e2e-out/` as a download for a week).
 
-`npm run e2e` runs the real app end to end, each check in a separate test copy with its own data folder (your Buddy,
-settings and files are left alone): **markerStartup** (generated captures, parallel preparation, cancellation,
+`npm run e2e` runs the real app end to end, each check in a separate test copy with its own data folder and its own
+Documents › Buddy (your Buddy, settings and files are left alone; a check that adds or changes anything in your real
+Documents › Buddy fails): **markerStartup** (generated captures, parallel preparation, cancellation,
 late-window ownership and timeout recovery, all on the still), **markerLive** (the native overlay: a stroke drawn and
 undone through its test commands, toolbar buttons, the picture for the question carrying the stroke, Cancel and a quick
 click closing it, drawing speed, and the still taking over when the overlay can't start), **markerRender** (generated sample content, standard/high-DPI pixels, long strokes,
@@ -199,12 +200,15 @@ retried on Anthropic's recommended fallback model rather than failing outright.
 
 ## Release
 
-1. Bump `version` in `package.json`, add the release to `CHANGELOG.md`, and commit.
-2. Push a matching tag: `git tag v0.2.1 && git push origin v0.2.1`.
+1. Bump `version` in `package.json`, add the release to `CHANGELOG.md`, commit, and merge to `main`.
+2. Push a matching tag on `main`: `git tag v0.2.1 && git push origin v0.2.1`. A tag on a commit that isn't on `main`
+   is refused.
 3. `.github/workflows/release.yml` fetches the pinned agent-desktop, runs the checks and tests, builds the native
    helpers (`npm run native`: Mark's overlay and the commands' wall launcher, into `build/native`, shipped as
-   `resources\native`; see `src/native.js`), builds the installer on Windows, and uploads it with `latest.yml` to a
-   **draft** release `v0.2.1`. `npm run dist` and `npm run dist:dir` build the helpers too; after `dist:dir`,
+   `resources\native`; see `src/native.js`) and the installer on Windows, then checks the packed app
+   (`scripts/check-packed-helper.mjs`) and, with a certificate, that the installer and Buddy's exe are signed. Only
+   when all of that passes does it upload the installer, its blockmap and `latest.yml` to a **draft** release
+   `v0.2.1`; a failed run leaves no draft. `npm run dist` and `npm run dist:dir` build the helpers too; after either,
    `node scripts/check-packed-helper.mjs` checks they're in the app and match its sources, and
    `npm run e2e -- --exe "dist/win-unpacked/Desktop Buddy.exe" markerLive` checks the app runs the shipped overlay
    and compiles nothing.

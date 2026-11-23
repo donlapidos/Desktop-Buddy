@@ -4,7 +4,11 @@ name: Release
 # copies check every download against), to a DRAFT GitHub release v<version>. Nothing is public until the maintainer
 # reviews the draft and publishes it; installed copies only see published releases.
 #
-# To release: bump "version" in package.json and add it to CHANGELOG.md, commit, then push a matching tag:
+# Nothing is uploaded until every check has passed: a failed run leaves no draft behind that could be published by
+# mistake.
+#
+# To release: bump "version" in package.json and add it to CHANGELOG.md, commit, merge to main, then push a matching
+# tag on main:
 #   git tag v0.2.1 && git push origin v0.2.1
 on:
   push:
@@ -23,7 +27,10 @@ jobs:
       # 'true' only when the signing certificate secret exists (a step's `if` can't read secrets directly).
       HAS_CERT: ${{ secrets.WIN_CSC_LINK != '' }}
     steps:
+      # The whole history, so the tag can be checked against main.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - name: The tag matches the app's version
         shell: bash
@@ -31,6 +38,15 @@ jobs:
           version=$(node -p "require('./package.json').version")
           if [ "$GITHUB_REF_NAME" != "v$version" ]; then
             echo "Tag $GITHUB_REF_NAME doesn't match package.json version $version" >&2
+            exit 1
+          fi
+
+      # A release is built only from reviewed code: a tag pushed on a branch that never reached main is refused.
+      - name: The tag is on main
+        shell: bash
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "Tag $GITHUB_REF_NAME ($GITHUB_SHA) isn't on main. Merge first, then tag main." >&2
             exit 1
           fi
 
@@ -57,24 +73,13 @@ jobs:
       - name: Unit tests
         run: npm test
 
-      # electron-builder uploads its files in parallel and, finding no release, each upload can create its own
-      # draft. Creating the draft first gives them one to share. The tag is v<version> because that's what
-      # electron-updater reads versions from.
-      - name: Create the draft release
-        shell: bash
-        run: |
-          version=$(node -p "require('./package.json').version")
-          gh release create "v$version" --draft --title "Desktop Buddy $version" --target "$GITHUB_SHA" --notes "Desktop Buddy $version"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       # Code signing, only when the certificate is there. With the WIN_CSC_LINK secret (the .pfx, base64 encoded)
       # and WIN_CSC_KEY_PASSWORD set, electron-builder signs Buddy's exe, the uninstaller and the installer while it
       # builds, and only then works out latest.yml and the blockmap, so their SHA-512 and size describe the signed
       # installer that installed copies download. Nothing has to be rebuilt afterwards. Without the secrets the
       # variables are never set and the build is unsigned, as before (an empty CSC_LINK is not passed on, so it
-      # can't be mistaken for a certificate).
-      - name: Build the installer and upload it to the draft release
+      # can't be mistaken for a certificate). Built only: uploading waits for the checks below.
+      - name: Build the installer
         shell: bash
         run: |
           if [ -n "$SIGN_LINK" ]; then
@@ -83,18 +88,36 @@ jobs:
           else
             echo "No WIN_CSC_LINK secret: building unsigned"
           fi
-          npx electron-builder --win --publish always
+          npx electron-builder --win --publish never
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SIGN_LINK: ${{ secrets.WIN_CSC_LINK }}
           SIGN_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
 
+      # The packed app as an installed copy runs it: buddy-mcp starts from inside app.asar, the files read at run
+      # time sit outside it, and the native helpers built above shipped, matching their sources (so an installed
+      # Buddy never compiles them; 0.5.0's did, and security tools flagged it).
+      - name: The packed app works and carries its helpers
+        run: node scripts/check-packed-helper.mjs
+
       # When a certificate was given, a build that came out unsigned must not look like a good release.
-      - name: The installer is signed
+      - name: The installer and Buddy are signed
         if: ${{ env.HAS_CERT == 'true' }}
         shell: pwsh
         run: |
           $version = node -p "require('./package.json').version"
-          $sig = Get-AuthenticodeSignature "dist/Desktop-Buddy-Setup-$version.exe"
-          "$($sig.Status): $($sig.SignerCertificate.Subject)"
-          if ($sig.Status -ne 'Valid') { throw "The installer is not validly signed ($($sig.Status))" }
+          foreach ($file in "dist/Desktop-Buddy-Setup-$version.exe", "dist/win-unpacked/Desktop Buddy.exe") {
+            $sig = Get-AuthenticodeSignature $file
+            "${file}: $($sig.Status): $($sig.SignerCertificate.Subject)"
+            if ($sig.Status -ne 'Valid') { throw "$file is not validly signed ($($sig.Status))" }
+          }
+
+      # One command creates the draft with all three files, so parallel uploads can't make drafts of their own. The
+      # tag is v<version> because that's what electron-updater reads versions from.
+      - name: Upload to a draft release
+        shell: bash
+        run: |
+          version=$(node -p "require('./package.json').version")
+          gh release create "v$version" --draft --title "Desktop Buddy $version" --target "$GITHUB_SHA" --notes "Desktop Buddy $version" \
+            "dist/Desktop-Buddy-Setup-$version.exe" "dist/Desktop-Buddy-Setup-$version.exe.blockmap" dist/latest.yml
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
