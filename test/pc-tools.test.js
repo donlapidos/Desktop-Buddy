@@ -26,7 +26,7 @@ function pc() {
   };
   const asked = [];
   // With the user's "Let Buddy run commands" switch on; the tests for it being off say so.
-  const ctx = (answer = true) => ({ places, undoDir: path.join(places.buddyData, "undo"), ask: async (s, n) => (asked.push({ s, n }), answer), status: () => {}, commands: true });
+  const ctx = (answer = true) => ({ places, undoDir: path.join(places.buddyData, "undo"), ask: async (s, n, _scope, d) => (asked.push({ s, n, d }), answer), status: () => {}, commands: true });
   return { root, home, places, asked, ctx };
 }
 
@@ -132,7 +132,7 @@ test("PowerShell asks with the plain description, runs in the working folder, an
   try {
     const out = await runPcTool("run_powershell", { command: "$Work; \"key=[$env:OPENAI_API_KEY]\"; 'héllo'", description: "Check the folder" }, ctx());
     assert.equal(asked[0].s, "Check the folder");
-    assert.match(asked[0].n, /\$Work/, "the command itself is on the card, under the description");
+    assert.match(asked[0].d, /\$Work/, "the command itself is on the card, in full, under the description");
     assert.match(out, /^Exit code 0/);
     assert.ok(out.toLowerCase().includes(fs.realpathSync.native(places.workDir).toLowerCase()), out);
     assert.match(out, /key=\[\]/);

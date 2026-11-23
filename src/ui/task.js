@@ -56,9 +56,14 @@ window.buddy.onTaskStream((text) => {
 // moments are ignored.
 const ARM_MS = 500;
 let confirmAt = 0;
-window.buddy.onTaskConfirm(({ summary, note }) => {
+// The card on screen: its number goes back with the answer, and its detail is the exact text, every character.
+let cardId = 0;
+window.buddy.onTaskConfirm(({ id, summary, note, detail }) => {
+  cardId = id;
   $("what").textContent = summary;
   $("why").textContent = note && note.toLowerCase() !== summary.toLowerCase() ? note : "";
+  $("exact").textContent = detail ?? "";
+  $("exact").hidden = !detail;
   $("confirm").classList.add("on");
   confirmAt = performance.now();
   $("confirm").focus();
@@ -74,7 +79,7 @@ $("confirm").addEventListener("click", (e) => {
   const d = /** @type {HTMLElement} */ (e.target).dataset?.d;
   if (!d || performance.now() - confirmAt < ARM_MS) return;
   $("confirm").classList.remove("on");
-  window.buddy.taskConfirmReply(d);
+  window.buddy.taskConfirmReply(d, cardId);
 });
 
 $form().addEventListener("submit", async (e) => {

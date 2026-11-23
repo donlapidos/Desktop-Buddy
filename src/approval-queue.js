@@ -5,7 +5,8 @@
 
 /**
  * @template B
- * @typedef {{ summary: string, bounds: B | null, note?: string, resolve: (decision: string) => void }} Request
+ * `detail`: the exact text typed or sent, shown in full. `id`: which card this is; an answer names the card it was for.
+ * @typedef {{ id: number, summary: string, bounds: B | null, note?: string, detail?: string, resolve: (decision: string) => void }} Request
  */
 
 /**
@@ -18,6 +19,7 @@ export function createApprovalQueue({ show: showCard, clear, trace, armMs = 0, n
   /** @type {Request<B>[]} */
   const waiting = [];
   let shownAt = 0;
+  let cards = 0;
   const show = (/** @type {Request<B>} */ request) => {
     shownAt = now();
     showCard(request);
@@ -39,14 +41,14 @@ export function createApprovalQueue({ show: showCard, clear, trace, armMs = 0, n
   return {
     /**
      * Waits for the user's OK. Resolves their decision ("allow", "always", "deny"), or "deny" if `signal` aborts first.
-     * @param {string} summary @param {B | null} bounds @param {string} [note] @param {AbortSignal} [signal]
+     * @param {string} summary @param {B | null} bounds @param {string} [note] @param {AbortSignal} [signal] @param {string} [detail]
      * @returns {Promise<string>}
      */
-    ask(summary, bounds, note, signal) {
+    ask(summary, bounds, note, signal, detail) {
       if (signal?.aborted) return Promise.resolve("deny");
       return new Promise((resolve) => {
         /** @type {Request<B>} */
-        const request = { summary, bounds, note, resolve };
+        const request = { id: ++cards, summary, bounds, note, detail, resolve };
         waiting.push(request);
         signal?.addEventListener("abort", () => settle(request, "deny"), { once: true });
         if (waiting.length === 1) show(request);
@@ -54,9 +56,16 @@ export function createApprovalQueue({ show: showCard, clear, trace, armMs = 0, n
       });
     },
 
-    /** The user answered the card: settles the request it shows. Returns whether one was waiting. */
-    answer(/** @type {string} */ decision) {
+    /**
+     * The user answered the card: settles the request it shows. With `id`, only if that's the card they answered: a
+     * click on a card that has just been replaced by another doesn't answer the new one. Returns whether it settled.
+     */
+    answer(/** @type {string} */ decision, /** @type {number | undefined} */ id = undefined) {
       if (!waiting.length) return false;
+      if (id !== undefined && waiting[0].id !== id) {
+        trace?.({ kind: "confirm-other-card", answered: id, showing: waiting[0].id });
+        return false;
+      }
       if (now() - shownAt < armMs) {
         trace?.({ kind: "confirm-too-soon", ms: now() - shownAt });
         return false;

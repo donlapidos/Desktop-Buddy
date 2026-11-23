@@ -341,13 +341,16 @@ const CHECKS = {
     await new Promise((r) => server.listen(0, "127.0.0.1", r));
     try {
       const url = `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`;
-      const { markers, timedOut } = await runCopy("conversation", { BUDDY_CONVERSATION_TEST: url, BUDDY_CONVERSATION_TEST_OUT: path.join(out, "conversation.png"),
+      const { markers, timedOut } = await runCopy("conversation", { BUDDY_CONVERSATION_TEST: url, BUDDY_CONVERSATION_TEST_OUT: path.join(out, "conversation.png"), BUDDY_CARD_TEST_OUT: path.join(out, "card-exact.png"),
         BUDDY_CONVERSATION_SAMPLE: path.join(app, "scripts/samples/context-window.ps1") }, "CONVERSATION_TEST_DONE");
       const r = markers.CONVERSATION_TEST?.[0];
       if (!r) return [timedOut ? "timed out" : "no conversation result"];
       const fp = r.firstPointer;
       return [!r.partial && "text wasn't visible before completion", !r.editable && "the input was disabled while answering", !r.corrected && "the correction didn't replace the old answer", r.error,
         !r.cardKept && "an AI app's approval card came down when an answer in the chat ended",
+        !(r.card?.shown && r.card.exact === "dir⏎\nformat d: /q⏎\n") && `the card didn't show the exact text to be typed (${JSON.stringify(r.card)})`,
+        !r.card?.oldAnswerIgnored && "an answer meant for the card before answered the one showing",
+        r.card?.answered !== "deny" && `the card's own answer didn't count (${JSON.stringify(r.card?.answered)})`,
         r.guided !== "There they are." && `the guided answer said ${JSON.stringify(r.guided)}`,
         !fp && "a guided answer left no first-pointer entry in the timing log",
         fp && !["ms", "contextMs", "modelMs", "pointMs"].every((k) => Number.isFinite(fp[k])) && `the first-pointer entry is missing a part: ${JSON.stringify(fp)}`,
@@ -648,7 +651,7 @@ const CHECKS = {
         !r.connected && "Connect didn't sign in",
         service.seen.registered !== 1 && `Buddy registered ${service.seen.registered} times`,
         !/^Connected/.test(r.after ?? "") && `after connecting the bubble said ${JSON.stringify(r.after)}`,
-        r.card !== "Test Docs: Search documents" && `the approval card said ${JSON.stringify(r.card)}`,
+        r.card !== "Test Docs: Search documents (search_docs)" && `the approval card said ${JSON.stringify(r.card)}`,
         JSON.stringify(service.seen.calls) !== JSON.stringify([{ name: "search_docs", args: { query: "budget" } }]) && `the service saw ${JSON.stringify(service.seen.calls)}`,
         !/Forecast sheet/.test(r.reply ?? "") && `the answer was ${JSON.stringify(r.reply)}`,
         !(r.listed ?? []).includes("testdocs:true") && `Settings listed ${JSON.stringify(r.listed)}`,

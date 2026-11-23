@@ -96,3 +96,18 @@ test("an answer in the card's first half second doesn't count; one after it does
   q.answer("allow");
   assert.equal(await after, "allow");
 });
+
+test("an answer counts only for the card it was given on: a click as one card replaces another doesn't answer the new one", async () => {
+  const shown = [];
+  const q = createApprovalQueue({ show: (r) => shown.push(r), clear() {} });
+  const first = q.ask("Click Save", null);
+  const second = q.ask("Delete report.xlsx", null);
+  const firstId = shown[0].id;
+  assert.equal(q.answer("allow", firstId), true);
+  assert.equal(await first, "allow");
+  // The user's second click was meant for the first card, but the second is showing now.
+  assert.equal(q.answer("allow", firstId), false, "it doesn't approve the card that replaced it");
+  assert.equal(await within(second, 50), "hung", "the new card still waits");
+  assert.equal(q.answer("deny", shown[1].id), true);
+  assert.equal(await second, "deny");
+});

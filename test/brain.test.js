@@ -363,3 +363,57 @@ test("AI apps that use Buddy's tools aren't offered a closing line: they reply f
   assert.ok(BRIDGE_TOOLS.every((t) => !t.input_schema?.properties?.then_say));
   assert.doesNotMatch(INSTRUCTIONS, /then_say/);
 });
+
+// What the card shows must be what happens: every character typed or sent, and the window the keys really go to.
+test("the card shows every character Buddy would type, line breaks marked, and refuses what's too long to check", async () => {
+  const { b, cards } = brain();
+  b.target = { app_name: "WindowsTerminal.exe", id: "w-1", title: "PowerShell" };
+  b.abort = new AbortController();
+  b.standing = new Set();
+  // In a console each line break is Enter: "dir", then a destructive command.
+  assert.equal(await b.act({ action: "type", ref: "@s1:e1", text: "dir\nformat d: /q\n", summary: "List the folder" }), "The user declined.");
+  const [summary, , note, , detail] = cards.at(-1);
+  assert.match(summary, /dir⏎format d: \/q⏎/, "the one-line summary marks each Enter");
+  assert.equal(note, "List the folder", "the model's words stay a note");
+  assert.equal(detail, "dir⏎\nformat d: /q⏎\n", "the detail shows it all, line by line");
+  // Long text: the summary is cut, the detail isn't.
+  const long = `${"a".repeat(300)} SECRET-TAIL`;
+  await b.act({ action: "set_value", ref: "@s1:e1", text: long });
+  assert.ok(!cards.at(-1)[0].includes("SECRET-TAIL"));
+  assert.match(cards.at(-1)[4], /SECRET-TAIL$/, "nothing past the summary goes unseen");
+  // Short, one-line text needs no detail.
+  await b.act({ action: "type", ref: "@s1:e1", text: "hello" });
+  assert.equal(cards.at(-1)[4], undefined);
+  // Too long to check on a card: not asked at all.
+  const asked = cards.length;
+  assert.match(await b.act({ action: "type", ref: "@s1:e1", text: "x".repeat(8001) }), /more than the user can check/);
+  assert.equal(cards.length, asked);
+});
+
+test("a connected service's card shows everything it will be given, even after a long message", async () => {
+  const { b, cards } = brain();
+  b.abort = new AbortController();
+  b.standing = new Set();
+  b.ui.connectors = { tools: () => [], describe: () => ({ service: "Mail", action: "Send" }), call: async () => "sent" };
+  await b.serviceTool("mail__send", { body: "Hi team,\n".repeat(80), to: ["sam@example.com"], bcc: ["someone@elsewhere.example"] }, { service: "Mail", action: "Send" });
+  assert.match(cards.at(-1)[4], /someone@elsewhere\.example/, "a recipient after a long body is on the card");
+});
+
+test("press and window act on the window the id names: its real app is judged, and an id from another app is refused", async () => {
+  const { b, cards } = brain();
+  b.abort = new AbortController();
+  b.standing = new Set();
+  b.openWindows = async () => [{ id: "w-1", app_name: "notepad.exe" }, { id: "w-9", app_name: "KeePass.exe" }];
+  // The model says Notepad but gives the password manager's window.
+  assert.match(await b.act({ action: "press", keys: "ctrl+v", app: "notepad", window_id: "w-9" }), /Window w-9 is KeePass\.exe, not notepad/);
+  assert.match(await b.runTool("window", { action: "focus", app: "notepad", window_id: "w-9" }), /Window w-9 is KeePass\.exe/);
+  assert.match(await b.act({ action: "press", keys: "ctrl+v", app: "notepad", window_id: "w-404" }), /no window w-404/);
+  assert.equal(cards.length, 0, "none of those reached a card");
+  // Matching: the action goes to that window, named by its real app.
+  const action = await new Promise((resolve) => {
+    b.operate = async (a) => resolve(a);
+    b.act({ action: "press", keys: "ctrl+s", app: "Notepad", window_id: "w-1" });
+  });
+  assert.deepEqual(action.args, ["press", "ctrl+s", "--app", "notepad.exe", "--window-id", "w-1"]);
+  assert.equal(action.app, "notepad.exe");
+});

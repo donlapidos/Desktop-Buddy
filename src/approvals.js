@@ -40,9 +40,10 @@ const issued = new WeakSet();
  *   (none)        reading a web page and sending an email: each asks, since either can carry what was read away
  * A request without a scope always asks. `policy` is the user's Agents settings; without one, every action asks.
  * @typedef {{
- *   confirm: (summary: string, bounds: import("./geometry.js").PhysicalRect | null, note?: string, signal?: AbortSignal) => Promise<Decision | string>,
+ *   confirm: (summary: string, bounds: import("./geometry.js").PhysicalRect | null, note?: string, detail?: string) => Promise<Decision | string>,
  *   bounds?: import("./geometry.js").PhysicalRect | null,
  *   note?: string,
+ *   detail?: string,       // the exact text typed or sent, shown in full
  *   scope?: string,
  *   standing: Set<string>,
  *   policy?: import("./policy.js").AgentPolicy,
@@ -70,10 +71,10 @@ function issue(action) {
  * @param {Ask} how
  * @returns {Promise<boolean>}
  */
-export async function askUser(summary, { confirm, bounds = null, note, scope, standing, signal }) {
+export async function askUser(summary, { confirm, bounds = null, note, detail, scope, standing, signal }) {
   if (signal?.aborted) return false;
   if (scope && standing.has(scope)) return true;
-  const decision = await confirm(summary, bounds, note);
+  const decision = await confirm(summary, bounds, note, detail);
   if (signal?.aborted) return false;
   if (decision === "always" && scope) standing.add(scope);
   return decision === "allow" || decision === "always";

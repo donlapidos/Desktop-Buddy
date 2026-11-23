@@ -1225,9 +1225,10 @@ onFrom(fromBubble, "hide", () => {
   hushReply();
   hideBubble();
 });
-onFrom(fromBubble, "confirm-reply", (_e, decision) => {
+// The card's answer names the card it was for; one without a card (not a number) answers nothing.
+onFrom(fromBubble, "confirm-reply", (_e, decision, id) => {
   trace({ kind: "confirm-reply", decision, waiting: approvals.size() });
-  answerApproval(decision);
+  answerApproval(decision, Number.isInteger(id) ? id : -1);
 });
 let islandHovered = false;
 onFrom(fromIsland, "island-hover", (_e, inside) => {
@@ -1274,11 +1275,11 @@ onFrom(fromIsland, "task-peek", (_e, id) => {
 // the oldest; a request whose asker stops (its signal) is withdrawn, and the card moves on or comes down.
 /** @type {ReturnType<typeof createApprovalQueue<PhysicalRect>>} */
 const approvals = createApprovalQueue({
-  show: ({ summary, bounds, note }) => {
+  show: ({ id, summary, bounds, note, detail }) => {
     trace({ kind: "confirm-shown", bubbleVisible: bubble.isVisible(), focusable: bubble.isFocusable(), bounds: bubble.getBounds(), waiting: approvals?.size() ?? 1 });
     if (bounds) point(bounds, summary);
     showBubble({ focus: false });
-    bubble.webContents.send("confirm", { summary, note });
+    bubble.webContents.send("confirm", { id, summary, note, detail });
     showIsland();
   },
   clear: () => {
@@ -1294,14 +1295,15 @@ const waitingForOk = () => approvals.size() > 0;
 
 // `summary` says exactly what will happen; `note` is the model's own description, shown smaller under it. `signal` is
 // the asker's: when it stops, its request is withdrawn as "deny".
-/** @param {string} summary @param {PhysicalRect | null} bounds @param {string} [note] @param {AbortSignal} [signal] @returns {Promise<string>} */
-function confirm(summary, bounds, note, signal) {
-  return approvals.ask(summary, bounds, note, signal);
+/** @param {string} summary @param {PhysicalRect | null} bounds @param {string} [note] @param {AbortSignal} [signal] @param {string} [detail] @returns {Promise<string>} */
+function confirm(summary, bounds, note, signal, detail) {
+  return approvals.ask(summary, bounds, note, signal, detail);
 }
 
 // The user answered the card (or pressed Esc on it): settles the request it shows.
-function answerApproval(decision) {
-  if (!approvals.answer(decision)) return;
+// `id`: the card answered; without one (Buddy's own "deny", the chat closing) it's the card showing now.
+function answerApproval(/** @type {string} */ decision, /** @type {number | undefined} */ id = undefined) {
+  if (!approvals.answer(decision, id)) return;
   releaseFocus(); // the click on the card activated the bubble; the user's app gets the keyboard back
 }
 

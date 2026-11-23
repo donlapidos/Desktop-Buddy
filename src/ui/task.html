@@ -55,6 +55,9 @@
   #confirm .what { font-weight: 600; overflow-wrap: anywhere; }
   #confirm .why { font-size: 12.5px; color: var(--muted); }
   #confirm .why:empty { display: none; }
+  /* The exact text Buddy would type or send, every character, line breaks marked: it scrolls rather than being cut. */
+  #confirm .exact { margin: 0; max-height: 9.5em; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.45 Consolas, "Cascadia Mono", monospace; padding: 7px 9px; border-radius: 8px; background: rgba(255,255,255,.06); color: #e9ebef; }
+  #confirm .exact[hidden] { display: none; }
   #confirm .row { display: flex; gap: 6px; flex-wrap: wrap; }
 
   form { display: flex; gap: 6px; padding: 10px 12px 12px; border-top: 1px solid var(--line); flex: none; }
@@ -85,6 +88,7 @@
 <div id="confirm" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="why" tabindex="-1">
   <div id="confirm-title"><span data-t>Can I do this?</span> <span class="what" id="what"></span></div>
   <div class="why" id="why"></div>
+    <pre class="exact" id="exact" hidden data-t-attrs="aria-label" aria-label="Exactly what Buddy would type or send" tabindex="0"></pre>
   <div class="row">
     <button class="btn" data-d="allow" data-t>Allow</button>
     <button class="btn ghost" data-d="always" data-t>Allow for this task</button>

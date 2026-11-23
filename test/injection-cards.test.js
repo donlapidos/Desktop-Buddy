@@ -26,7 +26,8 @@ test("obeying hidden instructions still stops at the card: each harmful step say
     apiKey: "sk-test", status() {}, point: async () => {}, advanced: () => true, commands: () => true,
     documentsDir: buddyDocs, dataDir: data, readFolders: () => [docs],
     openFile: async () => "opened",
-    confirm: async (summary, _bounds, note) => (cards.push({ summary, note: String(note ?? "") }), "deny"),
+    // What the card shows: the summary, the note, and the exact text in full (detail).
+    confirm: async (summary, _bounds, note, _signal, detail) => (cards.push({ summary, note: [note, detail].filter(Boolean).join("\n") }), "deny"),
     connectors: {
       tools: () => [],
       describe: (name) => (name === "mail__send_mail" ? { service: "Mail", action: "Send an email", once: true } : null),
