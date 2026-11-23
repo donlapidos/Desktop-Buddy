@@ -160,6 +160,7 @@ hotkey ─► main.js ── remembers the window you were in (list-windows, is_
             ├─► overlay.html  one click-through window per display: the pointer and its caption
             ├─► tasks.js      task windows (task.html), each with its own Brain
             ├─► voice.js      voice.html (hidden: microphone, end-of-speech detection, playback)
+            │      ├─► sound.js   who has the microphone and the speaker: the one table every move asks
             │      └─► speech.js  child process: Moonshine + Supertonic on sherpa-onnx (models.js fetches and checks them)
             ├─► brain.js      the tool loop: look · screenshot · point_at · guide_steps · act · list_windows · …
             │      ├─► providers.js  Anthropic, OpenAI (Responses), and Chat Completions for the rest; what models can do

@@ -36,19 +36,29 @@ function downsample(chunks, from) {
 }
 
 // `held`: the user is holding the Talk key, so a pause doesn't end the request; letting go does ("finish").
-async function listen({ continuous = false, held = false } = {}) {
+// `n` is the take's number from Buddy (sound.js), sent back with everything heard, so a cancelled take's late answer
+// can't count for the next one.
+async function listen({ continuous = false, held = false, take: n = 0 } = {}) {
   if (take) return;
-  const t = { chunks: [], frame: [], frameLen: 0, speech: false, lastVoice: 0, started: performance.now(), opened: performance.now(), segmentStart: 0, segments: 0, continuous, held, floor: null, loud: 0 };
+  const t = { n, chunks: [], frame: [], frameLen: 0, speech: false, lastVoice: 0, started: performance.now(), opened: performance.now(), segmentStart: 0, segments: 0, continuous, held, floor: null, loud: 0 };
   take = t;
   try {
     t.stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
   } catch (err) {
     take = null;
-    return window.buddy.voiceHeard({ error: err.name === "NotAllowedError" ? "mic-blocked" : "no-mic" });
+    return window.buddy.voiceHeard({ error: err.name === "NotAllowedError" ? "mic-blocked" : "no-mic", take: n });
   }
   if (take !== t) return t.stream.getTracks().forEach((x) => x.stop());
   t.ctx = new AudioContext();
-  await t.ctx.audioWorklet.addModule("voice-capture.js");
+  try {
+    await t.ctx.audioWorklet.addModule("voice-capture.js");
+  } catch {
+    // The microphone opened but its samples can't be read: end the take, rather than leave it open and Buddy waiting.
+    if (take === t) take = null;
+    close(t);
+    return window.buddy.voiceHeard({ error: "no-mic", take: n });
+  }
+  if (take !== t) return close(t);
   const src = t.ctx.createMediaStreamSource(t.stream);
   const node = new AudioWorkletNode(t.ctx, "capture");
   src.connect(node);
@@ -101,7 +111,7 @@ function onFrame(t, rms) {
 
 // Sends what was said since the last pause and keeps listening.
 function segment(t, now) {
-  window.buddy.voiceSegment({ pcm: downsample(t.chunks, t.ctx.sampleRate) });
+  window.buddy.voiceSegment({ pcm: downsample(t.chunks, t.ctx.sampleRate), take: t.n });
   t.chunks = [];
   t.speech = false;
   t.loud = 0;
@@ -109,9 +119,10 @@ function segment(t, now) {
   t.segments++;
 }
 
+// Safe to call twice (a take finished while it was still starting is closed by both).
 function close(t) {
   t.stream?.getTracks().forEach((x) => x.stop());
-  t.ctx?.close();
+  if (t.ctx && t.ctx.state !== "closed") t.ctx.close().catch(() => {});
 }
 
 function finish() {
@@ -119,8 +130,8 @@ function finish() {
   if (!t) return;
   take = null;
   close(t);
-  if (!t.speech || !t.ctx) return window.buddy.voiceHeard(t.segments ? { done: true } : { error: "silence" });
-  window.buddy.voiceHeard({ pcm: downsample(t.chunks, t.ctx.sampleRate) });
+  if (!t.speech || !t.ctx) return window.buddy.voiceHeard(t.segments ? { done: true, take: t.n } : { error: "silence", take: t.n });
+  window.buddy.voiceHeard({ pcm: downsample(t.chunks, t.ctx.sampleRate), take: t.n });
 }
 
 function cancel() {

@@ -182,6 +182,7 @@ function voiceTest(kit) {
     console.log("VOICE_JOIN", JSON.stringify(await joinCheck(voice)));
     console.log("VOICE_HUSH", JSON.stringify(await hushCheck(kit)));
     console.log("VOICE_MIC_OPEN", JSON.stringify(await openMicCheck(voice)));
+    console.log("VOICE_SOUND", JSON.stringify(await soundCheck(voice)));
     if (process.env.BUDDY_VOICE_TEST_MIC) console.log("VOICE_MIC", JSON.stringify(await voice.listen()));
     console.log("VOICE_HOLD", JSON.stringify(await holdToTalkCheck(kit)));
     console.log("VOICE_TEST_DONE");
@@ -202,6 +203,52 @@ async function openMicCheck(voice) {
   voice.cancelListening();
   await listening;
   return { opened, spoke };
+}
+
+// The rest of who has the microphone and speaker (sound.js), through the real voice page:
+// - during a meeting Buddy doesn't speak;
+// - a take's late answer, sent after it was cancelled, doesn't end the next take;
+// - a voice page that crashes mid-take ends the take at once, instead of leaving Buddy listening.
+/** @param {DevKit["voice"]} voice */
+async function soundCheck(voice) {
+  const r = {};
+  voice.setMeeting(true);
+  const meetingSay = voice.say("This should not be heard either.");
+  r.spokeInMeeting = voice.speaking;
+  voice.hush();
+  await meetingSay;
+  voice.setMeeting(false);
+  const page = () => BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("/ui/voice.html"));
+  // A take, cancelled; then a new one. The first take's answer arrives late, from the page, as it would.
+  const first = voice.listen();
+  voice.cancelListening();
+  await first;
+  const second = voice.listen();
+  await page()?.webContents.executeJavaScript(`window.buddy.voiceHeard({ error: "silence", take: 1 })`);
+  await new Promise((res) => setTimeout(res, 300));
+  r.stillListening = voice.listening;
+  // The page crashes while the second take is open. (Electron reports a crashed page with this event; a hidden page
+  // in a test copy can't be crashed on purpose, so the event is sent as Electron would send it.)
+  const t0 = Date.now();
+  page()?.webContents.emit("render-process-gone", {}, { reason: "crashed", exitCode: 1 });
+  const ended = await Promise.race([second, new Promise((res) => setTimeout(() => res({ error: "still waiting" }), 5000))]);
+  r.crashEnded = ended?.error;
+  r.crashMs = Date.now() - t0;
+  r.listeningAfter = voice.listening;
+  // And the next take works, on a new page.
+  const third = voice.listen();
+  r.reopened = voice.listening;
+  voice.cancelListening();
+  await third;
+  // The page opens the microphone but can't read its samples: the take ends, rather than staying open.
+  // The page made after the crash may still be loading.
+  for (let i = 0; i < 50 && !(page() && !page()?.webContents.isLoading()); i++) await new Promise((res) => setTimeout(res, 100));
+  r.patched = await page()?.webContents.executeJavaScript(`AudioWorklet.prototype.addModule = () => Promise.reject(new Error("no worklet")); true`);
+  const broken = await Promise.race([voice.listen(), new Promise((res) => setTimeout(() => res({ error: "still waiting" }), 8000))]);
+  r.brokenEnded = broken?.error;
+  r.listeningAfterBroken = voice.listening;
+  if (voice.listening) voice.cancelListening();
+  return r;
 }
 
 // A guided answer says each step's caption as it points, and Hush silences the rest of the answer, captions too:
