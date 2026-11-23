@@ -303,6 +303,8 @@ const meetings = createMeetingSession({
     trace,
   }),
   onState: (state) => {
+    // Buddy's voice stays quiet from the moment a meeting starts until its notes are written (sound.js).
+    voice?.setMeeting(state !== "off");
     clearInterval(meetingClock);
     islandFacts.meeting = null;
     if (state === "on") {
@@ -2007,8 +2009,8 @@ const settingsWindow = createSettingsWindow({
   state: settingsState,
   change: changeSettings,
   capture: suspendHotkeys,
-  // Not during a meeting: the preview would be heard by the people in it and end up in the notes.
-  preview: (sid, speed) => !meetingOn() && voice?.say(PREVIEW_LINE, { sid: Math.min(VOICES - 1, Math.max(0, Math.trunc(sid) || 0)), speed: Math.min(SPEED.max, Math.max(SPEED.min, speed || 1)) }),
+  // Quiet during a meeting, as all of Buddy's voice is (sound.js).
+  preview: (sid, speed) => voice?.say(PREVIEW_LINE, { sid: Math.min(VOICES - 1, Math.max(0, Math.trunc(sid) || 0)), speed: Math.min(SPEED.max, Math.max(SPEED.min, speed || 1)) }),
   setKey: setApiKey,
   setAddress,
   checkModel,

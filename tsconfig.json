@@ -43,6 +43,7 @@
     "src/connectors.js",
     "src/meeting.js",
     "src/meeting-capture.js",
+    "src/sound.js",
     "src/i18n.js",
     "src/updates.js",
     "src/speakable.js",

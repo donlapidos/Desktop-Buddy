@@ -505,9 +505,18 @@ const CHECKS = {
     const join = markers.VOICE_JOIN?.[0];
     const hush = markers.VOICE_HUSH?.[0];
     const mic = markers.VOICE_MIC_OPEN?.[0];
+    const sound = markers.VOICE_SOUND?.[0];
     return [!heard.includes("formulas") && `heard ${heard || "nothing"}`, !markers.VOICE_SAID && "the reply wasn't played",
       !mic?.opened && `the open-microphone check didn't get the microphone open (${JSON.stringify(mic)})`,
       mic?.opened && mic.spoke && "Buddy spoke while its microphone was open",
+      !sound && "the microphone-and-speaker check printed nothing",
+      sound?.spokeInMeeting && "Buddy spoke during a meeting",
+      sound && !sound.stillListening && "a cancelled take's late answer ended the next take",
+      sound && sound.crashEnded !== "voice-page-gone" && `a crashed voice page left Buddy listening (${sound.crashEnded})`,
+      sound && sound.listeningAfter && "Buddy still counted itself listening after the voice page crashed",
+      sound && !sound.reopened && "the microphone didn't open again after the voice page crashed",
+      sound && !sound.patched && "the check couldn't make the voice page's microphone fail",
+      sound && (sound.brokenEnded !== "no-mic" || sound.listeningAfterBroken) && `a microphone whose samples couldn't be read left the take open (${sound.brokenEnded})`,
       JSON.stringify(hush?.said) !== JSON.stringify(["Click Insert"]) && `a guide step's caption before Hush is said and the one after isn't, but Buddy said ${JSON.stringify(hush?.said)}`,
       !join && "the follow-on check printed nothing",
       join && !(join.gapMs < 300) && `a sentence joining the one being said left a silence of ${join.gapMs} ms before it`,

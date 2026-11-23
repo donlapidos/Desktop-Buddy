@@ -5,6 +5,7 @@ import { BrowserWindow, ipcMain } from "electron";
 import { fork } from "node:child_process";
 import path from "node:path";
 import { ASR, ASR_MULTI, TTS, isInstalled, removeLegacy } from "./models.js";
+import { createSound } from "./sound.js";
 import { pieces } from "./speakable.js";
 
 // The models hold ~520 MB while loaded. They load the moment the user starts talking (Moonshine is ready before
@@ -20,7 +21,7 @@ const PLAY_GRACE_MS = 5_000;
  * both come from Settings and are asked every time.
  * @param {{ here: string, cacheDir: string, getVoice: () => { sid: number, speed: number, lang?: string },
  *           getLanguage: () => string,
- *           onState: (state: string, info?: object) => void, onLevel: (level: number) => void, onSound?: () => void, trace?: Function }} opts
+ *           onState: (state: string, info?: object) => void, onLevel: (level: number) => void, onSound?: () => void, trace?: (entry: object) => void }} opts
  * `onSound` is told each time a clip starts playing (for the ask-to-pointer timing's first sound).
  */
 export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, onLevel, onSound = () => {}, trace = () => {} }) {
@@ -29,10 +30,11 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
   let seq = 0;
   const pending = new Map();
   let win = null;
-  let heard = null; // resolves the current listen()
+  // Who has the microphone and the speaker (sound.js): every move below asks it first.
+  const sound = createSound({ trace });
+  let heard = null; // resolves the open take's listen() or dictate()
   let played = new Map();
   let gen = 0; // bumps on hush, so a reply being spoken stops between pieces
-  let speaking = false;
   let line = null; // what Buddy is saying now, which more of the same reply can join (say's `join`)
 
   function startSpeech() {
@@ -72,7 +74,7 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
   function idleLater() {
     clearTimeout(unloadTimer);
     unloadTimer = setTimeout(() => {
-      if (heard || speaking || pending.size) return idleLater();
+      if (sound.ear !== "off" || sound.mouth === "speaking" || pending.size) return idleLater();
       speech?.kill();
       speech = null;
     }, UNLOAD_AFTER_MS);
@@ -103,6 +105,26 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
     win = new BrowserWindow({ show: false, width: 200, height: 100, skipTaskbar: true, webPreferences: { preload: path.join(here, "preload.cjs"), backgroundThrottling: false } });
     win.loadFile(path.join(here, "ui/voice.html"));
     win.on("closed", () => (win = null));
+    // A voice page that crashes or can't load ends what it was doing, so Buddy isn't left listening (or waiting on a
+    // clip) forever; the next request makes a new one.
+    const gone = (/** @type {string} */ why) => {
+      trace({ kind: "voice-page-gone", why });
+      const dead = win;
+      win = null;
+      if (dead && !dead.isDestroyed()) dead.destroy();
+      endTake(sound.take, { error: "voice-page-gone" });
+      for (const resolve of played.values()) resolve();
+      played.clear();
+    };
+    win.webContents.on("render-process-gone", (_e, d) => gone(d.reason));
+    win.webContents.on("did-fail-load", (_e, code) => gone(`load ${code}`));
+  }
+  /** Ends take `n` with `result`, if it's still the open one. */
+  function endTake(/** @type {number} */ n, /** @type {any} */ result) {
+    if (!sound.close(n)) return;
+    const done = heard;
+    heard = null;
+    done?.(result);
   }
   const send = (payload) => {
     if (!win || win.isDestroyed()) createWindow();
@@ -113,15 +135,13 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
   const fromVoice = (e) => win && e.sender === win.webContents;
   ipcMain.on("voice-state", (e, state) => fromVoice(e) && onState(state));
   ipcMain.on("voice-level", (e, level) => fromVoice(e) && onLevel(Number(level) || 0));
+  // What the page heard counts only for the take it was for: a cancelled take's late answer can't end the next one.
   ipcMain.on("voice-heard", (e, result) => {
-    if (!fromVoice(e)) return;
-    const done = heard;
-    heard = null;
-    done?.(result);
+    if (fromVoice(e)) endTake(Number(result?.take), result);
   });
   let onSegment = null; // where the pieces of a continuous dictation go
   ipcMain.on("voice-segment", (e, result) => {
-    if (fromVoice(e) && result?.pcm) onSegment?.(result.pcm);
+    if (fromVoice(e) && result?.pcm && sound.current(Number(result.take))) onSegment?.(result.pcm);
   });
   ipcMain.on("voice-played", (e, id) => {
     if (!fromVoice(e)) return;
@@ -151,12 +171,14 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
    * `endedAt` is when their speech ended (the clock a spoken question's timing starts from).
    */
   async function listen() {
+    // Refused before anything else, so a listen that can't happen doesn't cut off what Buddy is saying.
+    if (!sound.mayOpen()) return { error: "busy" };
     hush();
-    if (heard) return { error: "busy" };
     warm();
+    const take = sound.open("listening");
     const result = await new Promise((resolve) => {
       heard = resolve;
-      send({ cmd: "listen" });
+      send({ cmd: "listen", take });
     });
     if (!result?.pcm) return { error: result?.error ?? "cancelled" };
     const endedAt = Date.now();
@@ -171,8 +193,8 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
    * @param {{ continuous: boolean, onText: (text: string) => Promise<void> }} how
    */
   async function dictate({ continuous, onText }) {
+    if (!sound.mayOpen()) return { error: "busy" };
     hush();
-    if (heard) return { error: "busy" };
     warm();
     let chain = Promise.resolve();
     let count = 0;
@@ -187,9 +209,10 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
       });
     };
     onSegment = handle;
+    const take = sound.open("dictating");
     const result = await new Promise((resolve) => {
       heard = resolve;
-      send({ cmd: "listen", continuous });
+      send({ cmd: "listen", continuous, take });
     });
     onSegment = null;
     if (result?.pcm) handle(result.pcm);
@@ -199,15 +222,14 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
   }
 
   /** Ends listening now and uses what was said so far. */
-  const finishListening = () => heard && send({ cmd: "finish" });
+  const finishListening = () => sound.take && send({ cmd: "finish", take: sound.take });
   /** The Talk key is being held: keep listening through pauses until finishListening(). */
-  const holdListening = () => heard && send({ cmd: "hold" });
+  const holdListening = () => sound.take && send({ cmd: "hold", take: sound.take });
   const cancelListening = () => {
-    if (!heard) return;
-    send({ cmd: "cancel" });
-    const done = heard;
-    heard = null;
-    done({ error: "cancelled" });
+    const take = sound.take;
+    if (!take) return;
+    send({ cmd: "cancel", take });
+    endTake(take, { error: "cancelled" });
   };
 
   const warm = () => request("warm", { language: getLanguage() }).catch((err) => trace({ kind: "voice-warm-failed", error: err.message }));
@@ -219,9 +241,9 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
    * silence between two pieces (`gapMs`), which is how long the next one took to be ready after the last one ended.
    */
   async function say(text, how = getVoice(), { join = false } = {}) {
-    // Never into an open microphone: while Buddy listens or takes dictation, what it said would be heard back (and
-    // typed into the user's app).
-    if (heard) return;
+    // Never into an open microphone, nor during a meeting (sound.js): what Buddy said would be heard back, typed into
+    // the user's app, or written into the meeting's transcript.
+    if (!sound.maySpeak()) return;
     const following = join && line?.mine === gen ? line : null;
     const parts = pieces(text, { first: !following });
     if (!parts.length) return;
@@ -232,7 +254,7 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
     }
     hush();
     const mine = ++gen;
-    speaking = true;
+    sound.speak();
     onState("speaking");
     const synth = (s) => request("speak", { text: s, ...how }).catch(() => null);
     /** @type {{ mine: number, parts: string[], clips: Promise<any>[], at: number, ahead: () => void, done?: Promise<{ gapMs: number } | undefined> }} */
@@ -280,7 +302,7 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
       } finally {
         if (line === l) line = null;
         if (mine === gen) {
-          speaking = false;
+          sound.quiet();
           onState("quiet");
         }
       }
@@ -292,8 +314,8 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
     for (const resolve of played.values()) resolve();
     played.clear();
     if (win && !win.isDestroyed()) send({ cmd: "hush" });
-    if (speaking) {
-      speaking = false;
+    if (sound.mouth === "speaking") {
+      sound.quiet();
       onState("quiet");
     }
   }
@@ -326,11 +348,16 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
       win.webContents.setAudioMuted(true);
     },
     transcribe: (pcm, language = getLanguage()) => request("transcribe", { pcm, language }),
+    /** Meeting notes started or ended: Buddy goes quiet, and stays so until they end (sound.js). @param {boolean} on */
+    setMeeting(on) {
+      sound.setMeeting(on);
+      if (on) hush();
+    },
     get listening() {
-      return !!heard;
+      return sound.ear !== "off";
     },
     get speaking() {
-      return speaking;
+      return sound.mouth === "speaking";
     },
   };
 }

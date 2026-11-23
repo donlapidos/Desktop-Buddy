@@ -10,6 +10,8 @@
   * An approval card from an AI app no longer disappears when an answer in the chat ends.
   * Meeting notes can't get stuck "on" when they fail to start, and stopping while they start works.
   * A damaged settings file no longer starts the voice download without asking.
+  * Buddy can't be left listening forever: if its hidden voice page crashes or can't use the microphone, listening
+    ends at once, and a cancelled recording's late result can't end the next one.
 * **Meeting notes, in any meeting app:** say "take notes" (or use the tray menu) in Teams, Zoom, Meet or anything
   else. Buddy transcribes your microphone and your PC's sound on your PC, lets you ask about the meeting as it goes,
   and when you stop, saves a Word document with notes written by your AI (summary, decisions, action items) and the
