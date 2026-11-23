@@ -140,7 +140,9 @@ function runCopy(name, env, done, timeoutMs = 90_000, seed = {}, reuse = null) {
   // The source tree on Electron, or (--exe) a built or installed Buddy.
   const child = spawn(installed ?? electron, [...(installed ? [] : ["."]), `--user-data-dir=${data}`], {
     cwd: installed ? path.dirname(installed) : app,
-    env: { ...clean, BUDDY_E2E: "1", ...(fs.existsSync(realModels) ? { BUDDY_MODELS_DIR: realModels } : {}), ...(noVoice ? { BUDDY_E2E_NO_VOICE: "1" } : {}), ...env },
+    // Every copy gets a Documents › Buddy of its own unless the check names one: a check that makes a file must never
+    // leave it in the owner's Documents.
+    env: { ...clean, BUDDY_E2E: "1", BUDDY_DOCUMENTS_DIR: path.join(data, "Documents", "Buddy"), ...(fs.existsSync(realModels) ? { BUDDY_MODELS_DIR: realModels } : {}), ...(noVoice ? { BUDDY_E2E_NO_VOICE: "1" } : {}), ...env },
     windowsHide: false,
   });
   let log = "";
@@ -348,6 +350,7 @@ const CHECKS = {
       const fp = r.firstPointer;
       return [!r.partial && "text wasn't visible before completion", !r.editable && "the input was disabled while answering", !r.corrected && "the correction didn't replace the old answer", r.error,
         !r.cardKept && "an AI app's approval card came down when an answer in the chat ended",
+        r.outsideAnswered !== "deny" && `the AI app's card didn't take its answer (${JSON.stringify(r.outsideAnswered)})`,
         !(r.card?.shown && r.card.exact === "dir⏎\nformat d: /q⏎\n") && `the card didn't show the exact text to be typed (${JSON.stringify(r.card)})`,
         !r.card?.oldAnswerIgnored && "an answer meant for the card before answered the one showing",
         r.card?.answered !== "deny" && `the card's own answer didn't count (${JSON.stringify(r.card?.answered)})`,
@@ -818,15 +821,41 @@ if (!chosen.length) {
   process.exit(2);
 }
 console.log(`Buddy end-to-end · ${chosen.length} check(s) · screenshots and logs in ${path.relative(process.cwd(), out)}\n`);
+
+// The owner's own Documents › Buddy (OneDrive may have moved Documents): no check may add or change anything there.
+const ownerDocs = (() => {
+  const r = spawnSync("powershell", ["-NoProfile", "-Command", "[Environment]::GetFolderPath('MyDocuments')"], { encoding: "utf8", windowsHide: true });
+  return r.stdout?.trim() ? path.join(r.stdout.trim(), "Buddy") : null;
+})();
+/** Each file under the owner's Documents › Buddy, with its size and time. */
+function ownerFiles() {
+  /** @type {Map<string, string>} */
+  const files = new Map();
+  if (!ownerDocs) return files;
+  const walk = (dir) => {
+    let entries = [];
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of entries) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) walk(p);
+      else try { const st = fs.statSync(p); files.set(path.relative(ownerDocs, p), `${st.size}:${st.mtimeMs}`); } catch {}
+    }
+  };
+  walk(ownerDocs);
+  return files;
+}
 let failed = 0;
 for (const [name, c] of chosen) {
   const t0 = Date.now();
+  const before = ownerFiles();
   let problems;
   try {
     problems = await (typeof c === "function" ? c() : c.run());
   } catch (err) {
     problems = [`crashed: ${err?.stack ?? err}`];
   }
+  const touched = [...ownerFiles()].filter(([f, stamp]) => before.get(f) !== stamp).map(([f]) => f);
+  if (touched.length) problems.push(`made or changed files in the owner's Documents › Buddy (unless the owner's own Buddy did it just now): ${touched.join(", ")}`);
   // A state change the tables refused during this check is a bug, even if what the check looked at came out right.
   problems.push(...refusals.splice(0).map((r) => `refused state change: ${r}`));
   const s = ((Date.now() - t0) / 1000).toFixed(1);

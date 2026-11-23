@@ -856,6 +856,7 @@ function conversationTest(kit) {
   setTimeout(async () => {
     let sample;
     let card = null;
+    let outsideAnswered = null;
     const js = (code) => bubble.webContents.executeJavaScript(code);
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const until = async (code) => {
@@ -877,10 +878,12 @@ function conversationTest(kit) {
       const carded = await until(`document.getElementById("confirm").classList.contains("on")`);
       await js(`document.getElementById("input").value = "Change direction"; document.getElementById("form").requestSubmit();`);
       await until(`document.getElementById("reply").textContent === "Here is the corrected answer." && document.getElementById("stop").hidden`);
-      await wait(300);
+      // Past the card's first half second, which ignores answers so a click already on its way can't answer it: a
+      // fast answer in the chat can end before then.
+      await wait(600);
       const cardKept = carded && (await js(`document.getElementById("confirm").classList.contains("on")`));
       await js(`window.buddy.confirmReply("deny", cardId)`);
-      await outside;
+      outsideAnswered = await Promise.race([outside, wait(3000).then(() => "still waiting")]);
       // A card for text with line breaks shows it all, each Enter marked; an answer for the card before it doesn't
       // answer this one, and the card's own answer does.
       const typed = kit.confirm('Type "dir⏎format d: /q⏎" into "Command" (textfield)', null, "List the folder", undefined, "dir⏎\nformat d: /q⏎\n");
@@ -915,7 +918,7 @@ function conversationTest(kit) {
         firstPointer = lines.length ? JSON.parse(lines.at(-1)) : null;
         glanceReused = JSON.parse(log.filter((l) => l.includes('"kind":"screen-context"')).at(-1) ?? "{}").reused === true;
       }
-      console.log("CONVERSATION_TEST", JSON.stringify({ partial, editable, corrected, guided, firstPointer, glanceReused, cardKept, card }));
+      console.log("CONVERSATION_TEST", JSON.stringify({ partial, editable, corrected, guided, firstPointer, glanceReused, cardKept, outsideAnswered, card }));
     } catch (err) {
       console.log("CONVERSATION_TEST", JSON.stringify({ error: err.message }));
     } finally {
