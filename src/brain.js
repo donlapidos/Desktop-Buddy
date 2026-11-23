@@ -1,7 +1,7 @@
 // The agent loop. Claude decides; agent-desktop observes and acts; the UI points and confirms.
 import Anthropic from "@anthropic-ai/sdk";
 import { askUser, requestApproval } from "./approvals.js";
-import { appKey, decide } from "./policy.js";
+import { appKey, decide, isBlocked } from "./policy.js";
 import { collectScreenContext } from "./screen-context.js";
 import { annotationRequest, sameBox, validBox } from "./annotations.js";
 import { FOLLOW_UP_GUIDANCE, guidanceFor } from "./guidance.js";
@@ -648,6 +648,23 @@ const DONE = {
 // A field whose text Activity keeps to itself (it's saved on disk for a week).
 const PRIVATE_FIELD = /password|passcode|passphrase|\bpin\b|secret|security code|cvv|cvc/i;
 
+// What an approval card shows of text Buddy would type or send: every character. The one-line summary marks line
+// breaks and tabs (⏎ ⇥) rather than squashing them, since in a console each line break presses Enter; when it can't
+// show all of the text (line breaks, or long), the card's detail shows it in full. More than CARD_MAX characters is
+// more than anyone can check on a card, so it isn't asked at all.
+export const CARD_MAX = 8000;
+const marked = (/** @type {string} */ s) => String(s).replace(/\r\n|\r|\n/g, "⏎").replace(/\t/g, "⇥");
+export const cardQuote = (/** @type {string} */ s, n = 160) => {
+  const t = marked(s);
+  return JSON.stringify(t.length > n ? `${t.slice(0, n - 1)}…` : t);
+};
+/** The whole text for the card's detail, line breaks kept and marked, when the summary can't show all of it. */
+export const cardDetail = (/** @type {string} */ s, n = 160) => {
+  const t = String(s);
+  return /[\r\n\t]/.test(t) || t.length > n ? t.replace(/\t/g, "⇥").replace(/\r\n|\r|\n/g, "⏎\n") : undefined;
+};
+const TOO_LONG = (/** @type {number} */ n) => `Not asked: that's ${n} characters, more than the user can check on an approval card (${CARD_MAX} at most). Do it in smaller parts.`;
+
 const quote = (s, n = 160) => {
   const t = String(s).replace(/\s+/g, " ").trim();
   return JSON.stringify(t.length > n ? `${t.slice(0, n - 1)}…` : t);
@@ -714,7 +731,7 @@ const spokenNote = (lang) =>
  *   baseURL?: string,
  *   point: (bounds: import("./geometry.js").PhysicalRect, caption: string) => Promise<void>,
  *   pointGuess?: (bounds: import("./geometry.js").PhysicalRect, caption: string, window: any) => Promise<void>,
- *   confirm: import("./approvals.js").Ask["confirm"],
+ *   confirm: (summary: string, bounds: import("./geometry.js").PhysicalRect | null, note?: string, signal?: AbortSignal, detail?: string) => Promise<string>, // detail: the exact text, in full
  *   status: (text: string) => void,
  *   stream?: (update: { text: string, done: boolean }) => void,
  *   annotate?: (items: import("./annotations.js").Annotation[], context: { window: import("./desktop.js").DesktopWindow, caption: string, verify: () => Promise<boolean>, signal?: AbortSignal }) => Promise<boolean>,
@@ -969,7 +986,7 @@ export class Brain {
   }
 
   canObserveTarget(target) {
-    const blocked = agentPolicy?.blockedApps.some((name) => appKey(name) === appKey(target?.app_name));
+    const blocked = !!agentPolicy && isBlocked(agentPolicy, target?.app_name);
     return !!(target?.id && target?.app_name && !target.minimized && !blocked && !this.ui.isOwnWindow?.(target));
   }
 
@@ -1264,7 +1281,7 @@ export class Brain {
     if (!this.advanced || !this.ui.blender) return BASIC;
     const result = await runBlenderTool(name, input, {
       blender: this.ui.blender,
-      ask: (summary, note, scope) => askUser(summary, { ...this.asking({ note }), scope }),
+      ask: (summary, note, scope, detail) => askUser(summary, { ...this.asking({ note, detail }), scope }),
       status: (text) => this.ui.status(text),
       signal: this.abort?.signal,
       image: (png) => {
@@ -1286,7 +1303,7 @@ export class Brain {
       undoDir: path.join(dataDir, "undo"),
       // Commands run inside the wall (wall.ps1); its compiled launcher is kept here.
       wall: { cache: path.join(dataDir, "wall") },
-      ask: (summary, note, scope) => askUser(summary, { ...this.asking({ note }), scope }),
+      ask: (summary, note, scope, detail) => askUser(summary, { ...this.asking({ note, detail }), scope }),
       status: (text) => this.ui.status(text),
       signal: this.abort?.signal,
       commands: this.commands,
@@ -1423,11 +1440,30 @@ export class Brain {
     return /** @type {import("./geometry.js").PhysicalRect} */ (/** @type {unknown} */ ({ x: Math.round(v.x), y: Math.round(v.y), width: Math.round(v.width), height: Math.round(v.height) }));
   }
 
+  /** The windows open now, from list-windows. @returns {Promise<any[]>} */
+  async openWindows() {
+    const res = await observe(["list-windows"], { timeoutMs: 10_000, session: this.session });
+    return res.ok ? (Array.isArray(res.data) ? res.data : res.data?.windows ?? []) : [];
+  }
+
   /** The window in front right now, from list-windows, or null. */
   async frontWindow() {
-    const res = await observe(["list-windows"], { timeoutMs: 10_000, session: this.session });
-    const list = res.ok ? (Array.isArray(res.data) ? res.data : res.data?.windows ?? []) : [];
-    return list.find((w) => w.is_focused) ?? null;
+    return (await this.openWindows()).find((w) => w.is_focused) ?? null;
+  }
+
+  /**
+   * The window an action names, as it really is. The model writes both the app and the window id; the id decides
+   * where the action lands, so the app the Agents rules and the card judge is the id's own, and an id that belongs to
+   * another app than the one named is refused. Resolves the window, or an error for the model.
+   * @param {string} app @param {string | undefined} id
+   * @returns {Promise<{ app_name: string, id?: string } | { error: string }>}
+   */
+  async namedWindow(app, id) {
+    if (!id) return { app_name: app };
+    const w = (await this.openWindows()).find((x) => String(x.id) === String(id));
+    if (!w) return { error: `There's no window ${id} now. Use list_windows, then try again with a window_id from it.` };
+    if (app && appKey(w.app_name) !== appKey(app)) return { error: `Window ${id} is ${w.app_name}, not ${app}. Use list_windows, then name the app that window belongs to.` };
+    return { app_name: w.app_name, id: w.id };
   }
 
   windowArgs(input) {
@@ -1440,9 +1476,9 @@ export class Brain {
   describeAction(input) {
     if (input.action === "press") return tr("Press {keys}", { keys: input.keys });
     const control = this.labels.get(input.ref) ?? tr("the highlighted control");
-    if (input.action === "set_value") return tr("Set {control} to {text}", { control, text: quote(input.text) });
-    if (input.action === "type") return tr("Type {text} into {control}", { control, text: quote(input.text) });
-    if (input.action === "select") return tr("Choose {text} in {control}", { control, text: quote(input.text) });
+    if (input.action === "set_value") return tr("Set {control} to {text}", { control, text: cardQuote(input.text) });
+    if (input.action === "type") return tr("Type {text} into {control}", { control, text: cardQuote(input.text) });
+    if (input.action === "select") return tr("Choose {text} in {control}", { control, text: cardQuote(input.text) });
     if (this.opensIt(input)) return tr("Open {control}", { control });
     return tr(VERBS[input.action], { control });
   }
@@ -1470,21 +1506,22 @@ export class Brain {
   }
 
   /**
-   * @param {{ ref?: string | null, note?: string }} [how]
+   * @param {{ ref?: string | null, note?: string, detail?: string }} [how]
    * @returns {import("./approvals.js").Ask}
    */
-  asking({ ref = null, note } = {}) {
+  asking({ ref = null, note = undefined, detail = undefined } = {}) {
     // The answer's abort signal goes along: a stopped answer withdraws its request from the card.
-    return { confirm: (summary, bounds, note) => this.ui.confirm(summary, bounds, note, this.abort?.signal), bounds: ref ? this.bounds.get(ref) ?? null : null, note, standing: this.standing, policy: agentPolicy ?? undefined, signal: this.abort?.signal };
+    return { confirm: (summary, bounds, note, detail) => this.ui.confirm(summary, bounds, note, this.abort?.signal, detail), bounds: ref ? this.bounds.get(ref) ?? null : null, note, detail, standing: this.standing, policy: agentPolicy ?? undefined, signal: this.abort?.signal };
   }
 
   // Everything that operates the computer comes through here: the user's OK yields a slip, and only the slip runs
   // the action (approvals.js, desktop.perform). Actions take turns with other tasks (takeTurn).
   /**
    * @param {import("./approvals.js").InputAction} action
-   * @param {{ ref?: string | null, note?: string, status?: string, done?: string }} [how] `done`: how it reads in Activity once it ran
+   * @param {{ ref?: string | null, note?: string, detail?: string, status?: string, done?: string }} [how] `done`: how it reads in Activity once it ran;
+   *   `detail`: the exact text it types, in full, for the card
    */
-  async operate(action, { ref = null, note, status, done } = {}) {
+  async operate(action, { ref = null, note, detail, status, done } = {}) {
     const signal = this.abort?.signal;
     if (signal?.aborted) return "The user stopped.";
     const verdict = agentPolicy ? decide(agentPolicy, action) : "ask";
@@ -1492,7 +1529,7 @@ export class Brain {
       this.ui.trace?.({ kind: "policy-blocked", app: action.app, action: action.kind });
       return `Not allowed: the user has told Buddy never to act in ${action.app} (Settings › Agents). Tell them; don't try another way.`;
     }
-    const slip = await requestApproval(action, this.asking({ ref, note }));
+    const slip = await requestApproval(action, this.asking({ ref, note, detail }));
     if (!slip) return "The user declined.";
     if (verdict === "allow") {
       this.ui.trace?.({ kind: "policy-allowed", app: action.app, action: action.kind });
@@ -1646,9 +1683,12 @@ export class Brain {
       case "window": {
         const command = { focus: "focus-window", restore: "restore", minimize: "minimize", maximize: "maximize" }[input.action];
         if (!command || !input.app) return "window needs an action and an app.";
-        const args = [command, "--app", input.app, ...(input.window_id ? ["--window-id", input.window_id] : [])];
+        // Judged as the window the id names really is (namedWindow), as press is.
+        const win = await this.namedWindow(String(input.app), input.window_id);
+        if ("error" in win) return win.error;
+        const args = [command, "--app", win.app_name, ...(win.id ? ["--window-id", String(win.id)] : [])];
         const verb = `${input.action[0].toUpperCase()}${input.action.slice(1)}`;
-        return this.operate({ kind: input.action, app: input.app, args, headed: true, summary: `${verb} ${input.app.replace(/\.exe$/i, "")}` });
+        return this.operate({ kind: input.action, app: win.app_name, args, headed: true, summary: `${verb} ${String(win.app_name).replace(/\.exe$/i, "")}` });
       }
       case "guide_steps":
         return this.guideSteps(input);
@@ -1902,10 +1942,15 @@ ${text}` };
    * @param {string} name @param {any} input @param {{ service: string, action: string }} what
    */
   async serviceTool(name, input, what) {
-    const given = JSON.stringify(input ?? {});
-    const note = given === "{}" ? undefined : given.length > 300 ? `${given.slice(0, 300)}…` : given;
+    // Everything the service will be given, in full: a recipient after a long message body is still on the card.
+    const given = input && typeof input === "object" && Object.keys(input).length ? JSON.stringify(input, null, 2) : "";
+    if (given.length > CARD_MAX) return TOO_LONG(given.length);
     const service = tr(what.service);
-    const ok = await askUser(tr("{service}: {action}", { service, action: what.action }), { ...this.asking({ note }), scope: `service:${what.service}` });
+    // The service names its own tools, so the card shows the tool's real name beside its title, and "Allow for this
+    // task" covers that tool only: allowing one called "Read a page" doesn't allow a different one.
+    const tool = name.slice(name.indexOf("__") + 2);
+    const action = what.action === tool ? tool : `${what.action} (${tool})`;
+    const ok = await askUser(tr("{service}: {action}", { service, action }), { ...this.asking({ detail: given || undefined }), scope: `service:${what.service}:${tool}` });
     if (!ok) return "The user declined.";
     this.ui.status(tr("Using {service}…", { service }));
     return this.ui.connectors.call(name, input, this.abort?.signal);
@@ -1945,7 +1990,9 @@ ${text}` };
       // conversation's window, else the window in front right now. Pressing into whatever has focus would let keys
       // land in an app the rules never saw (a blocked password manager), or in one that came to the front while the
       // user read the card.
-      const win = input.app ? { app_name: String(input.app), id: input.window_id } : this.target ?? (await this.frontWindow());
+      const named = input.app ? await this.namedWindow(String(input.app), input.window_id) : null;
+      if (named && "error" in named) return named.error;
+      const win = named ?? this.target ?? (await this.frontWindow());
       if (!win?.app_name) return "Couldn't tell which window the keys would go to. Use list_windows, then press with app (and window_id).";
       if (this.ui.isOwnWindow?.(win)) return "Buddy's own window is in front. Say which app the keys are for: press with app (and window_id) from list_windows.";
       const args = ["press", input.keys, "--app", win.app_name, ...(win.id ? ["--window-id", String(win.id)] : [])];
@@ -1956,8 +2003,9 @@ ${text}` };
     if (!spec) return `Unknown action ${input.action}.`;
     if (!input.ref) return `${input.action} needs a ref.`;
     if (spec.text && input.text == null) return `${input.action} needs text.`;
+    if (spec.text && String(input.text).length > CARD_MAX) return TOO_LONG(String(input.text).length);
     const args = [spec.cmd, input.ref, ...(spec.text ? [input.text] : [])];
     const app = this.refApps.get(input.ref) ?? this.target?.app_name;
-    return this.operate({ kind: input.action, app, args, headed: !!spec.headed, summary: this.describeAction(input) }, { ...how, ref: input.ref, done: this.describeDone(input, app) });
+    return this.operate({ kind: input.action, app, args, headed: !!spec.headed, summary: this.describeAction(input) }, { ...how, ref: input.ref, detail: spec.text ? cardDetail(input.text) : undefined, done: this.describeDone(input, app) });
   }
 }

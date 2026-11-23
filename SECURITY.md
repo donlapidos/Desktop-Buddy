@@ -116,6 +116,11 @@ question is taken by Buddy when you ask, as before.
 - **Text on screen can try to steer the AI.** A web page, document or email can contain words written to look like
   instructions. Buddy tells the AI they aren't from you, and its tests check that a model ignores them, but no AI is immune.
   The approval card is the backstop: nothing is clicked, typed, changed or run without it (or your Agents rules).
+  The card is written by Buddy from the action itself, not by the AI, and shows all of it: every character it would
+  type (each line break marked ⏎, since in a console a line break presses Enter), the whole PowerShell command, and
+  everything a connected service would be given. Anything too long to check on a card (over 8,000 characters) isn't
+  asked at all. Keys go only to the window that was judged, under its real app's name, and a blocked app is blocked
+  however its name is written. "Allow for this task" for a service covers that one tool, not the whole service.
 - **Looking isn't asked about.** When you ask a question, Buddy reads that window without a card, and the AI you
   chose sees it. Don't ask Buddy about a window holding something you wouldn't send to that AI company.
 - **The installer isn't signed yet**, so Windows SmartScreen warns about it. Updates come only from this repository's

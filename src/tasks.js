@@ -86,13 +86,15 @@ export function createTasks({ here, icon, makeBrain, currentTarget, point, relea
       // Who made a change, in Settings › Activity.
       source: t.title,
       // Approvals belong to the task asking: its window comes forward (without stealing focus) and its chip turns amber.
-      confirm: (summaryText, bounds, note) => {
+      confirm: (summaryText, bounds, note, _signal, detail) => {
         if (bounds) point(bounds, summaryText, t.id);
         const win = windowFor(t, { show: false });
         if (!win.isVisible()) win.showInactive();
         setState(t, "confirm", tr("Waiting for your OK: {what}", { what: summaryText }));
         t.confirmAt = Date.now();
-        send(t, "task-confirm", { summary: summaryText, note });
+        // Each card has its own number: an answer only counts for the card it was given on.
+        t.cardId = (t.cardId ?? 0) + 1;
+        send(t, "task-confirm", { id: t.cardId, summary: summaryText, note, detail });
         return new Promise((resolve) => (t.pendingConfirm = resolve));
       },
     };
@@ -274,7 +276,11 @@ export function createTasks({ here, icon, makeBrain, currentTarget, point, relea
     t.brain.cancel();
     reply(t, "deny", { cancel: true });
   });
-  ipcMain.on("task-confirm-reply", (e, decision) => reply(fromSender(e.sender), decision));
+  ipcMain.on("task-confirm-reply", (e, decision, id) => {
+    const t = fromSender(e.sender);
+    if (t && id === t.cardId) reply(t, decision);
+    else trace?.({ kind: "confirm-other-card", task: t?.id, answered: id, showing: t?.cardId });
+  });
   ipcMain.on("task-minimize", (e) => fromSender(e.sender)?.win.hide());
   ipcMain.on("task-close", (e) => {
     const t = fromSender(e.sender);

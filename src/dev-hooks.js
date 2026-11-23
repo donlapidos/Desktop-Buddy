@@ -855,6 +855,7 @@ function conversationTest(kit) {
   // Real renderer + IPC + streamed model: show a partial answer, then steer it while it is still running.
   setTimeout(async () => {
     let sample;
+    let card = null;
     const js = (code) => bubble.webContents.executeJavaScript(code);
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const until = async (code) => {
@@ -878,8 +879,20 @@ function conversationTest(kit) {
       await until(`document.getElementById("reply").textContent === "Here is the corrected answer." && document.getElementById("stop").hidden`);
       await wait(300);
       const cardKept = carded && (await js(`document.getElementById("confirm").classList.contains("on")`));
-      await js(`window.buddy.confirmReply("deny")`);
+      await js(`window.buddy.confirmReply("deny", cardId)`);
       await outside;
+      // A card for text with line breaks shows it all, each Enter marked; an answer for the card before it doesn't
+      // answer this one, and the card's own answer does.
+      const typed = kit.confirm('Type "dir⏎format d: /q⏎" into "Command" (textfield)', null, "List the folder", undefined, "dir⏎\nformat d: /q⏎\n");
+      await until(`document.getElementById("confirm").classList.contains("on") && !document.getElementById("exact").hidden`);
+      const card = await js(`({ exact: document.getElementById("exact").textContent, shown: getComputedStyle(document.getElementById("exact")).display !== "none", id: cardId })`);
+      if (process.env.BUDDY_CARD_TEST_OUT) fs.writeFileSync(process.env.BUDDY_CARD_TEST_OUT, (await bubble.webContents.capturePage()).toPNG());
+      await wait(600);
+      await js(`window.buddy.confirmReply("allow", cardId - 1)`);
+      await wait(300);
+      card.oldAnswerIgnored = await js(`document.getElementById("confirm").classList.contains("on")`);
+      await js(`[...document.querySelectorAll('#confirm [data-d="deny"]')][0].click()`);
+      card.answered = await Promise.race([typed, wait(3000).then(() => "still waiting")]);
       // A guided answer, in a test-owned sample window: it must leave one ask-to-pointer entry in the timing log.
       let guided = null;
       let firstPointer = null;
@@ -902,7 +915,7 @@ function conversationTest(kit) {
         firstPointer = lines.length ? JSON.parse(lines.at(-1)) : null;
         glanceReused = JSON.parse(log.filter((l) => l.includes('"kind":"screen-context"')).at(-1) ?? "{}").reused === true;
       }
-      console.log("CONVERSATION_TEST", JSON.stringify({ partial, editable, corrected, guided, firstPointer, glanceReused, cardKept }));
+      console.log("CONVERSATION_TEST", JSON.stringify({ partial, editable, corrected, guided, firstPointer, glanceReused, cardKept, card }));
     } catch (err) {
       console.log("CONVERSATION_TEST", JSON.stringify({ error: err.message }));
     } finally {

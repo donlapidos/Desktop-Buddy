@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+* **Approval cards show everything:** every character Buddy would type, with each line break marked ⏎ (in a console
+  a line break presses Enter), the whole PowerShell command, and everything a connected service would be sent, in a
+  box beneath the card's summary. Before, the card squashed line breaks and cut long text and service data short.
+  Keys and window moves go only to the window that was checked, under its real app; a blocked app stays blocked
+  however its name is spelled ("KeePassXC", a full path); "Allow for this task" for a service covers that one tool;
+  and a click meant for a card that has just been replaced doesn't answer the new one.
 * **Fixed:**
   * A spoken answer that used a tool stopped mid-sentence when Buddy took its next step.
   * Hush now also silences the spoken steps of a guided answer.

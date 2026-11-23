@@ -421,7 +421,7 @@ function runPowerShell(command, { cwd, timeoutMs, signal, wall = {} }) {
  * @typedef {{
  *   places: Places,
  *   undoDir: string,
- *   ask: (summary: string, note?: string, scope?: string) => Promise<boolean>,   // scope: approvals.js
+ *   ask: (summary: string, note?: string, scope?: string, detail?: string) => Promise<boolean>,   // scope: approvals.js; detail: shown in full
  *   status: (text: string) => void,
  *   record?: (change: Omit<import("./activity.js").Change, "id" | "at" | "from">) => void,
  *   commands?: boolean,                                                         // the user lets Buddy run commands
@@ -552,7 +552,9 @@ export async function runPcTool(name, input, ctx) {
       const said = String(input.description ?? "").trim() || "Run a command on your PC";
       const problem = powershellProblem(command, p);
       if (problem) return `Not allowed: ${problem}`;
-      if (!(await ctx.ask(said, command.length > 300 ? `${command.slice(0, 300)}…` : command, "powershell"))) return "The user declined.";
+      // The card's headline is the model's own description; the command itself is shown in full beneath it.
+      if (command.length > 8000) return `Not asked: that command is ${command.length} characters, more than the user can check on an approval card (8000 at most). Split it up.`;
+      if (!(await ctx.ask(said, undefined, "powershell", command))) return "The user declined.";
       ctx.status(said.endsWith("…") ? said : `${said}…`);
       fs.mkdirSync(p.workDir, { recursive: true });
       const timeoutMs = Math.min(300, Math.max(5, Number(input.timeout_seconds) || 60)) * 1000;

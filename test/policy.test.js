@@ -53,3 +53,14 @@ test("approvals honour the policy: blocked gets no slip, allowed gets one withou
   assert.ok(asking);
   assert.equal(asked, 1);
 });
+
+test("a blocked app can't be reached under another spelling, and trust is never widened", () => {
+  const p = policy({ rope: "trusted", blockedApps: ["keepass", "Keeper"], trustedApps: ["notepad"] });
+  for (const name of [String.raw`C:\Program Files\KeePassXC\KeePassXC.exe`, "KeePassXC", "keePass.EXE", "Keeper Password Manager", "KEEPER-desktop"]) {
+    assert.equal(decide(p, { kind: "launch", app: name }), "block", name);
+  }
+  assert.equal(decide(p, { kind: "type", app: "Notepad.exe" }), "allow");
+  assert.equal(decide(p, { kind: "type", app: "notepad++" }), "ask", "notepad++ isn't the trusted notepad");
+  assert.equal(decide(p, { kind: "type", app: String.raw`C:\Windows\notepad.exe` }), "allow", "a path to the trusted app is that app");
+  assert.equal(decide(policy({ blockedApps: ["ab"] }), { kind: "type", app: "abcdef" }), "ask", "a name too short to be sure blocks only itself");
+});

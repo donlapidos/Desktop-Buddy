@@ -46,7 +46,8 @@ export function scopeOf(name, _input) {
 
 function describeBuiltIn(name, input) {
   switch (name) {
-    case "PowerShell": return { summary: String(input.description || "Run a command on your PC"), note: String(input.command ?? "").slice(0, 300) };
+    // The headline is the model's own description; the command itself goes on the card in full (detail).
+    case "PowerShell": return { summary: String(input.description || "Run a command on your PC"), detail: String(input.command ?? "") };
     case "Write": return { summary: `Create ${base(input.file_path)}`, note: path.dirname(String(input.file_path ?? "")) };
     case "Edit": return { summary: `Change ${base(input.file_path)}`, note: path.dirname(String(input.file_path ?? "")) };
     case "WebFetch": {
@@ -141,8 +142,8 @@ export class AgentBrain extends Brain {
           }],
         },
         canUseTool: async (name, input) => {
-          const { summary, note } = describeBuiltIn(name, input);
-          const ok = await askUser(summary, { ...this.asking({ note }), scope: scopeOf(name, input) });
+          const { summary, note, detail } = /** @type {{ summary: string, note?: string, detail?: string }} */ (describeBuiltIn(name, input));
+          const ok = await askUser(summary, { ...this.asking({ note, detail }), scope: scopeOf(name, input) });
           return ok ? { behavior: "allow", updatedInput: input } : { behavior: "deny", message: "The user declined." };
         },
       },

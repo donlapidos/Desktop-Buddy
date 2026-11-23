@@ -63,7 +63,7 @@ test("the card shows the action's own summary, with Claude's note beside it", as
   const { calls, confirm } = answering("deny");
   const bounds = { x: 1, y: 2, width: 3, height: 4 };
   await requestApproval(action, { confirm, bounds, note: "Save the file", standing: new Set() });
-  assert.deepEqual(calls, [[action.summary, bounds, "Save the file"]]);
+  assert.deepEqual(calls, [[action.summary, bounds, "Save the file", undefined]]);
 });
 
 test("Allow for this task stops asking for the rest of that answer only", async () => {

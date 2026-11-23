@@ -248,9 +248,14 @@ window.buddy.onReply((text) => { show(text); $("where").textContent = "Buddy"; }
 // must never land on Allow), and clicks in its first moments are ignored (a click already on its way doesn't count).
 const ARM_MS = 500;
 let confirmAt = 0;
-window.buddy.onConfirm(({ summary, note }) => {
+// The card on screen: its number goes back with the answer, and its detail is the exact text, every character.
+let cardId = 0;
+window.buddy.onConfirm(({ id, summary, note, detail }) => {
+  cardId = id;
   $("what").textContent = summary;
   $("why").textContent = note && note.toLowerCase() !== summary.toLowerCase() ? note : "";
+  $("exact").textContent = detail ?? "";
+  $("exact").hidden = !detail;
   $("confirm").classList.add("on");
   confirmAt = performance.now();
   $("confirm").focus();
@@ -264,7 +269,7 @@ $("confirm").addEventListener("click", (e) => {
   const d = /** @type {HTMLElement} */ (e.target).dataset?.d;
   if (!d || performance.now() - confirmAt < ARM_MS) return;
   $("confirm").classList.remove("on");
-  window.buddy.confirmReply(d);
+  window.buddy.confirmReply(d, cardId);
 });
 
 // Voice: the main process listens and transcribes; the words land in the field and go like a typed question.
