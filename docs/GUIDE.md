@@ -110,7 +110,9 @@ VS Code and more).
   **Don't ask again**; or connect from **Settings › Connections**. You sign in in your browser, so Buddy never sees
   your password, and Buddy asks on its card before every action in a service ("Notion: Search"); **Allow for this
   task** covers that service only. What a service sends back is treated as information, never as instructions.
-  **Disconnect** forgets the sign-in.
+  **Disconnect** forgets the sign-in. If a service signs you out (your sign-in expired or was revoked there), Settings
+  says so and offers **Sign in again**; Buddy never opens a sign-in page on its own. If it can't be reached, Settings
+  says that too, with **Try again**.
   - **HubSpot needs a one-time setup**, because HubSpot only lets in apps that each company sets up for itself.
     Someone with access to HubSpot's developer tools does it once: in HubSpot, **Development › MCP Connectors ›
     Create**, paste the return address Buddy shows in **Settings › Connections** (`http://localhost:41870/callback`),

@@ -621,7 +621,7 @@ const CHECKS = {
     const model = await toolModel();
     try {
       const seed = { "settings.json": JSON.stringify({ provider: "custom", providerURLs: { custom: model.url }, providerModels: { custom: "scripted" }, advanced: true, launchSetupDone: true, voiceSetup: "no", talkBack: "never" }) };
-      const { markers, timedOut } = await runCopy("connections", { BUDDY_CONNECTIONS_TEST: "1", BUDDY_CONNECTORS_TEST: service.url, BUDDY_CONNECTORS_OWN_TEST: `${own.url} ${ownPort}`, BUDDY_CONNECTIONS_TEST_OUT: path.join(out, "connections-setup.png") }, "CONNECTIONS_TEST_DONE", 120_000, seed);
+      const { markers, timedOut } = await runCopy("connections", { BUDDY_CONNECTIONS_TEST: "1", BUDDY_CONNECTORS_TEST: service.url, BUDDY_CONNECTORS_OWN_TEST: `${own.url} ${ownPort}`, BUDDY_CONNECTIONS_TEST_OUT: path.join(out, "connections-setup.png"), BUDDY_CONNECTIONS_STATES_OUT: path.join(out, "connections-states.png") }, "CONNECTIONS_TEST_DONE", 120_000, seed);
       const r = markers.CONNECTIONS_TEST?.[0];
       if (!r) return [timedOut ? "timed out" : "nothing printed"];
       if (r.error) return [r.error];
@@ -645,6 +645,17 @@ const CHECKS = {
         own.seen.registered !== 0 && `Buddy tried to register with the own-app service (${own.seen.registered} times)`,
         r.own?.connected && own.seen.tokens !== 1 && `the own-app service issued ${own.seen.tokens} tokens`,
         r.own && !/Connected/.test(r.own.after ?? "") && `after connecting, Settings said ${JSON.stringify(r.own.after)}`,
+        // Each state as Settings shows it: its words, and the buttons it offers.
+        ...Object.entries({
+          connected: [/^Connected: Buddy can/, "Disconnect"],
+          "needs-sign-in": [/^Signed out: sign in again/, "Sign in again,Disconnect"],
+          unavailable: [/^Couldn't reach it just now.$/, "Try again,Disconnect"],
+          connecting: [/^Connecting…$/, ""],
+          "signed-out": [/^Not connected.$/, "Connect"],
+        }).map(([state, [words, buttons]]) => {
+          const row = (r.own?.states ?? []).find((x) => x[0] === state);
+          return (!row || !words.test(row[1]) || row[2] !== buttons) && `Settings showed ${state} as ${JSON.stringify(row)}`;
+        }),
       ].filter(Boolean);
     } finally {
       model.close();

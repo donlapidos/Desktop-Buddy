@@ -22,7 +22,8 @@ export async function startTestService({ app } = {}) {
   const seen = { registered: 0, tokens: 0, calls: /** @type {any[]} */ ([]), refusedTokens: 0 };
   /** @type {Map<string, { challenge: string, redirect: string }>} */
   const codes = new Map();
-  const token = crypto.randomBytes(12).toString("hex");
+  let token = crypto.randomBytes(12).toString("hex");
+  let refreshes = true; // revoke() turns the sign-in down: the token stops working and can't be refreshed
   let base = "";
 
   const mcp = () => {
@@ -68,7 +69,7 @@ export async function startTestService({ app } = {}) {
     if (u.pathname === "/token" && req.method === "POST") {
       const form = new URLSearchParams(await body(req));
       if (app && (form.get("client_id") !== app.clientId || form.get("client_secret") !== app.clientSecret)) return json(res, 401, { error: "invalid_client" });
-      if (form.get("grant_type") === "refresh_token") return json(res, 200, { access_token: token, token_type: "Bearer", expires_in: 3600, refresh_token: "refresh" });
+      if (form.get("grant_type") === "refresh_token") return refreshes ? json(res, 200, { access_token: token, token_type: "Bearer", expires_in: 3600, refresh_token: "refresh" }) : json(res, 400, { error: "invalid_grant" });
       const issued = codes.get(form.get("code") ?? "");
       const verifier = form.get("code_verifier") ?? "";
       const challenge = crypto.createHash("sha256").update(verifier).digest("base64url");
@@ -92,5 +93,5 @@ export async function startTestService({ app } = {}) {
   });
   await new Promise((resolve) => httpServer.listen(0, "127.0.0.1", () => resolve(null)));
   base = `http://127.0.0.1:${/** @type {import("node:net").AddressInfo} */ (httpServer.address()).port}`;
-  return { url: `${base}/mcp`, seen, close: () => (httpServer.closeAllConnections(), httpServer.close()) };
+  return { url: `${base}/mcp`, seen, revoke: () => ((token = crypto.randomBytes(12).toString("hex")), (refreshes = false)), close: () => (httpServer.closeAllConnections(), httpServer.close()) };
 }
