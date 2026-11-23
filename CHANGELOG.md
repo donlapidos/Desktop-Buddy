@@ -9,6 +9,10 @@
   however its name is spelled ("KeePassXC", a full path); "Allow for this task" for a service covers that one tool;
   and a click meant for a card that has just been replaced doesn't answer the new one.
 * **Fixed:**
+  * Reading a web page can no longer reach your PC or local network through a web name that changes what it points
+    to between Buddy's check and the visit: the address checked is the one connected to.
+  * An AI server's address can use plain http only when it really is on your PC or local network; a web name that
+    merely starts like one ("10.example.com") needs https, like any other.
   * A spoken answer that used a tool stopped mid-sentence when Buddy took its next step.
   * Hush now also silences the spoken steps of a guided answer.
   * Buddy no longer speaks while its microphone is open, and the voice preview in Settings stays quiet during a

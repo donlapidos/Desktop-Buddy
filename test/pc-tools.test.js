@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import zlib from "node:zlib";
 import { Brain } from "../src/brain.js";
-import { defaultFolders, grantProblem, judgePath, pageText, privateHost, runPcTool } from "../src/pc-tools.js";
+import { defaultFolders, grantProblem, judgePath, pageText, pinnedFetch, privateHost, runPcTool } from "../src/pc-tools.js";
 
 /** A made-up PC: a home with everyday folders, Buddy's working and data folders, another user, Windows. */
 function pc() {
@@ -176,6 +178,29 @@ test("web pages: only public addresses, redirects checked, page text marked as i
   assert.doesNotMatch(page, /steal/);
   assert.match(await runPcTool("fetch_page", { url: "https://rebind.example/" }, { ...c, lookup: async () => true }), /can't be read/, "a public name that resolves to a private address is refused");
   assert.deepEqual(pageText("<p>a&#39;b &#x41;</p>").text, "a'b A");
+});
+
+test("web pages: a name that turns private between the check and the fetch is still refused", { timeout: 10_000 }, async (t) => {
+  const { ctx } = pc();
+  let hits = 0;
+  const server = http.createServer((_req, res) => {
+    hits++;
+    res.writeHead(200, { "content-type": "text/html", "content-encoding": "gzip" });
+    res.end(zlib.gzipSync("<title>Inside</title><p>secret router page</p>"));
+  });
+  await new Promise((r) => server.listen(0, "127.0.0.1", () => r(undefined)));
+  t.after(() => server.close());
+  const port = /** @type {import("node:net").AddressInfo} */ (server.address()).port;
+  // The check's lookup says public; the connection's own lookup gets this PC, as a rebinding DNS server would answer.
+  const toThisPc = (_host, _opts, cb) => cb(null, [{ address: "127.0.0.1", family: 4 }]);
+  const said = await runPcTool("fetch_page", { url: `http://rebind.example:${port}/` }, { ...ctx(), lookup: async () => false, resolve: toThisPc });
+  assert.match(said, /can't be read/);
+  assert.equal(hits, 0, "nothing reached the server on this PC");
+  // The same connection, allowed through, reads and unpacks the page: the guard is the only thing that stopped it.
+  const res = await pinnedFetch(`http://rebind.example:${port}/`, {}, { resolve: toThisPc, refuse: () => false });
+  assert.equal(res.status, 200);
+  assert.match(await res.text(), /secret router page/);
+  assert.equal(hits, 1);
 });
 
 test("Buddy's own conversations get the PC tools; a Brain serving Claude's apps doesn't", () => {

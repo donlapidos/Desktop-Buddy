@@ -19,10 +19,14 @@
 //   marked as information, not instructions.
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { lookup as dnsLookup } from "node:dns";
 import dns from "node:dns/promises";
 import fs from "node:fs";
+import http from "node:http";
+import https from "node:https";
 import os from "node:os";
 import path from "node:path";
+import zlib from "node:zlib";
 import { fingerprint, keepCopy } from "./activity.js";
 import { t as tr } from "./i18n.js";
 import { SHIPPED_NATIVE } from "./native.js";
@@ -349,7 +353,71 @@ async function resolvesPrivate(/** @type {string} */ host) {
   }
 }
 
-async function fetchPublic(/** @type {string} */ url, /** @type {AbortSignal | undefined} */ signal, fetchImpl = fetch, lookup = resolvesPrivate) {
+// The check above asks DNS once and fetch would ask again: a name can answer "public" to the first and "this PC" to
+// the second (DNS rebinding). So the page is fetched over a connection whose own lookup refuses a private address:
+// what is checked is what is connected to.
+const PAGE_LIMIT = 5_000_000;
+
+/** A dns.lookup for http.request that fails on any private address. */
+export function guardedLookup(resolve = dnsLookup, refuse = privateHost) {
+  return (/** @type {string} */ hostname, /** @type {any} */ options, /** @type {Function} */ callback) => {
+    resolve(hostname, { ...options, all: true }, (/** @type {any} */ err, /** @type {{ address: string, family: number }[]} */ addresses) => {
+      if (err) return callback(err);
+      if (!addresses.length || addresses.some((a) => refuse(a.address))) return callback(new Error("Addresses on this PC or the local network can't be read."));
+      if (options?.all) callback(null, addresses);
+      else callback(null, addresses[0].address, addresses[0].family);
+    });
+  };
+}
+
+/**
+ * A fetch for one GET over a guarded connection, answering with a web Response (body decompressed, at most
+ * PAGE_LIMIT bytes kept). Redirects aren't followed: fetchPublic checks each hop.
+ * @param {string} url @param {{ signal?: AbortSignal, headers?: Record<string, string> }} [init]
+ */
+export function pinnedFetch(url, init = {}, { resolve = dnsLookup, refuse = privateHost } = {}) {
+  return new Promise((done, fail) => {
+    const u = new URL(url);
+    const failed = (/** @type {any} */ err) => fail(init.signal?.aborted ? init.signal.reason : err);
+    const req = (u.protocol === "https:" ? https : http).request(u, {
+      method: "GET",
+      headers: { ...init.headers, "accept-encoding": "gzip, deflate, br" },
+      signal: init.signal,
+      lookup: /** @type {any} */ (guardedLookup(resolve, refuse)),
+    }, (res) => {
+      const encoding = String(res.headers["content-encoding"] ?? "").toLowerCase();
+      const body = encoding === "gzip" ? res.pipe(zlib.createGunzip()) : encoding === "br" ? res.pipe(zlib.createBrotliDecompress()) : encoding === "deflate" ? res.pipe(zlib.createInflate()) : res;
+      /** @type {Buffer[]} */
+      const chunks = [];
+      let size = 0;
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        const headers = new Headers();
+        for (const [k, v] of Object.entries(res.headers)) if (v !== undefined && k !== "content-encoding" && k !== "content-length") headers.set(k, Array.isArray(v) ? v.join(", ") : v);
+        const status = res.statusCode ?? 0;
+        done(new Response([101, 204, 205, 304].includes(status) ? null : Buffer.concat(chunks).subarray(0, PAGE_LIMIT), { status, statusText: res.statusMessage, headers }));
+      };
+      body.on("data", (/** @type {Buffer} */ c) => {
+        chunks.push(c);
+        size += c.length;
+        // Enough of a page: the rest isn't downloaded.
+        if (size >= PAGE_LIMIT) {
+          finish();
+          res.destroy();
+        }
+      });
+      body.on("error", (/** @type {any} */ e) => finished || failed(e));
+      res.on("error", (/** @type {any} */ e) => finished || failed(e));
+      body.on("end", finish);
+    });
+    req.on("error", failed);
+    req.end();
+  });
+}
+
+async function fetchPublic(/** @type {string} */ url, /** @type {AbortSignal | undefined} */ signal, /** @type {typeof fetch} */ fetchImpl, lookup = resolvesPrivate) {
   let at = url;
   for (let hop = 0; hop < 6; hop++) {
     const u = new URL(at);
@@ -429,6 +497,7 @@ function runPowerShell(command, { cwd, timeoutMs, signal, wall = {} }) {
  *   signal?: AbortSignal,
  *   fetchImpl?: typeof fetch,
  *   lookup?: (host: string) => Promise<boolean>,
+ *   resolve?: typeof dnsLookup,                                                 // tests: the guarded connection's DNS
  * }} PcContext
  */
 
@@ -639,7 +708,8 @@ export async function runPcTool(name, input, ctx) {
       ctx.status(`Reading ${u.hostname}…`);
       ctx.record?.({ kind: "read", summary: `Read a page on ${u.hostname}` });
       try {
-        const { res, url } = await fetchPublic(u.toString(), ctx.signal, ctx.fetchImpl, ctx.lookup);
+        const pinned = /** @type {typeof fetch} */ (/** @type {any} */ ((/** @type {string} */ at, /** @type {any} */ init) => pinnedFetch(at, init, { resolve: ctx.resolve })));
+        const { res, url } = await fetchPublic(u.toString(), ctx.signal, ctx.fetchImpl ?? pinned, ctx.lookup);
         if (!res.ok) return `The page answered ${res.status}${res.statusText ? ` ${res.statusText}` : ""}.`;
         const type = res.headers.get("content-type") ?? "";
         if (!/text|json|xml|html/i.test(type)) return `That address is a ${type || "file"}, not a page.`;

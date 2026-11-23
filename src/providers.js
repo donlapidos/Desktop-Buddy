@@ -2,6 +2,7 @@
 // Responses API, and the rest through Chat Completions, which they all speak. Buddy's conversation stays in
 // Anthropic's message format (text, image, tool_use and tool_result blocks); it is converted on the way out and the
 // reply converted back, so history, trimming and tools work the same whichever provider answers.
+import { isIPv4 } from "node:net";
 import { N } from "./i18n.js";
 import { fromOpenRouter, rememberPrice } from "./costs.js";
 
@@ -39,7 +40,9 @@ export function addressProblem(/** @type {string} */ url) {
   if (u.protocol === "https:") return null;
   if (u.protocol !== "http:") return "The address has to start with http:// or https://.";
   const host = u.hostname.replace(/^\[|\]$/g, "");
-  const nearby = host === "localhost" || host === "::1" || /^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[01])\./.test(host) || host.endsWith(".local");
+  // The number ranges only count for an address written as numbers: "10.evil.example" is a name anyone can register.
+  const ip = isIPv4(host);
+  const nearby = host === "localhost" || host === "::1" || host.endsWith(".local") || (ip && (/^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[01])\./.test(host)));
   return nearby ? null : "Use https:// for a server outside this PC and your local network, so your questions travel encrypted.";
 }
 
