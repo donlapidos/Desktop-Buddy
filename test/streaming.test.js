@@ -153,3 +153,18 @@ data: [DONE]
   assert.deepEqual(heard.map((h) => h[2]), ['{"steps": [', '{"steps": [{"target": "Insert", "caption": "Click Insert"}', '{"steps": [{"target": "Insert", "caption": "Click Insert"}]}']);
   assert.ok(heard.every((h) => h[0] === 0 && h[1] === "guide_steps"));
 });
+
+test("each answer starts the reply stream once; its later steps say they're the same answer", { timeout: 5000 }, async () => {
+  const updates = [];
+  const b = new Brain({ point: async () => {}, confirm: async () => "deny", status() {}, stream: (u) => updates.push(u) });
+  b.anthropic = /** @type {any} */ ({ beta: { messages: { stream: () => ({
+    on() { return this; },
+    finalMessage: async () => ({ content: [{ type: "text", text: "Done." }] }),
+  }) } } });
+  b.abort = new AbortController();
+  b.stepped = false; // what run() sets at the start of an answer
+  await b.turn();
+  await b.turn();
+  const starts = updates.filter((u) => u.text === "" && !u.done);
+  assert.deepEqual(starts.map((u) => !!u.next), [false, true]);
+});

@@ -6,7 +6,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { APPS, APP_IDS, allowRules, appStatus, claudeCodeExe, launchSpec, quickChatArgs, quickChatConfig, setApp, setCodeAllowed, staleApps } from "./ai-apps.js";
+import { APPS, APP_IDS, allowRules, appStatus, claudeCodeExe, codeSettingsFile, launchSpec, quickChatArgs, quickChatConfig, setApp, setCodeAllowed, staleApps } from "./ai-apps.js";
 import { SAFE_TOOLS } from "./bridge.js";
 import { findLocal, localDoor } from "./welcome.js";
 
@@ -25,7 +25,7 @@ const appSpec = (/** @type {import("./ai-apps.js").AppId} */ id) => launchSpec(p
 export function createAiAppSetup({ trace, documentsDir }) {
   /** Adds Buddy to one of the AI apps, or takes it out. Resolves an error message, or null. */
   async function setClaude(/** @type {import("./ai-apps.js").AppId} */ which, /** @type {boolean} */ on, why = "settings") {
-    const error = (await setApp(which, on ? appSpec(which) : null, appPlaces)) ?? (which === "code" ? setCodeAllowed(allowRules(SAFE_TOOLS), on) : null);
+    const error = (await setApp(which, on ? appSpec(which) : null, appPlaces)) ?? (which === "code" ? setCodeAllowed(allowRules(SAFE_TOOLS), on, codeSettingsFile(appPlaces)) : null);
     // Claude Code also gets allow rules for Buddy's look-and-point tools, so it doesn't stop to check each one.
     trace({ kind: "claude-setup", which, on, why, error });
     return error;

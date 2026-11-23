@@ -123,6 +123,7 @@ export function createMeetingNotes({ transcribe, complete, write, progressFile, 
   const transcript = createTranscript();
   let queue = Promise.resolve();
   let pieces = 0;
+  let discarded = false;
   const save = () => {
     try {
       fs.writeFileSync(`${progressFile}.tmp`, JSON.stringify({ started: started.toISOString(), entries: transcript.entries() }));
@@ -136,7 +137,7 @@ export function createMeetingNotes({ transcribe, complete, write, progressFile, 
     started,
     /** A piece of sound, cut at a pause. @param {{ who: Who, start: number, end: number, pcm: Float32Array }} p */
     piece(p) {
-      if ((p.who !== "you" && p.who !== "others") || !p.pcm?.length) return;
+      if (discarded || (p.who !== "you" && p.who !== "others") || !p.pcm?.length) return;
       pieces++;
       queue = queue.then(async () => {
         /** @type {{ text?: string, error?: string }} */
@@ -150,6 +151,11 @@ export function createMeetingNotes({ transcribe, complete, write, progressFile, 
       });
     },
     entries: () => transcript.entries(),
+    /** A meeting that never got going: its saved transcript goes, and later pieces are ignored. */
+    discard() {
+      discarded = true;
+      fs.rmSync(progressFile, { force: true });
+    },
     /** Everything heard so far, for questions during the meeting. */
     text: () => transcriptText(transcript.entries()),
     /**
@@ -198,4 +204,80 @@ export async function recoverTranscript(progressFile, write) {
   if (!t.entries().length) return null;
   const title = `${notesTitle(started)} (recovered)`;
   return write(title, notesDocument({ title, started, entries: t.entries(), notes: null, problem: "Buddy closed before the meeting ended" }));
+}
+
+/**
+ * @typedef {"off" | "starting" | "on" | "stopping"} SessionState
+ * A meeting's life, as one explicit machine, so nothing in between can be reached twice:
+ *   off ──start──▶ starting ──heard something──▶ on ──stop──▶ stopping ──notes saved (or failed)──▶ off
+ *                      └──heard nothing / failed──▶ off
+ * A start is refused unless off (a meeting being written up still owns its saved transcript). A stop while starting
+ * waits for the start to settle, then stops what started. Pieces of sound go to the meeting until it's written up.
+ * @param {{
+ *   capture: { start: (o?: any) => Promise<{ you?: boolean, others?: boolean, problems?: string[] }>, stop: () => Promise<void>, close: () => void },
+ *   makeNotes: () => ReturnType<typeof createMeetingNotes>,
+ *   onState?: (state: SessionState) => void,
+ * }} deps
+ */
+export function createMeetingSession({ capture, makeNotes, onState }) {
+  /** @type {SessionState} */
+  let state = "off";
+  /** @type {ReturnType<typeof createMeetingNotes> | null} */
+  let notes = null;
+  /** @type {Promise<unknown> | null} */
+  let starting = null;
+  const become = (/** @type {SessionState} */ next) => {
+    state = next;
+    onState?.(next);
+  };
+  return {
+    get state() {
+      return state;
+    },
+    /** The meeting being taken or written up, for its pieces of sound and its transcript. */
+    notes: () => notes,
+    /**
+     * Resolves which sides were heard, or an error: "busy" (not off), "unheard" (nothing would open).
+     * @param {any} [o] what the capture page is started with
+     * @returns {Promise<{ you?: boolean, others?: boolean, error?: "busy" | "unheard", problems?: string[] }>}
+     */
+    async start(o) {
+      if (state !== "off") return { error: "busy" };
+      become("starting");
+      notes = makeNotes();
+      /** @type {Promise<{ you?: boolean, others?: boolean, problems?: string[] }>} */
+      const opening = capture.start(o).catch((err) => ({ problems: [String(err?.message ?? err)] }));
+      starting = opening;
+      const heard = await opening;
+      starting = null;
+      if (!heard.you && !heard.others) {
+        capture.close();
+        notes.discard();
+        notes = null;
+        become("off");
+        return { error: "unheard", problems: heard.problems ?? [] };
+      }
+      become("on");
+      return { you: !!heard.you, others: !!heard.others };
+    },
+    /**
+     * Stops and writes up. Resolves the document, or an error: "off" (nothing to stop), or what failed.
+     * @returns {Promise<{ file?: string, problem?: string | null, entries?: number, error?: string }>}
+     */
+    async stop() {
+      if (state === "starting") await starting;
+      if (state !== "on" || !notes) return { error: "off" };
+      become("stopping");
+      const m = notes;
+      try {
+        await capture.stop();
+        return await m.finish();
+      } catch (err) {
+        return { error: String(err?.message ?? err) };
+      } finally {
+        notes = null;
+        become("off");
+      }
+    },
+  };
 }

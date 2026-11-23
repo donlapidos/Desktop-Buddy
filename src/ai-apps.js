@@ -153,10 +153,14 @@ function editJson(file, change, unreadable) {
 }
 
 /** Runs an app's own command: the first of `exes` that exists. */
-function command(/** @type {string[]} */ exes, /** @type {string[]} */ args) {
+// An app's command runs with `p`'s home as its own, so one pointed at a made-up home (end-to-end checks) changes that
+// home's settings, never the user's.
+export const commandEnv = (/** @type {Places} */ p = HERE) => (p === HERE ? process.env : { ...process.env, USERPROFILE: p.home, HOME: p.home, APPDATA: p.appData, LOCALAPPDATA: p.localAppData });
+function command(/** @type {string[]} */ exes, /** @type {string[]} */ args, /** @type {Places} */ p = HERE) {
+  const env = commandEnv(p);
   return new Promise((resolve) => {
     const attempt = (i) =>
-      execFile(exes[i], args, { timeout: 30_000, windowsHide: true }, (err, stdout, stderr) => {
+      execFile(exes[i], args, { timeout: 30_000, windowsHide: true, env }, (err, stdout, stderr) => {
         if (err?.code === "ENOENT" && i + 1 < exes.length) return attempt(i + 1);
         resolve(err ? { ok: false, missing: err.code === "ENOENT", text: `${stderr || stdout || err.message}`.trim() } : { ok: true, text: stdout });
       });
@@ -181,11 +185,11 @@ export async function setApp(id, spec, p = HERE) {
   }
   const exes = a.via === "claude-cli" ? CLAUDE_CODE(p) : CODEX(p);
   const have = entryIn(id, p);
-  if (have) await command(exes, a.via === "claude-cli" ? ["mcp", "remove", have.name, "-s", "user"] : ["mcp", "remove", have.name]);
+  if (have) await command(exes, a.via === "claude-cli" ? ["mcp", "remove", have.name, "-s", "user"] : ["mcp", "remove", have.name], p);
   if (!spec) return null;
   const env = Object.entries(spec.env).flatMap(([k, v]) => [a.via === "claude-cli" ? "-e" : "--env", `${k}=${v}`]);
   const add = a.via === "claude-cli" ? ["mcp", "add", "--scope", "user", SERVER, ...env, "--", spec.command, ...spec.args] : ["mcp", "add", SERVER, ...env, "--", spec.command, ...spec.args];
-  const res = await command(exes, add);
+  const res = await command(exes, add, p);
   if (res.missing) return `Couldn't find ${a.label}'s command on this PC.`;
   return res.ok ? null : `${a.label} said: ${res.text.slice(0, 200)}`;
 }
@@ -237,7 +241,10 @@ export function withAllowRules(settings, rules, on) {
 }
 
 /** Lets Claude Code run Buddy's safe tools without a check each time (on), or takes that back. */
-export function setCodeAllowed(rules, on, file = path.join(HERE.home, ".claude", "settings.json")) {
+/** Claude Code's user settings in `p`'s home, where its allow rules for Buddy go. */
+export const codeSettingsFile = (/** @type {Places} */ p = HERE) => path.join(p.home, ".claude", "settings.json");
+
+export function setCodeAllowed(rules, on, file = codeSettingsFile()) {
   if (!fs.existsSync(path.dirname(file))) return null;
   return editJson(file, (settings) => withAllowRules(settings, rules, on), "Buddy couldn't read Claude Code's settings file, so it left it alone.");
 }

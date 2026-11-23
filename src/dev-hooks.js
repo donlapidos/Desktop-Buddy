@@ -23,7 +23,7 @@ import { learnCaps } from "./providers.js";
  *   markLive: import("./marker-live.js").LiveOverlay | null, markBar: Electron.BrowserWindow | null,
  *   bubble: Electron.BrowserWindow, island: Electron.BrowserWindow, tasks: any, voice: any, updates: any, activity: any,
  *   settingsWindow: { open: (page?: string) => void },
- *   point: Function, guidePoint: Function, confirm: Function, summon: Function, toggle: Function, ownPids: () => number[],
+ *   point: Function, guidePoint: Function, hushReply: () => void, confirm: Function, summon: Function, toggle: Function, ownPids: () => number[],
  *   startMarking: Function, cancelMarking: Function, stopMarkMode: Function, enter: Function, currentMode: Function, grabDisplay: Function,
  *   toLocalRect: Function, annotationLayer: any, showAnnotations: Function, releaseLater: Function, openExplainer: Function,
  *   changeSettings: (patch: object) => any, settingsState: () => any, settingsFile: () => string, runRoutine: Function,
@@ -180,10 +180,50 @@ function voiceTest(kit) {
     await voice.say(`**${line}** It's under the *Formulas* tab → Insert Function.`);
     console.log("VOICE_SAID", Date.now() - t0, "ms");
     console.log("VOICE_JOIN", JSON.stringify(await joinCheck(voice)));
+    console.log("VOICE_HUSH", JSON.stringify(await hushCheck(kit)));
+    console.log("VOICE_MIC_OPEN", JSON.stringify(await openMicCheck(voice)));
     if (process.env.BUDDY_VOICE_TEST_MIC) console.log("VOICE_MIC", JSON.stringify(await voice.listen()));
     console.log("VOICE_HOLD", JSON.stringify(await holdToTalkCheck(kit)));
     console.log("VOICE_TEST_DONE");
   }, 1500);
+}
+
+// Buddy never speaks into its own open microphone: while it listens, say() makes no sound. The microphone opens for a
+// moment (nothing is kept) and is closed again.
+/** @param {DevKit["voice"]} voice */
+async function openMicCheck(voice) {
+  const listening = voice.listen();
+  const opened = voice.listening;
+  // say() marks itself speaking the moment it starts, so this is read before it could finish.
+  const saying = voice.say("This should not be heard.");
+  const spoke = voice.speaking;
+  voice.hush();
+  await saying;
+  voice.cancelListening();
+  await listening;
+  return { opened, spoke };
+}
+
+// A guided answer says each step's caption as it points, and Hush silences the rest of the answer, captions too:
+// the first step is said, the one pointed at after Hush isn't.
+/** @param {DevKit} kit */
+async function hushCheck(kit) {
+  const said = [];
+  const real = kit.voice.say;
+  kit.voice.say = (/** @type {string} */ text) => (said.push(text), Promise.resolve());
+  const before = kit.settings.talkBack;
+  kit.changeSettings({ talkBack: "always" });
+  const box = { x: 200, y: 200, width: 120, height: 40 };
+  const step = (/** @type {string} */ caption) => Promise.race([kit.guidePoint(box, caption), new Promise((r) => setTimeout(r, 3000))]);
+  try {
+    await step("Click Insert");
+    kit.hushReply();
+    await step("Now choose Table");
+    return { said };
+  } finally {
+    kit.voice.say = real;
+    kit.changeSettings({ talkBack: before });
+  }
 }
 
 // A streamed reply's second sentence joining the first while it plays (say's `join`): it must be made into audio during
@@ -783,6 +823,16 @@ function conversationTest(kit) {
       if (process.env.BUDDY_CONVERSATION_TEST_OUT) fs.writeFileSync(process.env.BUDDY_CONVERSATION_TEST_OUT, (await bubble.webContents.capturePage()).toPNG());
       await js(`document.getElementById("input").value = "Change direction"; document.getElementById("form").requestSubmit();`);
       const corrected = await until(`document.getElementById("reply").textContent === "Here is the corrected answer." && document.getElementById("stop").hidden`);
+      // An AI app's approval is waiting when an answer in the chat ends: the card is the app's, and stays up until
+      // someone answers it.
+      const outside = kit.confirm("Click Save (asked by an AI app)", null);
+      const carded = await until(`document.getElementById("confirm").classList.contains("on")`);
+      await js(`document.getElementById("input").value = "Change direction"; document.getElementById("form").requestSubmit();`);
+      await until(`document.getElementById("reply").textContent === "Here is the corrected answer." && document.getElementById("stop").hidden`);
+      await wait(300);
+      const cardKept = carded && (await js(`document.getElementById("confirm").classList.contains("on")`));
+      await js(`window.buddy.confirmReply("deny")`);
+      await outside;
       // A guided answer, in a test-owned sample window: it must leave one ask-to-pointer entry in the timing log.
       let guided = null;
       let firstPointer = null;
@@ -805,7 +855,7 @@ function conversationTest(kit) {
         firstPointer = lines.length ? JSON.parse(lines.at(-1)) : null;
         glanceReused = JSON.parse(log.filter((l) => l.includes('"kind":"screen-context"')).at(-1) ?? "{}").reused === true;
       }
-      console.log("CONVERSATION_TEST", JSON.stringify({ partial, editable, corrected, guided, firstPointer, glanceReused }));
+      console.log("CONVERSATION_TEST", JSON.stringify({ partial, editable, corrected, guided, firstPointer, glanceReused, cardKept }));
     } catch (err) {
       console.log("CONVERSATION_TEST", JSON.stringify({ error: err.message }));
     } finally {

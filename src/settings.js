@@ -347,7 +347,9 @@ export function load(file) {
     try {
       fs.renameSync(file, `${file}.bad`);
     } catch {}
-    return { settings: { ...normalize({}), launchSetupDone: true }, recovered: true };
+    // What the user chose is lost, so Buddy starts as carefully as on a first run: the voice download is offered, not
+    // started, and the advanced features wait to be turned on again. Only the welcome isn't shown again.
+    return { settings: { ...normalize({ voiceSetup: "ask", advanced: false }), launchSetupDone: true }, recovered: true };
   }
 }
 

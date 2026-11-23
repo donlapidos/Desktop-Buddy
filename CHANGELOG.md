@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* **Fixed:**
+  * A spoken answer that used a tool stopped mid-sentence when Buddy took its next step.
+  * Hush now also silences the spoken steps of a guided answer.
+  * Buddy no longer speaks while its microphone is open, and the voice preview in Settings stays quiet during a
+    meeting.
+  * An approval card from an AI app no longer disappears when an answer in the chat ends.
+  * Meeting notes can't get stuck "on" when they fail to start, and stopping while they start works.
+  * A damaged settings file no longer starts the voice download without asking.
 * **Meeting notes, in any meeting app:** say "take notes" (or use the tray menu) in Teams, Zoom, Meet or anything
   else. Buddy transcribes your microphone and your PC's sound on your PC, lets you ask about the meeting as it goes,
   and when you stop, saves a Word document with notes written by your AI (summary, decisions, action items) and the

@@ -347,6 +347,7 @@ const CHECKS = {
       if (!r) return [timedOut ? "timed out" : "no conversation result"];
       const fp = r.firstPointer;
       return [!r.partial && "text wasn't visible before completion", !r.editable && "the input was disabled while answering", !r.corrected && "the correction didn't replace the old answer", r.error,
+        !r.cardKept && "an AI app's approval card came down when an answer in the chat ended",
         r.guided !== "There they are." && `the guided answer said ${JSON.stringify(r.guided)}`,
         !fp && "a guided answer left no first-pointer entry in the timing log",
         fp && !["ms", "contextMs", "modelMs", "pointMs"].every((k) => Number.isFinite(fp[k])) && `the first-pointer entry is missing a part: ${JSON.stringify(fp)}`,
@@ -502,7 +503,12 @@ const CHECKS = {
     if (!markers.VOICE_SYNTH) return [timedOut ? "timed out (are the voice models downloaded?)" : "nothing spoken"];
     const hold = markers.VOICE_HOLD?.[0];
     const join = markers.VOICE_JOIN?.[0];
+    const hush = markers.VOICE_HUSH?.[0];
+    const mic = markers.VOICE_MIC_OPEN?.[0];
     return [!heard.includes("formulas") && `heard ${heard || "nothing"}`, !markers.VOICE_SAID && "the reply wasn't played",
+      !mic?.opened && `the open-microphone check didn't get the microphone open (${JSON.stringify(mic)})`,
+      mic?.opened && mic.spoke && "Buddy spoke while its microphone was open",
+      JSON.stringify(hush?.said) !== JSON.stringify(["Click Insert"]) && `a guide step's caption before Hush is said and the one after isn't, but Buddy said ${JSON.stringify(hush?.said)}`,
       !join && "the follow-on check printed nothing",
       join && !(join.gapMs < 300) && `a sentence joining the one being said left a silence of ${join.gapMs} ms before it`,
       join && join.joinedMs < join.playMs - 200 && `joining cut a sentence short (${join.joinedMs} ms for ${join.playMs} ms of audio)`,

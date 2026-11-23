@@ -320,7 +320,8 @@ async function askBuddy(text, opts) {
   else if (!listening) show(t("Okay, stopped."));
   $("spend").textContent = spend ?? "";
   offerLesson(!superseded && !!lesson);
-  $("confirm").classList.remove("on");
+  // The approval card isn't this answer's to take down: it may be an AI app's, and main clears it (confirm-clear)
+  // when nothing is waiting any more.
 }
 
 $("stop").addEventListener("click", () => window.buddy.cancel());
