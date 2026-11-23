@@ -25,7 +25,7 @@ const SIZE = { width: 640, height: 600 };
  *   addFolder: (win: BrowserWindow) => Promise<string | null>, // Agents › Add a folder; why it can't be added, or null
  *   lesson: (action: "play" | "export" | "delete", id: string, win: BrowserWindow) => Promise<{ error?: string, saved?: boolean }>, // Settings › Lessons
  *   importLesson: (win: BrowserWindow) => Promise<{ error?: string, title?: string }>,
- *   connection: (action: "connect" | "disconnect" | "setup", id: string, app?: { clientId?: string, clientSecret?: string }) => Promise<string | null>, // Settings › Connections; an error, or null
+ *   connection: (action: "connect" | "disconnect" | "setup" | "retry", id: string, app?: { clientId?: string, clientSecret?: string }) => Promise<string | null>, // Settings › Connections; an error, or null
  *   runRoutine: (id: string) => Promise<string | null>,    // start a routine now; returns an error message, or null
  *   apps: () => Promise<string[]>,                          // apps with a window open, for suggestions
  *   plusInterest: () => void,                               // open the Buddy Plus interest form
@@ -106,7 +106,7 @@ export function createSettingsWindow(deps) {
     return { ...(await deps.lesson(action, String(id ?? ""), win)), state: deps.state() };
   });
   handle("settings-connection", async (action, id, app) => {
-    if (action !== "connect" && action !== "disconnect" && action !== "setup") throw new Error("Not a connection action");
+    if (!["connect", "disconnect", "setup", "retry"].includes(action)) throw new Error("Not a connection action");
     const own = action === "setup" ? { clientId: String(app?.clientId ?? ""), clientSecret: String(app?.clientSecret ?? "") } : undefined;
     return { error: await deps.connection(action, String(id ?? ""), own), state: deps.state() };
   });

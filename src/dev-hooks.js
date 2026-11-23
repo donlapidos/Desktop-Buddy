@@ -1422,6 +1422,24 @@ async function ownAppConnection(kit) {
   r.connected = await until(() => !!kit.connectors?.connected("hubtest"));
   await wait(500);
   r.after = await page(`${row}?.textContent ?? ""`);
+  // Every state a connection can be in (connectors.js CONNECTION_MOVES), as Settings shows it: what the row says and
+  // the buttons it offers. One made-up service per state, from the state Buddy sends.
+  r.states = await page(`(() => {
+    const real = S;
+    const base = S.connections.find((c) => c.id === "testdocs");
+    const states = ["connected", "needs-sign-in", "unavailable", "connecting", "signed-out"];
+    render({ ...S, connections: states.map((st, i) => ({ ...base, id: "s" + i, label: st, state: st, connected: st === "connected" })) });
+    const rows = [...document.querySelectorAll("#connections .routine")].map((x) => [x.querySelector("b").textContent, x.querySelector(".when").textContent.trim(), [...x.querySelectorAll("button")].map((b) => b.textContent).join(",")]);
+    window.__real = real;
+    return rows;
+  })()`);
+  if (process.env.BUDDY_CONNECTIONS_STATES_OUT) {
+    // Drawn again just before the picture: a state change from earlier in the check may have redrawn the page.
+    await page(`(() => { const base = window.__real.connections.find((c) => c.id === "testdocs"); render({ ...window.__real, connections: ["connected", "needs-sign-in", "unavailable", "connecting", "signed-out"].map((st, i) => ({ ...base, id: "s" + i, label: st, state: st, connected: st === "connected" })) }); document.getElementById("connections").scrollIntoView(); })()`);
+    await wait(300);
+    fs.writeFileSync(process.env.BUDDY_CONNECTIONS_STATES_OUT, (await win.webContents.capturePage()).toPNG());
+  }
+  await page(`render(window.__real)`);
   win.close();
   return r;
 }

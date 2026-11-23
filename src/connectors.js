@@ -121,8 +121,36 @@ export async function signInReturn(state, { timeoutMs = 5 * 60_000, port: fixed 
   const close = () => (clearTimeout(timer), servers.forEach((s) => s.close()));
   code.then(close, close);
   const port = /** @type {import("node:net").AddressInfo} */ (servers[0].address()).port;
-  return { url: fixed ? returnAddress(fixed) : `http://127.0.0.1:${port}/callback`, code, close };
+  // cancel: the user gave up (signed out): the sign-in stops waiting at once.
+  return { url: fixed ? returnAddress(fixed) : `http://127.0.0.1:${port}/callback`, code, close, cancel: () => fail(new Error("cancelled")) };
 }
+
+/**
+ * @typedef {"not-set-up" | "signed-out" | "signing-in" | "connecting" | "connected" | "needs-sign-in" | "unavailable"} ConnectionState
+ * Each service's connection, as one explicit machine. What Buddy holds in memory is the truth; the encrypted record on
+ * disk follows it (the sign-in it keeps), and is read once, when Buddy starts.
+ *   not-set-up     a service that takes only the user's own app (`own`), before its codes are entered
+ *   signed-out     nothing kept, or nothing that works
+ *   signing-in     the browser sign-in is under way (one at a time)
+ *   connecting     reconnecting quietly with the sign-in kept from before
+ *   connected      its tools are offered
+ *   needs-sign-in  the service turned the kept sign-in down: the user signs in again (Buddy never opens a sign-in
+ *                  page by itself)
+ *   unavailable    it couldn't be reached: tried again later, or when the user asks
+ * @type {Record<ConnectionState, ConnectionState[]>}
+ */
+export const CONNECTION_MOVES = {
+  "not-set-up": ["signed-out"],
+  "signed-out": ["signing-in", "signed-out", "not-set-up"],
+  "signing-in": ["connected", "signed-out"],
+  connecting: ["connected", "needs-sign-in", "unavailable", "signed-out"],
+  connected: ["signing-in", "signed-out", "needs-sign-in"],
+  "needs-sign-in": ["signing-in", "signed-out"],
+  unavailable: ["connecting", "signing-in", "signed-out"],
+};
+
+/** The quiet reconnect needed the browser: that's for the user to start, so it stops here. */
+class NeedsSignIn extends Error {}
 
 /**
  * @param {{
@@ -130,10 +158,11 @@ export async function signInReturn(state, { timeoutMs = 5 * 60_000, port: fixed 
  *   safeStorage: { encryptString: (text: string) => Buffer, decryptString: (data: Buffer) => string },
  *   open: (url: string) => void | Promise<void>,              // shows the service's sign-in page in the browser
  *   trace?: (entry: object) => void,
+ *   onChange?: (id: string, state: ConnectionState) => void,   // a service's state moved (Settings shows it)
  *   list?: Connector[],
  * }} deps
  */
-export function createConnectors({ dir, safeStorage, open, trace, list = catalog() }) {
+export function createConnectors({ dir, safeStorage, open, trace, onChange, list = catalog() }) {
   const file = (/** @type {string} */ id) => path.join(dir, `${id}.bin`);
   /** @returns {{ client?: any, tokens?: any, app?: { clientId: string, clientSecret: string } } | null} */
   const read = (/** @type {string} */ id) => {
@@ -147,8 +176,38 @@ export function createConnectors({ dir, safeStorage, open, trace, list = catalog
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(file(id), safeStorage.encryptString(JSON.stringify(record)));
   };
-  /** @type {Map<string, { client: Client, tools: any[] }>} live connections */
-  const live = new Map();
+
+  /**
+   * Each service's state, its tools while connected, and the sign-in under way (`attempt`): only that attempt may save
+   * what the service hands back, so one the user cancelled can't bring the connection back.
+   * @type {Map<string, { state: ConnectionState, client?: Client, tools?: any[], attempt?: { alive: boolean, cancel: () => void } }>}
+   */
+  const conns = new Map();
+  for (const c of list) {
+    const r = read(c.id);
+    // A sign-in kept from before isn't connected until it's tried (start).
+    conns.set(c.id, { state: c.own && !r?.app ? "not-set-up" : r?.tokens ? "unavailable" : "signed-out" });
+  }
+  const stateOf = (/** @type {string} */ id) => conns.get(id)?.state ?? "signed-out";
+
+  /**
+   * Every change of state goes through here. A move the table doesn't allow is refused and logged. Leaving
+   * "connected" closes the service's client, so no other move has to.
+   * @param {string} id @param {ConnectionState} to @param {{ client?: Client, tools?: any[], attempt?: any }} [with_]
+   */
+  function move(id, to, with_ = {}) {
+    const conn = conns.get(id);
+    if (!conn) return false;
+    if (!CONNECTION_MOVES[conn.state].includes(to)) {
+      trace?.({ kind: "connector-move-refused", id, from: conn.state, to });
+      return false;
+    }
+    if (conn.state === "connected" && conn.client && conn.client !== with_.client) conn.client.close().catch(() => {});
+    conns.set(id, { state: to, ...with_ });
+    trace?.({ kind: "connector-state", id, from: conn.state, to });
+    onChange?.(id, to);
+    return true;
+  }
 
   /** A service set up with the user's own app keeps that app (`own`) through a sign-out or a failed sign-in. */
   const forget = (/** @type {Connector} */ c) => {
@@ -157,36 +216,52 @@ export function createConnectors({ dir, safeStorage, open, trace, list = catalog
     else fs.rmSync(file(c.id), { force: true });
   };
 
-  /** What the MCP library needs to sign in to a service and keep its tokens, for one connection attempt. */
-  function provider(/** @type {Connector} */ c, /** @type {{ redirect?: string, state?: string }} */ attempt = {}) {
+  /**
+   * What the MCP library needs to sign in to a service and keep its tokens. With `attempt` (the user's sign-in) it may
+   * open the browser and save; without (the quiet reconnect) it only uses and refreshes what's kept.
+   * @param {Connector} c @param {{ redirect?: string, state?: string, alive?: boolean } | null} [attempt]
+   */
+  function provider(c, attempt = null) {
     let verifier = "";
+    // A cancelled sign-in's late answers are dropped.
+    const mayWrite = () => !attempt || attempt.alive !== false;
     return {
       get redirectUrl() {
-        return attempt.redirect;
+        return attempt?.redirect;
       },
       get clientMetadata() {
-        return { client_name: "Desktop Buddy", redirect_uris: attempt.redirect ? [attempt.redirect] : [], grant_types: ["authorization_code", "refresh_token"], response_types: ["code"], token_endpoint_auth_method: c.own ? "client_secret_post" : "none" };
+        return { client_name: "Desktop Buddy", redirect_uris: attempt?.redirect ? [attempt.redirect] : [], grant_types: ["authorization_code", "refresh_token"], response_types: ["code"], token_endpoint_auth_method: c.own ? "client_secret_post" : "none" };
       },
-      state: () => attempt.state ?? "",
+      state: () => attempt?.state ?? "",
       // A service set up with the user's own app signs in as that app; the others register themselves.
       clientInformation: () => {
         const r = read(c.id);
         return c.own ? r?.app && { client_id: r.app.clientId, client_secret: r.app.clientSecret } : r?.client;
       },
-      saveClientInformation: (client) => c.own || write(c.id, { ...read(c.id), client }),
+      saveClientInformation: (client) => c.own || !mayWrite() || write(c.id, { ...read(c.id), client }),
       tokens: () => read(c.id)?.tokens,
-      saveTokens: (tokens) => write(c.id, { ...read(c.id), tokens }),
+      saveTokens: (tokens) => mayWrite() && write(c.id, { ...read(c.id), tokens }),
       redirectToAuthorization: async (/** @type {URL} */ url) => {
+        if (!attempt) throw new NeedsSignIn(`${c.label} needs signing in again.`);
+        if (!mayWrite()) throw new Error("cancelled");
         // Only a real sign-in page (or, in an end-to-end check, its stand-in on this PC).
         const local = process.env.BUDDY_E2E && url.protocol === "http:" && url.hostname === "127.0.0.1";
         if (url.protocol !== "https:" && !local) throw new Error("The sign-in page isn't a secure (https) page.");
         await open(url.toString());
       },
+      // Without a return address the library treats a reconnect as a sign-in that needs no browser, and asks for its
+      // token request once the kept tokens are no good: that's the moment the sign-in is known to be turned down. A
+      // sign-in the user started goes the usual way (undefined: the authorization code).
+      async prepareTokenRequest() {
+        if (attempt) return undefined;
+        throw new NeedsSignIn(`${c.label} needs signing in again.`);
+      },
       saveCodeVerifier: (v) => {
         verifier = v;
       },
       codeVerifier: () => verifier,
-      invalidateCredentials: (/** @type {string} */ scope) => {
+      invalidateCredentials(/** @type {string} */ scope) {
+        if (!mayWrite()) return;
         if (scope === "all") forget(c);
         else if (scope === "tokens") write(c.id, { ...read(c.id), tokens: undefined });
         else if (scope === "client") write(c.id, { ...read(c.id), client: undefined });
@@ -196,24 +271,39 @@ export function createConnectors({ dir, safeStorage, open, trace, list = catalog
 
   const transportFor = (/** @type {Connector} */ c, /** @type {any} */ auth) => new StreamableHTTPClientTransport(new URL(c.url), { authProvider: auth });
 
-  /** Opens a connection with the tokens kept (refreshing them if need be) and learns its tools. */
+  /** Opens a connection with what's kept (refreshing it if need be) and learns its tools. Throws if it can't. */
   async function attach(/** @type {Connector} */ c) {
     const client = new Client({ name: "desktop-buddy", version: "1" });
     await client.connect(transportFor(c, provider(c)));
     const { tools } = await client.listTools();
-    live.set(c.id, { client, tools });
-    trace?.({ kind: "connector-attached", id: c.id, tools: tools.length });
-    return live.get(c.id);
+    return { client, tools };
+  }
+
+  /** The quiet reconnect, from "unavailable": to connected, needs-sign-in or (again) unavailable. */
+  async function reconnect(/** @type {Connector} */ c) {
+    if (!move(c.id, "connecting")) return;
+    try {
+      const { client, tools } = await attach(c);
+      // Signed out (or in again) meanwhile: this connection isn't wanted any more.
+      if (stateOf(c.id) !== "connecting" || !move(c.id, "connected", { client, tools })) return void client.close().catch(() => {});
+      trace?.({ kind: "connector-attached", id: c.id, tools: tools.length });
+    } catch (err) {
+      const signIn = err instanceof NeedsSignIn || err instanceof UnauthorizedError;
+      if (stateOf(c.id) === "connecting") move(c.id, signIn ? "needs-sign-in" : "unavailable");
+      trace?.({ kind: "connector-unavailable", id: c.id, signIn, why: String(err?.message ?? err).slice(0, 200) });
+    }
   }
 
   return {
-    /** Every service Buddy knows, and whether it's connected. */
-    // For a service set up with the user's own app: what to do in the service, the address to enter there, and
-    // whether it's been done here. The app's secret never leaves this module.
-    list: () => list.map((c) => ({ id: c.id, label: c.label, does: c.does, connected: !!read(c.id)?.tokens,
+    /**
+     * Every service Buddy knows and its state. For a service set up with the user's own app: what to do in the service,
+     * the address to enter there, and whether it's been done here. The app's secret never leaves this module.
+     */
+    list: () => list.map((c) => ({ id: c.id, label: c.label, does: c.does, state: stateOf(c.id), connected: stateOf(c.id) === "connected",
       ...(c.own && { setup: c.own.setup, returnUrl: returnAddress(c.own.port), setUp: !!read(c.id)?.app }) })),
     get: (/** @type {string} */ id) => list.find((c) => c.id === id) ?? null,
-    connected: (/** @type {string} */ id) => !!read(id)?.tokens,
+    connected: (/** @type {string} */ id) => stateOf(id) === "connected",
+    state: stateOf,
 
     /**
      * Keeps the client id and secret of the app the user set up in a service that needs one (`own`), replacing any
@@ -222,14 +312,14 @@ export function createConnectors({ dir, safeStorage, open, trace, list = catalog
     async setUp(/** @type {string} */ id, /** @type {{ clientId?: string, clientSecret?: string }} */ app) {
       const c = list.find((x) => x.id === id);
       if (!c?.own) return "That service doesn't need setting up.";
+      if (stateOf(id) === "signing-in") return `${c.label} is signing in. Wait for it to finish, or cancel it first.`;
       const clientId = String(app?.clientId ?? "").trim();
       const clientSecret = String(app?.clientSecret ?? "").trim();
       if (!clientId || !clientSecret) return "Paste both the Client ID and the Client secret.";
       if (/\s/.test(clientId + clientSecret) || clientId.length > 200 || clientSecret.length > 200) return "That doesn't look like a Client ID and secret. Copy them again from the service.";
-      const l = live.get(id);
-      live.delete(id);
-      await l?.client.close().catch(() => {});
+      if (stateOf(id) !== "not-set-up" && stateOf(id) !== "signed-out") move(id, "signed-out");
       write(c.id, { app: { clientId, clientSecret } });
+      if (stateOf(id) === "not-set-up") move(id, "signed-out");
       trace?.({ kind: "connector-set-up", id });
       return null;
     },
@@ -238,8 +328,11 @@ export function createConnectors({ dir, safeStorage, open, trace, list = catalog
     async connect(/** @type {string} */ id) {
       const c = list.find((x) => x.id === id);
       if (!c) return "Buddy doesn't know that service.";
+      const from = stateOf(id);
+      if (from === "not-set-up") return `${c.label} needs setting up first, in Settings › Connections.`;
+      if (from === "signing-in") return `${c.label} is already signing in: finish in your browser.`;
+      if (from === "connecting") return `${c.label} is connecting. Try again in a moment.`;
       const app = c.own ? read(c.id)?.app : null;
-      if (c.own && !app) return `${c.label} needs setting up first, in Settings › Connections.`;
       const state = crypto.randomBytes(16).toString("hex");
       let back;
       try {
@@ -247,26 +340,41 @@ export function createConnectors({ dir, safeStorage, open, trace, list = catalog
       } catch {
         return `Another program is using the address ${c.label} comes back to (port ${c.own?.port}). Close it and try again.`;
       }
+      const attempt = { redirect: back.url, state, alive: true, cancel: () => ((attempt.alive = false), back.cancel()) };
+      // Checked again after the await: another sign-in may have started meanwhile.
+      if (!move(id, "signing-in", { attempt })) {
+        back.close();
+        return `${c.label} is already signing in: finish in your browser.`;
+      }
+      const ours = () => conns.get(id)?.attempt === attempt;
+      let client = null;
       try {
         // A new sign-in registers anew (the address the browser comes back to is new each time), or, with the user's
         // own app, starts again from that app.
         write(c.id, app ? { app } : {});
-        const auth = provider(c, { redirect: back.url, state });
+        const auth = provider(c, attempt);
         const transport = transportFor(c, auth);
-        const client = new Client({ name: "desktop-buddy", version: "1" });
+        const signing = new Client({ name: "desktop-buddy", version: "1" });
         try {
-          await client.connect(transport);
+          await signing.connect(transport);
         } catch (err) {
           if (!(err instanceof UnauthorizedError)) throw err;
           await transport.finishAuth(await back.code);
         }
-        await client.close().catch(() => {});
-        await attach(c);
+        await signing.close().catch(() => {});
+        if (!ours()) throw new Error("cancelled");
+        const attached = await attach(c);
+        client = attached.client;
+        if (!ours() || !move(id, "connected", attached)) throw new Error("cancelled");
         trace?.({ kind: "connector-connected", id });
         return null;
       } catch (err) {
-        forget(c);
+        client?.close().catch(() => {});
         const why = String(err?.message || err?.errorCode || err);
+        // Cancelled (signed out meanwhile): that move already left the record as it should be.
+        if (!ours()) return "Signing in was cancelled.";
+        forget(c);
+        move(id, "signed-out");
         trace?.({ kind: "connector-failed", id, why: why.slice(0, 200) });
         // The MCP library's OAuth errors carry the service's error code; their message can be empty.
         if (c.own && /invalid_client|unauthorized_client|client authentication/i.test(`${err?.errorCode ?? ""} ${why}`)) return `${c.label} didn't accept the Client ID and secret. Copy them again from the service and save them here.`;
@@ -276,30 +384,40 @@ export function createConnectors({ dir, safeStorage, open, trace, list = catalog
       }
     },
 
+    /** Signs out of a service, whatever it was doing; a sign-in under way is cancelled. Kept codes (`own`) stay. */
     async disconnect(/** @type {string} */ id) {
-      const l = live.get(id);
-      live.delete(id);
-      await l?.client.close().catch(() => {});
+      const conn = conns.get(id);
       const c = list.find((x) => x.id === id);
-      if (c) forget(c);
-      else fs.rmSync(file(id), { force: true });
+      if (!conn || !c) return;
+      conn.attempt?.cancel();
+      if (conn.state !== "not-set-up") {
+        if (conn.state === "signed-out") forget(c);
+        else {
+          move(id, "signed-out");
+          forget(c);
+        }
+      }
       trace?.({ kind: "connector-disconnected", id });
     },
 
-    /** Connects the services kept from before (tokens on file), quietly; one that needs signing in again is left out. */
+    /** Connects the services kept from before, quietly; one that needs signing in again waits for the user. */
     async start() {
-      for (const c of list) {
-        if (!read(c.id)?.tokens || live.has(c.id)) continue;
-        await attach(c).catch((err) => trace?.({ kind: "connector-unavailable", id: c.id, why: String(err?.message ?? err).slice(0, 200) }));
-      }
+      for (const c of list) if (stateOf(c.id) === "unavailable") await reconnect(c);
+    },
+    /** Tries an unavailable service again, now. Resolves its state. */
+    async retry(/** @type {string} */ id) {
+      const c = list.find((x) => x.id === id);
+      if (c && stateOf(id) === "unavailable") await reconnect(c);
+      return stateOf(id);
     },
 
     /** The connected services' tools, as the model is offered them. */
     tools() {
-      return [...live.entries()].flatMap(([id, { tools }]) => {
-        const c = /** @type {Connector} */ (list.find((x) => x.id === id));
-        return tools.map((t) => ({
-          name: toolName(id, t.name),
+      return list.flatMap((c) => {
+        const conn = conns.get(c.id);
+        if (conn?.state !== "connected") return [];
+        return (conn.tools ?? []).map((t) => ({
+          name: toolName(c.id, t.name),
           description: `${c.label}: ${String(t.description ?? t.name).slice(0, 900)}`,
           input_schema: t.inputSchema?.type === "object" ? t.inputSchema : { type: "object", properties: {} },
         }));
@@ -309,8 +427,8 @@ export function createConnectors({ dir, safeStorage, open, trace, list = catalog
     /** What the approval card names: the service and the tool's own title. */
     describe(/** @type {string} */ name) {
       const id = serviceOf(name);
-      const l = id ? live.get(id) : null;
-      const tool = l?.tools.find((t) => toolName(/** @type {string} */ (id), t.name) === name);
+      const conn = id ? conns.get(id) : null;
+      const tool = conn?.state === "connected" ? conn.tools?.find((t) => toolName(/** @type {string} */ (id), t.name) === name) : null;
       const c = list.find((x) => x.id === id);
       return tool && c ? { service: c.label, action: tool.annotations?.title ?? tool.title ?? tool.name, readOnly: !!tool.annotations?.readOnlyHint } : null;
     },
@@ -319,16 +437,20 @@ export function createConnectors({ dir, safeStorage, open, trace, list = catalog
     async call(/** @type {string} */ name, /** @type {any} */ input, /** @type {AbortSignal | undefined} */ signal) {
       const id = serviceOf(name);
       const c = list.find((x) => x.id === id);
-      const l = id ? live.get(id) : null;
-      const tool = l?.tools.find((t) => toolName(/** @type {string} */ (id), t.name) === name);
-      if (!c || !l || !tool) return "That service isn't connected.";
+      const conn = id ? conns.get(id) : null;
+      const tool = conn?.state === "connected" ? conn.tools?.find((t) => toolName(/** @type {string} */ (id), t.name) === name) : null;
+      if (!c || !conn?.client || !tool) return "That service isn't connected.";
       try {
-        const result = await l.client.callTool({ name: tool.name, arguments: input ?? {} }, undefined, { signal });
+        const result = await conn.client.callTool({ name: tool.name, arguments: input ?? {} }, undefined, { signal });
         trace?.({ kind: "connector-call", id, ok: !result?.isError });
         return resultText(c.label, result);
       } catch (err) {
         trace?.({ kind: "connector-call", id, ok: false });
-        if (err instanceof UnauthorizedError) return `${c.label} needs signing in again: tell the user to reconnect it in Settings › Connections.`;
+        if (err instanceof UnauthorizedError || err instanceof NeedsSignIn) {
+          // The service has turned the sign-in down: Settings says so, and its tools stop being offered.
+          if (conns.get(c.id)?.client === conn.client) move(c.id, "needs-sign-in");
+          return `${c.label} needs signing in again: tell the user to choose Sign in again for it in Settings › Connections.`;
+        }
         return `${c.label} couldn't do that: ${String(err?.message ?? err).slice(0, 300)}`;
       }
     },

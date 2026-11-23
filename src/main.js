@@ -2038,6 +2038,7 @@ const settingsWindow = createSettingsWindow({
   addFolder: addReadFolder,
   connection: async (action, id, app) => {
     if (action === "disconnect") return (await connectors?.disconnect(id), null);
+    if (action === "retry") return (await connectors?.retry(id)) === "connected" ? null : t("Buddy still couldn't reach it. Check your internet connection and try again.");
     if (action === "setup") {
       const error = (await connectors?.setUp(id, app ?? {})) ?? null;
       return error && t(error);
@@ -2156,7 +2157,7 @@ app.whenReady().then(() => {
   startLedger();
   conversations = createConversations({ file: path.join(app.getPath("userData"), "conversations.json") });
   lessons = createLessons({ file: path.join(app.getPath("userData"), "lessons.json") });
-  connectors = createConnectors({ dir: path.join(app.getPath("userData"), "connectors"), safeStorage, open: openSignIn, trace });
+  connectors = createConnectors({ dir: path.join(app.getPath("userData"), "connectors"), safeStorage, open: openSignIn, trace, onChange: () => settingsWindow?.refresh() });
   connectors.start().catch(() => {});
   // A meeting Buddy closed during: its transcript, saved as it grew, becomes a document.
   recoverTranscript(meetingFile(), writeNotes).then((file) => {

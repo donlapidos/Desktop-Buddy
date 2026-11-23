@@ -719,21 +719,44 @@ let settingUpId = null; // a service that needs the user's own app (HubSpot), wi
 function renderConnections() {
   $("connections").replaceChildren(...(S.connections ?? []).map((c) => {
     if (c.returnUrl && (!c.setUp || settingUpId === c.id)) return setupRow(c);
-    const info = el("div", {}, el("b", { textContent: c.label }), el("span", { className: "when", textContent: ` ${c.connected ? t("Connected: Buddy can {does}.", { does: c.does }) : t("Not connected.")}` }));
-    const busy = connectingId === c.id;
-    const btn = el("button", { className: c.connected ? "btn" : "btn primary", textContent: busy ? t("Signing in…") : c.connected ? t("Disconnect") : t("Connect"), disabled: !!connectingId });
-    btn.setAttribute("aria-label", c.connected ? t("Disconnect {service}", { service: c.label }) : t("Connect {service}", { service: c.label }));
-    btn.addEventListener("click", async () => {
-      connectingId = c.connected ? null : c.id;
-      $("connection-problem").textContent = c.connected ? "" : t("Sign in in your browser, then come back here.");
-      renderConnections();
-      const r = await window.buddy.settingsConnection(c.connected ? "disconnect" : "connect", c.id);
-      connectingId = null;
-      $("connection-problem").textContent = r.error ?? "";
-      render(r.state);
-    });
-    const row = el("div", { className: "row" }, btn);
-    if (c.returnUrl && !c.connected) {
+    // What each state says (connectors.js CONNECTION_MOVES), and what the user can do from it.
+    const state = connectingId === c.id && c.state !== "connected" ? "signing-in" : c.state;
+    const says = {
+      connected: t("Connected: Buddy can {does}.", { does: c.does }),
+      "needs-sign-in": t("Signed out: sign in again so Buddy can {does}.", { does: c.does }),
+      unavailable: t("Couldn't reach it just now."),
+      connecting: t("Connecting…"),
+      "signing-in": t("Signing in…"),
+    }[state] ?? t("Not connected.");
+    const info = el("div", {}, el("b", { textContent: c.label }), el("span", { className: "when", textContent: ` ${says}` }));
+    /** One of the row's buttons: `action` goes to Buddy, then Settings shows what's true now. */
+    const button = (/** @type {string} */ words, /** @type {string} */ label, /** @type {string} */ action, primary = false) => {
+      const b = el("button", { className: primary ? "btn primary" : "btn", textContent: words, disabled: !!connectingId && connectingId !== c.id });
+      b.setAttribute("aria-label", label);
+      b.addEventListener("click", async () => {
+        if (action === "connect") connectingId = c.id;
+        $("connection-problem").textContent = action === "connect" ? t("Sign in in your browser, then come back here.") : "";
+        renderConnections();
+        try {
+          const r = await window.buddy.settingsConnection(action, c.id);
+          $("connection-problem").textContent = r.error ?? "";
+          render(r.state);
+        } finally {
+          if (connectingId === c.id) connectingId = null;
+          renderConnections();
+        }
+      });
+      return b;
+    };
+    const buttons = {
+      connected: [button(t("Disconnect"), t("Disconnect {service}", { service: c.label }), "disconnect")],
+      "needs-sign-in": [button(t("Sign in again"), t("Sign in to {service} again", { service: c.label }), "connect", true), button(t("Disconnect"), t("Disconnect {service}", { service: c.label }), "disconnect")],
+      unavailable: [button(t("Try again"), t("Try {service} again", { service: c.label }), "retry", true), button(t("Disconnect"), t("Disconnect {service}", { service: c.label }), "disconnect")],
+      connecting: [],
+      "signing-in": [button(t("Cancel"), t("Cancel signing in to {service}", { service: c.label }), "disconnect")],
+    }[state] ?? [button(t("Connect"), t("Connect {service}", { service: c.label }), "connect", true)];
+    const row = el("div", { className: "row" }, ...buttons);
+    if (c.returnUrl && (state === "signed-out" || state === "needs-sign-in")) {
       const change = el("button", { className: "btn", textContent: t("Change setup"), disabled: !!connectingId });
       change.setAttribute("aria-label", t("Change the {service} setup", { service: c.label }));
       change.addEventListener("click", () => ((settingUpId = c.id), renderConnections()));

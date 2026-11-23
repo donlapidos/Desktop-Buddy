@@ -4,7 +4,7 @@ import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { CATALOG, createConnectors, resultText, serviceOf, siteConnector, toolName } from "../src/connectors.js";
+import { CATALOG, CONNECTION_MOVES, createConnectors, resultText, serviceOf, siteConnector, toolName } from "../src/connectors.js";
 import { startTestService } from "../scripts/samples/test-service.mjs";
 
 // What Windows' encryption does, for tests: anything but what was written reads as damaged.
@@ -100,7 +100,7 @@ test("a service that only takes the user's own app (HubSpot) signs in as that ap
   /** @type {string[]} */
   const opened = [];
   const conn = createConnectors({ dir, safeStorage: fakeStorage, open: async (url) => (opened.push(url), browser(url)), list });
-  assert.deepEqual(conn.list()[0], { id: "hubtest", label: "Hub Test", does: "x", connected: false, setup: "Set it up.", returnUrl: app.redirect, setUp: false });
+  assert.deepEqual(conn.list()[0], { id: "hubtest", label: "Hub Test", does: "x", state: "not-set-up", connected: false, setup: "Set it up.", returnUrl: app.redirect, setUp: false });
   assert.match(String(await conn.connect("hubtest")), /needs setting up first/);
   assert.equal(opened.length, 0, "no sign-in before it's set up");
   assert.match(String(await conn.setUp("hubtest", { clientId: "hub-client", clientSecret: "" })), /both/);
@@ -192,4 +192,111 @@ test("a service's tool asks first, naming the service; declining calls nothing, 
   const basic = new Brain({ apiKey: "sk-test", status() {}, point: async () => {}, confirm: async () => "allow", advanced: () => false, connectors: { tools: () => tools, describe: () => ({ service: "Notion", action: "Search" }), call: async () => assert.fail("not without the advanced features") } });
   assert.ok(!basic.tools().some((t) => t.name === "notion__search"));
   assert.doesNotMatch(await basic.runTool("notion__search", {}), /^From/);
+});
+
+// Each service's connection as one machine (CONNECTION_MOVES): what Settings shows is what's true.
+const testList = (service) => [{ id: "testdocs", label: "Test Docs", url: service.url, sites: /docs\.test/, does: "read your test documents" }];
+
+test("a sign-in the service turns down shows as needing sign-in, at start or mid-use, and Buddy never opens the browser by itself", { timeout: 30_000 }, async (t) => {
+  const service = await startTestService();
+  t.after(() => service.close());
+  const dir = tempDir(t);
+  process.env.BUDDY_E2E = "1";
+  t.after(() => delete process.env.BUDDY_E2E);
+  const conn = createConnectors({ dir, safeStorage: fakeStorage, open: browser, list: testList(service) });
+  assert.equal(await conn.connect("testdocs"), null);
+  assert.equal(conn.state("testdocs"), "connected");
+  // Mid-use: the service turns the sign-in down.
+  service.revoke();
+  assert.match(await conn.call("testdocs__search_docs", { query: "x" }), /needs signing in again/);
+  assert.equal(conn.state("testdocs"), "needs-sign-in");
+  assert.deepEqual(conn.tools(), [], "its tools stop being offered");
+  assert.equal(conn.list()[0].connected, false, "Settings doesn't say Connected");
+  // At start: the kept sign-in is tried quietly, and turned down.
+  /** @type {string[]} */
+  const opened = [];
+  const later = createConnectors({ dir, safeStorage: fakeStorage, open: async (url) => { opened.push(url); }, list: testList(service) });
+  assert.equal(later.state("testdocs"), "unavailable", "not connected until tried");
+  await later.start();
+  assert.equal(later.state("testdocs"), "needs-sign-in");
+  assert.deepEqual(opened, [], "no sign-in page opened without the user");
+  // Signing in again connects.
+  const again = createConnectors({ dir, safeStorage: fakeStorage, open: browser, list: testList(service) });
+  await again.start();
+  assert.equal(await again.connect("testdocs"), null);
+  assert.equal(again.state("testdocs"), "connected");
+});
+
+test("a service that can't be reached is unavailable, not connected, and can be tried again", { timeout: 30_000 }, async (t) => {
+  const service = await startTestService();
+  const dir = tempDir(t);
+  process.env.BUDDY_E2E = "1";
+  t.after(() => delete process.env.BUDDY_E2E);
+  const list = testList(service);
+  const first = createConnectors({ dir, safeStorage: fakeStorage, open: browser, list });
+  assert.equal(await first.connect("testdocs"), null);
+  service.close();
+  const conn = createConnectors({ dir, safeStorage: fakeStorage, open: browser, list });
+  await conn.start();
+  assert.equal(conn.state("testdocs"), "unavailable");
+  assert.deepEqual(conn.tools(), []);
+  assert.equal(await conn.retry("testdocs"), "unavailable", "still down");
+});
+
+test("one sign-in at a time; signing out cancels one under way, and its late answer can't connect", { timeout: 30_000 }, async (t) => {
+  const service = await startTestService();
+  t.after(() => service.close());
+  const dir = tempDir(t);
+  process.env.BUDDY_E2E = "1";
+  t.after(() => delete process.env.BUDDY_E2E);
+  /** @type {string[]} */
+  const pages = [];
+  let opened;
+  const sawPage = new Promise((r) => { opened = r; });
+  // The browser: the user hasn't finished signing in yet.
+  const conn = createConnectors({ dir, safeStorage: fakeStorage, open: async (url) => { pages.push(url); opened(); }, list: testList(service) });
+  const signing = conn.connect("testdocs");
+  await sawPage;
+  assert.equal(conn.state("testdocs"), "signing-in");
+  assert.match(String(await conn.connect("testdocs")), /already signing in/, "a second sign-in is refused");
+  await conn.disconnect("testdocs");
+  assert.equal(await signing, "Signing in was cancelled.");
+  assert.equal(conn.state("testdocs"), "signed-out");
+  // The user finishes in the browser anyway: the return address is gone, and nothing is kept or connected.
+  await browser(pages[0]).catch(() => {});
+  assert.equal(service.seen.tokens, 0);
+  assert.equal(conn.state("testdocs"), "signed-out");
+  assert.ok(!fs.existsSync(path.join(dir, "testdocs.bin")), "nothing kept");
+  assert.equal(pages.length, 1, "only one sign-in page");
+});
+
+test("signing in again while connected replaces the connection; if it fails, nothing stale is left offered", { timeout: 30_000 }, async (t) => {
+  const service = await startTestService();
+  t.after(() => service.close());
+  process.env.BUDDY_E2E = "1";
+  t.after(() => delete process.env.BUDDY_E2E);
+  let refuse = false;
+  // The second time, the user says no in the browser.
+  const open = async (url) => {
+    if (!refuse) return browser(url);
+    const back = new URL(new URL(url).searchParams.get("redirect_uri") ?? "");
+    back.searchParams.set("error", "access_denied");
+    back.searchParams.set("state", new URL(url).searchParams.get("state") ?? "");
+    await fetch(back);
+  };
+  const conn = createConnectors({ dir: tempDir(t), safeStorage: fakeStorage, open, list: testList(service) });
+  assert.equal(await conn.connect("testdocs"), null);
+  assert.equal(conn.tools().length, 2);
+  refuse = true;
+  assert.match(String(await conn.connect("testdocs")), /didn't allow it/);
+  assert.equal(conn.state("testdocs"), "signed-out");
+  assert.deepEqual(conn.tools(), [], "the old connection's tools went with it");
+  assert.equal(await conn.call("testdocs__search_docs", { query: "x" }), "That service isn't connected.");
+});
+
+test("moves the machine doesn't allow are refused and logged", () => {
+  for (const [from, tos] of Object.entries(CONNECTION_MOVES)) for (const to of tos) assert.ok(to in CONNECTION_MOVES, `${from} → ${to}`);
+  assert.ok(!CONNECTION_MOVES["not-set-up"].includes("signing-in"), "a service that needs its codes can't start signing in");
+  assert.ok(!CONNECTION_MOVES["signing-in"].includes("signing-in"), "one sign-in at a time");
+  assert.ok(!CONNECTION_MOVES["needs-sign-in"].includes("connected"), "a turned-down sign-in connects only by signing in again");
 });
