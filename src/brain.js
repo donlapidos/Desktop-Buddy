@@ -1062,6 +1062,8 @@ export class Brain {
     this.made = [];
     // A route this answer walks the user all the way through (guideSteps), which they may keep as a lesson.
     this.lastRoute = null;
+    // Whether the model has already taken a step in this answer: the reply stream starts once per answer.
+    this.stepped = false;
     try {
       await this.checkBlender();
       if (prepare) content = await prepare(this.abort.signal);
@@ -1307,7 +1309,10 @@ export class Brain {
       text += delta;
       this.ui.stream?.({ text, done: false });
     };
-    this.ui.stream?.({ text: "", done: false });
+    // A new answer starts the reply afresh; a later step of the same answer only starts new text, so what Buddy is
+    // still saying from the step before carries on (reply-stream.js).
+    this.ui.stream?.({ text: "", done: false, ...(this.stepped && { next: true }) });
+    this.stepped = true;
     // Pointing and guiding start as soon as their first target is written (early-tools.js); nothing else does.
     this.early = null;
     const hear = (/** @type {number} */ index, /** @type {string} */ name, /** @type {string} */ raw) => {

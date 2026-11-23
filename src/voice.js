@@ -219,6 +219,9 @@ export function createVoice({ here, cacheDir, getVoice, getLanguage, onState, on
    * silence between two pieces (`gapMs`), which is how long the next one took to be ready after the last one ended.
    */
   async function say(text, how = getVoice(), { join = false } = {}) {
+    // Never into an open microphone: while Buddy listens or takes dictation, what it said would be heard back (and
+    // typed into the user's app).
+    if (heard) return;
     const following = join && line?.mine === gen ? line : null;
     const parts = pieces(text, { first: !following });
     if (!parts.length) return;

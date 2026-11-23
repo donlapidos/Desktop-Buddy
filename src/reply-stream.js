@@ -18,9 +18,12 @@ export function createReplyStream(ui) {
     spoken = false;
   }
 
+  // `{ text: "" }` starts a new answer: whatever was being said stops. `{ text: "", next: true }` is the same answer's
+  // next step (after a tool): its text starts from the top, and what's being said or waiting to be said carries on.
   function receive(update) {
     if (!update.text && !update.done) {
-      cancel();
+      if (!update.next) cancel();
+      else if (!active) return;
       active = true;
       text = "";
       consumed = 0;

@@ -48,7 +48,7 @@ import { createConversations } from "./conversations.js";
 import { appName, createLessons } from "./lessons.js";
 import { createConnectors, siteConnector } from "./connectors.js";
 import { writeDocx } from "./documents.js";
-import { createMeetingNotes, recoverTranscript } from "./meeting.js";
+import { createMeetingNotes, createMeetingSession, recoverTranscript } from "./meeting.js";
 import { createMeetingCapture } from "./meeting-capture.js";
 import { LANGUAGES, N, language, pickLanguage, setLanguage, t, table } from "./i18n.js";
 import { appKey } from "./policy.js";
@@ -119,7 +119,7 @@ const liveReply = createReplyStream({
     await voice?.say(text, undefined, how);
   },
   hush: () => voice?.hush(),
-  canSpeak: () => !replyMuted && talksBack(turn.spoken),
+  canSpeak: () => speaksNow(),
 });
 function hushReply() {
   replyMuted = true;
@@ -281,21 +281,47 @@ async function connectService(/** @type {string} */ id) {
 
 // ---------- Meeting notes (meeting.js): a transcript of a meeting in any app, then notes written from it ----------
 
-/** @type {ReturnType<typeof createMeetingNotes> | null} the meeting being transcribed */
-let meeting = null;
-let meetingStopping = false;
 /** @type {ReturnType<typeof setInterval> | undefined} */
 let meetingClock;
-/** @type {ReturnType<typeof createMeetingCapture> | null} */
-let meetingCapture = null;
 const meetingFile = () => path.join(app.getPath("userData"), "meeting-in-progress.json");
 const writeNotes = (/** @type {string} */ title, /** @type {string} */ markdown) => writeDocx({ title, markdown, dir: documentsDir() });
-const capture = () => (meetingCapture ??= createMeetingCapture({ here, onPiece: (p) => meeting?.piece(p), trace }));
+// The meeting's life (off, starting, on, stopping) is one machine in meeting.js; what Buddy shows follows its state.
+// The capture page is made when first needed: its session can only be made once the app is ready.
+/** @type {ReturnType<typeof createMeetingCapture> | null} */
+let meetingCapture = null;
+const capture = () => (meetingCapture ??= createMeetingCapture({ here, onPiece: (p) => meetings.notes()?.piece(p), trace }));
+const meetings = createMeetingSession({
+  capture: { start: (o) => capture().start(o), stop: () => capture().stop(), close: () => capture().close() },
+  makeNotes: () => createMeetingNotes({
+    transcribe: (pcm) => voice?.transcribe(pcm) ?? Promise.resolve({ error: "no voice" }),
+    complete: (system, text) => {
+      if (!brain) throw new Error(t("No AI is set up, so only the transcript was saved."));
+      return brain.complete(system, text);
+    },
+    write: writeNotes,
+    progressFile: meetingFile(),
+    trace,
+  }),
+  onState: (state) => {
+    clearInterval(meetingClock);
+    islandFacts.meeting = null;
+    if (state === "on") {
+      showMeetingLine();
+      meetingClock = setInterval(showMeetingLine, 30_000);
+    }
+    if (state === "stopping") notice(t("Writing up the meeting notes…"));
+    buildTrayMenu();
+    showIsland();
+  },
+});
+/** Whether a meeting is being taken, from starting until its notes are written: Buddy stays quiet throughout. */
+const meetingOn = () => meetings.state !== "off";
 
 /** The island's line while notes are being taken: how long so far. */
 function showMeetingLine() {
-  if (!meeting) return;
-  const minutes = Math.floor((Date.now() - meeting.started.getTime()) / 60000);
+  const m = meetings.notes();
+  if (meetings.state !== "on" || !m) return;
+  const minutes = Math.floor((Date.now() - m.started.getTime()) / 60000);
   islandFacts.meeting = minutes < 1 ? t("Taking notes") : t("Taking notes · {n} min", { n: minutes });
   showIsland();
 }
@@ -307,31 +333,15 @@ function showMeetingLine() {
  * @returns {Promise<{ you?: boolean, others?: boolean, error?: string }>}
  */
 async function startMeetingNotes({ testMic } = {}) {
-  if (meeting) return { error: t("Buddy is already taking notes.") };
   if (!voice) return { error: t("Buddy's listening isn't available, so it can't take notes.") };
+  if (meetings.state === "stopping") return { error: t("Buddy is still writing up the last meeting's notes.") };
+  if (meetingOn()) return { error: t("Buddy is already taking notes.") };
   hushReply();
-  const notes = createMeetingNotes({
-    transcribe: (pcm) => voice?.transcribe(pcm) ?? Promise.resolve({ error: "no voice" }),
-    complete: (system, text) => {
-      if (!brain) throw new Error(t("No AI is set up, so only the transcript was saved."));
-      return brain.complete(system, text);
-    },
-    write: writeNotes,
-    progressFile: meetingFile(),
-    trace,
-  });
-  meeting = notes;
-  const heard = await capture().start({ testMic });
-  if (!heard.you && !heard.others) {
-    meeting = null;
-    fs.rmSync(meetingFile(), { force: true });
-    return { error: t("Buddy couldn't hear the meeting: neither the microphone nor the PC's sound would open.") };
-  }
-  showMeetingLine();
-  meetingClock = setInterval(showMeetingLine, 30_000);
-  buildTrayMenu();
-  trace({ kind: "meeting-started", you: !!heard.you, others: !!heard.others });
-  return { you: !!heard.you, others: !!heard.others };
+  const r = await meetings.start({ testMic });
+  if (r.error === "busy") return { error: t("Buddy is already taking notes.") };
+  if (r.error) return { error: t("Buddy couldn't hear the meeting: neither the microphone nor the PC's sound would open.") };
+  trace({ kind: "meeting-started", you: !!r.you, others: !!r.others });
+  return { you: !!r.you, others: !!r.others };
 }
 
 /**
@@ -340,34 +350,21 @@ async function startMeetingNotes({ testMic } = {}) {
  * @returns {Promise<{ file?: string, problem?: string | null, error?: string }>}
  */
 async function stopMeetingNotes() {
-  const m = meeting;
-  if (!m || meetingStopping) return { error: t("Buddy isn't taking notes.") };
-  meetingStopping = true;
-  try {
-    clearInterval(meetingClock);
-    islandFacts.meeting = null;
-    notice(t("Writing up the meeting notes…"));
-    await capture().stop();
-    meeting = null;
-    const done = await m.finish();
-    recordChange({ kind: "document", summary: t("Wrote meeting notes"), file: done.file, from: "Buddy" });
-    notice(done.problem ? t("Meeting transcript saved (no notes: {why})", { why: done.problem }) : t("Meeting notes saved"));
-    revealMade([done.file]);
-    return { file: done.file, problem: done.problem };
-  } catch (err) {
-    meeting = null;
-    trace({ kind: "meeting-stop-failed", why: String(err?.message ?? err).slice(0, 200) });
+  const done = await meetings.stop();
+  if (done.error === "off") return { error: t("Buddy isn't taking notes.") };
+  if (done.error || !done.file) {
+    trace({ kind: "meeting-stop-failed", why: String(done.error).slice(0, 200) });
     notice(t("Couldn't save the meeting notes"));
-    return { error: String(err?.message ?? err) };
-  } finally {
-    meetingStopping = false;
-    buildTrayMenu();
-    showIsland();
+    return { error: done.error ?? "no document" };
   }
+  recordChange({ kind: "document", summary: t("Wrote meeting notes"), file: done.file, from: "Buddy" });
+  notice(done.problem ? t("Meeting transcript saved (no notes: {why})", { why: done.problem }) : t("Meeting notes saved"));
+  revealMade([done.file]);
+  return { file: done.file, problem: done.problem };
 }
 
 // What the bubble's Brain may do with meeting notes (its meeting_notes tool).
-const meetingUI = { on: () => !!meeting, start: () => startMeetingNotes(), stop: () => stopMeetingNotes(), transcript: () => meeting?.text() ?? "" };
+const meetingUI = { on: () => meetings.state === "on", start: () => startMeetingNotes(), stop: () => stopMeetingNotes(), transcript: () => meetings.notes()?.text() ?? "" };
 
 /** @type {ReturnType<typeof createLessons> | null} "teach me this app" lessons, kept on the PC (lessons.js) */
 let lessons = null;
@@ -557,7 +554,7 @@ async function showAnnotations(items, context, owner = "bubble") {
   if (shown && owner === "bubble") {
     liveReply.cancel();
     if (mode === "working" && bubble.isVisible() && !waitingForOk()) hideBubble();
-    if (context.caption && talksBack(turn.spoken)) voice.say(context.caption);
+    if (context.caption && speaksNow()) voice.say(context.caption);
   }
   return shown;
 }
@@ -1017,7 +1014,7 @@ async function answerQuestion(text, opts, isCurrent) {
     releaseLater("bubble");
     // Kept on the PC, so a restart within the next few minutes picks the conversation up (conversations.js).
     if (engine === brain) conversations?.save({ id: "bubble", n: 0, title: "", target: null, transcript: engine.transcript() });
-    clock.finish({ waitForAudio: !replyMuted && talksBack(turn.spoken) });
+    clock.finish({ waitForAudio: speaksNow() });
   }
   if (!isCurrent()) return { reply: null, superseded: true };
   notice(oneLine(reply));
@@ -1025,7 +1022,7 @@ async function answerQuestion(text, opts, isCurrent) {
   // After the mode is back to idle, so the island shows Buddy speaking (and a click stops it).
   if (!liveReply.covers(reply)) {
     liveReply.cancel();
-    if (!replyMuted && talksBack(turn.spoken)) speak(reply);
+    if (speaksNow()) speak(reply);
   }
   // A route they went all the way through can be kept as a lesson; the bubble offers it, and main keeps the steps.
   routeToKeep = engine.lastRoute ? { title: text, ...engine.lastRoute } : null;
@@ -1313,15 +1310,18 @@ function guidePoint(bounds, caption, guessIn = null) {
   liveReply.cancel();
   if (mode === "working" && bubble.isVisible() && !waitingForOk()) hideBubble();
   // In a spoken conversation Buddy says each step as it points, the way a person beside you would.
-  if (caption && talksBack(turn.spoken)) voice.say(caption);
+  if (caption && speaksNow()) voice.say(caption);
   return guessIn ? guessPoint(bounds, caption, guessIn) : point(bounds, caption);
 }
 
 // ---------- Voice: talk to Buddy, and hear it talk back ----------
 
 // Talk back: "spoken" (answer aloud when you spoke), "always", or "never".
+// Whether Buddy says this answer out loud: the reply, and each guide step's caption. Hush (replyMuted) silences all
+// of it until the next question.
+const speaksNow = () => !replyMuted && talksBack(turn.spoken);
 // Never while taking meeting notes: Buddy's voice would end up in the transcript, and talk over the meeting.
-const talksBack = (spoken) => !!voice && !meeting && (settings.talkBack === "always" || (settings.talkBack === "spoken" && spoken));
+const talksBack = (spoken) => !!voice && !meetingOn() && (settings.talkBack === "always" || (settings.talkBack === "spoken" && spoken));
 
 const HEARD_ERRORS = {
   silence: N("Didn't hear anything"),
@@ -1876,7 +1876,7 @@ function buildTrayMenu() {
       { label: `${t("Talk to Buddy")}  (${keyLabel(hotkey("talk"))})`, click: () => talkByClick() },
       { label: `${t("Mark or explain something")}  (${keyLabel(hotkey("mark"))})`, click: () => startMarking() },
       { label: t("New conversation"), click: () => resetBubble() },
-      meeting
+      meetings.state === "on"
         ? { label: t("Stop meeting notes"), click: () => stopMeetingNotes() }
         : { label: t("Take meeting notes"), click: () => startMeetingNotes().then((r) => notice(r.error ?? t("Taking notes. Let everyone know: in some places they have to agree to it."))) },
       ...(lessons?.list().length ? [{ label: t("Play a lesson"), submenu: lessons.list().slice(-15).reverse().map((l) => ({ label: `${l.title}  (${appName(l.app)})`, click: () => playLesson(l.id) })) }] : []),
@@ -2007,7 +2007,8 @@ const settingsWindow = createSettingsWindow({
   state: settingsState,
   change: changeSettings,
   capture: suspendHotkeys,
-  preview: (sid, speed) => voice?.say(PREVIEW_LINE, { sid: Math.min(VOICES - 1, Math.max(0, Math.trunc(sid) || 0)), speed: Math.min(SPEED.max, Math.max(SPEED.min, speed || 1)) }),
+  // Not during a meeting: the preview would be heard by the people in it and end up in the notes.
+  preview: (sid, speed) => !meetingOn() && voice?.say(PREVIEW_LINE, { sid: Math.min(VOICES - 1, Math.max(0, Math.trunc(sid) || 0)), speed: Math.min(SPEED.max, Math.max(SPEED.min, speed || 1)) }),
   setKey: setApiKey,
   setAddress,
   checkModel,
@@ -2127,6 +2128,7 @@ const devKit = () => ({
   startMeetingNotes,
   stopMeetingNotes,
   meetingUI,
+  hushReply,
   playLesson,
   get brain() { return brain; },
   set brain(b) { brain = b; },

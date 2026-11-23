@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { clock, createMeetingNotes, createTranscript, notesDocument, notesRequest, notesTitle, recoverTranscript, sharedWords } from "../src/meeting.js";
+import { clock, createMeetingNotes, createMeetingSession, createTranscript, notesDocument, notesRequest, notesTitle, recoverTranscript, sharedWords } from "../src/meeting.js";
 
 // Meeting notes (meeting.js): the transcript, the echo the microphone hears from speakers, the notes and the document.
 const tempDir = (t) => {
@@ -120,4 +120,58 @@ test("notes that can't be written still leave the transcript, and a crash's tran
   assert.match(String(file), /Meeting notes 2026-11-21 16\.30 \(recovered\)\.docx$/);
   assert.match(written.at(-1), /Buddy closed before the meeting ended[\s\S]*Budget is approved/);
   assert.equal(await recoverTranscript(progressFile, write), null, "only once");
+});
+
+// The meeting's life (createMeetingSession): off, starting, on, stopping.
+test("a meeting session moves off → starting → on → stopping → off, and refuses what doesn't fit its state", { timeout: 10_000 }, async (t) => {
+  const dir = tempDir(t);
+  const progressFile = path.join(dir, "meeting.json");
+  /** @type {string[]} */
+  const states = [];
+  let opened;
+  const capture = { start: () => new Promise((r) => { opened = r; }), stop: async () => {}, close: () => {} };
+  let made = 0;
+  const makeNotes = () => (made++, createMeetingNotes({ transcribe: async () => ({ text: "Budget approved." }), complete: async () => "## Summary\n\nApproved.", write: async (title) => path.join(dir, `${title}.docx`), progressFile }));
+  const s = createMeetingSession({ capture, makeNotes, onState: (x) => states.push(x) });
+  const starting = s.start();
+  assert.equal(s.state, "starting");
+  assert.deepEqual(await s.start(), { error: "busy" }, "a second start while starting is refused");
+  // Stop while starting waits for the start, then stops what started.
+  const stopping = s.stop();
+  opened({ you: true, others: true });
+  assert.deepEqual(await starting, { you: true, others: true });
+  const done = await stopping;
+  assert.match(String(done.file), /Meeting notes/);
+  assert.deepEqual(states, ["starting", "on", "stopping", "off"]);
+  assert.deepEqual(await s.stop(), { error: "off" });
+  assert.equal(made, 1);
+});
+
+test("a start that hears nothing, or fails, goes back to off and leaves nothing saved; a start while writing up is refused", { timeout: 10_000 }, async (t) => {
+  const dir = tempDir(t);
+  const progressFile = path.join(dir, "meeting.json");
+  let finishing;
+  const notes = () => createMeetingNotes({ transcribe: async () => ({ text: "x" }), complete: () => new Promise((r) => { finishing = () => r("notes"); }), write: async (title) => path.join(dir, `${title}.docx`), progressFile });
+  // Nothing would open.
+  let closed = 0;
+  const deaf = createMeetingSession({ capture: { start: async () => ({ you: false, others: false }), stop: async () => {}, close: () => closed++ }, makeNotes: notes });
+  assert.deepEqual(await deaf.start(), { error: "unheard", problems: [] });
+  assert.equal(deaf.state, "off");
+  assert.equal(closed, 1);
+  assert.ok(!fs.existsSync(progressFile), "no saved transcript left for a meeting that never started");
+  // The page failed to load: the same, not stuck "on".
+  const broken = createMeetingSession({ capture: { start: async () => { throw new Error("page didn't load"); }, stop: async () => {}, close: () => {} }, makeNotes: notes });
+  assert.deepEqual(await broken.start(), { error: "unheard", problems: ["page didn't load"] });
+  assert.equal(broken.state, "off");
+  // While a meeting is written up, a new one can't start: the old one still owns the saved transcript.
+  const s = createMeetingSession({ capture: { start: async () => ({ you: true }), stop: async () => {}, close: () => {} }, makeNotes: notes });
+  await s.start();
+  s.notes()?.piece({ who: "you", start: 0, end: 500, pcm: Float32Array.of(1) });
+  const stopping = s.stop();
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(s.state, "stopping");
+  assert.deepEqual(await s.start(), { error: "busy" });
+  finishing();
+  await stopping;
+  assert.equal(s.state, "off");
 });

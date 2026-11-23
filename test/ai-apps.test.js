@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { SAFE_TOOLS } from "../src/bridge.js";
-import { APPS, APP_IDS, allowRules, appStatus, launchSpec, setApp, setCodeAllowed, staleApps, withAllowRules, withBuddy } from "../src/ai-apps.js";
+import { APPS, APP_IDS, allowRules, appStatus, codeSettingsFile, commandEnv, launchSpec, setApp, setCodeAllowed, staleApps, withAllowRules, withBuddy } from "../src/ai-apps.js";
 
 const EXE = "C:\\Buddy\\Desktop Buddy.exe";
 const SCRIPT = "C:\\Buddy\\resources\\mcp-server.js";
@@ -143,4 +143,13 @@ test("a quick Claude Code chat loads only Buddy, leaves the user's settings (plu
   assert.deepEqual(allowed, allowRules(SAFE_TOOLS));
   assert.ok(!allowed.includes("mcp__desktop-buddy__act"));
   assert.deepEqual(Object.keys(JSON.parse(quickChatConfig(specFor("code"))).mcpServers), ["desktop-buddy"]);
+});
+
+test("an AI app set up in a made-up home is changed there, its command and Claude Code's allow rules too, never the user's", () => {
+  const fake = { home: "C:\fake\home", appData: "C:\fake\home\AppData", localAppData: "C:\fake\home\Local" };
+  assert.equal(codeSettingsFile(fake), path.join("C:\fake\home", ".claude", "settings.json"));
+  assert.equal(codeSettingsFile(), path.join(os.homedir(), ".claude", "settings.json"), "the user's own, for the real Buddy");
+  const env = commandEnv(fake);
+  assert.deepEqual([env.USERPROFILE, env.HOME, env.APPDATA, env.LOCALAPPDATA], [fake.home, fake.home, fake.appData, fake.localAppData], "claude and codex write where they think home is");
+  assert.equal(commandEnv(), process.env, "the real Buddy runs them as the user");
 });

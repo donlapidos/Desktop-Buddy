@@ -37,10 +37,14 @@ export function createMeetingCapture({ here, onPiece, trace = () => {} }) {
     done?.(s ?? {});
   });
 
-  /** Resolves the page's next state, or `fallback` after `ms`. */
+  /** Resolves the page's next state, or `fallback` after `ms`. A wait that times out only clears itself. */
   const next = (/** @type {number} */ ms, /** @type {CaptureState} */ fallback) => new Promise((resolve) => {
-    const timer = setTimeout(() => ((waiting = null), resolve(fallback)), ms);
-    waiting = (s) => (clearTimeout(timer), resolve(s));
+    const mine = (/** @type {CaptureState} */ s) => (clearTimeout(timer), resolve(s));
+    const timer = setTimeout(() => {
+      if (waiting === mine) waiting = null;
+      resolve(fallback);
+    }, ms);
+    waiting = mine;
   });
 
   return {

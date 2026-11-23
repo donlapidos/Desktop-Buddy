@@ -102,6 +102,9 @@ test("a damaged file is set aside, and first-run setup isn't repeated", (t) => {
   assert.equal(settings.voice, DEFAULTS.voice);
   assert.ok(fs.existsSync(`${file}.bad`), "the damaged file is kept for inspection");
   assert.ok(!fs.existsSync(file));
+  // As carefully as a first run: nothing downloaded without asking, the advanced features off until turned on.
+  assert.equal(settings.voiceSetup, "ask");
+  assert.equal(settings.advanced, false);
 });
 
 test("each provider keeps its own model; unknown providers and odd model ids are refused", () => {
