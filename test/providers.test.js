@@ -171,6 +171,8 @@ test("addresses: https anywhere, plain http only on this PC or the local network
   const { addressProblem } = await import("../src/providers.js");
   for (const ok of ["http://localhost:11434/v1", "http://127.0.0.1:1234/v1", "http://192.168.1.20:8000/v1", "http://10.0.0.5/v1", "http://[::1]:8080/v1", "http://gpu-box.local:8000/v1", "https://llm.example.com/v1"]) assert.equal(addressProblem(ok), null, ok);
   assert.match(addressProblem("http://llm.example.com/v1"), /https/);
+  // A name that only starts like a local address is a name on the internet.
+  for (const name of ["http://127.evil.example/v1", "http://10.attacker.example/v1", "http://192.168.example.com/v1", "http://172.16.evil.example/v1"]) assert.match(addressProblem(name), /https/, name);
   assert.match(addressProblem("ftp://localhost/v1"), /http/);
   assert.match(addressProblem("localhost:11434"), /http|address/);
   assert.match(addressProblem("not a url"), /address/);
