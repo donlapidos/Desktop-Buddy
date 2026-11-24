@@ -3,6 +3,7 @@ import {
   app, BrowserWindow, clipboard, ClipboardItem, desktopCapturer, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, screen,
   session, shell, Tray, webContents,
 } from "electron";
+import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -45,7 +46,7 @@ import { createMarker } from "./marker.js";
 import { createAiAppSetup } from "./ai-app-setup.js";
 import { createAppBridge } from "./app-bridge.js";
 import { createConversations } from "./conversations.js";
-import { appName, createLessons } from "./lessons.js";
+import { STARTER, appName, createLessons } from "./lessons.js";
 import { createConnectors, siteConnector } from "./connectors.js";
 import { writeDocx } from "./documents.js";
 import { callQualityMic, createMeetingNotes, createMeetingSession, recoverTranscript } from "./meeting.js";
@@ -1136,6 +1137,17 @@ async function playLesson(/** @type {string} */ id, { window = null } = {}) {
   const open = (await listWindows()).filter((w) => !own.includes(w.pid) && String(w.app_name).toLowerCase() === lesson.app.toLowerCase());
   const win = (window && open.find((w) => w.id === window.id)) ?? open.find((w) => w.is_focused) ?? open[0];
   if (!win) return notice(t("Open {app} first, then play the lesson again.", { app: appName(lesson.app) }));
+  const said = await playSteps(lesson, win);
+  notice(said.text);
+  return said;
+}
+
+/**
+ * Plays a lesson's steps in `win`: Buddy points at each and follows the user, with no model call and no key.
+ * @param {{ title: string, steps: readonly import("./lessons.js").Step[] }} lesson @param {any} win
+ * @returns {Promise<{ done: boolean, text: string }>}
+ */
+async function playSteps(lesson, win) {
   enter("working");
   hideBubble({ now: true });
   progress(t("Lesson: {title}", { title: lesson.title }));
@@ -1153,7 +1165,7 @@ async function playLesson(/** @type {string} */ id, { window = null } = {}) {
   answeringBrain = lessonBrain;
   let said;
   try {
-    said = await lessonBrain.playLesson(lesson.steps, win);
+    said = await lessonBrain.playLesson([...lesson.steps], win);
   } finally {
     answeringBrain = null;
     lessonBrain = null;
@@ -1161,7 +1173,54 @@ async function playLesson(/** @type {string} */ id, { window = null } = {}) {
     releaseLater("bubble");
   }
   trace({ kind: "lesson-played", done: said.done });
-  notice(said.text);
+  return said;
+}
+
+// ---------- The first minute: Buddy guiding, before any AI is chosen ----------
+
+/** Whether the starter lesson can be offered: Calculator names its controls in Windows' language, and it's English. */
+const starterOffered = () => process.platform === "win32" && /^en(-|$)/i.test(app.getPreferredSystemLanguages()[0] ?? app.getLocale());
+
+/**
+ * "See Buddy in action first", from the welcome: Buddy opens Calculator (if it isn't open), points the way to
+ * Scientific mode and follows the user's clicks, with no AI and no key. Then the welcome comes back, with what's next.
+ * A Calculator Buddy opened is left open: it's the user's now, as if they'd opened it.
+ */
+async function tryStarter() {
+  if (mode !== "idle") {
+    progress(t(BUSY[mode]));
+    return { done: false };
+  }
+  const started = Date.now();
+  const own = ownPids();
+  const calculator = async () => (await listWindows()).find((w) => !own.includes(w.pid) && appKey(w.app_name) === appKey(STARTER.app));
+  let win = await calculator();
+  if (!win) {
+    progress(t("Opening Calculator…"));
+    try {
+      spawn("calc.exe", [], { detached: true, stdio: "ignore", windowsHide: false }).unref();
+    } catch {}
+    for (const end = Date.now() + 10_000; !win && Date.now() < end; await new Promise((r) => setTimeout(r, 250))) win = await calculator();
+  }
+  if (!win) {
+    notice(t("Calculator didn't open. Pick a way in, then ask Buddy about any app."));
+    return { done: false };
+  }
+  // A Calculator just opened shows its window before its buttons can be read; a lesson started then can take the
+  // drawing for the user's doing. Wait (a few seconds at most) until the first step's control is there.
+  const probe = new Brain({ status() {}, point: async () => {}, confirm: async () => "deny", isOwnWindow: (w) => ownPids().includes(Number(w.pid)) });
+  probe.target = win;
+  const first = STARTER.steps[0].target;
+  for (const end = Date.now() + 8000; Date.now() < end; await new Promise((r) => setTimeout(r, 300))) {
+    try {
+      await probe.look({ app: win.app_name, window_id: win.id }, { windowOnly: true });
+      if ([...probe.labels.values()].some((l) => l.startsWith(`"${first}"`))) break;
+    } catch {}
+  }
+  trace({ kind: "starter-play", readyMs: Date.now() - started });
+  const said = await playSteps({ title: t(STARTER.title), steps: STARTER.steps.map((s) => ({ ...s, caption: t(s.caption) })) }, win);
+  notice(said.done ? t("That's Buddy: it points, you click. Pick a way in, and you can ask about any app.") : said.text);
+  summon();
   return said;
 }
 
@@ -1243,7 +1302,9 @@ onFrom(fromBubble, "voice-offer", async (_e, answer) => {
 
 // ---------- First-run setup in the bubble (welcome.js): an AI app, a model on this PC, or a key ----------
 
-handleFrom(fromBubble, "welcome-state", () => welcomeState(settings.providerURLs));
+handleFrom(fromBubble, "welcome-state", async () => ({ ...(await welcomeState(settings.providerURLs)), trial: starterOffered() }));
+// "See Buddy in action first": the starter lesson, before any AI is chosen.
+handleFrom(fromBubble, "try-lesson", () => tryStarter().then((r) => ({ done: !!r?.done })));
 
 handleFrom(fromBubble, "welcome-app", async (_e, id) => {
   if (!APP_IDS.includes(id)) return { error: "Buddy doesn't know that app." };

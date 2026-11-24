@@ -1,5 +1,11 @@
 # Desktop Buddy changelog
 
+## Unreleased
+
+* **See Buddy in action before setting anything up:** the welcome's first choice opens Calculator and guides you to
+  Scientific mode, pointing at each step while you click: a lesson that comes with Buddy, so it needs no AI, no key
+  and sends nothing. Offered when Windows is in English (Calculator names its buttons in Windows' language).
+
 ## 0.6.1 (2026-11-24)
 
 * **Fixed:**

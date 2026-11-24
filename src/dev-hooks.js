@@ -1116,7 +1116,7 @@ function welcomeTest(kit) {
 
     changeSettings({ provider: "anthropic" });
     await openDoors();
-    r.doorsAgain = !kit.brain && (await js(`document.querySelectorAll("[data-door]").length`)) === 3;
+    r.doorsAgain = !kit.brain && (await js(`document.querySelectorAll("[data-door]:not([data-door=trial])").length`)) === 3;
     await click("[data-door]", "API key");
     await js(`document.getElementById("input").value = "sk-ant-api03-${"e2e".repeat(30)}"; document.getElementById("form").requestSubmit()`);
     await until(`document.getElementById("welcome").hidden`);
@@ -1774,6 +1774,63 @@ function meetingTest(kit) {
   }, 2500);
 }
 
+/**
+ * BUDDY_FIRST_MINUTE_TEST: the welcome's "See Buddy in action first", in a copy with no AI set up. Buddy opens
+ * Calculator and points at the first step; a helper opens the menu through the accessibility tree (no mouse), and
+ * the pointer moves on to the second step. Picking Scientific itself takes a real click (an accessibility select
+ * doesn't switch modes), so Stop ends the lesson there, and the welcome comes back. A Calculator that was already
+ * open is the owner's: the check leaves it alone and says it was skipped.
+ * @param {DevKit} kit
+ */
+function firstMinuteTest(kit) {
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const until = async (check, ms = 20_000) => { for (const end = Date.now() + ms; Date.now() < end; await wait(150)) if (await check()) return true; return false; };
+  const readies = () => (fs.readFileSync(kit.timingLog(), "utf8").match(/"kind":"guide-ready"/g) ?? []).length;
+  setTimeout(async () => {
+    const r = {};
+    /** @type {any} */
+    let opened = null;
+    try {
+      const calculator = async () => (await listWindows()).find((w) => /^calculatorapp([.]exe)?$/i.test(String(w.app_name)));
+      if (await calculator()) {
+        r.skipped = "Calculator was already open";
+        throw null;
+      }
+      kit.summon();
+      const bubble = (/** @type {string} */ code) => kit.bubble.webContents.executeJavaScript(code);
+      r.offered = await until(() => bubble(`!!document.querySelector('[data-door="trial"]')`));
+      const before = readies();
+      await bubble(`document.querySelector('[data-door="trial"]').click()`);
+      r.calculatorOpened = await until(async () => !!(opened = await calculator()));
+      r.firstStep = await until(() => readies() > before);
+      r.bubbleHidden = !kit.bubble.isVisible();
+      // The user's click on the first step, through the accessibility tree.
+      const helper = new Brain({ status() {}, point: async () => {}, confirm: async () => "allow" });
+      helper.target = opened;
+      helper.abort = new AbortController();
+      await helper.look({ app: opened.app_name, window_id: opened.id }, { windowOnly: true });
+      const nav = [...helper.labels].find(([, l]) => /^"Open Navigation"/.test(l))?.[0];
+      const clickSaid = nav ? String(await helper.act({ action: "click", ref: nav })) : "no Open Navigation in the window";
+      r.clicked = /"ok":true/.test(clickSaid);
+      if (!r.clicked) r.clickSaid = clickSaid.slice(0, 300);
+      r.secondStep = await until(() => readies() > before + 1);
+      r.modeWhilePlaying = kit.currentMode();
+      r.island = await kit.island.webContents.executeJavaScript(`document.getElementById("label").textContent`);
+      // Stop, from the bubble's own Stop: the lesson ends and the welcome comes back.
+      await bubble("window.buddy.cancel()");
+      r.stopped = await until(() => kit.currentMode() === "idle");
+      r.welcomeBack = await until(async () => kit.bubble.isVisible() && (await bubble(`document.body.classList.contains("welcoming") && !!document.querySelector('[data-door="trial"]')`)), 8000);
+    } catch (err) {
+      if (err) r.error = String(err?.message ?? err);
+    } finally {
+      // The Calculator this check opened goes again.
+      if (opened?.pid) try { process.kill(opened.pid); } catch {}
+    }
+    console.log("FIRST_MINUTE_TEST", JSON.stringify(r));
+    console.log("FIRST_MINUTE_TEST_DONE");
+  }, 2500);
+}
+
 /** BUDDY_FAILURES_TEST @param {DevKit} kit */
 function failuresTest(kit) {
   // When Buddy's side fails, each window comes back usable and says so: the bubble's question, a task's, and Settings'
@@ -1834,6 +1891,7 @@ const HOOKS = {
   BUDDY_CONNECTIONS_TEST: connectionsTest,
   BUDDY_LANGUAGE_TEST: languageTest,
   BUDDY_LESSONS_TEST: lessonsTest,
+  BUDDY_FIRST_MINUTE_TEST: firstMinuteTest,
   BUDDY_RESTORE_TEST: restoreTest,
   BUDDY_BRIDGE_TEST: bridgeTest,
   BUDDY_ISLAND_TEST: islandTest,

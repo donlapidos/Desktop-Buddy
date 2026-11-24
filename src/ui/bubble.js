@@ -146,8 +146,10 @@ async function welcome(page) {
     const found = apps.map((a) => a.label);
     const inApp = apps.some((a) => a.added);
     const door = (title, sub, go, ready = false) => { const b = el("button", { className: `door${ready ? " ready" : ""}`, type: "button" }, el("b", { textContent: title }), el("span", { textContent: sub })); b.addEventListener("click", go); b.dataset.door = go.name; return b; };
+    // See Buddy guide before choosing anything: the lesson that comes with it plays with no AI and no key.
+    const trial = welcomeData.trial ? [door(t("See Buddy in action first"), t("No setup: Buddy opens Calculator and points the way. You do the clicking."), function trial() { window.buddy.tryLesson(); }), el("p", { className: "lede", textContent: t("Then, to ask about anything, Buddy needs an AI. Pick one way in:") })] : [el("p", { className: "lede", textContent: t("Buddy needs an AI to think with. Pick one way in:") })];
     box.replaceChildren(
-      el("p", { className: "lede", textContent: t("Buddy needs an AI to think with. Pick one way in:") }),
+      ...trial,
       door(t("Use the AI app I already have"), found.length ? t("{apps} on this PC. No key needed.", { apps: `${found.slice(0, 3).join(", ")}${found.length > 3 ? "…" : ""}` }) : t("Claude, Codex, Gemini CLI, Cursor and others. No key needed."), function apps() { welcome("apps"); }, inApp),
       door(t("Free, on this PC"), local.use ? t("{app} is running. Private: nothing leaves this PC.", { app: local.use.label }) : t("With Ollama or LM Studio. Private: nothing leaves this PC."), function local() { welcome("local"); }),
       door(t("I have an API key"), "Anthropic, OpenAI, Google Gemini, OpenRouter…", function key() { welcome("key"); }),

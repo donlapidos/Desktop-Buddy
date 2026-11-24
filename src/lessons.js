@@ -5,6 +5,7 @@
 // on the way in, whether saved here or imported from someone else's file.
 import crypto from "node:crypto";
 import fs from "node:fs";
+import { N } from "./i18n.js";
 
 export const MAX_LESSONS = 100;
 const MAX_STEPS = 30;
@@ -50,6 +51,22 @@ export function cleanLesson(/** @type {any} */ raw, { id = null, now = Date.now(
   const keepId = typeof raw?.id === "string" && /^[a-f0-9]{12}$/.test(raw.id) ? raw.id : null;
   return { id: id ?? keepId ?? crypto.randomBytes(6).toString("hex"), title, app, steps: /** @type {Step[]} */ (steps), savedAt: Number.isFinite(raw?.savedAt) ? raw.savedAt : now };
 }
+
+/**
+ * The lesson that comes with Buddy, for someone who hasn't chosen an AI yet (the welcome's "See Buddy in action
+ * first"): Windows' own Calculator, which every Windows 10 and 11 PC has and which holds nothing of theirs (Notepad
+ * reopens the user's own unsaved tabs, so it isn't used). Its controls are named in Windows' language, so it's offered
+ * only when Windows is in English (main.js). The last step is done when the menu closes, whatever mode is picked: a
+ * Calculator already in Scientific mode would never show "Sine" anew. Captions are translated as it plays.
+ */
+export const STARTER = Object.freeze({
+  title: N("Switch Calculator to scientific mode"),
+  app: "CalculatorApp.exe",
+  steps: Object.freeze([
+    { caption: N("Click here to open Calculator's menu"), target: "Open Navigation", role: "button", done_when: ["Scientific Calculator"] },
+    { caption: N("Now choose Scientific"), target: "Scientific Calculator", role: "option", done_when: [] },
+  ]),
+});
 
 /** The app a lesson is for, in words: "EXCEL.EXE" is "Excel". */
 export const appName = (/** @type {string} */ app) => {
