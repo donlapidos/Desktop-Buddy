@@ -611,6 +611,13 @@ const CHECKS = {
         !(r.started?.you && r.started?.others) && `Buddy didn't hear both sides: ${JSON.stringify(r.started)}`,
         !/^notes\|Taking notes\|(?!none)/.test(r.island ?? "") && `the island didn't show notes being taken with a Stop button (${r.island})`,
         !/revised budget/i.test(r.soFar ?? "") && `questions during the meeting couldn't see what was said (${JSON.stringify(r.soFar)})`,
+        !r.reopened && "a crashed meeting page wasn't opened again",
+        !r.stillOn && "the meeting didn't stay on, with a fresh page, after its page crashed",
+        !/launch moves to June/i.test(r.afterCrash ?? "") && `after the page crashed, Buddy didn't hear the meeting (${JSON.stringify(r.afterCrash?.slice(-200))})`,
+        !r.soundBack && "the PC's sound wasn't opened again after it ended",
+        !/press release/i.test(r.afterUnplug ?? "") && `after the PC's sound ended, Buddy didn't hear the meeting (${JSON.stringify(r.afterUnplug?.slice(-200))})`,
+        // What was said after the crash comes after what was said before it.
+        !/book the room[\s\S]*launch moves to June[\s\S]*press release/i.test(r.afterUnplug ?? "") && `the transcript is out of order after the page was opened again (${JSON.stringify(r.afterUnplug?.slice(-300))})`,
         !file && `no document: ${JSON.stringify(r.stopped)}`,
         file && !text && "the document couldn't be read",
         text && !/Sarah sends the revised budget on Friday/.test(text) && "the document doesn't have the notes",

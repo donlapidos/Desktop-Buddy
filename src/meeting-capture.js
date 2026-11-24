@@ -10,13 +10,18 @@ const STOP_MS = 5_000;
 
 /**
  * @typedef {{ started?: boolean, stopped?: boolean, you?: boolean, others?: boolean, problems?: string[] }} CaptureState
- * @param {{ here: string, onPiece: (piece: { who: "you" | "others", start: number, end: number, pcm: Float32Array }) => void, trace?: (entry: object) => void }} o
+ * @typedef {{ who: "you" | "others", lost?: boolean, back?: boolean, gone?: boolean, switched?: boolean } | { page: "gone", reason?: string }} CaptureEvent
+ *   A side's sound ended (lost), came back (back), stayed gone after a few tries (gone), or followed a new default
+ *   microphone (switched); or the page itself crashed, taking both sides with it.
+ * @param {{ here: string, onPiece: (piece: { who: "you" | "others", start: number, end: number, pcm: Float32Array }) => void, onEvent?: (e: CaptureEvent) => void, trace?: (entry: object) => void }} o
  */
-export function createMeetingCapture({ here, onPiece, trace = () => {} }) {
+export function createMeetingCapture({ here, onPiece, onEvent = () => {}, trace = () => {} }) {
   /** @type {BrowserWindow | null} */
   let win = null;
   /** @type {((s: CaptureState) => void) | null} */
   let waiting = null;
+  /** Test recordings already played as the microphone. */
+  const played = new WeakSet();
   const ses = session.fromPartition("buddy-meeting");
   ses.setDisplayMediaRequestHandler(async (request, callback) => {
     // Only Buddy's own meeting page, and only while it's taking notes.
@@ -36,6 +41,12 @@ export function createMeetingCapture({ here, onPiece, trace = () => {} }) {
     waiting = null;
     done?.(s ?? {});
   });
+  ipcMain.on("meeting-event", (e, ev) => {
+    if (!fromPage(e) || (ev?.who !== "you" && ev?.who !== "others")) return;
+    const event = { who: ev.who, lost: !!ev.lost, back: !!ev.back, gone: !!ev.gone, switched: !!ev.switched };
+    trace({ kind: "meeting-sound", ...event });
+    onEvent(event);
+  });
 
   /** Resolves the page's next state, or `fallback` after `ms`. A wait that times out only clears itself. */
   const next = (/** @type {number} */ ms, /** @type {CaptureState} */ fallback) => new Promise((resolve) => {
@@ -53,16 +64,33 @@ export function createMeetingCapture({ here, onPiece, trace = () => {} }) {
     },
     /**
      * Opens the page and starts hearing. Resolves which sources it got (`you`, `others`) and what went wrong.
-     * @param {{ testMic?: Uint8Array }} [o] testMic: a recording played as the microphone (end-to-end check)
+     * @param {{ testMic?: Uint8Array, since?: number }} [o] testMic: a recording played as the microphone (end-to-end
+     *   check); since: how far into the meeting (ms) a page opened again starts, so its times follow on
      * @returns {Promise<CaptureState>}
      */
-    async start({ testMic } = {}) {
+    async start({ testMic, since } = {}) {
       if (win && !win.isDestroyed()) return { started: true, you: true, others: true };
       win = new BrowserWindow({ show: false, width: 200, height: 100, skipTaskbar: true, webPreferences: { preload: path.join(here, "preload.cjs"), session: ses, backgroundThrottling: false } });
-      win.on("closed", () => (win = null));
+      const page = win;
+      win.on("closed", () => win === page && (win = null));
+      // A crashed page hears nothing more: let it go at once (a start or stop waiting on it isn't kept waiting), and
+      // say so, so the meeting can open a fresh one.
+      page.webContents.on("render-process-gone", (_e, d) => {
+        if (win !== page) return;
+        trace({ kind: "meeting-page-gone", reason: d?.reason });
+        win = null;
+        if (!page.isDestroyed()) page.destroy();
+        const done = waiting;
+        waiting = null;
+        done?.({ started: false, stopped: true, problems: ["page-gone"] });
+        onEvent({ page: "gone", reason: d?.reason });
+      });
       await win.loadFile(path.join(here, "ui/meeting.html"));
       const ready = next(READY_MS, { started: false, problems: ["timeout"] });
-      win.webContents.send("meeting", { cmd: "start", testMic });
+      // A test recording plays once: a page opened again after a crash has a silent stand-in microphone instead.
+      const replay = !!testMic && played.has(testMic);
+      if (testMic) played.add(testMic);
+      win.webContents.send("meeting", { cmd: "start", testMic: replay ? undefined : testMic, testQuiet: replay, since });
       const state = await ready;
       trace({ kind: "meeting-capture", you: !!state.you, others: !!state.others, problems: state.problems ?? [] });
       if (!state.you && !state.others) this.close();
@@ -80,5 +108,7 @@ export function createMeetingCapture({ here, onPiece, trace = () => {} }) {
       if (win && !win.isDestroyed()) win.destroy();
       win = null;
     },
+    /** End-to-end checks: the page, to crash it or end a side's sound. */
+    page: () => win,
   };
 }
