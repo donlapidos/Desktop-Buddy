@@ -9,6 +9,10 @@
   however its name is spelled ("KeePassXC", a full path); "Allow for this task" for a service covers that one tool;
   and a click meant for a card that has just been replaced doesn't answer the new one.
 * **Fixed:**
+  * Meeting notes keep going when the sound does something unexpected: an unplugged or switching headset is picked up
+    again, a newly plugged-in microphone is followed, and Buddy's hidden listening page is reopened if it crashes.
+    Before, notes stayed "on" while hearing nothing. A side that stays silent is now said, and when Buddy can't hear
+    anything at all it writes up what it heard.
   * Reading a web page can no longer reach your PC or local network through a web name that changes what it points
     to between Buddy's check and the visit: the address checked is the one connected to.
   * An AI server's address can use plain http only when it really is on your PC or local network; a web name that

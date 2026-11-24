@@ -213,6 +213,8 @@ export async function recoverTranscript(progressFile, write) {
  *                      └──heard nothing / failed──▶ off
  * A start is refused unless off (a meeting being written up still owns its saved transcript). A stop while starting
  * waits for the start to settle, then stops what started. Pieces of sound go to the meeting until it's written up.
+ * While on, the capture can be reopened (its page crashed): the meeting stays on and keeps its transcript, one reopen
+ * at a time, and a stop meanwhile waits for it, as it waits for a start.
  * @param {{
  *   capture: { start: (o?: any) => Promise<{ you?: boolean, others?: boolean, problems?: string[] }>, stop: () => Promise<void>, close: () => void },
  *   makeNotes: () => ReturnType<typeof createMeetingNotes>,
@@ -226,6 +228,12 @@ export function createMeetingSession({ capture, makeNotes, onState }) {
   let notes = null;
   /** @type {Promise<unknown> | null} */
   let starting = null;
+  /** @type {Promise<{ you?: boolean, others?: boolean, problems?: string[] }> | null} */
+  let reopening = null;
+  /** What the capture was started with, to start it the same way again, and when: a page opened again counts its
+   * times from the meeting's start, not its own, so the transcript stays in order. */
+  let opened;
+  let openedAt = 0;
   const become = (/** @type {SessionState} */ next) => {
     state = next;
     onState?.(next);
@@ -244,6 +252,8 @@ export function createMeetingSession({ capture, makeNotes, onState }) {
     async start(o) {
       if (state !== "off") return { error: "busy" };
       become("starting");
+      opened = o;
+      openedAt = Date.now();
       notes = makeNotes();
       /** @type {Promise<{ you?: boolean, others?: boolean, problems?: string[] }>} */
       const opening = capture.start(o).catch((err) => ({ problems: [String(err?.message ?? err)] }));
@@ -264,8 +274,24 @@ export function createMeetingSession({ capture, makeNotes, onState }) {
      * Stops and writes up. Resolves the document, or an error: "off" (nothing to stop), or what failed.
      * @returns {Promise<{ file?: string, problem?: string | null, entries?: number, error?: string }>}
      */
+    /**
+     * Opens the capture again while on (its page crashed), keeping the meeting and its transcript. Resolves which
+     * sides it hears now, or an error: "off" (not on, or already reopening), "unheard" (nothing would open; the
+     * meeting is still on, for the caller to stop and write up what was heard).
+     * @returns {Promise<{ you?: boolean, others?: boolean, error?: "off" | "unheard", problems?: string[] }>}
+     */
+    async reopen() {
+      if (state !== "on" || reopening) return { error: "off" };
+      capture.close();
+      reopening = capture.start({ ...opened, since: Date.now() - openedAt }).catch((err) => ({ problems: [String(err?.message ?? err)] }));
+      const heard = await reopening;
+      reopening = null;
+      if (!heard.you && !heard.others) return { error: "unheard", problems: heard.problems ?? [] };
+      return { you: !!heard.you, others: !!heard.others };
+    },
     async stop() {
       if (state === "starting") await starting;
+      if (reopening) await reopening;
       if (state !== "on" || !notes) return { error: "off" };
       become("stopping");
       const m = notes;

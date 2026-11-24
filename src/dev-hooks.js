@@ -3,7 +3,7 @@
 // Buddy never loads it, and hands it what it needs as one kit (DevKit). Members main.js reassigns (settings, brain,
 // about, the marker's state) are read through the kit each time; the rest are fixed once the app is ready.
 import { app, BrowserWindow, clipboard, desktopCapturer, globalShortcut, ipcMain, nativeImage, nativeTheme, screen } from "electron";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import net from "node:net";
 import os from "node:os";
@@ -33,6 +33,7 @@ import { learnCaps } from "./providers.js";
  *   connectors: ReturnType<typeof import("./connectors.js").createConnectors> | null, offerConnection: (win: any) => Promise<void>,
  *   lessons: ReturnType<typeof import("./lessons.js").createLessons> | null, playLesson: (id: string, opts?: { window?: any }) => Promise<any>,
  *   startMeetingNotes: (o?: { testMic?: Uint8Array }) => Promise<any>, stopMeetingNotes: () => Promise<any>, meetingUI: { transcript: () => string },
+ *   meetingPage: () => Electron.BrowserWindow | null, meetingState: string,
  * }} DevKit
  */
 
@@ -1684,7 +1685,8 @@ function meetingTest(kit) {
       const othersFile = path.join(app.getPath("userData"), "others.wav");
       fs.writeFileSync(othersFile, wavBytes(others.audio, rate));
       const gap = Math.round(rate * 1.5);
-      const mic = new Float32Array(others.audio.length + gap + mine.audio.length);
+      // Then quiet, as a real microphone goes on after the user stops talking: the pause ends their piece.
+      const mic = new Float32Array(others.audio.length + gap + mine.audio.length + rate * 2);
       others.audio.forEach((v, i) => (mic[i] = v * 0.35));
       mic.set(mine.audio, others.audio.length + gap);
       step("start");
@@ -1694,6 +1696,33 @@ function meetingTest(kit) {
       r.island = await kit.island.webContents.executeJavaScript(`document.body.dataset.state + "|" + document.getElementById("label").textContent + "|" + getComputedStyle(document.getElementById("notes-stop")).display`);
       await wait((mic.length / rate) * 1000 + 2500);
       r.soFar = kit.meetingUI.transcript();
+      // The meeting page crashes: a fresh one opens and the meeting goes on. Then the PC's sound ends, as an unplugged
+      // headset's does: it's opened again. Each time, Buddy must still hear what's played next.
+      const log = path.join(app.getPath("userData"), "timing.log");
+      const logged = (/** @type {RegExp} */ re) => fs.existsSync(log) && re.test(fs.readFileSync(log, "utf8"));
+      const until = async (/** @type {() => boolean} */ ok, ms = 15_000) => {
+        for (const end = Date.now() + ms; Date.now() < end; await wait(100)) if (ok()) return true;
+        return false;
+      };
+      const play = async (/** @type {string} */ words, /** @type {string} */ name) => {
+        const said = await voice.synthesize(words, { sid: 5, speed: 1 });
+        const file = path.join(app.getPath("userData"), name);
+        fs.writeFileSync(file, wavBytes(said.audio, said.rate));
+        spawnSync("powershell.exe", ["-NoProfile", "-Command", `(New-Object Media.SoundPlayer '${file}').PlaySync()`], { windowsHide: true });
+        await wait(2500);
+      };
+      step("crash");
+      const first = kit.meetingPage();
+      first?.webContents.emit("render-process-gone", {}, { reason: "crashed", exitCode: 1 });
+      r.reopened = await until(() => logged(/"kind":"meeting-reopened"/));
+      r.stillOn = kit.meetingState === "on" && !!kit.meetingPage() && kit.meetingPage() !== first;
+      await play("The product launch moves to June.", "after-crash.wav");
+      r.afterCrash = kit.meetingUI.transcript();
+      step("sound-ends");
+      kit.meetingPage()?.webContents.send("meeting", { cmd: "test-end", who: "others" });
+      r.soundBack = await until(() => logged(/"kind":"meeting-sound","who":"others","lost":false,"back":true/));
+      await play("Marketing will draft the press release.", "after-unplug.wav");
+      r.afterUnplug = kit.meetingUI.transcript();
       step("stop");
       r.stopped = await kit.stopMeetingNotes();
       r.islandAfter = await kit.island.webContents.executeJavaScript(`document.body.dataset.state`);

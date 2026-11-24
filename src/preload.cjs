@@ -120,4 +120,5 @@ contextBridge.exposeInMainWorld("buddy", {
   onMeeting: on("meeting"),
   meetingPiece: (piece) => ipcRenderer.send("meeting-piece", piece),
   meetingState: (state) => ipcRenderer.send("meeting-state", state),
+  meetingEvent: (event) => ipcRenderer.send("meeting-event", event),
 });

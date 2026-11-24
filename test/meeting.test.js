@@ -175,3 +175,53 @@ test("a start that hears nothing, or fails, goes back to off and leaves nothing 
   await stopping;
   assert.equal(s.state, "off");
 });
+
+test("a crashed capture is reopened while the meeting stays on, keeping its transcript; a stop waits for the reopen", { timeout: 10_000 }, async (t) => {
+  const dir = tempDir(t);
+  const progressFile = path.join(dir, "meeting.json");
+  const states = [];
+  const calls = [];
+  /** @type {((v: any) => void)[]} */
+  const opens = [];
+  const capture = {
+    start: (o) => (calls.push(["start", o]), new Promise((r) => opens.push(r))),
+    stop: async () => void calls.push(["stop"]),
+    close: () => void calls.push(["close"]),
+  };
+  const makeNotes = () => createMeetingNotes({ transcribe: async () => ({ text: "Budget approved." }), complete: async () => "## Summary\n\nApproved.", write: async (title) => path.join(dir, `${title}.docx`), progressFile });
+  const s = createMeetingSession({ capture, makeNotes, onState: (x) => states.push(x) });
+  assert.deepEqual(await s.reopen(), { error: "off" }, "nothing to reopen while off");
+  const starting = s.start({ testMic: "rec" });
+  opens[0]({ you: true, others: true });
+  await starting;
+  await s.notes()?.piece({ who: "others", start: 0, end: 1000, pcm: new Float32Array(10) });
+  // The page crashed: it's opened again the way it was first opened, and the meeting never leaves "on".
+  await new Promise((r) => setTimeout(r, 25));
+  const reopened = s.reopen();
+  assert.deepEqual(await s.reopen(), { error: "off" }, "one reopen at a time");
+  const stopping = s.stop();
+  await new Promise((r) => setTimeout(r, 20));
+  assert.ok(!calls.some(([c]) => c === "stop"), "the stop waits for the reopen");
+  opens[1]({ you: false, others: true });
+  assert.deepEqual(await reopened, { you: false, others: true });
+  assert.deepEqual(calls.slice(0, 2), [["start", { testMic: "rec" }], ["close"]]);
+  const [what, again] = calls[2];
+  assert.equal(what, "start");
+  assert.equal(again.testMic, "rec", "opened again the way it was first opened");
+  assert.ok(again.since >= 20, `times follow on from the meeting's start, not the new page's (since ${again.since})`);
+  const done = await stopping;
+  assert.match(String(done.file), /Meeting notes/);
+  assert.equal(done.entries, 1, "what was heard before the crash is kept");
+  assert.deepEqual(states, ["starting", "on", "stopping", "off"]);
+});
+
+test("a reopen that hears nothing leaves the meeting on, for its notes to be written from what was heard", { timeout: 10_000 }, async (t) => {
+  const dir = tempDir(t);
+  let n = 0;
+  const capture = { start: async () => (n++ ? { problems: ["page-gone"] } : { you: true }), stop: async () => {}, close: () => {} };
+  const s = createMeetingSession({ capture, makeNotes: () => createMeetingNotes({ transcribe: async () => ({ text: "x" }), complete: async () => "notes", write: async (title) => path.join(dir, `${title}.docx`), progressFile: path.join(dir, "m.json") }) });
+  await s.start();
+  assert.deepEqual(await s.reopen(), { error: "unheard", problems: ["page-gone"] });
+  assert.equal(s.state, "on");
+  assert.ok((await s.stop()).file);
+});

@@ -85,33 +85,104 @@ async function systemSound() {
   return new MediaStream(shared.getAudioTracks());
 }
 
-/** @param {{ testMic?: Uint8Array }} o  testMic: a recording (WAV bytes) played as the microphone, for the end-to-end check */
-async function start({ testMic } = {}) {
+const microphone = () => navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+
+// A side's sound can end mid-meeting: a headset unplugged, a Bluetooth headset switching modes, the output device
+// changed. Its last words are kept, and the side is opened again; Buddy is told, so a side that stays gone is said.
+const REOPEN_WAITS_MS = [500, 1500, 4000];
+
+/** Starts hearing one side from a live stream, watching for the stream to end. */
+function hear(m, stream, who) {
+  const s = listenTo(m.ctx, m.ctx.createMediaStreamSource(stream), who, m.t0);
+  s.stream = stream;
+  m.sources.push(s);
+  for (const track of stream.getAudioTracks()) track.addEventListener("ended", () => lost(m, who));
+  return s;
+}
+
+/** Lets go of a side: what it was saying is handed over, then its stream is stopped. */
+function drop(m, who) {
+  for (const s of m.sources.filter((x) => x.who === who)) {
+    s.flush();
+    s.worklet.port.onmessage = null;
+    s.stream?.getTracks().forEach((t) => t.stop());
+  }
+  m.sources = m.sources.filter((x) => x.who !== who);
+}
+
+/** A side's sound ended: try to open it again, a few times, and say how it went. */
+async function lost(m, who) {
+  if (meeting !== m || m.reopening.has(who)) return;
+  m.reopening.add(who);
+  drop(m, who);
+  window.buddy.meetingEvent({ who, lost: true });
+  for (const ms of REOPEN_WAITS_MS) {
+    await new Promise((r) => setTimeout(r, ms));
+    if (meeting !== m) return;
+    try {
+      const stream = who === "you" ? await microphone() : await systemSound();
+      if (meeting !== m) return stream.getTracks().forEach((t) => t.stop());
+      hear(m, stream, who);
+      m.reopening.delete(who);
+      return window.buddy.meetingEvent({ who, back: true });
+    } catch {}
+  }
+  m.reopening.delete(who);
+  if (meeting === m) window.buddy.meetingEvent({ who, gone: true });
+}
+
+/** A headset plugged in becomes Windows' default microphone: follow it, as the meeting app does. */
+async function followDefaultMic(m) {
+  const mine = m.sources.find((s) => s.who === "you" && s.stream);
+  if (meeting !== m || !mine || m.reopening.has("you")) return;
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const preferred = devices.find((d) => d.kind === "audioinput" && d.deviceId === "default");
+  const using = mine.stream.getAudioTracks()[0]?.getSettings().groupId;
+  if (!preferred || !using || preferred.groupId === using) return;
+  m.reopening.add("you");
+  try {
+    const stream = await microphone();
+    if (meeting !== m) return stream.getTracks().forEach((t) => t.stop());
+    drop(m, "you");
+    hear(m, stream, "you");
+    window.buddy.meetingEvent({ who: "you", switched: true });
+  } catch {
+    // The old microphone carries on; if it's gone, its ending says so.
+  } finally {
+    m.reopening.delete("you");
+  }
+}
+
+/**
+ * @param {{ testMic?: Uint8Array, testQuiet?: boolean, since?: number }} o  testMic: a recording (WAV bytes) played as
+ *   the microphone, for the end-to-end check; testQuiet: a silent stand-in microphone (the check's page, opened
+ *   again); since: how far into the meeting this page starts (ms), when it replaces one that crashed
+ */
+async function start({ testMic, testQuiet, since = 0 } = {}) {
   if (meeting) return;
   const ctx = new AudioContext();
-  const m = { t0: performance.now(), sources: [], ctx, streams: [] };
+  const m = { t0: performance.now() - Math.max(0, Number(since) || 0), sources: [], ctx, reopening: new Set(), onDevices: () => followDefaultMic(m).catch(() => {}) };
   meeting = m;
   await ctx.audioWorklet.addModule("voice-capture.js");
   const state = { started: true, others: false, you: false, problems: [] };
   try {
-    const sound = await systemSound();
-    m.streams.push(sound);
-    m.sources.push(listenTo(ctx, ctx.createMediaStreamSource(sound), "others", m.t0));
+    hear(m, await systemSound(), "others");
     state.others = true;
   } catch (err) {
     state.problems.push(`others: ${err?.name ?? err}`);
   }
   try {
-    if (testMic) {
+    if (testQuiet) {
+      // Nothing to hear on this side.
+    } else if (testMic) {
       const buffer = await ctx.decodeAudioData(testMic.slice().buffer);
       const play = ctx.createBufferSource();
       play.buffer = buffer;
       m.sources.push(listenTo(ctx, play, "you", m.t0));
       play.start();
     } else {
-      const mic = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
-      m.streams.push(mic);
-      m.sources.push(listenTo(ctx, ctx.createMediaStreamSource(mic), "you", m.t0));
+      hear(m, await microphone(), "you");
+      navigator.mediaDevices.addEventListener("devicechange", m.onDevices);
     }
     state.you = true;
   } catch (err) {
@@ -122,7 +193,8 @@ async function start({ testMic } = {}) {
 }
 
 function close(m) {
-  m.streams.forEach((s) => s.getTracks().forEach((t) => t.stop()));
+  navigator.mediaDevices.removeEventListener("devicechange", m.onDevices);
+  m.sources.forEach((s) => s.stream?.getTracks().forEach((t) => t.stop()));
   m.ctx?.close();
 }
 
@@ -138,4 +210,6 @@ function stop() {
 window.buddy.onMeeting((/** @type {any} */ cmd) => {
   if (cmd?.cmd === "start") start(cmd).catch((err) => window.buddy.meetingState({ started: false, problems: [String(err?.message ?? err)] }));
   else if (cmd?.cmd === "stop") stop();
+  // End-to-end check: a side's sound ends, as an unplugged device's does.
+  else if (cmd?.cmd === "test-end" && meeting) meeting.sources.find((s) => s.who === cmd.who)?.stream?.getAudioTracks().forEach((t) => (t.stop(), t.dispatchEvent(new Event("ended"))));
 });

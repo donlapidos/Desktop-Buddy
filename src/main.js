@@ -289,7 +289,41 @@ const writeNotes = (/** @type {string} */ title, /** @type {string} */ markdown)
 // The capture page is made when first needed: its session can only be made once the app is ready.
 /** @type {ReturnType<typeof createMeetingCapture> | null} */
 let meetingCapture = null;
-const capture = () => (meetingCapture ??= createMeetingCapture({ here, onPiece: (p) => meetings.notes()?.piece(p), trace }));
+const capture = () => (meetingCapture ??= createMeetingCapture({ here, onPiece: (p) => meetings.notes()?.piece(p), onEvent: (e) => meetingSound(e), trace }));
+/** The sides Buddy hears in the meeting now. @type {Set<"you" | "others">} */
+const hearing = new Set();
+const sideName = (/** @type {"you" | "others"} */ who) => (who === "you" ? t("your microphone") : t("the PC's sound"));
+
+/**
+ * A side's sound ended or came back, or the meeting page crashed. A crashed page is opened again; a side that stays
+ * gone is said; when Buddy can hear nothing at all, it stops and writes up what it heard, rather than sit there "on".
+ * @param {import("./meeting-capture.js").CaptureEvent} e
+ */
+async function meetingSound(e) {
+  if (meetings.state !== "on") return;
+  if ("page" in e) {
+    const r = await meetings.reopen();
+    if (r.error === "off") return;
+    if (r.error) return lostTheMeeting();
+    hearing.clear();
+    if (r.you) hearing.add("you");
+    if (r.others) hearing.add("others");
+    trace({ kind: "meeting-reopened", you: !!r.you, others: !!r.others });
+    return;
+  }
+  if (e.back) hearing.add(e.who);
+  if (!e.gone) return;
+  hearing.delete(e.who);
+  if (!hearing.size) return lostTheMeeting();
+  const other = e.who === "you" ? "others" : "you";
+  notice(t("Buddy can't hear {side} any more; still taking notes from {other}.", { side: sideName(e.who), other: sideName(other) }));
+}
+
+async function lostTheMeeting() {
+  trace({ kind: "meeting-lost" });
+  notice(t("Buddy stopped hearing the meeting, so it's writing up what it heard."));
+  await stopMeetingNotes();
+}
 const meetings = createMeetingSession({
   capture: { start: (o) => capture().start(o), stop: () => capture().stop(), close: () => capture().close() },
   makeNotes: () => createMeetingNotes({
@@ -342,6 +376,9 @@ async function startMeetingNotes({ testMic } = {}) {
   const r = await meetings.start({ testMic });
   if (r.error === "busy") return { error: t("Buddy is already taking notes.") };
   if (r.error) return { error: t("Buddy couldn't hear the meeting: neither the microphone nor the PC's sound would open.") };
+  hearing.clear();
+  if (r.you) hearing.add("you");
+  if (r.others) hearing.add("others");
   trace({ kind: "meeting-started", you: !!r.you, others: !!r.others });
   return { you: !!r.you, others: !!r.others };
 }
@@ -2133,6 +2170,8 @@ const devKit = () => ({
   startMeetingNotes,
   stopMeetingNotes,
   meetingUI,
+  meetingPage: () => meetingCapture?.page() ?? null,
+  get meetingState() { return meetings.state; },
   hushReply,
   playLesson,
   get brain() { return brain; },
