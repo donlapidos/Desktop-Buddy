@@ -383,6 +383,10 @@ notes.txt · 1 KB · 2026-11-10 17:40`;
       case "show_explainer":
         this.calls.push({ kind: "explainer", name: String(input.common_name ?? ""), input });
         return "Shown.";
+      case "create_document":
+        // Recorded, never written; answered as Buddy does once the approved document is saved and open in Word.
+        this.calls.push({ kind: "other", name, input });
+        return `Saved "${String(input.title ?? "Document")}.docx" in Documents › Buddy and opened it in Word.`;
       default:
         this.calls.push({ kind: "other", name, input });
         return this.replay ? "This tool has no recorded outcome in this workflow. Nothing was done." : "Done.";

@@ -1,0 +1,2001 @@
+Order,Date,Quarter,Region,Sales rep,Product,Units,Unit price,Revenue
+41000,2026-02-20,Q1,North,Avery Lund,Webcam,5,95,475
+41001,2026-09-21,Q3,South,Maria Ortiz,Desk lamp,1,39,39
+41002,2026-01-03,Q1,East,Chloe Brandt,Standing desk,3,449,1347
+41003,2026-10-29,Q4,West,Priya Nair,Monitor arm,5,79,395
+41004,2026-12-15,Q4,South,Maria Ortiz,Standing desk,3,449,1347
+41005,2026-03-03,Q1,South,Dev Sharma,Monitor arm,4,79,316
+41006,2026-10-11,Q4,North,Jonah Pike,Monitor arm,1,79,79
+41007,2026-10-30,Q4,West,Priya Nair,Office chair,2,189,378
+41008,2026-09-05,Q3,West,Leo Tran,Webcam,3,95,285
+41009,2026-01-09,Q1,East,Chloe Brandt,Office chair,2,189,378
+41010,2026-11-08,Q4,West,Leo Tran,Standing desk,2,449,898
+41011,2026-08-30,Q3,North,Jonah Pike,Monitor arm,8,79,632
+41012,2026-05-11,Q2,South,Maria Ortiz,Monitor arm,3,79,237
+41013,2026-03-31,Q1,East,Chloe Brandt,Desk lamp,2,39,78
+41014,2026-04-21,Q2,South,Maria Ortiz,Monitor arm,4,79,316
+41015,2026-05-01,Q2,North,Avery Lund,Standing desk,1,449,449
+41016,2026-12-21,Q4,South,Maria Ortiz,Webcam,1,95,95
+41017,2026-02-24,Q1,North,Jonah Pike,Standing desk,2,449,898
+41018,2026-06-06,Q2,North,Jonah Pike,Desk lamp,6,39,234
+41019,2026-12-31,Q4,West,Priya Nair,Standing desk,2,449,898
+41020,2026-12-14,Q4,South,Maria Ortiz,Standing desk,1,449,449
+41021,2026-09-28,Q3,West,Priya Nair,Keyboard,2,59,118
+41022,2026-11-14,Q4,West,Priya Nair,Desk lamp,5,39,195
+41023,2026-07-11,Q3,North,Jonah Pike,Monitor arm,8,79,632
+41024,2026-12-22,Q4,East,Chloe Brandt,Monitor arm,5,79,395
+41025,2026-05-17,Q2,South,Maria Ortiz,Webcam,1,95,95
+41026,2026-11-29,Q4,North,Jonah Pike,Office chair,2,189,378
+41027,2026-01-21,Q1,South,Dev Sharma,Keyboard,6,59,354
+41028,2026-11-09,Q4,North,Jonah Pike,Standing desk,1,449,449
+41029,2026-10-09,Q4,North,Jonah Pike,Keyboard,1,59,59
+41030,2026-12-28,Q4,West,Leo Tran,Office chair,4,189,756
+41031,2026-06-03,Q2,West,Priya Nair,Webcam,6,95,570
+41032,2026-09-17,Q3,West,Leo Tran,Desk lamp,5,39,195
+41033,2026-09-17,Q3,West,Priya Nair,Desk lamp,8,39,312
+41034,2026-07-12,Q3,South,Dev Sharma,Keyboard,8,59,472
+41035,2026-02-12,Q1,West,Leo Tran,Standing desk,3,449,1347
+41036,2026-12-22,Q4,West,Priya Nair,Standing desk,1,449,449
+41037,2026-08-15,Q3,North,Avery Lund,Standing desk,1,449,449
+41038,2026-04-16,Q2,East,Sam Okafor,Office chair,7,189,1323
+41039,2026-09-09,Q3,South,Maria Ortiz,Office chair,5,189,945
+41040,2026-05-17,Q2,North,Jonah Pike,Keyboard,3,59,177
+41041,2026-03-14,Q1,West,Priya Nair,Webcam,6,95,570
+41042,2026-11-07,Q4,East,Sam Okafor,Office chair,1,189,189
+41043,2026-02-26,Q1,North,Jonah Pike,Keyboard,8,59,472
+41044,2026-10-10,Q4,East,Sam Okafor,Webcam,2,95,190
+41045,2026-08-02,Q3,West,Priya Nair,Monitor arm,3,79,237
+41046,2026-05-29,Q2,West,Leo Tran,Keyboard,4,59,236
+41047,2026-12-23,Q4,West,Leo Tran,Keyboard,3,59,177
+41048,2026-12-31,Q4,North,Avery Lund,Desk lamp,3,39,117
+41049,2026-11-23,Q4,West,Priya Nair,Desk lamp,8,39,312
+41050,2026-11-04,Q4,West,Leo Tran,Monitor arm,6,79,474
+41051,2026-03-04,Q1,West,Priya Nair,Desk lamp,8,39,312
+41052,2026-07-31,Q3,South,Maria Ortiz,Keyboard,3,59,177
+41053,2026-12-22,Q4,West,Leo Tran,Keyboard,1,59,59
+41054,2026-10-13,Q4,East,Chloe Brandt,Desk lamp,8,39,312
+41055,2026-09-08,Q3,East,Sam Okafor,Office chair,4,189,756
+41056,2026-10-05,Q4,West,Leo Tran,Keyboard,6,59,354
+41057,2026-04-21,Q2,North,Jonah Pike,Keyboard,7,59,413
+41058,2026-06-15,Q2,South,Dev Sharma,Monitor arm,4,79,316
+41059,2026-07-30,Q3,West,Priya Nair,Office chair,6,189,1134
+41060,2026-08-25,Q3,East,Chloe Brandt,Monitor arm,4,79,316
+41061,2026-07-17,Q3,West,Leo Tran,Keyboard,7,59,413
+41062,2026-05-14,Q2,South,Dev Sharma,Desk lamp,3,39,117
+41063,2026-06-06,Q2,South,Maria Ortiz,Office chair,5,189,945
+41064,2026-02-25,Q1,East,Sam Okafor,Keyboard,4,59,236
+41065,2026-01-04,Q1,East,Chloe Brandt,Desk lamp,8,39,312
+41066,2026-12-04,Q4,West,Leo Tran,Standing desk,1,449,449
+41067,2026-12-13,Q4,South,Maria Ortiz,Desk lamp,8,39,312
+41068,2026-02-24,Q1,North,Jonah Pike,Desk lamp,2,39,78
+41069,2026-01-31,Q1,South,Maria Ortiz,Webcam,3,95,285
+41070,2026-10-07,Q4,West,Priya Nair,Keyboard,2,59,118
+41071,2026-09-05,Q3,West,Leo Tran,Keyboard,1,59,59
+41072,2026-11-30,Q4,West,Leo Tran,Office chair,2,189,378
+41073,2026-09-04,Q3,West,Leo Tran,Desk lamp,1,39,39
+41074,2026-07-26,Q3,South,Dev Sharma,Desk lamp,3,39,117
+41075,2026-11-23,Q4,South,Dev Sharma,Desk lamp,2,39,78
+41076,2026-01-10,Q1,West,Leo Tran,Desk lamp,7,39,273
+41077,2026-07-28,Q3,East,Chloe Brandt,Standing desk,3,449,1347
+41078,2026-10-25,Q4,West,Leo Tran,Keyboard,7,59,413
+41079,2026-01-31,Q1,South,Dev Sharma,Office chair,6,189,1134
+41080,2026-12-28,Q4,West,Leo Tran,Office chair,8,189,1512
+41081,2026-05-25,Q2,West,Leo Tran,Webcam,1,95,95
+41082,2026-11-03,Q4,East,Chloe Brandt,Webcam,3,95,285
+41083,2026-02-21,Q1,South,Dev Sharma,Office chair,6,189,1134
+41084,2026-12-19,Q4,West,Leo Tran,Office chair,2,189,378
+41085,2026-07-31,Q3,East,Sam Okafor,Monitor arm,4,79,316
+41086,2026-04-16,Q2,East,Chloe Brandt,Standing desk,3,449,1347
+41087,2026-09-07,Q3,West,Priya Nair,Office chair,5,189,945
+41088,2026-03-28,Q1,South,Maria Ortiz,Webcam,8,95,760
+41089,2026-04-23,Q2,West,Priya Nair,Desk lamp,8,39,312
+41090,2026-01-05,Q1,West,Leo Tran,Webcam,1,95,95
+41091,2026-06-09,Q2,North,Avery Lund,Keyboard,3,59,177
+41092,2026-02-04,Q1,West,Leo Tran,Desk lamp,8,39,312
+41093,2026-07-14,Q3,South,Maria Ortiz,Office chair,8,189,1512
+41094,2026-12-20,Q4,West,Priya Nair,Monitor arm,2,79,158
+41095,2026-04-03,Q2,East,Sam Okafor,Webcam,8,95,760
+41096,2026-02-12,Q1,East,Sam Okafor,Desk lamp,6,39,234
+41097,2026-12-23,Q4,West,Priya Nair,Standing desk,1,449,449
+41098,2026-12-29,Q4,South,Maria Ortiz,Office chair,4,189,756
+41099,2026-07-16,Q3,West,Priya Nair,Desk lamp,4,39,156
+41100,2026-03-22,Q1,East,Sam Okafor,Keyboard,6,59,354
+41101,2026-09-21,Q3,West,Leo Tran,Office chair,2,189,378
+41102,2026-06-20,Q2,West,Leo Tran,Office chair,3,189,567
+41103,2026-11-29,Q4,West,Leo Tran,Desk lamp,2,39,78
+41104,2026-08-07,Q3,West,Priya Nair,Office chair,2,189,378
+41105,2026-09-12,Q3,West,Leo Tran,Monitor arm,7,79,553
+41106,2026-07-10,Q3,North,Avery Lund,Standing desk,2,449,898
+41107,2026-11-18,Q4,West,Leo Tran,Office chair,1,189,189
+41108,2026-02-06,Q1,East,Sam Okafor,Webcam,1,95,95
+41109,2026-12-17,Q4,West,Leo Tran,Desk lamp,7,39,273
+41110,2026-11-28,Q4,West,Priya Nair,Office chair,1,189,189
+41111,2026-09-22,Q3,West,Priya Nair,Keyboard,2,59,118
+41112,2026-06-11,Q2,West,Leo Tran,Office chair,3,189,567
+41113,2026-03-13,Q1,East,Chloe Brandt,Webcam,5,95,475
+41114,2026-10-07,Q4,East,Sam Okafor,Keyboard,8,59,472
+41115,2026-08-22,Q3,West,Priya Nair,Desk lamp,1,39,39
+41116,2026-11-04,Q4,North,Avery Lund,Desk lamp,5,39,195
+41117,2026-11-01,Q4,East,Chloe Brandt,Standing desk,2,449,898
+41118,2026-09-06,Q3,West,Priya Nair,Webcam,1,95,95
+41119,2026-05-30,Q2,West,Leo Tran,Monitor arm,6,79,474
+41120,2026-06-30,Q2,South,Dev Sharma,Office chair,2,189,378
+41121,2026-04-10,Q2,West,Leo Tran,Monitor arm,8,79,632
+41122,2026-11-16,Q4,West,Priya Nair,Monitor arm,5,79,395
+41123,2026-06-19,Q2,North,Avery Lund,Desk lamp,3,39,117
+41124,2026-08-15,Q3,West,Priya Nair,Monitor arm,8,79,632
+41125,2026-10-27,Q4,West,Priya Nair,Monitor arm,3,79,237
+41126,2026-09-15,Q3,West,Leo Tran,Monitor arm,1,79,79
+41127,2026-07-17,Q3,West,Leo Tran,Keyboard,4,59,236
+41128,2026-01-15,Q1,East,Chloe Brandt,Monitor arm,2,79,158
+41129,2026-12-14,Q4,North,Avery Lund,Monitor arm,3,79,237
+41130,2026-11-03,Q4,West,Priya Nair,Keyboard,5,59,295
+41131,2026-08-13,Q3,East,Chloe Brandt,Standing desk,3,449,1347
+41132,2026-04-07,Q2,South,Dev Sharma,Monitor arm,6,79,474
+41133,2026-10-17,Q4,East,Sam Okafor,Standing desk,1,449,449
+41134,2026-11-27,Q4,West,Priya Nair,Monitor arm,8,79,632
+41135,2026-10-05,Q4,East,Chloe Brandt,Desk lamp,1,39,39
+41136,2026-11-12,Q4,West,Priya Nair,Office chair,7,189,1323
+41137,2026-03-08,Q1,North,Avery Lund,Webcam,7,95,665
+41138,2026-02-20,Q1,North,Jonah Pike,Standing desk,1,449,449
+41139,2026-01-31,Q1,West,Leo Tran,Webcam,4,95,380
+41140,2026-09-17,Q3,East,Sam Okafor,Webcam,4,95,380
+41141,2026-03-05,Q1,South,Dev Sharma,Monitor arm,1,79,79
+41142,2026-12-06,Q4,West,Leo Tran,Office chair,1,189,189
+41143,2026-08-06,Q3,North,Jonah Pike,Standing desk,3,449,1347
+41144,2026-07-12,Q3,North,Avery Lund,Webcam,5,95,475
+41145,2026-01-18,Q1,East,Sam Okafor,Office chair,5,189,945
+41146,2026-04-27,Q2,West,Priya Nair,Standing desk,3,449,1347
+41147,2026-09-13,Q3,West,Priya Nair,Office chair,4,189,756
+41148,2026-10-21,Q4,West,Priya Nair,Keyboard,2,59,118
+41149,2026-12-10,Q4,West,Leo Tran,Office chair,1,189,189
+41150,2026-04-03,Q2,South,Dev Sharma,Keyboard,1,59,59
+41151,2026-07-04,Q3,South,Dev Sharma,Office chair,4,189,756
+41152,2026-07-28,Q3,West,Priya Nair,Webcam,2,95,190
+41153,2026-08-15,Q3,East,Sam Okafor,Desk lamp,7,39,273
+41154,2026-01-10,Q1,South,Dev Sharma,Office chair,8,189,1512
+41155,2026-03-20,Q1,West,Leo Tran,Keyboard,2,59,118
+41156,2026-07-14,Q3,East,Sam Okafor,Keyboard,1,59,59
+41157,2026-03-30,Q1,West,Leo Tran,Monitor arm,3,79,237
+41158,2026-04-25,Q2,North,Jonah Pike,Webcam,8,95,760
+41159,2026-04-06,Q2,South,Maria Ortiz,Monitor arm,6,79,474
+41160,2026-02-16,Q1,East,Sam Okafor,Office chair,5,189,945
+41161,2026-08-03,Q3,East,Sam Okafor,Desk lamp,4,39,156
+41162,2026-03-08,Q1,North,Jonah Pike,Office chair,2,189,378
+41163,2026-08-25,Q3,West,Priya Nair,Monitor arm,8,79,632
+41164,2026-10-30,Q4,South,Dev Sharma,Desk lamp,3,39,117
+41165,2026-06-12,Q2,North,Jonah Pike,Standing desk,1,449,449
+41166,2026-10-28,Q4,North,Jonah Pike,Office chair,8,189,1512
+41167,2026-10-21,Q4,North,Jonah Pike,Desk lamp,1,39,39
+41168,2026-01-06,Q1,East,Chloe Brandt,Standing desk,2,449,898
+41169,2026-04-02,Q2,North,Avery Lund,Desk lamp,4,39,156
+41170,2026-05-30,Q2,East,Chloe Brandt,Standing desk,3,449,1347
+41171,2026-04-19,Q2,South,Dev Sharma,Standing desk,3,449,1347
+41172,2026-06-20,Q2,South,Maria Ortiz,Webcam,4,95,380
+41173,2026-01-17,Q1,East,Sam Okafor,Monitor arm,7,79,553
+41174,2026-01-17,Q1,South,Dev Sharma,Desk lamp,6,39,234
+41175,2026-04-26,Q2,North,Avery Lund,Keyboard,1,59,59
+41176,2026-08-16,Q3,South,Maria Ortiz,Monitor arm,8,79,632
+41177,2026-07-19,Q3,West,Priya Nair,Standing desk,3,449,1347
+41178,2026-10-16,Q4,West,Priya Nair,Webcam,4,95,380
+41179,2026-11-13,Q4,West,Priya Nair,Standing desk,2,449,898
+41180,2026-11-06,Q4,East,Chloe Brandt,Keyboard,7,59,413
+41181,2026-12-23,Q4,West,Priya Nair,Webcam,2,95,190
+41182,2026-06-12,Q2,East,Sam Okafor,Desk lamp,5,39,195
+41183,2026-03-05,Q1,North,Jonah Pike,Standing desk,2,449,898
+41184,2026-08-11,Q3,East,Chloe Brandt,Standing desk,2,449,898
+41185,2026-11-13,Q4,West,Leo Tran,Keyboard,5,59,295
+41186,2026-02-14,Q1,East,Sam Okafor,Webcam,4,95,380
+41187,2026-03-24,Q1,West,Leo Tran,Webcam,8,95,760
+41188,2026-12-15,Q4,West,Priya Nair,Standing desk,1,449,449
+41189,2026-07-22,Q3,East,Chloe Brandt,Standing desk,1,449,449
+41190,2026-02-01,Q1,East,Sam Okafor,Webcam,1,95,95
+41191,2026-04-22,Q2,West,Leo Tran,Office chair,7,189,1323
+41192,2026-06-01,Q2,West,Priya Nair,Desk lamp,7,39,273
+41193,2026-01-05,Q1,East,Chloe Brandt,Office chair,1,189,189
+41194,2026-02-12,Q1,West,Leo Tran,Standing desk,2,449,898
+41195,2026-10-28,Q4,West,Leo Tran,Desk lamp,6,39,234
+41196,2026-04-09,Q2,North,Avery Lund,Desk lamp,4,39,156
+41197,2026-10-03,Q4,East,Chloe Brandt,Desk lamp,4,39,156
+41198,2026-07-26,Q3,North,Avery Lund,Standing desk,3,449,1347
+41199,2026-10-01,Q4,South,Dev Sharma,Office chair,5,189,945
+41200,2026-10-19,Q4,South,Dev Sharma,Monitor arm,1,79,79
+41201,2026-11-30,Q4,West,Leo Tran,Keyboard,8,59,472
+41202,2026-10-27,Q4,East,Sam Okafor,Desk lamp,1,39,39
+41203,2026-11-23,Q4,West,Priya Nair,Office chair,3,189,567
+41204,2026-10-25,Q4,West,Leo Tran,Desk lamp,7,39,273
+41205,2026-10-03,Q4,East,Chloe Brandt,Desk lamp,1,39,39
+41206,2026-03-04,Q1,East,Chloe Brandt,Desk lamp,8,39,312
+41207,2026-10-08,Q4,North,Avery Lund,Desk lamp,5,39,195
+41208,2026-10-02,Q4,West,Leo Tran,Office chair,8,189,1512
+41209,2026-07-19,Q3,South,Maria Ortiz,Standing desk,1,449,449
+41210,2026-07-27,Q3,South,Maria Ortiz,Desk lamp,2,39,78
+41211,2026-04-24,Q2,North,Avery Lund,Desk lamp,3,39,117
+41212,2026-12-31,Q4,West,Leo Tran,Office chair,2,189,378
+41213,2026-04-11,Q2,North,Avery Lund,Webcam,4,95,380
+41214,2026-02-09,Q1,East,Chloe Brandt,Keyboard,3,59,177
+41215,2026-03-12,Q1,West,Leo Tran,Webcam,8,95,760
+41216,2026-11-03,Q4,West,Priya Nair,Monitor arm,1,79,79
+41217,2026-12-15,Q4,East,Sam Okafor,Monitor arm,3,79,237
+41218,2026-07-26,Q3,West,Leo Tran,Desk lamp,2,39,78
+41219,2026-04-17,Q2,East,Chloe Brandt,Office chair,2,189,378
+41220,2026-02-28,Q1,West,Leo Tran,Standing desk,2,449,898
+41221,2026-04-03,Q2,East,Chloe Brandt,Standing desk,2,449,898
+41222,2026-03-21,Q1,North,Jonah Pike,Desk lamp,4,39,156
+41223,2026-02-02,Q1,West,Priya Nair,Monitor arm,7,79,553
+41224,2026-04-08,Q2,West,Leo Tran,Keyboard,2,59,118
+41225,2026-05-19,Q2,South,Maria Ortiz,Monitor arm,2,79,158
+41226,2026-09-11,Q3,West,Priya Nair,Keyboard,3,59,177
+41227,2026-01-26,Q1,South,Maria Ortiz,Standing desk,3,449,1347
+41228,2026-04-28,Q2,East,Chloe Brandt,Keyboard,8,59,472
+41229,2026-12-19,Q4,North,Avery Lund,Office chair,7,189,1323
+41230,2026-03-28,Q1,West,Leo Tran,Monitor arm,3,79,237
+41231,2026-11-17,Q4,South,Maria Ortiz,Webcam,3,95,285
+41232,2026-10-17,Q4,East,Chloe Brandt,Standing desk,2,449,898
+41233,2026-12-04,Q4,West,Priya Nair,Monitor arm,3,79,237
+41234,2026-02-11,Q1,North,Avery Lund,Keyboard,1,59,59
+41235,2026-12-16,Q4,West,Leo Tran,Monitor arm,5,79,395
+41236,2026-01-01,Q1,North,Avery Lund,Standing desk,2,449,898
+41237,2026-12-21,Q4,North,Jonah Pike,Webcam,5,95,475
+41238,2026-10-30,Q4,West,Priya Nair,Office chair,3,189,567
+41239,2026-05-16,Q2,West,Priya Nair,Desk lamp,5,39,195
+41240,2026-05-01,Q2,West,Priya Nair,Desk lamp,8,39,312
+41241,2026-04-18,Q2,West,Leo Tran,Desk lamp,3,39,117
+41242,2026-12-22,Q4,West,Leo Tran,Standing desk,3,449,1347
+41243,2026-04-30,Q2,South,Maria Ortiz,Monitor arm,8,79,632
+41244,2026-11-20,Q4,East,Sam Okafor,Webcam,1,95,95
+41245,2026-10-24,Q4,North,Jonah Pike,Webcam,5,95,475
+41246,2026-02-10,Q1,East,Sam Okafor,Standing desk,2,449,898
+41247,2026-05-08,Q2,North,Avery Lund,Desk lamp,6,39,234
+41248,2026-07-05,Q3,West,Priya Nair,Webcam,1,95,95
+41249,2026-03-07,Q1,East,Chloe Brandt,Monitor arm,7,79,553
+41250,2026-03-25,Q1,South,Dev Sharma,Webcam,6,95,570
+41251,2026-09-27,Q3,West,Leo Tran,Keyboard,6,59,354
+41252,2026-03-31,Q1,West,Priya Nair,Webcam,2,95,190
+41253,2026-06-27,Q2,South,Maria Ortiz,Keyboard,1,59,59
+41254,2026-09-28,Q3,West,Priya Nair,Standing desk,1,449,449
+41255,2026-05-26,Q2,West,Priya Nair,Office chair,2,189,378
+41256,2026-01-26,Q1,South,Maria Ortiz,Monitor arm,4,79,316
+41257,2026-03-05,Q1,South,Dev Sharma,Webcam,7,95,665
+41258,2026-07-29,Q3,South,Maria Ortiz,Desk lamp,4,39,156
+41259,2026-09-09,Q3,West,Priya Nair,Standing desk,2,449,898
+41260,2026-12-25,Q4,West,Leo Tran,Office chair,8,189,1512
+41261,2026-09-24,Q3,West,Priya Nair,Desk lamp,2,39,78
+41262,2026-10-04,Q4,East,Sam Okafor,Keyboard,8,59,472
+41263,2026-02-23,Q1,East,Sam Okafor,Standing desk,2,449,898
+41264,2026-11-06,Q4,West,Priya Nair,Webcam,8,95,760
+41265,2026-01-29,Q1,East,Sam Okafor,Office chair,4,189,756
+41266,2026-11-27,Q4,West,Leo Tran,Keyboard,5,59,295
+41267,2026-02-15,Q1,East,Chloe Brandt,Webcam,8,95,760
+41268,2026-12-16,Q4,West,Leo Tran,Standing desk,1,449,449
+41269,2026-10-17,Q4,East,Sam Okafor,Standing desk,2,449,898
+41270,2026-06-19,Q2,South,Dev Sharma,Keyboard,5,59,295
+41271,2026-05-18,Q2,South,Dev Sharma,Office chair,2,189,378
+41272,2026-09-20,Q3,South,Dev Sharma,Monitor arm,6,79,474
+41273,2026-02-10,Q1,North,Jonah Pike,Keyboard,7,59,413
+41274,2026-06-27,Q2,South,Maria Ortiz,Monitor arm,7,79,553
+41275,2026-03-09,Q1,West,Priya Nair,Office chair,1,189,189
+41276,2026-10-29,Q4,South,Maria Ortiz,Monitor arm,2,79,158
+41277,2026-09-07,Q3,South,Dev Sharma,Keyboard,1,59,59
+41278,2026-08-17,Q3,North,Avery Lund,Monitor arm,8,79,632
+41279,2026-09-03,Q3,East,Chloe Brandt,Standing desk,1,449,449
+41280,2026-07-18,Q3,West,Priya Nair,Desk lamp,6,39,234
+41281,2026-12-11,Q4,West,Leo Tran,Keyboard,2,59,118
+41282,2026-08-11,Q3,South,Dev Sharma,Desk lamp,6,39,234
+41283,2026-05-03,Q2,West,Leo Tran,Desk lamp,7,39,273
+41284,2026-12-10,Q4,South,Dev Sharma,Desk lamp,6,39,234
+41285,2026-08-05,Q3,West,Leo Tran,Office chair,8,189,1512
+41286,2026-12-01,Q4,South,Dev Sharma,Standing desk,2,449,898
+41287,2026-06-20,Q2,East,Chloe Brandt,Monitor arm,6,79,474
+41288,2026-12-31,Q4,North,Jonah Pike,Office chair,6,189,1134
+41289,2026-12-11,Q4,East,Chloe Brandt,Monitor arm,6,79,474
+41290,2026-11-18,Q4,West,Leo Tran,Desk lamp,4,39,156
+41291,2026-10-30,Q4,South,Maria Ortiz,Standing desk,2,449,898
+41292,2026-04-07,Q2,East,Sam Okafor,Office chair,5,189,945
+41293,2026-01-25,Q1,West,Leo Tran,Office chair,6,189,1134
+41294,2026-05-28,Q2,North,Avery Lund,Standing desk,1,449,449
+41295,2026-06-21,Q2,North,Jonah Pike,Webcam,2,95,190
+41296,2026-12-17,Q4,South,Dev Sharma,Webcam,2,95,190
+41297,2026-04-03,Q2,West,Priya Nair,Office chair,2,189,378
+41298,2026-04-29,Q2,East,Chloe Brandt,Desk lamp,1,39,39
+41299,2026-08-19,Q3,South,Maria Ortiz,Webcam,6,95,570
+41300,2026-12-09,Q4,East,Sam Okafor,Standing desk,1,449,449
+41301,2026-05-05,Q2,West,Priya Nair,Desk lamp,8,39,312
+41302,2026-06-25,Q2,East,Sam Okafor,Keyboard,7,59,413
+41303,2026-01-22,Q1,North,Jonah Pike,Office chair,6,189,1134
+41304,2026-10-08,Q4,West,Leo Tran,Webcam,1,95,95
+41305,2026-06-24,Q2,South,Dev Sharma,Keyboard,3,59,177
+41306,2026-10-13,Q4,North,Jonah Pike,Webcam,1,95,95
+41307,2026-12-25,Q4,West,Priya Nair,Webcam,8,95,760
+41308,2026-09-03,Q3,South,Dev Sharma,Keyboard,4,59,236
+41309,2026-03-18,Q1,South,Maria Ortiz,Office chair,8,189,1512
+41310,2026-04-21,Q2,West,Leo Tran,Webcam,4,95,380
+41311,2026-09-02,Q3,West,Leo Tran,Webcam,7,95,665
+41312,2026-05-30,Q2,North,Jonah Pike,Standing desk,2,449,898
+41313,2026-11-08,Q4,West,Priya Nair,Keyboard,6,59,354
+41314,2026-07-12,Q3,East,Chloe Brandt,Keyboard,4,59,236
+41315,2026-08-26,Q3,South,Maria Ortiz,Standing desk,2,449,898
+41316,2026-03-02,Q1,South,Dev Sharma,Desk lamp,5,39,195
+41317,2026-10-30,Q4,West,Leo Tran,Webcam,8,95,760
+41318,2026-10-08,Q4,East,Sam Okafor,Monitor arm,4,79,316
+41319,2026-05-30,Q2,South,Dev Sharma,Standing desk,3,449,1347
+41320,2026-11-12,Q4,North,Jonah Pike,Standing desk,2,449,898
+41321,2026-12-26,Q4,East,Chloe Brandt,Keyboard,7,59,413
+41322,2026-08-23,Q3,North,Jonah Pike,Webcam,7,95,665
+41323,2026-11-07,Q4,East,Chloe Brandt,Standing desk,2,449,898
+41324,2026-09-24,Q3,West,Leo Tran,Office chair,5,189,945
+41325,2026-07-30,Q3,West,Leo Tran,Monitor arm,6,79,474
+41326,2026-01-11,Q1,East,Sam Okafor,Office chair,7,189,1323
+41327,2026-11-24,Q4,East,Chloe Brandt,Office chair,1,189,189
+41328,2026-09-02,Q3,North,Jonah Pike,Monitor arm,5,79,395
+41329,2026-12-08,Q4,North,Avery Lund,Keyboard,7,59,413
+41330,2026-10-31,Q4,South,Dev Sharma,Desk lamp,4,39,156
+41331,2026-09-24,Q3,South,Dev Sharma,Standing desk,1,449,449
+41332,2026-08-15,Q3,South,Maria Ortiz,Desk lamp,5,39,195
+41333,2026-01-05,Q1,North,Jonah Pike,Webcam,1,95,95
+41334,2026-08-25,Q3,West,Leo Tran,Keyboard,7,59,413
+41335,2026-12-07,Q4,North,Avery Lund,Desk lamp,6,39,234
+41336,2026-03-21,Q1,North,Avery Lund,Monitor arm,6,79,474
+41337,2026-04-16,Q2,West,Priya Nair,Webcam,7,95,665
+41338,2026-10-25,Q4,South,Maria Ortiz,Standing desk,2,449,898
+41339,2026-08-24,Q3,West,Leo Tran,Webcam,8,95,760
+41340,2026-01-30,Q1,North,Avery Lund,Standing desk,3,449,1347
+41341,2026-02-11,Q1,South,Dev Sharma,Monitor arm,5,79,395
+41342,2026-09-15,Q3,North,Jonah Pike,Standing desk,3,449,1347
+41343,2026-04-16,Q2,West,Leo Tran,Monitor arm,8,79,632
+41344,2026-08-06,Q3,South,Dev Sharma,Desk lamp,7,39,273
+41345,2026-12-08,Q4,West,Priya Nair,Webcam,6,95,570
+41346,2026-07-12,Q3,North,Avery Lund,Office chair,5,189,945
+41347,2026-12-20,Q4,West,Leo Tran,Webcam,8,95,760
+41348,2026-04-27,Q2,West,Priya Nair,Standing desk,1,449,449
+41349,2026-07-31,Q3,East,Sam Okafor,Keyboard,8,59,472
+41350,2026-06-30,Q2,West,Priya Nair,Desk lamp,4,39,156
+41351,2026-12-23,Q4,West,Leo Tran,Desk lamp,1,39,39
+41352,2026-04-19,Q2,West,Priya Nair,Keyboard,6,59,354
+41353,2026-10-07,Q4,South,Dev Sharma,Keyboard,8,59,472
+41354,2026-01-01,Q1,South,Dev Sharma,Webcam,1,95,95
+41355,2026-02-14,Q1,West,Leo Tran,Monitor arm,3,79,237
+41356,2026-06-06,Q2,South,Dev Sharma,Office chair,2,189,378
+41357,2026-11-27,Q4,East,Sam Okafor,Desk lamp,3,39,117
+41358,2026-11-08,Q4,South,Maria Ortiz,Desk lamp,8,39,312
+41359,2026-05-12,Q2,West,Priya Nair,Monitor arm,4,79,316
+41360,2026-08-01,Q3,North,Jonah Pike,Desk lamp,2,39,78
+41361,2026-03-14,Q1,East,Sam Okafor,Keyboard,2,59,118
+41362,2026-06-14,Q2,East,Sam Okafor,Office chair,3,189,567
+41363,2026-10-06,Q4,West,Priya Nair,Monitor arm,3,79,237
+41364,2026-08-17,Q3,North,Jonah Pike,Standing desk,1,449,449
+41365,2026-01-12,Q1,East,Sam Okafor,Desk lamp,1,39,39
+41366,2026-08-23,Q3,South,Dev Sharma,Standing desk,3,449,1347
+41367,2026-05-25,Q2,North,Jonah Pike,Office chair,8,189,1512
+41368,2026-12-09,Q4,North,Jonah Pike,Desk lamp,4,39,156
+41369,2026-10-20,Q4,West,Priya Nair,Desk lamp,5,39,195
+41370,2026-08-08,Q3,West,Leo Tran,Monitor arm,7,79,553
+41371,2026-10-19,Q4,West,Leo Tran,Office chair,5,189,945
+41372,2026-09-28,Q3,East,Chloe Brandt,Standing desk,2,449,898
+41373,2026-12-17,Q4,South,Dev Sharma,Webcam,5,95,475
+41374,2026-11-12,Q4,South,Maria Ortiz,Desk lamp,8,39,312
+41375,2026-12-13,Q4,South,Dev Sharma,Webcam,1,95,95
+41376,2026-06-07,Q2,East,Sam Okafor,Keyboard,1,59,59
+41377,2026-10-13,Q4,West,Leo Tran,Monitor arm,1,79,79
+41378,2026-11-01,Q4,West,Priya Nair,Webcam,8,95,760
+41379,2026-07-07,Q3,East,Sam Okafor,Standing desk,2,449,898
+41380,2026-10-04,Q4,South,Dev Sharma,Desk lamp,8,39,312
+41381,2026-04-02,Q2,East,Chloe Brandt,Monitor arm,3,79,237
+41382,2026-09-24,Q3,South,Maria Ortiz,Standing desk,2,449,898
+41383,2026-09-26,Q3,East,Sam Okafor,Desk lamp,6,39,234
+41384,2026-01-10,Q1,South,Dev Sharma,Keyboard,3,59,177
+41385,2026-04-19,Q2,East,Sam Okafor,Standing desk,2,449,898
+41386,2026-10-07,Q4,West,Leo Tran,Desk lamp,7,39,273
+41387,2026-11-26,Q4,West,Priya Nair,Keyboard,6,59,354
+41388,2026-04-21,Q2,East,Chloe Brandt,Standing desk,1,449,449
+41389,2026-05-26,Q2,South,Maria Ortiz,Webcam,2,95,190
+41390,2026-08-15,Q3,North,Avery Lund,Webcam,8,95,760
+41391,2026-05-26,Q2,West,Priya Nair,Standing desk,3,449,1347
+41392,2026-09-23,Q3,West,Priya Nair,Webcam,3,95,285
+41393,2026-03-25,Q1,North,Avery Lund,Desk lamp,3,39,117
+41394,2026-10-17,Q4,East,Chloe Brandt,Standing desk,3,449,1347
+41395,2026-06-24,Q2,West,Priya Nair,Webcam,3,95,285
+41396,2026-02-09,Q1,North,Jonah Pike,Monitor arm,5,79,395
+41397,2026-08-28,Q3,East,Chloe Brandt,Monitor arm,3,79,237
+41398,2026-08-14,Q3,West,Priya Nair,Office chair,8,189,1512
+41399,2026-10-19,Q4,South,Dev Sharma,Monitor arm,8,79,632
+41400,2026-10-05,Q4,West,Leo Tran,Standing desk,1,449,449
+41401,2026-07-16,Q3,South,Maria Ortiz,Office chair,8,189,1512
+41402,2026-08-21,Q3,North,Avery Lund,Monitor arm,4,79,316
+41403,2026-07-19,Q3,West,Priya Nair,Monitor arm,4,79,316
+41404,2026-06-07,Q2,East,Sam Okafor,Keyboard,1,59,59
+41405,2026-08-25,Q3,South,Dev Sharma,Webcam,3,95,285
+41406,2026-02-08,Q1,South,Maria Ortiz,Monitor arm,1,79,79
+41407,2026-04-26,Q2,West,Leo Tran,Monitor arm,1,79,79
+41408,2026-10-23,Q4,East,Chloe Brandt,Desk lamp,6,39,234
+41409,2026-02-18,Q1,South,Maria Ortiz,Standing desk,3,449,1347
+41410,2026-04-12,Q2,West,Leo Tran,Office chair,4,189,756
+41411,2026-11-15,Q4,North,Avery Lund,Webcam,5,95,475
+41412,2026-12-14,Q4,South,Maria Ortiz,Standing desk,2,449,898
+41413,2026-06-04,Q2,South,Dev Sharma,Keyboard,1,59,59
+41414,2026-06-01,Q2,North,Avery Lund,Keyboard,7,59,413
+41415,2026-11-15,Q4,East,Chloe Brandt,Keyboard,7,59,413
+41416,2026-03-15,Q1,West,Leo Tran,Standing desk,2,449,898
+41417,2026-07-11,Q3,West,Leo Tran,Standing desk,1,449,449
+41418,2026-08-16,Q3,South,Dev Sharma,Keyboard,7,59,413
+41419,2026-05-04,Q2,West,Priya Nair,Monitor arm,3,79,237
+41420,2026-06-24,Q2,East,Sam Okafor,Office chair,4,189,756
+41421,2026-08-25,Q3,West,Leo Tran,Webcam,6,95,570
+41422,2026-02-15,Q1,South,Dev Sharma,Desk lamp,6,39,234
+41423,2026-01-21,Q1,West,Leo Tran,Standing desk,2,449,898
+41424,2026-11-07,Q4,North,Jonah Pike,Webcam,8,95,760
+41425,2026-11-01,Q4,West,Leo Tran,Webcam,8,95,760
+41426,2026-06-18,Q2,North,Avery Lund,Desk lamp,8,39,312
+41427,2026-08-14,Q3,West,Priya Nair,Monitor arm,5,79,395
+41428,2026-05-20,Q2,West,Leo Tran,Standing desk,3,449,1347
+41429,2026-09-07,Q3,West,Leo Tran,Webcam,2,95,190
+41430,2026-12-25,Q4,East,Sam Okafor,Monitor arm,8,79,632
+41431,2026-10-16,Q4,East,Chloe Brandt,Desk lamp,8,39,312
+41432,2026-08-17,Q3,North,Jonah Pike,Webcam,8,95,760
+41433,2026-06-03,Q2,North,Avery Lund,Webcam,1,95,95
+41434,2026-10-01,Q4,West,Leo Tran,Desk lamp,4,39,156
+41435,2026-08-19,Q3,West,Priya Nair,Desk lamp,2,39,78
+41436,2026-12-15,Q4,North,Avery Lund,Webcam,3,95,285
+41437,2026-07-15,Q3,North,Jonah Pike,Keyboard,6,59,354
+41438,2026-09-11,Q3,South,Dev Sharma,Office chair,7,189,1323
+41439,2026-12-25,Q4,North,Jonah Pike,Keyboard,5,59,295
+41440,2026-09-16,Q3,North,Avery Lund,Office chair,4,189,756
+41441,2026-05-09,Q2,North,Jonah Pike,Office chair,6,189,1134
+41442,2026-12-16,Q4,West,Priya Nair,Desk lamp,7,39,273
+41443,2026-12-19,Q4,North,Jonah Pike,Standing desk,1,449,449
+41444,2026-06-07,Q2,West,Leo Tran,Webcam,5,95,475
+41445,2026-12-14,Q4,North,Jonah Pike,Monitor arm,2,79,158
+41446,2026-10-02,Q4,East,Sam Okafor,Desk lamp,2,39,78
+41447,2026-08-23,Q3,North,Avery Lund,Webcam,3,95,285
+41448,2026-01-26,Q1,East,Chloe Brandt,Monitor arm,6,79,474
+41449,2026-10-28,Q4,North,Jonah Pike,Office chair,5,189,945
+41450,2026-02-01,Q1,North,Jonah Pike,Office chair,5,189,945
+41451,2026-01-27,Q1,South,Maria Ortiz,Standing desk,1,449,449
+41452,2026-12-10,Q4,South,Maria Ortiz,Keyboard,2,59,118
+41453,2026-05-19,Q2,South,Maria Ortiz,Webcam,7,95,665
+41454,2026-08-13,Q3,West,Priya Nair,Desk lamp,1,39,39
+41455,2026-03-14,Q1,South,Maria Ortiz,Webcam,7,95,665
+41456,2026-09-08,Q3,South,Dev Sharma,Keyboard,7,59,413
+41457,2026-11-27,Q4,North,Jonah Pike,Standing desk,2,449,898
+41458,2026-11-23,Q4,North,Avery Lund,Monitor arm,3,79,237
+41459,2026-03-22,Q1,West,Leo Tran,Desk lamp,5,39,195
+41460,2026-02-17,Q1,North,Avery Lund,Desk lamp,1,39,39
+41461,2026-09-21,Q3,West,Priya Nair,Monitor arm,2,79,158
+41462,2026-11-07,Q4,West,Leo Tran,Office chair,1,189,189
+41463,2026-09-12,Q3,East,Chloe Brandt,Keyboard,5,59,295
+41464,2026-11-01,Q4,South,Dev Sharma,Webcam,7,95,665
+41465,2026-04-06,Q2,West,Priya Nair,Keyboard,8,59,472
+41466,2026-07-25,Q3,North,Jonah Pike,Monitor arm,4,79,316
+41467,2026-10-20,Q4,West,Leo Tran,Monitor arm,8,79,632
+41468,2026-11-12,Q4,West,Leo Tran,Keyboard,2,59,118
+41469,2026-12-27,Q4,North,Jonah Pike,Standing desk,1,449,449
+41470,2026-07-09,Q3,South,Maria Ortiz,Desk lamp,7,39,273
+41471,2026-07-16,Q3,North,Avery Lund,Webcam,4,95,380
+41472,2026-07-12,Q3,West,Priya Nair,Desk lamp,5,39,195
+41473,2026-11-13,Q4,West,Leo Tran,Webcam,6,95,570
+41474,2026-11-11,Q4,West,Leo Tran,Monitor arm,8,79,632
+41475,2026-04-02,Q2,North,Jonah Pike,Desk lamp,6,39,234
+41476,2026-09-29,Q3,West,Priya Nair,Desk lamp,6,39,234
+41477,2026-08-20,Q3,West,Priya Nair,Monitor arm,4,79,316
+41478,2026-03-28,Q1,North,Jonah Pike,Monitor arm,6,79,474
+41479,2026-03-18,Q1,West,Leo Tran,Office chair,5,189,945
+41480,2026-09-29,Q3,North,Jonah Pike,Desk lamp,1,39,39
+41481,2026-08-20,Q3,West,Priya Nair,Monitor arm,2,79,158
+41482,2026-10-02,Q4,East,Chloe Brandt,Standing desk,3,449,1347
+41483,2026-09-22,Q3,North,Avery Lund,Monitor arm,8,79,632
+41484,2026-08-21,Q3,South,Maria Ortiz,Keyboard,8,59,472
+41485,2026-07-13,Q3,South,Dev Sharma,Webcam,6,95,570
+41486,2026-10-23,Q4,North,Avery Lund,Standing desk,2,449,898
+41487,2026-10-27,Q4,North,Avery Lund,Keyboard,1,59,59
+41488,2026-09-09,Q3,West,Priya Nair,Standing desk,3,449,1347
+41489,2026-09-02,Q3,West,Priya Nair,Desk lamp,5,39,195
+41490,2026-07-25,Q3,South,Maria Ortiz,Webcam,1,95,95
+41491,2026-08-09,Q3,East,Sam Okafor,Standing desk,1,449,449
+41492,2026-05-13,Q2,South,Dev Sharma,Monitor arm,6,79,474
+41493,2026-08-02,Q3,East,Sam Okafor,Monitor arm,1,79,79
+41494,2026-07-31,Q3,West,Priya Nair,Standing desk,1,449,449
+41495,2026-07-09,Q3,West,Leo Tran,Desk lamp,7,39,273
+41496,2026-07-18,Q3,North,Jonah Pike,Keyboard,1,59,59
+41497,2026-08-29,Q3,East,Sam Okafor,Keyboard,6,59,354
+41498,2026-09-07,Q3,North,Jonah Pike,Monitor arm,3,79,237
+41499,2026-04-11,Q2,West,Priya Nair,Standing desk,1,449,449
+41500,2026-01-28,Q1,East,Chloe Brandt,Office chair,3,189,567
+41501,2026-10-04,Q4,West,Priya Nair,Desk lamp,2,39,78
+41502,2026-07-02,Q3,South,Maria Ortiz,Monitor arm,5,79,395
+41503,2026-05-18,Q2,North,Avery Lund,Desk lamp,4,39,156
+41504,2026-07-20,Q3,West,Priya Nair,Desk lamp,2,39,78
+41505,2026-06-07,Q2,West,Leo Tran,Office chair,5,189,945
+41506,2026-07-12,Q3,South,Dev Sharma,Desk lamp,8,39,312
+41507,2026-11-07,Q4,West,Priya Nair,Standing desk,3,449,1347
+41508,2026-01-08,Q1,North,Jonah Pike,Standing desk,2,449,898
+41509,2026-09-01,Q3,South,Dev Sharma,Desk lamp,6,39,234
+41510,2026-07-10,Q3,West,Priya Nair,Webcam,5,95,475
+41511,2026-09-22,Q3,South,Dev Sharma,Keyboard,6,59,354
+41512,2026-10-23,Q4,West,Priya Nair,Keyboard,3,59,177
+41513,2026-05-13,Q2,East,Chloe Brandt,Webcam,6,95,570
+41514,2026-09-10,Q3,South,Maria Ortiz,Keyboard,8,59,472
+41515,2026-09-01,Q3,West,Leo Tran,Monitor arm,2,79,158
+41516,2026-03-20,Q1,North,Jonah Pike,Monitor arm,4,79,316
+41517,2026-09-24,Q3,North,Jonah Pike,Desk lamp,3,39,117
+41518,2026-08-08,Q3,East,Sam Okafor,Keyboard,1,59,59
+41519,2026-09-18,Q3,West,Leo Tran,Keyboard,6,59,354
+41520,2026-05-22,Q2,West,Leo Tran,Keyboard,8,59,472
+41521,2026-11-09,Q4,West,Priya Nair,Office chair,6,189,1134
+41522,2026-05-09,Q2,North,Avery Lund,Office chair,7,189,1323
+41523,2026-01-14,Q1,East,Chloe Brandt,Monitor arm,3,79,237
+41524,2026-09-25,Q3,North,Jonah Pike,Desk lamp,4,39,156
+41525,2026-05-13,Q2,South,Maria Ortiz,Keyboard,1,59,59
+41526,2026-12-15,Q4,West,Leo Tran,Monitor arm,5,79,395
+41527,2026-08-07,Q3,South,Dev Sharma,Monitor arm,4,79,316
+41528,2026-08-18,Q3,West,Priya Nair,Office chair,2,189,378
+41529,2026-12-26,Q4,West,Priya Nair,Webcam,5,95,475
+41530,2026-07-29,Q3,North,Jonah Pike,Keyboard,5,59,295
+41531,2026-05-08,Q2,South,Maria Ortiz,Standing desk,2,449,898
+41532,2026-09-01,Q3,North,Jonah Pike,Office chair,4,189,756
+41533,2026-10-21,Q4,West,Priya Nair,Webcam,7,95,665
+41534,2026-02-21,Q1,South,Maria Ortiz,Webcam,7,95,665
+41535,2026-03-24,Q1,North,Jonah Pike,Office chair,3,189,567
+41536,2026-03-24,Q1,North,Avery Lund,Office chair,3,189,567
+41537,2026-11-13,Q4,South,Dev Sharma,Webcam,3,95,285
+41538,2026-07-13,Q3,North,Avery Lund,Webcam,3,95,285
+41539,2026-02-13,Q1,East,Sam Okafor,Office chair,8,189,1512
+41540,2026-12-01,Q4,East,Chloe Brandt,Monitor arm,3,79,237
+41541,2026-11-13,Q4,South,Maria Ortiz,Keyboard,3,59,177
+41542,2026-07-18,Q3,East,Chloe Brandt,Keyboard,3,59,177
+41543,2026-05-25,Q2,South,Maria Ortiz,Standing desk,3,449,1347
+41544,2026-03-04,Q1,North,Avery Lund,Webcam,8,95,760
+41545,2026-03-26,Q1,North,Avery Lund,Standing desk,1,449,449
+41546,2026-12-04,Q4,East,Chloe Brandt,Keyboard,2,59,118
+41547,2026-04-18,Q2,West,Priya Nair,Webcam,3,95,285
+41548,2026-05-31,Q2,East,Chloe Brandt,Monitor arm,7,79,553
+41549,2026-07-31,Q3,East,Sam Okafor,Standing desk,3,449,1347
+41550,2026-09-17,Q3,West,Priya Nair,Keyboard,1,59,59
+41551,2026-12-21,Q4,West,Priya Nair,Keyboard,4,59,236
+41552,2026-02-17,Q1,East,Chloe Brandt,Standing desk,3,449,1347
+41553,2026-04-10,Q2,North,Jonah Pike,Webcam,4,95,380
+41554,2026-08-07,Q3,West,Priya Nair,Office chair,6,189,1134
+41555,2026-12-13,Q4,West,Priya Nair,Monitor arm,1,79,79
+41556,2026-03-14,Q1,West,Leo Tran,Standing desk,1,449,449
+41557,2026-11-14,Q4,West,Priya Nair,Standing desk,2,449,898
+41558,2026-10-23,Q4,South,Dev Sharma,Keyboard,1,59,59
+41559,2026-01-16,Q1,North,Jonah Pike,Standing desk,2,449,898
+41560,2026-09-13,Q3,West,Priya Nair,Standing desk,2,449,898
+41561,2026-06-04,Q2,East,Sam Okafor,Webcam,5,95,475
+41562,2026-03-30,Q1,West,Priya Nair,Webcam,7,95,665
+41563,2026-12-09,Q4,North,Jonah Pike,Monitor arm,2,79,158
+41564,2026-07-15,Q3,East,Chloe Brandt,Desk lamp,6,39,234
+41565,2026-07-28,Q3,East,Sam Okafor,Standing desk,3,449,1347
+41566,2026-08-09,Q3,North,Avery Lund,Standing desk,2,449,898
+41567,2026-09-12,Q3,West,Priya Nair,Webcam,3,95,285
+41568,2026-12-03,Q4,West,Leo Tran,Office chair,7,189,1323
+41569,2026-05-25,Q2,North,Jonah Pike,Desk lamp,2,39,78
+41570,2026-08-23,Q3,West,Priya Nair,Office chair,6,189,1134
+41571,2026-03-23,Q1,South,Maria Ortiz,Desk lamp,8,39,312
+41572,2026-07-15,Q3,West,Leo Tran,Monitor arm,8,79,632
+41573,2026-11-22,Q4,East,Sam Okafor,Keyboard,4,59,236
+41574,2026-02-27,Q1,East,Sam Okafor,Keyboard,7,59,413
+41575,2026-10-13,Q4,West,Leo Tran,Webcam,7,95,665
+41576,2026-11-23,Q4,North,Jonah Pike,Monitor arm,3,79,237
+41577,2026-01-03,Q1,North,Jonah Pike,Desk lamp,2,39,78
+41578,2026-07-13,Q3,East,Chloe Brandt,Desk lamp,7,39,273
+41579,2026-06-07,Q2,West,Priya Nair,Desk lamp,1,39,39
+41580,2026-07-15,Q3,East,Chloe Brandt,Monitor arm,5,79,395
+41581,2026-03-20,Q1,South,Maria Ortiz,Desk lamp,8,39,312
+41582,2026-11-11,Q4,South,Dev Sharma,Monitor arm,5,79,395
+41583,2026-11-26,Q4,North,Avery Lund,Monitor arm,5,79,395
+41584,2026-05-08,Q2,West,Leo Tran,Keyboard,1,59,59
+41585,2026-01-11,Q1,East,Sam Okafor,Office chair,5,189,945
+41586,2026-10-08,Q4,East,Sam Okafor,Keyboard,5,59,295
+41587,2026-09-01,Q3,East,Sam Okafor,Standing desk,2,449,898
+41588,2026-01-09,Q1,East,Sam Okafor,Desk lamp,7,39,273
+41589,2026-01-16,Q1,East,Chloe Brandt,Monitor arm,6,79,474
+41590,2026-05-25,Q2,North,Avery Lund,Standing desk,3,449,1347
+41591,2026-03-12,Q1,East,Sam Okafor,Monitor arm,4,79,316
+41592,2026-11-30,Q4,South,Dev Sharma,Standing desk,2,449,898
+41593,2026-02-17,Q1,East,Chloe Brandt,Webcam,3,95,285
+41594,2026-07-05,Q3,West,Leo Tran,Keyboard,5,59,295
+41595,2026-09-07,Q3,West,Priya Nair,Standing desk,3,449,1347
+41596,2026-06-14,Q2,East,Chloe Brandt,Webcam,1,95,95
+41597,2026-11-21,Q4,East,Sam Okafor,Desk lamp,3,39,117
+41598,2026-08-13,Q3,East,Sam Okafor,Monitor arm,1,79,79
+41599,2026-07-19,Q3,West,Leo Tran,Standing desk,2,449,898
+41600,2026-03-23,Q1,West,Leo Tran,Desk lamp,6,39,234
+41601,2026-04-28,Q2,North,Jonah Pike,Desk lamp,4,39,156
+41602,2026-03-27,Q1,East,Chloe Brandt,Webcam,1,95,95
+41603,2026-01-01,Q1,East,Chloe Brandt,Monitor arm,5,79,395
+41604,2026-03-24,Q1,South,Maria Ortiz,Desk lamp,5,39,195
+41605,2026-07-12,Q3,West,Leo Tran,Keyboard,4,59,236
+41606,2026-06-10,Q2,North,Avery Lund,Webcam,7,95,665
+41607,2026-09-04,Q3,West,Leo Tran,Office chair,4,189,756
+41608,2026-06-07,Q2,North,Jonah Pike,Desk lamp,8,39,312
+41609,2026-02-21,Q1,East,Sam Okafor,Office chair,3,189,567
+41610,2026-08-30,Q3,North,Avery Lund,Standing desk,3,449,1347
+41611,2026-05-23,Q2,North,Avery Lund,Keyboard,1,59,59
+41612,2026-03-05,Q1,South,Maria Ortiz,Standing desk,3,449,1347
+41613,2026-10-07,Q4,South,Dev Sharma,Webcam,7,95,665
+41614,2026-06-21,Q2,East,Chloe Brandt,Office chair,4,189,756
+41615,2026-07-19,Q3,West,Priya Nair,Monitor arm,8,79,632
+41616,2026-11-30,Q4,West,Priya Nair,Webcam,4,95,380
+41617,2026-07-04,Q3,West,Leo Tran,Desk lamp,5,39,195
+41618,2026-06-13,Q2,West,Priya Nair,Standing desk,1,449,449
+41619,2026-11-29,Q4,West,Priya Nair,Monitor arm,1,79,79
+41620,2026-07-19,Q3,South,Dev Sharma,Webcam,2,95,190
+41621,2026-01-21,Q1,North,Avery Lund,Standing desk,3,449,1347
+41622,2026-07-30,Q3,North,Avery Lund,Webcam,1,95,95
+41623,2026-04-13,Q2,East,Chloe Brandt,Desk lamp,5,39,195
+41624,2026-06-10,Q2,North,Avery Lund,Desk lamp,4,39,156
+41625,2026-03-03,Q1,West,Leo Tran,Desk lamp,4,39,156
+41626,2026-09-20,Q3,West,Leo Tran,Standing desk,1,449,449
+41627,2026-07-25,Q3,West,Leo Tran,Standing desk,2,449,898
+41628,2026-10-18,Q4,West,Priya Nair,Webcam,7,95,665
+41629,2026-02-13,Q1,West,Priya Nair,Desk lamp,2,39,78
+41630,2026-05-04,Q2,West,Leo Tran,Webcam,2,95,190
+41631,2026-11-25,Q4,East,Sam Okafor,Webcam,6,95,570
+41632,2026-04-26,Q2,South,Maria Ortiz,Standing desk,2,449,898
+41633,2026-08-30,Q3,South,Maria Ortiz,Monitor arm,6,79,474
+41634,2026-11-10,Q4,North,Jonah Pike,Desk lamp,4,39,156
+41635,2026-06-30,Q2,North,Jonah Pike,Keyboard,3,59,177
+41636,2026-10-18,Q4,West,Priya Nair,Webcam,1,95,95
+41637,2026-05-05,Q2,East,Sam Okafor,Keyboard,1,59,59
+41638,2026-07-15,Q3,East,Chloe Brandt,Keyboard,8,59,472
+41639,2026-08-01,Q3,West,Leo Tran,Monitor arm,4,79,316
+41640,2026-08-08,Q3,North,Avery Lund,Keyboard,4,59,236
+41641,2026-01-27,Q1,North,Jonah Pike,Standing desk,3,449,1347
+41642,2026-06-10,Q2,East,Chloe Brandt,Office chair,2,189,378
+41643,2026-10-22,Q4,South,Maria Ortiz,Desk lamp,3,39,117
+41644,2026-07-23,Q3,North,Jonah Pike,Standing desk,2,449,898
+41645,2026-06-02,Q2,East,Sam Okafor,Standing desk,3,449,1347
+41646,2026-09-10,Q3,West,Leo Tran,Desk lamp,8,39,312
+41647,2026-06-21,Q2,North,Jonah Pike,Keyboard,1,59,59
+41648,2026-07-25,Q3,South,Maria Ortiz,Monitor arm,4,79,316
+41649,2026-12-24,Q4,West,Priya Nair,Office chair,5,189,945
+41650,2026-08-21,Q3,West,Leo Tran,Monitor arm,2,79,158
+41651,2026-05-23,Q2,West,Leo Tran,Webcam,5,95,475
+41652,2026-06-30,Q2,East,Chloe Brandt,Desk lamp,4,39,156
+41653,2026-01-30,Q1,South,Maria Ortiz,Keyboard,3,59,177
+41654,2026-11-22,Q4,West,Leo Tran,Office chair,6,189,1134
+41655,2026-09-25,Q3,West,Priya Nair,Monitor arm,1,79,79
+41656,2026-12-11,Q4,West,Leo Tran,Monitor arm,7,79,553
+41657,2026-10-07,Q4,West,Priya Nair,Desk lamp,6,39,234
+41658,2026-04-26,Q2,North,Avery Lund,Keyboard,8,59,472
+41659,2026-06-22,Q2,East,Sam Okafor,Office chair,3,189,567
+41660,2026-01-03,Q1,West,Leo Tran,Office chair,5,189,945
+41661,2026-09-25,Q3,East,Sam Okafor,Webcam,1,95,95
+41662,2026-01-31,Q1,East,Chloe Brandt,Monitor arm,5,79,395
+41663,2026-09-09,Q3,East,Sam Okafor,Monitor arm,7,79,553
+41664,2026-03-11,Q1,East,Chloe Brandt,Desk lamp,4,39,156
+41665,2026-03-26,Q1,East,Sam Okafor,Webcam,7,95,665
+41666,2026-09-03,Q3,West,Leo Tran,Keyboard,6,59,354
+41667,2026-03-18,Q1,North,Avery Lund,Keyboard,8,59,472
+41668,2026-05-30,Q2,North,Avery Lund,Office chair,6,189,1134
+41669,2026-06-11,Q2,South,Maria Ortiz,Keyboard,1,59,59
+41670,2026-01-28,Q1,West,Leo Tran,Monitor arm,2,79,158
+41671,2026-11-21,Q4,South,Maria Ortiz,Monitor arm,1,79,79
+41672,2026-05-04,Q2,North,Jonah Pike,Office chair,4,189,756
+41673,2026-04-26,Q2,West,Priya Nair,Desk lamp,6,39,234
+41674,2026-09-27,Q3,West,Priya Nair,Desk lamp,6,39,234
+41675,2026-09-28,Q3,North,Avery Lund,Keyboard,5,59,295
+41676,2026-01-31,Q1,West,Priya Nair,Desk lamp,5,39,195
+41677,2026-11-17,Q4,West,Leo Tran,Keyboard,4,59,236
+41678,2026-05-04,Q2,North,Avery Lund,Webcam,1,95,95
+41679,2026-02-23,Q1,South,Dev Sharma,Keyboard,2,59,118
+41680,2026-10-10,Q4,East,Sam Okafor,Keyboard,3,59,177
+41681,2026-10-24,Q4,West,Leo Tran,Webcam,2,95,190
+41682,2026-11-11,Q4,South,Maria Ortiz,Keyboard,3,59,177
+41683,2026-07-27,Q3,South,Maria Ortiz,Monitor arm,6,79,474
+41684,2026-02-19,Q1,North,Avery Lund,Webcam,3,95,285
+41685,2026-07-21,Q3,South,Maria Ortiz,Standing desk,3,449,1347
+41686,2026-03-12,Q1,East,Sam Okafor,Office chair,7,189,1323
+41687,2026-05-15,Q2,West,Priya Nair,Webcam,4,95,380
+41688,2026-01-08,Q1,South,Dev Sharma,Keyboard,3,59,177
+41689,2026-09-25,Q3,North,Jonah Pike,Monitor arm,4,79,316
+41690,2026-12-20,Q4,South,Maria Ortiz,Monitor arm,6,79,474
+41691,2026-08-24,Q3,West,Priya Nair,Monitor arm,3,79,237
+41692,2026-10-13,Q4,South,Dev Sharma,Office chair,7,189,1323
+41693,2026-06-07,Q2,South,Dev Sharma,Standing desk,1,449,449
+41694,2026-03-09,Q1,North,Avery Lund,Webcam,4,95,380
+41695,2026-08-12,Q3,East,Chloe Brandt,Office chair,7,189,1323
+41696,2026-11-15,Q4,East,Chloe Brandt,Keyboard,6,59,354
+41697,2026-08-30,Q3,East,Chloe Brandt,Standing desk,3,449,1347
+41698,2026-01-15,Q1,West,Priya Nair,Monitor arm,7,79,553
+41699,2026-06-26,Q2,North,Avery Lund,Keyboard,1,59,59
+41700,2026-01-13,Q1,South,Dev Sharma,Standing desk,3,449,1347
+41701,2026-11-10,Q4,West,Priya Nair,Monitor arm,3,79,237
+41702,2026-06-14,Q2,South,Dev Sharma,Keyboard,3,59,177
+41703,2026-02-05,Q1,North,Avery Lund,Office chair,1,189,189
+41704,2026-08-01,Q3,South,Dev Sharma,Office chair,1,189,189
+41705,2026-07-01,Q3,East,Chloe Brandt,Webcam,5,95,475
+41706,2026-10-06,Q4,West,Priya Nair,Webcam,1,95,95
+41707,2026-02-16,Q1,West,Priya Nair,Office chair,5,189,945
+41708,2026-01-14,Q1,North,Avery Lund,Webcam,5,95,475
+41709,2026-12-07,Q4,East,Sam Okafor,Webcam,1,95,95
+41710,2026-08-12,Q3,North,Jonah Pike,Standing desk,2,449,898
+41711,2026-10-23,Q4,South,Maria Ortiz,Standing desk,1,449,449
+41712,2026-12-29,Q4,East,Chloe Brandt,Keyboard,3,59,177
+41713,2026-08-04,Q3,North,Avery Lund,Webcam,7,95,665
+41714,2026-11-15,Q4,West,Leo Tran,Monitor arm,6,79,474
+41715,2026-06-18,Q2,West,Leo Tran,Desk lamp,3,39,117
+41716,2026-07-13,Q3,South,Dev Sharma,Desk lamp,8,39,312
+41717,2026-05-01,Q2,South,Dev Sharma,Webcam,7,95,665
+41718,2026-07-28,Q3,West,Leo Tran,Office chair,4,189,756
+41719,2026-12-25,Q4,West,Leo Tran,Monitor arm,6,79,474
+41720,2026-04-11,Q2,East,Chloe Brandt,Office chair,4,189,756
+41721,2026-08-16,Q3,North,Avery Lund,Webcam,1,95,95
+41722,2026-06-29,Q2,North,Avery Lund,Office chair,8,189,1512
+41723,2026-03-09,Q1,South,Maria Ortiz,Desk lamp,3,39,117
+41724,2026-03-11,Q1,East,Sam Okafor,Monitor arm,5,79,395
+41725,2026-12-08,Q4,South,Dev Sharma,Webcam,5,95,475
+41726,2026-11-14,Q4,West,Leo Tran,Monitor arm,2,79,158
+41727,2026-11-30,Q4,South,Maria Ortiz,Monitor arm,4,79,316
+41728,2026-05-03,Q2,South,Dev Sharma,Webcam,5,95,475
+41729,2026-12-24,Q4,West,Leo Tran,Office chair,3,189,567
+41730,2026-09-07,Q3,East,Sam Okafor,Standing desk,3,449,1347
+41731,2026-07-11,Q3,West,Priya Nair,Monitor arm,5,79,395
+41732,2026-11-11,Q4,West,Leo Tran,Standing desk,3,449,1347
+41733,2026-08-06,Q3,West,Leo Tran,Keyboard,2,59,118
+41734,2026-05-30,Q2,East,Chloe Brandt,Office chair,6,189,1134
+41735,2026-01-20,Q1,South,Maria Ortiz,Desk lamp,1,39,39
+41736,2026-06-19,Q2,North,Jonah Pike,Monitor arm,5,79,395
+41737,2026-08-04,Q3,North,Avery Lund,Monitor arm,5,79,395
+41738,2026-03-01,Q1,South,Dev Sharma,Standing desk,1,449,449
+41739,2026-11-19,Q4,West,Leo Tran,Keyboard,3,59,177
+41740,2026-06-04,Q2,North,Jonah Pike,Keyboard,3,59,177
+41741,2026-07-29,Q3,North,Avery Lund,Standing desk,2,449,898
+41742,2026-01-12,Q1,North,Avery Lund,Standing desk,2,449,898
+41743,2026-05-09,Q2,South,Maria Ortiz,Webcam,2,95,190
+41744,2026-04-09,Q2,West,Priya Nair,Monitor arm,4,79,316
+41745,2026-05-30,Q2,North,Jonah Pike,Office chair,5,189,945
+41746,2026-06-19,Q2,South,Maria Ortiz,Desk lamp,5,39,195
+41747,2026-05-25,Q2,East,Sam Okafor,Desk lamp,5,39,195
+41748,2026-11-18,Q4,West,Leo Tran,Keyboard,5,59,295
+41749,2026-04-06,Q2,North,Jonah Pike,Standing desk,2,449,898
+41750,2026-08-26,Q3,West,Priya Nair,Standing desk,1,449,449
+41751,2026-11-25,Q4,East,Chloe Brandt,Keyboard,8,59,472
+41752,2026-10-19,Q4,East,Chloe Brandt,Monitor arm,2,79,158
+41753,2026-09-04,Q3,North,Jonah Pike,Standing desk,3,449,1347
+41754,2026-12-24,Q4,East,Chloe Brandt,Keyboard,1,59,59
+41755,2026-06-13,Q2,North,Avery Lund,Keyboard,7,59,413
+41756,2026-09-24,Q3,West,Priya Nair,Office chair,6,189,1134
+41757,2026-07-07,Q3,South,Maria Ortiz,Keyboard,8,59,472
+41758,2026-11-22,Q4,West,Priya Nair,Keyboard,5,59,295
+41759,2026-08-09,Q3,West,Priya Nair,Standing desk,1,449,449
+41760,2026-09-05,Q3,North,Jonah Pike,Monitor arm,3,79,237
+41761,2026-12-10,Q4,South,Dev Sharma,Standing desk,1,449,449
+41762,2026-08-22,Q3,North,Jonah Pike,Desk lamp,3,39,117
+41763,2026-08-18,Q3,North,Avery Lund,Standing desk,2,449,898
+41764,2026-12-29,Q4,South,Dev Sharma,Webcam,4,95,380
+41765,2026-11-29,Q4,East,Sam Okafor,Webcam,1,95,95
+41766,2026-12-19,Q4,West,Leo Tran,Webcam,1,95,95
+41767,2026-10-16,Q4,East,Chloe Brandt,Desk lamp,6,39,234
+41768,2026-08-03,Q3,South,Maria Ortiz,Keyboard,4,59,236
+41769,2026-06-30,Q2,West,Priya Nair,Standing desk,1,449,449
+41770,2026-03-23,Q1,East,Sam Okafor,Office chair,5,189,945
+41771,2026-11-09,Q4,West,Priya Nair,Keyboard,7,59,413
+41772,2026-10-11,Q4,West,Priya Nair,Keyboard,2,59,118
+41773,2026-06-02,Q2,East,Chloe Brandt,Standing desk,2,449,898
+41774,2026-08-06,Q3,West,Priya Nair,Keyboard,8,59,472
+41775,2026-07-05,Q3,North,Jonah Pike,Webcam,6,95,570
+41776,2026-12-18,Q4,North,Avery Lund,Webcam,7,95,665
+41777,2026-11-28,Q4,North,Jonah Pike,Webcam,6,95,570
+41778,2026-06-26,Q2,South,Dev Sharma,Standing desk,2,449,898
+41779,2026-10-25,Q4,West,Leo Tran,Keyboard,1,59,59
+41780,2026-01-12,Q1,West,Leo Tran,Office chair,2,189,378
+41781,2026-09-25,Q3,East,Sam Okafor,Desk lamp,2,39,78
+41782,2026-04-16,Q2,North,Avery Lund,Webcam,8,95,760
+41783,2026-12-23,Q4,South,Maria Ortiz,Office chair,8,189,1512
+41784,2026-06-29,Q2,West,Leo Tran,Desk lamp,5,39,195
+41785,2026-09-30,Q3,East,Chloe Brandt,Keyboard,6,59,354
+41786,2026-10-07,Q4,North,Avery Lund,Office chair,2,189,378
+41787,2026-09-17,Q3,North,Jonah Pike,Office chair,3,189,567
+41788,2026-08-03,Q3,West,Priya Nair,Standing desk,2,449,898
+41789,2026-04-28,Q2,East,Chloe Brandt,Standing desk,1,449,449
+41790,2026-12-21,Q4,West,Priya Nair,Standing desk,3,449,1347
+41791,2026-08-09,Q3,West,Leo Tran,Standing desk,2,449,898
+41792,2026-04-25,Q2,West,Leo Tran,Keyboard,5,59,295
+41793,2026-12-30,Q4,West,Leo Tran,Monitor arm,1,79,79
+41794,2026-05-26,Q2,East,Sam Okafor,Desk lamp,5,39,195
+41795,2026-05-16,Q2,West,Priya Nair,Webcam,7,95,665
+41796,2026-12-21,Q4,West,Leo Tran,Monitor arm,1,79,79
+41797,2026-09-07,Q3,North,Jonah Pike,Standing desk,2,449,898
+41798,2026-05-29,Q2,North,Jonah Pike,Keyboard,5,59,295
+41799,2026-05-27,Q2,South,Dev Sharma,Monitor arm,5,79,395
+41800,2026-03-30,Q1,East,Chloe Brandt,Webcam,2,95,190
+41801,2026-10-16,Q4,South,Maria Ortiz,Webcam,1,95,95
+41802,2026-02-18,Q1,North,Avery Lund,Office chair,2,189,378
+41803,2026-08-17,Q3,South,Dev Sharma,Webcam,8,95,760
+41804,2026-11-27,Q4,South,Maria Ortiz,Desk lamp,7,39,273
+41805,2026-10-21,Q4,East,Chloe Brandt,Keyboard,2,59,118
+41806,2026-06-19,Q2,South,Maria Ortiz,Office chair,3,189,567
+41807,2026-04-06,Q2,South,Maria Ortiz,Desk lamp,1,39,39
+41808,2026-04-23,Q2,North,Jonah Pike,Standing desk,3,449,1347
+41809,2026-03-02,Q1,East,Sam Okafor,Standing desk,1,449,449
+41810,2026-04-20,Q2,East,Sam Okafor,Webcam,7,95,665
+41811,2026-08-08,Q3,West,Leo Tran,Monitor arm,2,79,158
+41812,2026-12-30,Q4,North,Jonah Pike,Webcam,7,95,665
+41813,2026-04-27,Q2,East,Chloe Brandt,Webcam,8,95,760
+41814,2026-01-11,Q1,North,Avery Lund,Webcam,2,95,190
+41815,2026-05-27,Q2,East,Sam Okafor,Monitor arm,1,79,79
+41816,2026-08-06,Q3,West,Leo Tran,Keyboard,8,59,472
+41817,2026-01-12,Q1,South,Maria Ortiz,Standing desk,2,449,898
+41818,2026-02-21,Q1,North,Avery Lund,Webcam,2,95,190
+41819,2026-01-03,Q1,North,Jonah Pike,Desk lamp,6,39,234
+41820,2026-02-19,Q1,South,Maria Ortiz,Monitor arm,6,79,474
+41821,2026-07-12,Q3,North,Avery Lund,Office chair,5,189,945
+41822,2026-12-18,Q4,South,Maria Ortiz,Office chair,2,189,378
+41823,2026-05-06,Q2,East,Chloe Brandt,Keyboard,1,59,59
+41824,2026-04-16,Q2,West,Leo Tran,Webcam,2,95,190
+41825,2026-08-13,Q3,South,Maria Ortiz,Monitor arm,8,79,632
+41826,2026-05-01,Q2,North,Avery Lund,Monitor arm,4,79,316
+41827,2026-04-03,Q2,West,Priya Nair,Standing desk,3,449,1347
+41828,2026-05-20,Q2,West,Leo Tran,Webcam,7,95,665
+41829,2026-07-10,Q3,South,Dev Sharma,Desk lamp,1,39,39
+41830,2026-01-14,Q1,South,Dev Sharma,Standing desk,2,449,898
+41831,2026-03-29,Q1,East,Sam Okafor,Keyboard,1,59,59
+41832,2026-06-03,Q2,South,Maria Ortiz,Keyboard,4,59,236
+41833,2026-08-28,Q3,East,Chloe Brandt,Monitor arm,7,79,553
+41834,2026-11-29,Q4,West,Priya Nair,Webcam,6,95,570
+41835,2026-06-27,Q2,South,Dev Sharma,Office chair,6,189,1134
+41836,2026-12-30,Q4,East,Sam Okafor,Standing desk,2,449,898
+41837,2026-02-07,Q1,East,Chloe Brandt,Monitor arm,2,79,158
+41838,2026-12-16,Q4,South,Dev Sharma,Monitor arm,5,79,395
+41839,2026-03-08,Q1,East,Sam Okafor,Desk lamp,3,39,117
+41840,2026-02-22,Q1,North,Avery Lund,Standing desk,1,449,449
+41841,2026-01-29,Q1,East,Sam Okafor,Webcam,7,95,665
+41842,2026-08-19,Q3,North,Jonah Pike,Office chair,6,189,1134
+41843,2026-09-24,Q3,West,Leo Tran,Webcam,2,95,190
+41844,2026-05-27,Q2,West,Leo Tran,Monitor arm,4,79,316
+41845,2026-06-02,Q2,East,Chloe Brandt,Standing desk,2,449,898
+41846,2026-03-22,Q1,West,Priya Nair,Keyboard,5,59,295
+41847,2026-12-17,Q4,North,Jonah Pike,Keyboard,7,59,413
+41848,2026-01-11,Q1,North,Jonah Pike,Monitor arm,7,79,553
+41849,2026-06-24,Q2,South,Dev Sharma,Keyboard,3,59,177
+41850,2026-12-25,Q4,West,Leo Tran,Monitor arm,8,79,632
+41851,2026-02-28,Q1,South,Dev Sharma,Monitor arm,1,79,79
+41852,2026-06-02,Q2,West,Leo Tran,Office chair,5,189,945
+41853,2026-11-02,Q4,East,Chloe Brandt,Standing desk,3,449,1347
+41854,2026-12-29,Q4,East,Sam Okafor,Monitor arm,4,79,316
+41855,2026-08-24,Q3,West,Priya Nair,Desk lamp,7,39,273
+41856,2026-11-07,Q4,South,Maria Ortiz,Webcam,5,95,475
+41857,2026-02-17,Q1,North,Jonah Pike,Webcam,7,95,665
+41858,2026-10-09,Q4,East,Chloe Brandt,Monitor arm,4,79,316
+41859,2026-09-16,Q3,East,Chloe Brandt,Webcam,2,95,190
+41860,2026-08-22,Q3,West,Priya Nair,Standing desk,1,449,449
+41861,2026-02-22,Q1,East,Sam Okafor,Office chair,4,189,756
+41862,2026-03-05,Q1,South,Dev Sharma,Office chair,8,189,1512
+41863,2026-06-06,Q2,South,Maria Ortiz,Office chair,2,189,378
+41864,2026-04-24,Q2,East,Chloe Brandt,Desk lamp,6,39,234
+41865,2026-07-05,Q3,West,Priya Nair,Standing desk,2,449,898
+41866,2026-10-28,Q4,West,Leo Tran,Standing desk,1,449,449
+41867,2026-05-12,Q2,South,Dev Sharma,Desk lamp,6,39,234
+41868,2026-07-16,Q3,West,Priya Nair,Office chair,1,189,189
+41869,2026-08-05,Q3,West,Leo Tran,Monitor arm,6,79,474
+41870,2026-09-06,Q3,West,Priya Nair,Webcam,2,95,190
+41871,2026-04-09,Q2,East,Sam Okafor,Standing desk,3,449,1347
+41872,2026-01-10,Q1,East,Chloe Brandt,Desk lamp,8,39,312
+41873,2026-03-24,Q1,South,Maria Ortiz,Webcam,2,95,190
+41874,2026-12-22,Q4,West,Priya Nair,Desk lamp,3,39,117
+41875,2026-05-29,Q2,West,Leo Tran,Standing desk,3,449,1347
+41876,2026-12-31,Q4,East,Chloe Brandt,Monitor arm,7,79,553
+41877,2026-07-13,Q3,North,Jonah Pike,Desk lamp,2,39,78
+41878,2026-02-17,Q1,North,Jonah Pike,Desk lamp,2,39,78
+41879,2026-01-17,Q1,North,Avery Lund,Office chair,2,189,378
+41880,2026-09-05,Q3,West,Priya Nair,Webcam,3,95,285
+41881,2026-11-13,Q4,West,Leo Tran,Desk lamp,3,39,117
+41882,2026-08-21,Q3,West,Priya Nair,Monitor arm,6,79,474
+41883,2026-08-21,Q3,West,Priya Nair,Standing desk,1,449,449
+41884,2026-03-02,Q1,North,Jonah Pike,Standing desk,3,449,1347
+41885,2026-10-24,Q4,West,Leo Tran,Standing desk,3,449,1347
+41886,2026-08-03,Q3,West,Priya Nair,Monitor arm,2,79,158
+41887,2026-07-13,Q3,West,Priya Nair,Desk lamp,6,39,234
+41888,2026-05-30,Q2,South,Dev Sharma,Desk lamp,6,39,234
+41889,2026-06-03,Q2,West,Leo Tran,Standing desk,3,449,1347
+41890,2026-07-20,Q3,East,Chloe Brandt,Webcam,3,95,285
+41891,2026-02-19,Q1,North,Avery Lund,Office chair,4,189,756
+41892,2026-06-02,Q2,East,Sam Okafor,Standing desk,1,449,449
+41893,2026-09-26,Q3,South,Dev Sharma,Monitor arm,4,79,316
+41894,2026-08-12,Q3,West,Leo Tran,Standing desk,3,449,1347
+41895,2026-03-07,Q1,North,Jonah Pike,Monitor arm,3,79,237
+41896,2026-06-03,Q2,West,Leo Tran,Monitor arm,1,79,79
+41897,2026-10-14,Q4,West,Priya Nair,Office chair,1,189,189
+41898,2026-06-28,Q2,South,Maria Ortiz,Standing desk,1,449,449
+41899,2026-03-03,Q1,West,Leo Tran,Standing desk,1,449,449
+41900,2026-02-01,Q1,West,Priya Nair,Office chair,5,189,945
+41901,2026-05-19,Q2,East,Chloe Brandt,Desk lamp,7,39,273
+41902,2026-08-27,Q3,West,Priya Nair,Desk lamp,2,39,78
+41903,2026-04-03,Q2,West,Leo Tran,Desk lamp,3,39,117
+41904,2026-11-11,Q4,South,Dev Sharma,Office chair,3,189,567
+41905,2026-12-26,Q4,West,Priya Nair,Office chair,5,189,945
+41906,2026-03-08,Q1,North,Jonah Pike,Webcam,6,95,570
+41907,2026-03-25,Q1,East,Chloe Brandt,Desk lamp,8,39,312
+41908,2026-08-23,Q3,North,Jonah Pike,Standing desk,2,449,898
+41909,2026-11-25,Q4,West,Priya Nair,Office chair,2,189,378
+41910,2026-07-17,Q3,East,Chloe Brandt,Webcam,5,95,475
+41911,2026-06-26,Q2,North,Jonah Pike,Standing desk,3,449,1347
+41912,2026-06-07,Q2,North,Jonah Pike,Webcam,4,95,380
+41913,2026-12-02,Q4,West,Priya Nair,Webcam,8,95,760
+41914,2026-10-13,Q4,South,Dev Sharma,Standing desk,1,449,449
+41915,2026-03-07,Q1,South,Dev Sharma,Monitor arm,7,79,553
+41916,2026-06-11,Q2,South,Maria Ortiz,Webcam,2,95,190
+41917,2026-12-11,Q4,North,Avery Lund,Desk lamp,1,39,39
+41918,2026-11-27,Q4,West,Leo Tran,Standing desk,3,449,1347
+41919,2026-05-17,Q2,South,Dev Sharma,Office chair,1,189,189
+41920,2026-07-23,Q3,East,Sam Okafor,Webcam,2,95,190
+41921,2026-12-20,Q4,East,Sam Okafor,Monitor arm,6,79,474
+41922,2026-11-09,Q4,West,Priya Nair,Keyboard,6,59,354
+41923,2026-12-13,Q4,South,Dev Sharma,Standing desk,1,449,449
+41924,2026-07-06,Q3,West,Priya Nair,Desk lamp,7,39,273
+41925,2026-11-06,Q4,West,Leo Tran,Monitor arm,6,79,474
+41926,2026-05-27,Q2,West,Priya Nair,Office chair,7,189,1323
+41927,2026-03-08,Q1,West,Priya Nair,Desk lamp,1,39,39
+41928,2026-02-06,Q1,East,Chloe Brandt,Keyboard,7,59,413
+41929,2026-08-13,Q3,West,Leo Tran,Desk lamp,8,39,312
+41930,2026-09-07,Q3,West,Leo Tran,Desk lamp,1,39,39
+41931,2026-10-05,Q4,East,Sam Okafor,Desk lamp,1,39,39
+41932,2026-12-19,Q4,North,Jonah Pike,Webcam,2,95,190
+41933,2026-12-23,Q4,South,Dev Sharma,Office chair,1,189,189
+41934,2026-11-07,Q4,West,Priya Nair,Desk lamp,3,39,117
+41935,2026-04-16,Q2,East,Chloe Brandt,Desk lamp,5,39,195
+41936,2026-01-25,Q1,South,Maria Ortiz,Standing desk,1,449,449
+41937,2026-05-12,Q2,East,Chloe Brandt,Standing desk,1,449,449
+41938,2026-11-28,Q4,West,Priya Nair,Keyboard,6,59,354
+41939,2026-02-09,Q1,North,Jonah Pike,Standing desk,3,449,1347
+41940,2026-12-09,Q4,West,Priya Nair,Desk lamp,4,39,156
+41941,2026-02-18,Q1,North,Jonah Pike,Keyboard,7,59,413
+41942,2026-01-19,Q1,North,Avery Lund,Webcam,3,95,285
+41943,2026-10-06,Q4,East,Chloe Brandt,Desk lamp,8,39,312
+41944,2026-07-14,Q3,East,Sam Okafor,Monitor arm,3,79,237
+41945,2026-02-15,Q1,North,Avery Lund,Desk lamp,4,39,156
+41946,2026-09-08,Q3,North,Avery Lund,Keyboard,6,59,354
+41947,2026-06-03,Q2,South,Dev Sharma,Keyboard,8,59,472
+41948,2026-03-13,Q1,East,Sam Okafor,Desk lamp,1,39,39
+41949,2026-02-13,Q1,North,Jonah Pike,Desk lamp,5,39,195
+41950,2026-12-26,Q4,West,Leo Tran,Standing desk,2,449,898
+41951,2026-08-15,Q3,South,Maria Ortiz,Standing desk,3,449,1347
+41952,2026-09-02,Q3,West,Leo Tran,Keyboard,4,59,236
+41953,2026-03-11,Q1,South,Dev Sharma,Standing desk,1,449,449
+41954,2026-09-01,Q3,West,Priya Nair,Keyboard,6,59,354
+41955,2026-05-01,Q2,West,Leo Tran,Webcam,7,95,665
+41956,2026-08-28,Q3,South,Maria Ortiz,Keyboard,8,59,472
+41957,2026-04-25,Q2,South,Maria Ortiz,Monitor arm,7,79,553
+41958,2026-05-17,Q2,West,Priya Nair,Standing desk,1,449,449
+41959,2026-12-27,Q4,North,Avery Lund,Webcam,3,95,285
+41960,2026-03-21,Q1,East,Sam Okafor,Webcam,1,95,95
+41961,2026-12-19,Q4,West,Priya Nair,Keyboard,4,59,236
+41962,2026-09-24,Q3,South,Dev Sharma,Office chair,1,189,189
+41963,2026-01-03,Q1,East,Chloe Brandt,Office chair,7,189,1323
+41964,2026-10-07,Q4,South,Dev Sharma,Webcam,2,95,190
+41965,2026-07-03,Q3,South,Dev Sharma,Monitor arm,3,79,237
+41966,2026-12-06,Q4,West,Leo Tran,Office chair,1,189,189
+41967,2026-12-25,Q4,West,Priya Nair,Desk lamp,4,39,156
+41968,2026-01-17,Q1,South,Dev Sharma,Desk lamp,6,39,234
+41969,2026-09-18,Q3,East,Sam Okafor,Office chair,7,189,1323
+41970,2026-08-29,Q3,East,Chloe Brandt,Standing desk,2,449,898
+41971,2026-08-09,Q3,East,Chloe Brandt,Desk lamp,7,39,273
+41972,2026-09-18,Q3,South,Dev Sharma,Standing desk,1,449,449
+41973,2026-05-31,Q2,East,Sam Okafor,Webcam,3,95,285
+41974,2026-04-01,Q2,West,Leo Tran,Desk lamp,7,39,273
+41975,2026-09-15,Q3,South,Maria Ortiz,Office chair,1,189,189
+41976,2026-04-13,Q2,North,Jonah Pike,Standing desk,3,449,1347
+41977,2026-03-29,Q1,West,Priya Nair,Standing desk,1,449,449
+41978,2026-12-25,Q4,East,Chloe Brandt,Keyboard,3,59,177
+41979,2026-02-26,Q1,South,Maria Ortiz,Office chair,5,189,945
+41980,2026-11-27,Q4,West,Priya Nair,Standing desk,1,449,449
+41981,2026-05-31,Q2,West,Priya Nair,Desk lamp,4,39,156
+41982,2026-03-06,Q1,West,Leo Tran,Desk lamp,5,39,195
+41983,2026-01-14,Q1,West,Leo Tran,Keyboard,2,59,118
+41984,2026-02-03,Q1,South,Dev Sharma,Monitor arm,1,79,79
+41985,2026-03-15,Q1,South,Dev Sharma,Desk lamp,6,39,234
+41986,2026-05-17,Q2,South,Dev Sharma,Webcam,7,95,665
+41987,2026-10-20,Q4,West,Leo Tran,Desk lamp,5,39,195
+41988,2026-10-13,Q4,South,Maria Ortiz,Webcam,3,95,285
+41989,2026-09-01,Q3,South,Maria Ortiz,Office chair,7,189,1323
+41990,2026-08-19,Q3,West,Priya Nair,Monitor arm,1,79,79
+41991,2026-10-24,Q4,West,Priya Nair,Webcam,3,95,285
+41992,2026-12-04,Q4,South,Dev Sharma,Monitor arm,1,79,79
+41993,2026-09-01,Q3,South,Maria Ortiz,Office chair,3,189,567
+41994,2026-03-16,Q1,North,Jonah Pike,Office chair,2,189,378
+41995,2026-10-20,Q4,North,Avery Lund,Office chair,6,189,1134
+41996,2026-10-21,Q4,South,Dev Sharma,Webcam,8,95,760
+41997,2026-09-23,Q3,South,Dev Sharma,Monitor arm,1,79,79
+41998,2026-05-31,Q2,East,Sam Okafor,Webcam,3,95,285
+41999,2026-12-01,Q4,North,Avery Lund,Keyboard,7,59,413
+42000,2026-06-06,Q2,North,Avery Lund,Desk lamp,6,39,234
+42001,2026-07-21,Q3,West,Priya Nair,Standing desk,1,449,449
+42002,2026-10-05,Q4,West,Priya Nair,Webcam,3,95,285
+42003,2026-08-11,Q3,North,Avery Lund,Webcam,5,95,475
+42004,2026-10-07,Q4,North,Avery Lund,Desk lamp,4,39,156
+42005,2026-12-24,Q4,East,Sam Okafor,Keyboard,8,59,472
+42006,2026-07-01,Q3,West,Priya Nair,Monitor arm,4,79,316
+42007,2026-03-14,Q1,West,Leo Tran,Desk lamp,7,39,273
+42008,2026-09-27,Q3,West,Leo Tran,Keyboard,6,59,354
+42009,2026-04-06,Q2,West,Priya Nair,Desk lamp,4,39,156
+42010,2026-02-17,Q1,South,Dev Sharma,Webcam,3,95,285
+42011,2026-09-19,Q3,East,Sam Okafor,Webcam,8,95,760
+42012,2026-03-30,Q1,South,Dev Sharma,Webcam,7,95,665
+42013,2026-07-06,Q3,East,Chloe Brandt,Monitor arm,7,79,553
+42014,2026-07-21,Q3,West,Leo Tran,Desk lamp,8,39,312
+42015,2026-09-17,Q3,East,Sam Okafor,Keyboard,7,59,413
+42016,2026-01-08,Q1,North,Jonah Pike,Monitor arm,2,79,158
+42017,2026-03-19,Q1,North,Avery Lund,Keyboard,3,59,177
+42018,2026-06-14,Q2,East,Sam Okafor,Office chair,1,189,189
+42019,2026-04-28,Q2,North,Jonah Pike,Keyboard,8,59,472
+42020,2026-07-07,Q3,East,Chloe Brandt,Webcam,5,95,475
+42021,2026-02-13,Q1,South,Dev Sharma,Office chair,1,189,189
+42022,2026-06-10,Q2,South,Maria Ortiz,Webcam,8,95,760
+42023,2026-05-30,Q2,East,Sam Okafor,Monitor arm,4,79,316
+42024,2026-11-30,Q4,West,Leo Tran,Keyboard,6,59,354
+42025,2026-07-22,Q3,West,Leo Tran,Webcam,6,95,570
+42026,2026-10-01,Q4,North,Avery Lund,Keyboard,4,59,236
+42027,2026-11-16,Q4,West,Priya Nair,Monitor arm,6,79,474
+42028,2026-08-16,Q3,South,Dev Sharma,Standing desk,3,449,1347
+42029,2026-06-03,Q2,West,Leo Tran,Keyboard,5,59,295
+42030,2026-11-09,Q4,South,Dev Sharma,Office chair,6,189,1134
+42031,2026-05-22,Q2,South,Maria Ortiz,Keyboard,8,59,472
+42032,2026-11-24,Q4,North,Avery Lund,Keyboard,6,59,354
+42033,2026-08-27,Q3,West,Leo Tran,Standing desk,2,449,898
+42034,2026-09-25,Q3,West,Priya Nair,Standing desk,2,449,898
+42035,2026-10-01,Q4,South,Maria Ortiz,Standing desk,3,449,1347
+42036,2026-11-27,Q4,East,Sam Okafor,Monitor arm,4,79,316
+42037,2026-09-13,Q3,South,Maria Ortiz,Keyboard,8,59,472
+42038,2026-08-09,Q3,West,Priya Nair,Standing desk,3,449,1347
+42039,2026-02-28,Q1,South,Dev Sharma,Keyboard,4,59,236
+42040,2026-02-03,Q1,East,Sam Okafor,Monitor arm,6,79,474
+42041,2026-11-19,Q4,East,Sam Okafor,Desk lamp,5,39,195
+42042,2026-07-16,Q3,West,Leo Tran,Office chair,7,189,1323
+42043,2026-12-26,Q4,East,Chloe Brandt,Keyboard,3,59,177
+42044,2026-01-29,Q1,East,Sam Okafor,Office chair,3,189,567
+42045,2026-03-29,Q1,West,Priya Nair,Monitor arm,5,79,395
+42046,2026-05-26,Q2,South,Maria Ortiz,Monitor arm,7,79,553
+42047,2026-02-03,Q1,West,Leo Tran,Monitor arm,7,79,553
+42048,2026-06-11,Q2,West,Priya Nair,Office chair,7,189,1323
+42049,2026-02-10,Q1,West,Leo Tran,Desk lamp,1,39,39
+42050,2026-10-04,Q4,West,Priya Nair,Office chair,3,189,567
+42051,2026-04-24,Q2,West,Priya Nair,Office chair,5,189,945
+42052,2026-09-20,Q3,West,Priya Nair,Desk lamp,2,39,78
+42053,2026-12-22,Q4,West,Leo Tran,Office chair,2,189,378
+42054,2026-11-21,Q4,North,Avery Lund,Webcam,8,95,760
+42055,2026-11-20,Q4,West,Leo Tran,Desk lamp,8,39,312
+42056,2026-10-20,Q4,North,Jonah Pike,Desk lamp,1,39,39
+42057,2026-11-03,Q4,West,Leo Tran,Webcam,7,95,665
+42058,2026-01-22,Q1,East,Sam Okafor,Monitor arm,2,79,158
+42059,2026-02-24,Q1,West,Priya Nair,Office chair,3,189,567
+42060,2026-12-12,Q4,North,Avery Lund,Webcam,5,95,475
+42061,2026-08-31,Q3,West,Priya Nair,Office chair,7,189,1323
+42062,2026-05-08,Q2,North,Avery Lund,Monitor arm,6,79,474
+42063,2026-04-19,Q2,West,Priya Nair,Standing desk,1,449,449
+42064,2026-10-09,Q4,West,Leo Tran,Office chair,1,189,189
+42065,2026-11-06,Q4,East,Chloe Brandt,Keyboard,2,59,118
+42066,2026-08-25,Q3,West,Priya Nair,Monitor arm,8,79,632
+42067,2026-07-26,Q3,South,Maria Ortiz,Webcam,1,95,95
+42068,2026-04-09,Q2,West,Leo Tran,Office chair,6,189,1134
+42069,2026-07-19,Q3,East,Sam Okafor,Keyboard,8,59,472
+42070,2026-09-17,Q3,West,Priya Nair,Office chair,4,189,756
+42071,2026-02-01,Q1,East,Chloe Brandt,Desk lamp,1,39,39
+42072,2026-09-28,Q3,North,Avery Lund,Monitor arm,5,79,395
+42073,2026-10-16,Q4,South,Dev Sharma,Webcam,6,95,570
+42074,2026-06-29,Q2,West,Priya Nair,Keyboard,5,59,295
+42075,2026-09-10,Q3,West,Priya Nair,Monitor arm,3,79,237
+42076,2026-04-10,Q2,North,Avery Lund,Standing desk,1,449,449
+42077,2026-05-23,Q2,East,Sam Okafor,Desk lamp,5,39,195
+42078,2026-06-20,Q2,South,Dev Sharma,Standing desk,3,449,1347
+42079,2026-03-31,Q1,South,Maria Ortiz,Desk lamp,7,39,273
+42080,2026-04-17,Q2,West,Leo Tran,Desk lamp,2,39,78
+42081,2026-02-03,Q1,East,Chloe Brandt,Standing desk,1,449,449
+42082,2026-05-16,Q2,South,Maria Ortiz,Monitor arm,1,79,79
+42083,2026-08-23,Q3,East,Sam Okafor,Desk lamp,7,39,273
+42084,2026-12-10,Q4,South,Dev Sharma,Desk lamp,7,39,273
+42085,2026-05-10,Q2,East,Chloe Brandt,Desk lamp,8,39,312
+42086,2026-12-18,Q4,North,Avery Lund,Monitor arm,1,79,79
+42087,2026-12-11,Q4,West,Priya Nair,Office chair,2,189,378
+42088,2026-07-02,Q3,North,Avery Lund,Standing desk,2,449,898
+42089,2026-11-23,Q4,East,Sam Okafor,Standing desk,2,449,898
+42090,2026-02-25,Q1,West,Leo Tran,Office chair,6,189,1134
+42091,2026-11-23,Q4,South,Maria Ortiz,Office chair,2,189,378
+42092,2026-08-26,Q3,East,Chloe Brandt,Monitor arm,5,79,395
+42093,2026-12-20,Q4,West,Priya Nair,Keyboard,3,59,177
+42094,2026-04-07,Q2,South,Dev Sharma,Keyboard,3,59,177
+42095,2026-02-14,Q1,South,Dev Sharma,Webcam,1,95,95
+42096,2026-12-29,Q4,North,Jonah Pike,Webcam,4,95,380
+42097,2026-09-29,Q3,East,Sam Okafor,Office chair,7,189,1323
+42098,2026-11-18,Q4,South,Dev Sharma,Desk lamp,1,39,39
+42099,2026-12-28,Q4,South,Maria Ortiz,Monitor arm,7,79,553
+42100,2026-09-05,Q3,East,Chloe Brandt,Desk lamp,7,39,273
+42101,2026-11-09,Q4,East,Sam Okafor,Monitor arm,1,79,79
+42102,2026-01-26,Q1,South,Maria Ortiz,Office chair,2,189,378
+42103,2026-11-05,Q4,North,Avery Lund,Webcam,1,95,95
+42104,2026-03-09,Q1,North,Avery Lund,Monitor arm,6,79,474
+42105,2026-10-16,Q4,North,Avery Lund,Keyboard,5,59,295
+42106,2026-06-29,Q2,West,Priya Nair,Standing desk,3,449,1347
+42107,2026-08-09,Q3,West,Leo Tran,Standing desk,1,449,449
+42108,2026-06-24,Q2,West,Priya Nair,Monitor arm,3,79,237
+42109,2026-09-16,Q3,East,Chloe Brandt,Standing desk,2,449,898
+42110,2026-04-05,Q2,West,Leo Tran,Office chair,7,189,1323
+42111,2026-05-11,Q2,South,Maria Ortiz,Standing desk,3,449,1347
+42112,2026-12-25,Q4,West,Priya Nair,Keyboard,7,59,413
+42113,2026-01-12,Q1,West,Leo Tran,Monitor arm,1,79,79
+42114,2026-06-09,Q2,East,Chloe Brandt,Desk lamp,2,39,78
+42115,2026-06-24,Q2,North,Avery Lund,Standing desk,2,449,898
+42116,2026-07-01,Q3,East,Sam Okafor,Keyboard,2,59,118
+42117,2026-07-27,Q3,South,Dev Sharma,Office chair,1,189,189
+42118,2026-07-12,Q3,North,Jonah Pike,Desk lamp,1,39,39
+42119,2026-09-21,Q3,West,Leo Tran,Standing desk,3,449,1347
+42120,2026-04-21,Q2,South,Maria Ortiz,Keyboard,5,59,295
+42121,2026-12-06,Q4,South,Dev Sharma,Desk lamp,3,39,117
+42122,2026-09-29,Q3,West,Priya Nair,Keyboard,2,59,118
+42123,2026-04-03,Q2,West,Leo Tran,Keyboard,6,59,354
+42124,2026-10-10,Q4,West,Priya Nair,Monitor arm,5,79,395
+42125,2026-06-09,Q2,West,Leo Tran,Standing desk,1,449,449
+42126,2026-05-06,Q2,North,Avery Lund,Office chair,1,189,189
+42127,2026-06-01,Q2,East,Chloe Brandt,Webcam,3,95,285
+42128,2026-12-05,Q4,West,Leo Tran,Standing desk,3,449,1347
+42129,2026-06-19,Q2,West,Leo Tran,Desk lamp,4,39,156
+42130,2026-07-22,Q3,East,Sam Okafor,Standing desk,1,449,449
+42131,2026-10-06,Q4,West,Priya Nair,Desk lamp,7,39,273
+42132,2026-09-18,Q3,West,Priya Nair,Webcam,5,95,475
+42133,2026-08-04,Q3,North,Jonah Pike,Office chair,2,189,378
+42134,2026-04-21,Q2,North,Jonah Pike,Monitor arm,3,79,237
+42135,2026-12-22,Q4,North,Jonah Pike,Office chair,4,189,756
+42136,2026-08-05,Q3,North,Jonah Pike,Standing desk,3,449,1347
+42137,2026-11-07,Q4,South,Dev Sharma,Standing desk,3,449,1347
+42138,2026-02-24,Q1,West,Leo Tran,Office chair,4,189,756
+42139,2026-06-29,Q2,South,Maria Ortiz,Desk lamp,2,39,78
+42140,2026-08-31,Q3,South,Dev Sharma,Standing desk,1,449,449
+42141,2026-11-10,Q4,North,Avery Lund,Desk lamp,7,39,273
+42142,2026-12-18,Q4,South,Maria Ortiz,Standing desk,3,449,1347
+42143,2026-02-13,Q1,North,Jonah Pike,Office chair,3,189,567
+42144,2026-04-03,Q2,South,Maria Ortiz,Office chair,7,189,1323
+42145,2026-11-03,Q4,South,Maria Ortiz,Monitor arm,2,79,158
+42146,2026-01-30,Q1,North,Jonah Pike,Monitor arm,7,79,553
+42147,2026-02-28,Q1,West,Priya Nair,Office chair,8,189,1512
+42148,2026-02-21,Q1,East,Sam Okafor,Desk lamp,3,39,117
+42149,2026-12-18,Q4,North,Avery Lund,Keyboard,5,59,295
+42150,2026-05-31,Q2,West,Leo Tran,Keyboard,5,59,295
+42151,2026-11-17,Q4,North,Jonah Pike,Monitor arm,3,79,237
+42152,2026-04-05,Q2,West,Priya Nair,Office chair,6,189,1134
+42153,2026-06-24,Q2,North,Avery Lund,Keyboard,7,59,413
+42154,2026-06-02,Q2,East,Chloe Brandt,Office chair,7,189,1323
+42155,2026-07-02,Q3,West,Leo Tran,Standing desk,1,449,449
+42156,2026-01-23,Q1,East,Sam Okafor,Keyboard,3,59,177
+42157,2026-12-27,Q4,North,Jonah Pike,Keyboard,7,59,413
+42158,2026-03-03,Q1,North,Avery Lund,Desk lamp,8,39,312
+42159,2026-07-05,Q3,West,Priya Nair,Monitor arm,3,79,237
+42160,2026-06-24,Q2,West,Priya Nair,Monitor arm,3,79,237
+42161,2026-02-09,Q1,North,Avery Lund,Standing desk,3,449,1347
+42162,2026-11-16,Q4,West,Priya Nair,Keyboard,3,59,177
+42163,2026-02-05,Q1,South,Dev Sharma,Monitor arm,7,79,553
+42164,2026-10-25,Q4,North,Avery Lund,Office chair,7,189,1323
+42165,2026-06-21,Q2,West,Priya Nair,Standing desk,1,449,449
+42166,2026-02-17,Q1,South,Dev Sharma,Keyboard,5,59,295
+42167,2026-08-15,Q3,East,Sam Okafor,Office chair,7,189,1323
+42168,2026-04-19,Q2,North,Avery Lund,Office chair,3,189,567
+42169,2026-12-20,Q4,West,Priya Nair,Desk lamp,4,39,156
+42170,2026-02-23,Q1,West,Priya Nair,Standing desk,1,449,449
+42171,2026-09-03,Q3,East,Sam Okafor,Office chair,4,189,756
+42172,2026-09-01,Q3,East,Sam Okafor,Monitor arm,6,79,474
+42173,2026-07-07,Q3,West,Priya Nair,Keyboard,8,59,472
+42174,2026-02-19,Q1,East,Chloe Brandt,Office chair,4,189,756
+42175,2026-07-07,Q3,West,Priya Nair,Keyboard,5,59,295
+42176,2026-09-04,Q3,West,Priya Nair,Monitor arm,4,79,316
+42177,2026-06-13,Q2,East,Sam Okafor,Monitor arm,8,79,632
+42178,2026-02-03,Q1,North,Avery Lund,Standing desk,2,449,898
+42179,2026-10-01,Q4,East,Chloe Brandt,Webcam,7,95,665
+42180,2026-12-22,Q4,North,Jonah Pike,Keyboard,1,59,59
+42181,2026-08-19,Q3,East,Chloe Brandt,Webcam,8,95,760
+42182,2026-12-21,Q4,South,Dev Sharma,Office chair,1,189,189
+42183,2026-10-13,Q4,West,Leo Tran,Standing desk,2,449,898
+42184,2026-11-12,Q4,West,Priya Nair,Monitor arm,8,79,632
+42185,2026-10-09,Q4,East,Sam Okafor,Standing desk,1,449,449
+42186,2026-08-12,Q3,West,Leo Tran,Standing desk,3,449,1347
+42187,2026-04-12,Q2,South,Maria Ortiz,Keyboard,1,59,59
+42188,2026-04-13,Q2,North,Jonah Pike,Monitor arm,4,79,316
+42189,2026-09-15,Q3,South,Dev Sharma,Desk lamp,1,39,39
+42190,2026-09-02,Q3,West,Priya Nair,Desk lamp,7,39,273
+42191,2026-06-09,Q2,North,Jonah Pike,Monitor arm,3,79,237
+42192,2026-02-16,Q1,West,Priya Nair,Keyboard,5,59,295
+42193,2026-08-03,Q3,South,Dev Sharma,Office chair,2,189,378
+42194,2026-11-01,Q4,South,Dev Sharma,Keyboard,1,59,59
+42195,2026-07-30,Q3,North,Jonah Pike,Webcam,2,95,190
+42196,2026-09-20,Q3,East,Sam Okafor,Keyboard,2,59,118
+42197,2026-12-16,Q4,East,Sam Okafor,Monitor arm,4,79,316
+42198,2026-06-04,Q2,West,Priya Nair,Office chair,8,189,1512
+42199,2026-11-04,Q4,South,Maria Ortiz,Desk lamp,1,39,39
+42200,2026-01-01,Q1,North,Avery Lund,Monitor arm,2,79,158
+42201,2026-12-17,Q4,East,Sam Okafor,Office chair,6,189,1134
+42202,2026-11-07,Q4,East,Sam Okafor,Standing desk,2,449,898
+42203,2026-08-04,Q3,West,Leo Tran,Desk lamp,2,39,78
+42204,2026-11-10,Q4,North,Avery Lund,Keyboard,5,59,295
+42205,2026-03-19,Q1,East,Sam Okafor,Webcam,8,95,760
+42206,2026-01-10,Q1,South,Dev Sharma,Keyboard,5,59,295
+42207,2026-12-24,Q4,North,Avery Lund,Webcam,3,95,285
+42208,2026-04-21,Q2,North,Jonah Pike,Monitor arm,8,79,632
+42209,2026-04-02,Q2,South,Maria Ortiz,Keyboard,1,59,59
+42210,2026-09-17,Q3,West,Leo Tran,Webcam,7,95,665
+42211,2026-10-04,Q4,West,Priya Nair,Standing desk,3,449,1347
+42212,2026-11-28,Q4,West,Priya Nair,Webcam,4,95,380
+42213,2026-01-19,Q1,East,Sam Okafor,Office chair,1,189,189
+42214,2026-02-05,Q1,South,Dev Sharma,Standing desk,1,449,449
+42215,2026-04-25,Q2,South,Dev Sharma,Keyboard,2,59,118
+42216,2026-11-08,Q4,West,Priya Nair,Webcam,1,95,95
+42217,2026-06-14,Q2,East,Chloe Brandt,Standing desk,3,449,1347
+42218,2026-01-19,Q1,South,Maria Ortiz,Monitor arm,8,79,632
+42219,2026-04-03,Q2,South,Maria Ortiz,Office chair,8,189,1512
+42220,2026-07-21,Q3,West,Leo Tran,Keyboard,6,59,354
+42221,2026-10-07,Q4,North,Jonah Pike,Keyboard,8,59,472
+42222,2026-08-14,Q3,West,Leo Tran,Standing desk,2,449,898
+42223,2026-03-10,Q1,West,Priya Nair,Monitor arm,5,79,395
+42224,2026-10-20,Q4,East,Chloe Brandt,Monitor arm,8,79,632
+42225,2026-05-26,Q2,East,Sam Okafor,Monitor arm,3,79,237
+42226,2026-12-09,Q4,West,Leo Tran,Desk lamp,8,39,312
+42227,2026-12-31,Q4,East,Sam Okafor,Monitor arm,5,79,395
+42228,2026-09-11,Q3,South,Dev Sharma,Office chair,1,189,189
+42229,2026-06-27,Q2,West,Priya Nair,Monitor arm,3,79,237
+42230,2026-08-17,Q3,West,Leo Tran,Standing desk,3,449,1347
+42231,2026-12-17,Q4,West,Leo Tran,Standing desk,2,449,898
+42232,2026-07-12,Q3,North,Avery Lund,Monitor arm,5,79,395
+42233,2026-02-15,Q1,North,Jonah Pike,Desk lamp,8,39,312
+42234,2026-09-26,Q3,South,Dev Sharma,Office chair,1,189,189
+42235,2026-05-20,Q2,North,Avery Lund,Desk lamp,1,39,39
+42236,2026-05-07,Q2,East,Sam Okafor,Monitor arm,2,79,158
+42237,2026-06-28,Q2,East,Chloe Brandt,Monitor arm,4,79,316
+42238,2026-01-23,Q1,South,Dev Sharma,Desk lamp,5,39,195
+42239,2026-09-22,Q3,West,Priya Nair,Office chair,8,189,1512
+42240,2026-01-09,Q1,East,Chloe Brandt,Keyboard,3,59,177
+42241,2026-04-22,Q2,North,Avery Lund,Webcam,4,95,380
+42242,2026-06-07,Q2,West,Leo Tran,Standing desk,1,449,449
+42243,2026-10-03,Q4,West,Priya Nair,Standing desk,2,449,898
+42244,2026-10-30,Q4,South,Maria Ortiz,Desk lamp,8,39,312
+42245,2026-07-05,Q3,East,Chloe Brandt,Office chair,1,189,189
+42246,2026-05-08,Q2,East,Chloe Brandt,Keyboard,6,59,354
+42247,2026-10-05,Q4,North,Jonah Pike,Office chair,5,189,945
+42248,2026-04-06,Q2,South,Maria Ortiz,Webcam,3,95,285
+42249,2026-03-25,Q1,North,Avery Lund,Standing desk,1,449,449
+42250,2026-11-11,Q4,West,Priya Nair,Monitor arm,8,79,632
+42251,2026-02-05,Q1,South,Maria Ortiz,Desk lamp,8,39,312
+42252,2026-06-21,Q2,East,Chloe Brandt,Desk lamp,7,39,273
+42253,2026-02-10,Q1,South,Dev Sharma,Standing desk,3,449,1347
+42254,2026-12-12,Q4,West,Leo Tran,Office chair,2,189,378
+42255,2026-09-18,Q3,West,Priya Nair,Desk lamp,8,39,312
+42256,2026-03-01,Q1,North,Jonah Pike,Monitor arm,4,79,316
+42257,2026-05-26,Q2,East,Chloe Brandt,Standing desk,1,449,449
+42258,2026-01-04,Q1,South,Dev Sharma,Standing desk,1,449,449
+42259,2026-07-10,Q3,West,Priya Nair,Keyboard,8,59,472
+42260,2026-11-26,Q4,North,Jonah Pike,Webcam,6,95,570
+42261,2026-05-12,Q2,South,Maria Ortiz,Desk lamp,2,39,78
+42262,2026-11-09,Q4,West,Priya Nair,Keyboard,2,59,118
+42263,2026-12-21,Q4,East,Chloe Brandt,Webcam,7,95,665
+42264,2026-09-17,Q3,West,Leo Tran,Standing desk,2,449,898
+42265,2026-02-23,Q1,East,Sam Okafor,Standing desk,2,449,898
+42266,2026-11-20,Q4,North,Avery Lund,Office chair,1,189,189
+42267,2026-03-29,Q1,West,Leo Tran,Office chair,7,189,1323
+42268,2026-11-27,Q4,West,Leo Tran,Office chair,5,189,945
+42269,2026-11-14,Q4,East,Chloe Brandt,Desk lamp,4,39,156
+42270,2026-12-19,Q4,West,Priya Nair,Monitor arm,4,79,316
+42271,2026-03-22,Q1,North,Avery Lund,Webcam,2,95,190
+42272,2026-09-09,Q3,West,Priya Nair,Office chair,5,189,945
+42273,2026-05-10,Q2,East,Sam Okafor,Keyboard,6,59,354
+42274,2026-08-20,Q3,West,Priya Nair,Monitor arm,1,79,79
+42275,2026-02-16,Q1,South,Dev Sharma,Keyboard,8,59,472
+42276,2026-10-23,Q4,North,Avery Lund,Keyboard,4,59,236
+42277,2026-12-24,Q4,East,Chloe Brandt,Office chair,7,189,1323
+42278,2026-04-26,Q2,North,Avery Lund,Office chair,6,189,1134
+42279,2026-05-07,Q2,East,Chloe Brandt,Desk lamp,4,39,156
+42280,2026-08-10,Q3,West,Leo Tran,Monitor arm,8,79,632
+42281,2026-02-20,Q1,West,Leo Tran,Office chair,4,189,756
+42282,2026-05-21,Q2,West,Leo Tran,Standing desk,3,449,1347
+42283,2026-03-26,Q1,North,Avery Lund,Standing desk,1,449,449
+42284,2026-07-02,Q3,North,Avery Lund,Desk lamp,2,39,78
+42285,2026-06-14,Q2,West,Leo Tran,Standing desk,2,449,898
+42286,2026-12-14,Q4,West,Leo Tran,Webcam,2,95,190
+42287,2026-11-10,Q4,East,Sam Okafor,Webcam,1,95,95
+42288,2026-11-10,Q4,South,Dev Sharma,Monitor arm,3,79,237
+42289,2026-08-28,Q3,West,Leo Tran,Desk lamp,2,39,78
+42290,2026-05-31,Q2,North,Jonah Pike,Desk lamp,7,39,273
+42291,2026-11-15,Q4,West,Leo Tran,Webcam,4,95,380
+42292,2026-03-03,Q1,North,Avery Lund,Standing desk,2,449,898
+42293,2026-10-08,Q4,West,Leo Tran,Keyboard,7,59,413
+42294,2026-11-18,Q4,South,Dev Sharma,Webcam,6,95,570
+42295,2026-03-22,Q1,South,Dev Sharma,Standing desk,2,449,898
+42296,2026-05-17,Q2,North,Avery Lund,Desk lamp,8,39,312
+42297,2026-11-01,Q4,West,Priya Nair,Standing desk,3,449,1347
+42298,2026-11-08,Q4,West,Leo Tran,Desk lamp,1,39,39
+42299,2026-12-21,Q4,North,Jonah Pike,Office chair,5,189,945
+42300,2026-09-19,Q3,East,Sam Okafor,Office chair,5,189,945
+42301,2026-10-19,Q4,West,Leo Tran,Standing desk,2,449,898
+42302,2026-08-12,Q3,West,Priya Nair,Monitor arm,5,79,395
+42303,2026-05-19,Q2,North,Jonah Pike,Keyboard,3,59,177
+42304,2026-12-27,Q4,West,Leo Tran,Standing desk,1,449,449
+42305,2026-12-11,Q4,North,Avery Lund,Standing desk,3,449,1347
+42306,2026-08-04,Q3,East,Sam Okafor,Webcam,2,95,190
+42307,2026-12-21,Q4,West,Priya Nair,Standing desk,3,449,1347
+42308,2026-02-07,Q1,South,Dev Sharma,Desk lamp,3,39,117
+42309,2026-12-12,Q4,East,Sam Okafor,Desk lamp,6,39,234
+42310,2026-10-08,Q4,North,Jonah Pike,Desk lamp,6,39,234
+42311,2026-09-25,Q3,West,Leo Tran,Desk lamp,3,39,117
+42312,2026-12-09,Q4,South,Maria Ortiz,Webcam,1,95,95
+42313,2026-09-06,Q3,North,Jonah Pike,Desk lamp,1,39,39
+42314,2026-07-29,Q3,North,Avery Lund,Office chair,7,189,1323
+42315,2026-03-12,Q1,South,Maria Ortiz,Standing desk,1,449,449
+42316,2026-09-16,Q3,West,Priya Nair,Standing desk,2,449,898
+42317,2026-06-21,Q2,South,Maria Ortiz,Desk lamp,5,39,195
+42318,2026-11-12,Q4,West,Leo Tran,Office chair,4,189,756
+42319,2026-01-01,Q1,East,Chloe Brandt,Monitor arm,8,79,632
+42320,2026-06-11,Q2,North,Avery Lund,Desk lamp,2,39,78
+42321,2026-10-25,Q4,North,Avery Lund,Monitor arm,6,79,474
+42322,2026-06-06,Q2,West,Priya Nair,Webcam,3,95,285
+42323,2026-10-17,Q4,East,Chloe Brandt,Monitor arm,8,79,632
+42324,2026-04-02,Q2,North,Avery Lund,Standing desk,3,449,1347
+42325,2026-11-25,Q4,North,Avery Lund,Office chair,2,189,378
+42326,2026-07-01,Q3,South,Maria Ortiz,Monitor arm,7,79,553
+42327,2026-05-06,Q2,East,Chloe Brandt,Keyboard,7,59,413
+42328,2026-12-04,Q4,West,Leo Tran,Monitor arm,6,79,474
+42329,2026-05-18,Q2,West,Leo Tran,Desk lamp,5,39,195
+42330,2026-09-30,Q3,West,Leo Tran,Keyboard,6,59,354
+42331,2026-09-22,Q3,West,Leo Tran,Desk lamp,3,39,117
+42332,2026-06-09,Q2,West,Priya Nair,Desk lamp,4,39,156
+42333,2026-05-09,Q2,West,Priya Nair,Keyboard,6,59,354
+42334,2026-03-19,Q1,North,Jonah Pike,Webcam,2,95,190
+42335,2026-04-16,Q2,East,Sam Okafor,Keyboard,1,59,59
+42336,2026-04-02,Q2,South,Dev Sharma,Office chair,3,189,567
+42337,2026-10-16,Q4,West,Priya Nair,Monitor arm,3,79,237
+42338,2026-04-21,Q2,South,Maria Ortiz,Office chair,6,189,1134
+42339,2026-11-03,Q4,West,Priya Nair,Standing desk,3,449,1347
+42340,2026-07-07,Q3,North,Jonah Pike,Webcam,1,95,95
+42341,2026-05-25,Q2,North,Avery Lund,Keyboard,3,59,177
+42342,2026-04-13,Q2,West,Leo Tran,Keyboard,1,59,59
+42343,2026-09-10,Q3,South,Maria Ortiz,Office chair,8,189,1512
+42344,2026-07-01,Q3,North,Avery Lund,Monitor arm,5,79,395
+42345,2026-11-01,Q4,West,Leo Tran,Desk lamp,1,39,39
+42346,2026-12-19,Q4,South,Maria Ortiz,Office chair,8,189,1512
+42347,2026-09-11,Q3,West,Priya Nair,Keyboard,6,59,354
+42348,2026-05-08,Q2,East,Chloe Brandt,Office chair,4,189,756
+42349,2026-08-14,Q3,East,Sam Okafor,Office chair,1,189,189
+42350,2026-08-20,Q3,North,Avery Lund,Desk lamp,2,39,78
+42351,2026-02-16,Q1,South,Dev Sharma,Keyboard,6,59,354
+42352,2026-02-16,Q1,South,Maria Ortiz,Standing desk,2,449,898
+42353,2026-03-05,Q1,West,Priya Nair,Standing desk,2,449,898
+42354,2026-12-23,Q4,East,Sam Okafor,Office chair,1,189,189
+42355,2026-05-25,Q2,West,Priya Nair,Office chair,6,189,1134
+42356,2026-10-27,Q4,North,Jonah Pike,Standing desk,3,449,1347
+42357,2026-08-13,Q3,North,Jonah Pike,Desk lamp,5,39,195
+42358,2026-05-01,Q2,West,Priya Nair,Desk lamp,1,39,39
+42359,2026-04-27,Q2,West,Leo Tran,Monitor arm,7,79,553
+42360,2026-06-17,Q2,West,Leo Tran,Webcam,5,95,475
+42361,2026-02-06,Q1,North,Jonah Pike,Office chair,8,189,1512
+42362,2026-08-15,Q3,West,Leo Tran,Desk lamp,6,39,234
+42363,2026-09-06,Q3,West,Leo Tran,Office chair,7,189,1323
+42364,2026-11-30,Q4,West,Leo Tran,Desk lamp,1,39,39
+42365,2026-06-09,Q2,South,Dev Sharma,Monitor arm,5,79,395
+42366,2026-09-20,Q3,East,Sam Okafor,Monitor arm,6,79,474
+42367,2026-09-04,Q3,South,Dev Sharma,Monitor arm,1,79,79
+42368,2026-07-16,Q3,West,Leo Tran,Standing desk,1,449,449
+42369,2026-02-03,Q1,East,Chloe Brandt,Desk lamp,5,39,195
+42370,2026-03-21,Q1,West,Leo Tran,Webcam,6,95,570
+42371,2026-10-02,Q4,East,Chloe Brandt,Monitor arm,7,79,553
+42372,2026-03-25,Q1,West,Priya Nair,Office chair,6,189,1134
+42373,2026-08-14,Q3,East,Sam Okafor,Office chair,1,189,189
+42374,2026-06-26,Q2,West,Priya Nair,Keyboard,2,59,118
+42375,2026-07-12,Q3,South,Dev Sharma,Monitor arm,3,79,237
+42376,2026-11-01,Q4,West,Priya Nair,Desk lamp,3,39,117
+42377,2026-01-29,Q1,South,Maria Ortiz,Monitor arm,6,79,474
+42378,2026-11-13,Q4,North,Avery Lund,Webcam,5,95,475
+42379,2026-10-12,Q4,West,Leo Tran,Desk lamp,5,39,195
+42380,2026-07-07,Q3,West,Priya Nair,Monitor arm,1,79,79
+42381,2026-09-18,Q3,North,Avery Lund,Office chair,1,189,189
+42382,2026-06-01,Q2,North,Avery Lund,Standing desk,3,449,1347
+42383,2026-01-07,Q1,North,Avery Lund,Standing desk,1,449,449
+42384,2026-07-01,Q3,South,Dev Sharma,Webcam,1,95,95
+42385,2026-06-29,Q2,East,Chloe Brandt,Desk lamp,1,39,39
+42386,2026-12-17,Q4,North,Jonah Pike,Office chair,4,189,756
+42387,2026-04-18,Q2,South,Maria Ortiz,Office chair,1,189,189
+42388,2026-11-14,Q4,West,Leo Tran,Office chair,6,189,1134
+42389,2026-06-23,Q2,South,Maria Ortiz,Keyboard,8,59,472
+42390,2026-10-21,Q4,West,Priya Nair,Office chair,1,189,189
+42391,2026-06-17,Q2,North,Avery Lund,Webcam,5,95,475
+42392,2026-03-05,Q1,South,Dev Sharma,Desk lamp,3,39,117
+42393,2026-12-19,Q4,South,Dev Sharma,Standing desk,3,449,1347
+42394,2026-04-06,Q2,West,Leo Tran,Keyboard,5,59,295
+42395,2026-10-18,Q4,South,Dev Sharma,Desk lamp,6,39,234
+42396,2026-10-27,Q4,South,Dev Sharma,Desk lamp,4,39,156
+42397,2026-05-08,Q2,North,Avery Lund,Desk lamp,7,39,273
+42398,2026-08-07,Q3,West,Priya Nair,Keyboard,8,59,472
+42399,2026-03-13,Q1,North,Jonah Pike,Monitor arm,2,79,158
+42400,2026-10-29,Q4,West,Leo Tran,Monitor arm,6,79,474
+42401,2026-02-20,Q1,North,Avery Lund,Monitor arm,8,79,632
+42402,2026-07-02,Q3,East,Chloe Brandt,Monitor arm,7,79,553
+42403,2026-11-23,Q4,South,Dev Sharma,Office chair,8,189,1512
+42404,2026-10-20,Q4,South,Maria Ortiz,Office chair,6,189,1134
+42405,2026-01-11,Q1,South,Maria Ortiz,Desk lamp,3,39,117
+42406,2026-06-04,Q2,West,Priya Nair,Standing desk,2,449,898
+42407,2026-10-26,Q4,South,Dev Sharma,Keyboard,8,59,472
+42408,2026-10-15,Q4,East,Sam Okafor,Desk lamp,3,39,117
+42409,2026-01-18,Q1,South,Dev Sharma,Office chair,7,189,1323
+42410,2026-09-23,Q3,South,Dev Sharma,Monitor arm,3,79,237
+42411,2026-09-12,Q3,West,Leo Tran,Standing desk,2,449,898
+42412,2026-04-18,Q2,South,Dev Sharma,Standing desk,3,449,1347
+42413,2026-05-29,Q2,North,Avery Lund,Webcam,3,95,285
+42414,2026-01-07,Q1,East,Sam Okafor,Webcam,5,95,475
+42415,2026-04-26,Q2,North,Jonah Pike,Keyboard,8,59,472
+42416,2026-06-23,Q2,North,Avery Lund,Standing desk,2,449,898
+42417,2026-05-16,Q2,West,Leo Tran,Keyboard,6,59,354
+42418,2026-05-17,Q2,East,Sam Okafor,Keyboard,4,59,236
+42419,2026-08-12,Q3,East,Sam Okafor,Desk lamp,3,39,117
+42420,2026-07-25,Q3,West,Priya Nair,Desk lamp,4,39,156
+42421,2026-10-01,Q4,South,Maria Ortiz,Standing desk,2,449,898
+42422,2026-03-14,Q1,East,Chloe Brandt,Keyboard,5,59,295
+42423,2026-02-07,Q1,West,Leo Tran,Desk lamp,6,39,234
+42424,2026-05-17,Q2,East,Chloe Brandt,Office chair,1,189,189
+42425,2026-12-24,Q4,West,Priya Nair,Office chair,8,189,1512
+42426,2026-12-12,Q4,West,Priya Nair,Webcam,4,95,380
+42427,2026-04-16,Q2,West,Priya Nair,Keyboard,8,59,472
+42428,2026-10-04,Q4,East,Chloe Brandt,Webcam,1,95,95
+42429,2026-10-25,Q4,West,Priya Nair,Standing desk,1,449,449
+42430,2026-11-24,Q4,North,Avery Lund,Webcam,2,95,190
+42431,2026-08-15,Q3,South,Maria Ortiz,Monitor arm,6,79,474
+42432,2026-02-25,Q1,North,Jonah Pike,Webcam,6,95,570
+42433,2026-09-17,Q3,South,Dev Sharma,Office chair,8,189,1512
+42434,2026-06-29,Q2,West,Leo Tran,Keyboard,4,59,236
+42435,2026-10-05,Q4,West,Leo Tran,Office chair,1,189,189
+42436,2026-07-24,Q3,South,Maria Ortiz,Standing desk,1,449,449
+42437,2026-06-27,Q2,West,Leo Tran,Standing desk,3,449,1347
+42438,2026-09-08,Q3,East,Chloe Brandt,Monitor arm,7,79,553
+42439,2026-04-17,Q2,West,Leo Tran,Office chair,8,189,1512
+42440,2026-09-30,Q3,West,Leo Tran,Webcam,7,95,665
+42441,2026-10-30,Q4,North,Avery Lund,Desk lamp,6,39,234
+42442,2026-08-03,Q3,South,Maria Ortiz,Webcam,2,95,190
+42443,2026-08-19,Q3,West,Priya Nair,Office chair,6,189,1134
+42444,2026-10-12,Q4,South,Dev Sharma,Monitor arm,5,79,395
+42445,2026-07-31,Q3,West,Leo Tran,Monitor arm,8,79,632
+42446,2026-10-21,Q4,East,Sam Okafor,Monitor arm,5,79,395
+42447,2026-04-05,Q2,East,Chloe Brandt,Desk lamp,8,39,312
+42448,2026-08-15,Q3,West,Leo Tran,Desk lamp,5,39,195
+42449,2026-08-12,Q3,West,Priya Nair,Webcam,6,95,570
+42450,2026-10-11,Q4,West,Leo Tran,Standing desk,2,449,898
+42451,2026-11-15,Q4,North,Avery Lund,Office chair,7,189,1323
+42452,2026-12-24,Q4,West,Leo Tran,Webcam,3,95,285
+42453,2026-02-19,Q1,South,Maria Ortiz,Office chair,4,189,756
+42454,2026-07-06,Q3,North,Avery Lund,Monitor arm,3,79,237
+42455,2026-05-25,Q2,East,Sam Okafor,Standing desk,1,449,449
+42456,2026-03-10,Q1,East,Chloe Brandt,Standing desk,1,449,449
+42457,2026-02-01,Q1,East,Chloe Brandt,Webcam,6,95,570
+42458,2026-10-02,Q4,North,Jonah Pike,Webcam,5,95,475
+42459,2026-07-05,Q3,West,Leo Tran,Webcam,4,95,380
+42460,2026-09-30,Q3,North,Jonah Pike,Keyboard,6,59,354
+42461,2026-02-25,Q1,East,Sam Okafor,Monitor arm,4,79,316
+42462,2026-12-07,Q4,South,Maria Ortiz,Webcam,2,95,190
+42463,2026-07-13,Q3,West,Leo Tran,Office chair,4,189,756
+42464,2026-04-10,Q2,North,Avery Lund,Keyboard,8,59,472
+42465,2026-05-01,Q2,South,Dev Sharma,Desk lamp,3,39,117
+42466,2026-05-22,Q2,North,Jonah Pike,Webcam,1,95,95
+42467,2026-05-11,Q2,East,Chloe Brandt,Office chair,5,189,945
+42468,2026-09-20,Q3,North,Avery Lund,Standing desk,3,449,1347
+42469,2026-02-27,Q1,East,Chloe Brandt,Monitor arm,2,79,158
+42470,2026-05-05,Q2,South,Maria Ortiz,Office chair,4,189,756
+42471,2026-10-28,Q4,West,Priya Nair,Monitor arm,2,79,158
+42472,2026-09-15,Q3,East,Chloe Brandt,Keyboard,4,59,236
+42473,2026-11-24,Q4,South,Dev Sharma,Standing desk,2,449,898
+42474,2026-01-26,Q1,North,Avery Lund,Monitor arm,4,79,316
+42475,2026-12-18,Q4,West,Priya Nair,Office chair,8,189,1512
+42476,2026-05-11,Q2,South,Dev Sharma,Desk lamp,4,39,156
+42477,2026-08-06,Q3,West,Leo Tran,Standing desk,2,449,898
+42478,2026-11-05,Q4,West,Priya Nair,Standing desk,3,449,1347
+42479,2026-11-10,Q4,West,Leo Tran,Keyboard,5,59,295
+42480,2026-04-30,Q2,West,Leo Tran,Keyboard,3,59,177
+42481,2026-11-29,Q4,West,Leo Tran,Standing desk,3,449,1347
+42482,2026-02-28,Q1,East,Sam Okafor,Keyboard,3,59,177
+42483,2026-12-13,Q4,East,Sam Okafor,Office chair,8,189,1512
+42484,2026-06-07,Q2,West,Priya Nair,Monitor arm,6,79,474
+42485,2026-10-06,Q4,South,Maria Ortiz,Monitor arm,8,79,632
+42486,2026-09-05,Q3,West,Leo Tran,Monitor arm,6,79,474
+42487,2026-02-09,Q1,South,Maria Ortiz,Monitor arm,5,79,395
+42488,2026-08-13,Q3,South,Maria Ortiz,Office chair,5,189,945
+42489,2026-09-14,Q3,West,Leo Tran,Office chair,1,189,189
+42490,2026-02-14,Q1,North,Avery Lund,Keyboard,1,59,59
+42491,2026-01-12,Q1,South,Maria Ortiz,Webcam,4,95,380
+42492,2026-12-19,Q4,South,Dev Sharma,Monitor arm,2,79,158
+42493,2026-11-16,Q4,South,Maria Ortiz,Office chair,4,189,756
+42494,2026-09-01,Q3,West,Leo Tran,Webcam,3,95,285
+42495,2026-04-29,Q2,South,Dev Sharma,Webcam,1,95,95
+42496,2026-10-17,Q4,West,Leo Tran,Webcam,8,95,760
+42497,2026-12-17,Q4,West,Priya Nair,Webcam,8,95,760
+42498,2026-03-15,Q1,West,Priya Nair,Standing desk,1,449,449
+42499,2026-07-01,Q3,East,Chloe Brandt,Monitor arm,4,79,316
+42500,2026-01-18,Q1,North,Jonah Pike,Desk lamp,8,39,312
+42501,2026-01-04,Q1,South,Dev Sharma,Webcam,1,95,95
+42502,2026-09-07,Q3,West,Leo Tran,Keyboard,6,59,354
+42503,2026-06-15,Q2,South,Dev Sharma,Keyboard,2,59,118
+42504,2026-10-14,Q4,West,Priya Nair,Desk lamp,7,39,273
+42505,2026-11-28,Q4,South,Dev Sharma,Desk lamp,1,39,39
+42506,2026-12-17,Q4,South,Dev Sharma,Keyboard,3,59,177
+42507,2026-05-18,Q2,East,Sam Okafor,Keyboard,4,59,236
+42508,2026-10-11,Q4,West,Priya Nair,Standing desk,3,449,1347
+42509,2026-05-07,Q2,North,Avery Lund,Desk lamp,4,39,156
+42510,2026-10-02,Q4,West,Leo Tran,Monitor arm,4,79,316
+42511,2026-03-12,Q1,South,Maria Ortiz,Office chair,1,189,189
+42512,2026-12-20,Q4,West,Priya Nair,Office chair,2,189,378
+42513,2026-11-20,Q4,West,Leo Tran,Standing desk,1,449,449
+42514,2026-09-06,Q3,South,Dev Sharma,Desk lamp,1,39,39
+42515,2026-11-28,Q4,East,Chloe Brandt,Monitor arm,4,79,316
+42516,2026-11-26,Q4,West,Priya Nair,Webcam,7,95,665
+42517,2026-04-09,Q2,West,Priya Nair,Webcam,7,95,665
+42518,2026-06-19,Q2,West,Leo Tran,Webcam,1,95,95
+42519,2026-05-13,Q2,East,Sam Okafor,Desk lamp,8,39,312
+42520,2026-08-07,Q3,South,Maria Ortiz,Webcam,3,95,285
+42521,2026-08-01,Q3,East,Sam Okafor,Desk lamp,7,39,273
+42522,2026-12-30,Q4,North,Avery Lund,Keyboard,1,59,59
+42523,2026-09-06,Q3,West,Priya Nair,Keyboard,4,59,236
+42524,2026-06-14,Q2,South,Maria Ortiz,Standing desk,1,449,449
+42525,2026-04-01,Q2,South,Maria Ortiz,Webcam,3,95,285
+42526,2026-01-18,Q1,North,Jonah Pike,Office chair,1,189,189
+42527,2026-05-13,Q2,South,Dev Sharma,Desk lamp,3,39,117
+42528,2026-07-06,Q3,East,Sam Okafor,Office chair,5,189,945
+42529,2026-02-12,Q1,East,Chloe Brandt,Office chair,5,189,945
+42530,2026-06-11,Q2,West,Leo Tran,Keyboard,8,59,472
+42531,2026-10-21,Q4,West,Leo Tran,Standing desk,1,449,449
+42532,2026-08-19,Q3,East,Sam Okafor,Standing desk,3,449,1347
+42533,2026-12-02,Q4,East,Sam Okafor,Standing desk,3,449,1347
+42534,2026-11-07,Q4,North,Jonah Pike,Keyboard,2,59,118
+42535,2026-07-12,Q3,West,Leo Tran,Keyboard,1,59,59
+42536,2026-07-20,Q3,North,Jonah Pike,Standing desk,3,449,1347
+42537,2026-04-27,Q2,West,Leo Tran,Desk lamp,6,39,234
+42538,2026-12-31,Q4,East,Sam Okafor,Desk lamp,8,39,312
+42539,2026-06-14,Q2,North,Avery Lund,Office chair,6,189,1134
+42540,2026-10-29,Q4,South,Maria Ortiz,Monitor arm,2,79,158
+42541,2026-03-23,Q1,West,Priya Nair,Office chair,3,189,567
+42542,2026-06-23,Q2,East,Sam Okafor,Desk lamp,4,39,156
+42543,2026-08-27,Q3,South,Maria Ortiz,Webcam,3,95,285
+42544,2026-02-17,Q1,West,Priya Nair,Desk lamp,5,39,195
+42545,2026-02-02,Q1,South,Maria Ortiz,Desk lamp,3,39,117
+42546,2026-01-01,Q1,North,Avery Lund,Desk lamp,6,39,234
+42547,2026-09-17,Q3,North,Avery Lund,Standing desk,2,449,898
+42548,2026-11-29,Q4,North,Avery Lund,Standing desk,3,449,1347
+42549,2026-08-26,Q3,South,Maria Ortiz,Keyboard,6,59,354
+42550,2026-11-27,Q4,West,Leo Tran,Office chair,5,189,945
+42551,2026-09-12,Q3,West,Leo Tran,Standing desk,2,449,898
+42552,2026-09-14,Q3,South,Dev Sharma,Monitor arm,4,79,316
+42553,2026-06-11,Q2,East,Chloe Brandt,Keyboard,7,59,413
+42554,2026-01-24,Q1,East,Sam Okafor,Office chair,5,189,945
+42555,2026-05-10,Q2,West,Leo Tran,Standing desk,2,449,898
+42556,2026-07-29,Q3,West,Leo Tran,Desk lamp,8,39,312
+42557,2026-11-04,Q4,West,Priya Nair,Desk lamp,5,39,195
+42558,2026-08-15,Q3,North,Avery Lund,Webcam,8,95,760
+42559,2026-06-18,Q2,East,Sam Okafor,Desk lamp,7,39,273
+42560,2026-01-19,Q1,South,Dev Sharma,Keyboard,1,59,59
+42561,2026-01-06,Q1,North,Jonah Pike,Office chair,7,189,1323
+42562,2026-10-28,Q4,West,Priya Nair,Monitor arm,6,79,474
+42563,2026-08-08,Q3,North,Avery Lund,Standing desk,2,449,898
+42564,2026-05-20,Q2,West,Priya Nair,Monitor arm,6,79,474
+42565,2026-08-03,Q3,West,Priya Nair,Desk lamp,7,39,273
+42566,2026-01-23,Q1,East,Sam Okafor,Desk lamp,8,39,312
+42567,2026-01-24,Q1,East,Chloe Brandt,Webcam,6,95,570
+42568,2026-09-06,Q3,North,Avery Lund,Webcam,3,95,285
+42569,2026-08-13,Q3,West,Leo Tran,Monitor arm,5,79,395
+42570,2026-01-10,Q1,East,Chloe Brandt,Standing desk,1,449,449
+42571,2026-08-27,Q3,South,Dev Sharma,Standing desk,2,449,898
+42572,2026-05-08,Q2,South,Maria Ortiz,Keyboard,7,59,413
+42573,2026-03-18,Q1,North,Avery Lund,Webcam,7,95,665
+42574,2026-11-05,Q4,West,Priya Nair,Desk lamp,2,39,78
+42575,2026-11-20,Q4,West,Priya Nair,Monitor arm,6,79,474
+42576,2026-07-30,Q3,North,Avery Lund,Monitor arm,7,79,553
+42577,2026-08-06,Q3,East,Sam Okafor,Monitor arm,4,79,316
+42578,2026-06-17,Q2,South,Dev Sharma,Keyboard,3,59,177
+42579,2026-05-24,Q2,North,Jonah Pike,Standing desk,3,449,1347
+42580,2026-04-13,Q2,North,Jonah Pike,Webcam,7,95,665
+42581,2026-04-24,Q2,South,Maria Ortiz,Office chair,2,189,378
+42582,2026-12-16,Q4,South,Dev Sharma,Desk lamp,7,39,273
+42583,2026-02-23,Q1,West,Leo Tran,Keyboard,5,59,295
+42584,2026-09-05,Q3,East,Sam Okafor,Office chair,3,189,567
+42585,2026-12-05,Q4,East,Sam Okafor,Standing desk,3,449,1347
+42586,2026-11-06,Q4,North,Jonah Pike,Webcam,6,95,570
+42587,2026-05-25,Q2,East,Sam Okafor,Standing desk,1,449,449
+42588,2026-09-22,Q3,South,Dev Sharma,Keyboard,6,59,354
+42589,2026-09-06,Q3,West,Priya Nair,Office chair,4,189,756
+42590,2026-01-20,Q1,West,Leo Tran,Keyboard,5,59,295
+42591,2026-05-10,Q2,East,Sam Okafor,Monitor arm,6,79,474
+42592,2026-06-19,Q2,North,Avery Lund,Webcam,6,95,570
+42593,2026-12-13,Q4,North,Jonah Pike,Keyboard,7,59,413
+42594,2026-07-25,Q3,East,Sam Okafor,Monitor arm,7,79,553
+42595,2026-06-03,Q2,West,Priya Nair,Desk lamp,2,39,78
+42596,2026-09-23,Q3,East,Chloe Brandt,Webcam,6,95,570
+42597,2026-11-07,Q4,South,Dev Sharma,Monitor arm,1,79,79
+42598,2026-12-04,Q4,North,Avery Lund,Office chair,7,189,1323
+42599,2026-11-23,Q4,West,Leo Tran,Monitor arm,2,79,158
+42600,2026-08-02,Q3,East,Chloe Brandt,Desk lamp,6,39,234
+42601,2026-10-16,Q4,East,Sam Okafor,Desk lamp,7,39,273
+42602,2026-12-10,Q4,West,Priya Nair,Keyboard,7,59,413
+42603,2026-11-01,Q4,West,Priya Nair,Webcam,8,95,760
+42604,2026-05-02,Q2,North,Avery Lund,Monitor arm,2,79,158
+42605,2026-06-15,Q2,North,Avery Lund,Monitor arm,8,79,632
+42606,2026-08-02,Q3,East,Chloe Brandt,Desk lamp,8,39,312
+42607,2026-08-12,Q3,West,Priya Nair,Monitor arm,6,79,474
+42608,2026-05-25,Q2,East,Chloe Brandt,Monitor arm,1,79,79
+42609,2026-01-14,Q1,East,Chloe Brandt,Desk lamp,5,39,195
+42610,2026-10-03,Q4,West,Leo Tran,Webcam,5,95,475
+42611,2026-02-13,Q1,West,Leo Tran,Desk lamp,7,39,273
+42612,2026-07-12,Q3,West,Priya Nair,Office chair,4,189,756
+42613,2026-02-24,Q1,North,Jonah Pike,Monitor arm,1,79,79
+42614,2026-10-25,Q4,West,Leo Tran,Office chair,4,189,756
+42615,2026-02-06,Q1,South,Maria Ortiz,Keyboard,2,59,118
+42616,2026-09-11,Q3,South,Dev Sharma,Office chair,5,189,945
+42617,2026-03-11,Q1,East,Sam Okafor,Office chair,6,189,1134
+42618,2026-10-15,Q4,West,Priya Nair,Desk lamp,3,39,117
+42619,2026-07-28,Q3,North,Avery Lund,Webcam,8,95,760
+42620,2026-06-03,Q2,South,Dev Sharma,Monitor arm,4,79,316
+42621,2026-12-30,Q4,North,Jonah Pike,Standing desk,2,449,898
+42622,2026-06-07,Q2,West,Priya Nair,Office chair,1,189,189
+42623,2026-01-25,Q1,West,Leo Tran,Office chair,2,189,378
+42624,2026-03-23,Q1,West,Priya Nair,Office chair,5,189,945
+42625,2026-12-28,Q4,North,Avery Lund,Webcam,6,95,570
+42626,2026-10-21,Q4,West,Leo Tran,Desk lamp,8,39,312
+42627,2026-09-30,Q3,North,Jonah Pike,Monitor arm,7,79,553
+42628,2026-10-11,Q4,West,Leo Tran,Desk lamp,2,39,78
+42629,2026-07-24,Q3,West,Leo Tran,Standing desk,2,449,898
+42630,2026-01-08,Q1,North,Jonah Pike,Office chair,1,189,189
+42631,2026-07-06,Q3,West,Priya Nair,Standing desk,3,449,1347
+42632,2026-08-11,Q3,West,Leo Tran,Standing desk,2,449,898
+42633,2026-09-12,Q3,West,Priya Nair,Desk lamp,6,39,234
+42634,2026-09-26,Q3,North,Jonah Pike,Standing desk,1,449,449
+42635,2026-08-11,Q3,West,Leo Tran,Standing desk,1,449,449
+42636,2026-12-03,Q4,North,Avery Lund,Webcam,3,95,285
+42637,2026-09-11,Q3,South,Dev Sharma,Monitor arm,4,79,316
+42638,2026-03-16,Q1,South,Dev Sharma,Webcam,7,95,665
+42639,2026-04-25,Q2,East,Chloe Brandt,Webcam,5,95,475
+42640,2026-08-26,Q3,West,Leo Tran,Office chair,6,189,1134
+42641,2026-09-05,Q3,West,Priya Nair,Monitor arm,6,79,474
+42642,2026-06-15,Q2,South,Dev Sharma,Office chair,7,189,1323
+42643,2026-09-09,Q3,East,Chloe Brandt,Webcam,2,95,190
+42644,2026-07-31,Q3,West,Priya Nair,Standing desk,2,449,898
+42645,2026-12-06,Q4,East,Sam Okafor,Webcam,1,95,95
+42646,2026-10-09,Q4,West,Priya Nair,Desk lamp,7,39,273
+42647,2026-10-07,Q4,North,Jonah Pike,Keyboard,5,59,295
+42648,2026-02-11,Q1,West,Leo Tran,Monitor arm,1,79,79
+42649,2026-12-13,Q4,West,Leo Tran,Keyboard,4,59,236
+42650,2026-10-12,Q4,West,Leo Tran,Desk lamp,3,39,117
+42651,2026-09-06,Q3,South,Dev Sharma,Desk lamp,3,39,117
+42652,2026-10-22,Q4,West,Priya Nair,Webcam,6,95,570
+42653,2026-03-06,Q1,South,Dev Sharma,Standing desk,3,449,1347
+42654,2026-07-03,Q3,North,Jonah Pike,Keyboard,3,59,177
+42655,2026-01-24,Q1,South,Maria Ortiz,Keyboard,2,59,118
+42656,2026-05-01,Q2,West,Leo Tran,Standing desk,1,449,449
+42657,2026-09-14,Q3,South,Maria Ortiz,Monitor arm,5,79,395
+42658,2026-02-25,Q1,East,Sam Okafor,Office chair,7,189,1323
+42659,2026-06-14,Q2,North,Avery Lund,Standing desk,3,449,1347
+42660,2026-07-06,Q3,West,Priya Nair,Webcam,1,95,95
+42661,2026-08-28,Q3,West,Priya Nair,Webcam,3,95,285
+42662,2026-08-15,Q3,South,Dev Sharma,Desk lamp,8,39,312
+42663,2026-12-09,Q4,North,Avery Lund,Office chair,6,189,1134
+42664,2026-09-10,Q3,North,Avery Lund,Monitor arm,7,79,553
+42665,2026-12-05,Q4,East,Sam Okafor,Desk lamp,8,39,312
+42666,2026-05-30,Q2,North,Jonah Pike,Desk lamp,2,39,78
+42667,2026-10-19,Q4,West,Leo Tran,Standing desk,2,449,898
+42668,2026-04-03,Q2,North,Avery Lund,Standing desk,1,449,449
+42669,2026-04-24,Q2,North,Jonah Pike,Monitor arm,5,79,395
+42670,2026-05-02,Q2,West,Priya Nair,Webcam,2,95,190
+42671,2026-01-24,Q1,West,Priya Nair,Keyboard,1,59,59
+42672,2026-11-06,Q4,West,Leo Tran,Desk lamp,8,39,312
+42673,2026-07-11,Q3,West,Priya Nair,Office chair,4,189,756
+42674,2026-12-02,Q4,South,Maria Ortiz,Office chair,2,189,378
+42675,2026-12-12,Q4,West,Priya Nair,Standing desk,2,449,898
+42676,2026-02-16,Q1,East,Sam Okafor,Office chair,8,189,1512
+42677,2026-12-20,Q4,East,Chloe Brandt,Desk lamp,6,39,234
+42678,2026-11-27,Q4,West,Priya Nair,Desk lamp,7,39,273
+42679,2026-07-19,Q3,North,Avery Lund,Monitor arm,3,79,237
+42680,2026-02-08,Q1,North,Avery Lund,Keyboard,7,59,413
+42681,2026-08-13,Q3,South,Maria Ortiz,Monitor arm,2,79,158
+42682,2026-07-08,Q3,North,Jonah Pike,Monitor arm,1,79,79
+42683,2026-08-22,Q3,North,Jonah Pike,Desk lamp,4,39,156
+42684,2026-04-16,Q2,East,Sam Okafor,Office chair,8,189,1512
+42685,2026-03-31,Q1,East,Sam Okafor,Office chair,8,189,1512
+42686,2026-04-25,Q2,North,Avery Lund,Monitor arm,6,79,474
+42687,2026-04-11,Q2,North,Jonah Pike,Webcam,2,95,190
+42688,2026-11-27,Q4,East,Chloe Brandt,Monitor arm,5,79,395
+42689,2026-06-24,Q2,North,Jonah Pike,Standing desk,1,449,449
+42690,2026-04-02,Q2,East,Sam Okafor,Office chair,4,189,756
+42691,2026-05-29,Q2,East,Sam Okafor,Office chair,8,189,1512
+42692,2026-07-08,Q3,East,Sam Okafor,Desk lamp,4,39,156
+42693,2026-08-17,Q3,East,Chloe Brandt,Keyboard,6,59,354
+42694,2026-09-11,Q3,North,Avery Lund,Keyboard,1,59,59
+42695,2026-12-24,Q4,East,Sam Okafor,Webcam,3,95,285
+42696,2026-02-28,Q1,East,Sam Okafor,Standing desk,1,449,449
+42697,2026-05-12,Q2,East,Sam Okafor,Office chair,4,189,756
+42698,2026-06-04,Q2,West,Priya Nair,Keyboard,1,59,59
+42699,2026-06-29,Q2,North,Jonah Pike,Desk lamp,6,39,234
+42700,2026-12-13,Q4,South,Dev Sharma,Desk lamp,3,39,117
+42701,2026-06-17,Q2,South,Maria Ortiz,Keyboard,2,59,118
+42702,2026-03-19,Q1,South,Maria Ortiz,Standing desk,2,449,898
+42703,2026-07-27,Q3,South,Dev Sharma,Desk lamp,8,39,312
+42704,2026-10-13,Q4,West,Priya Nair,Webcam,6,95,570
+42705,2026-11-19,Q4,North,Avery Lund,Standing desk,1,449,449
+42706,2026-11-21,Q4,West,Leo Tran,Monitor arm,3,79,237
+42707,2026-07-03,Q3,East,Chloe Brandt,Desk lamp,7,39,273
+42708,2026-03-21,Q1,East,Chloe Brandt,Keyboard,2,59,118
+42709,2026-06-03,Q2,West,Priya Nair,Desk lamp,7,39,273
+42710,2026-07-29,Q3,East,Chloe Brandt,Desk lamp,6,39,234
+42711,2026-01-02,Q1,West,Leo Tran,Monitor arm,5,79,395
+42712,2026-07-22,Q3,North,Jonah Pike,Monitor arm,8,79,632
+42713,2026-11-24,Q4,West,Priya Nair,Keyboard,5,59,295
+42714,2026-04-03,Q2,North,Jonah Pike,Office chair,6,189,1134
+42715,2026-04-30,Q2,East,Chloe Brandt,Desk lamp,4,39,156
+42716,2026-10-22,Q4,East,Sam Okafor,Monitor arm,4,79,316
+42717,2026-03-01,Q1,East,Sam Okafor,Office chair,6,189,1134
+42718,2026-03-04,Q1,South,Dev Sharma,Webcam,7,95,665
+42719,2026-04-02,Q2,West,Leo Tran,Desk lamp,6,39,234
+42720,2026-11-06,Q4,South,Dev Sharma,Webcam,2,95,190
+42721,2026-06-02,Q2,North,Avery Lund,Keyboard,2,59,118
+42722,2026-02-07,Q1,North,Jonah Pike,Keyboard,5,59,295
+42723,2026-12-10,Q4,West,Leo Tran,Standing desk,2,449,898
+42724,2026-11-26,Q4,North,Avery Lund,Webcam,1,95,95
+42725,2026-08-12,Q3,East,Sam Okafor,Desk lamp,7,39,273
+42726,2026-02-01,Q1,East,Sam Okafor,Office chair,1,189,189
+42727,2026-06-14,Q2,West,Priya Nair,Webcam,6,95,570
+42728,2026-11-15,Q4,West,Priya Nair,Desk lamp,3,39,117
+42729,2026-04-03,Q2,East,Chloe Brandt,Standing desk,1,449,449
+42730,2026-01-27,Q1,North,Avery Lund,Office chair,2,189,378
+42731,2026-02-10,Q1,South,Maria Ortiz,Standing desk,1,449,449
+42732,2026-10-24,Q4,West,Priya Nair,Office chair,6,189,1134
+42733,2026-10-11,Q4,West,Leo Tran,Monitor arm,4,79,316
+42734,2026-10-14,Q4,North,Jonah Pike,Office chair,8,189,1512
+42735,2026-10-31,Q4,West,Leo Tran,Office chair,5,189,945
+42736,2026-05-24,Q2,West,Leo Tran,Keyboard,7,59,413
+42737,2026-10-28,Q4,East,Sam Okafor,Standing desk,1,449,449
+42738,2026-08-06,Q3,West,Leo Tran,Webcam,6,95,570
+42739,2026-10-09,Q4,North,Jonah Pike,Desk lamp,6,39,234
+42740,2026-05-29,Q2,West,Priya Nair,Office chair,7,189,1323
+42741,2026-01-20,Q1,East,Chloe Brandt,Keyboard,4,59,236
+42742,2026-05-28,Q2,East,Sam Okafor,Standing desk,2,449,898
+42743,2026-07-18,Q3,West,Leo Tran,Keyboard,4,59,236
+42744,2026-03-12,Q1,North,Jonah Pike,Webcam,4,95,380
+42745,2026-04-29,Q2,East,Sam Okafor,Standing desk,1,449,449
+42746,2026-11-19,Q4,West,Priya Nair,Webcam,4,95,380
+42747,2026-07-23,Q3,West,Priya Nair,Desk lamp,2,39,78
+42748,2026-04-26,Q2,East,Sam Okafor,Monitor arm,4,79,316
+42749,2026-09-09,Q3,South,Maria Ortiz,Standing desk,3,449,1347
+42750,2026-11-30,Q4,West,Leo Tran,Office chair,6,189,1134
+42751,2026-01-19,Q1,West,Leo Tran,Keyboard,6,59,354
+42752,2026-12-18,Q4,West,Priya Nair,Monitor arm,2,79,158
+42753,2026-06-23,Q2,West,Priya Nair,Standing desk,3,449,1347
+42754,2026-03-01,Q1,East,Sam Okafor,Monitor arm,5,79,395
+42755,2026-04-04,Q2,East,Chloe Brandt,Desk lamp,2,39,78
+42756,2026-07-29,Q3,North,Jonah Pike,Monitor arm,5,79,395
+42757,2026-08-18,Q3,South,Dev Sharma,Monitor arm,8,79,632
+42758,2026-11-14,Q4,South,Dev Sharma,Desk lamp,2,39,78
+42759,2026-11-08,Q4,West,Leo Tran,Standing desk,2,449,898
+42760,2026-06-06,Q2,South,Maria Ortiz,Webcam,7,95,665
+42761,2026-10-26,Q4,South,Dev Sharma,Desk lamp,6,39,234
+42762,2026-11-01,Q4,West,Priya Nair,Standing desk,3,449,1347
+42763,2026-10-15,Q4,South,Dev Sharma,Monitor arm,4,79,316
+42764,2026-12-21,Q4,East,Chloe Brandt,Office chair,8,189,1512
+42765,2026-04-03,Q2,South,Dev Sharma,Keyboard,1,59,59
+42766,2026-05-02,Q2,West,Priya Nair,Desk lamp,8,39,312
+42767,2026-07-11,Q3,North,Avery Lund,Desk lamp,8,39,312
+42768,2026-05-08,Q2,East,Sam Okafor,Standing desk,3,449,1347
+42769,2026-01-29,Q1,South,Maria Ortiz,Office chair,3,189,567
+42770,2026-06-06,Q2,East,Chloe Brandt,Monitor arm,5,79,395
+42771,2026-09-10,Q3,North,Avery Lund,Webcam,2,95,190
+42772,2026-01-23,Q1,West,Priya Nair,Webcam,7,95,665
+42773,2026-04-13,Q2,North,Avery Lund,Webcam,7,95,665
+42774,2026-10-24,Q4,East,Chloe Brandt,Office chair,4,189,756
+42775,2026-04-18,Q2,North,Jonah Pike,Desk lamp,6,39,234
+42776,2026-11-08,Q4,West,Leo Tran,Standing desk,2,449,898
+42777,2026-11-22,Q4,North,Jonah Pike,Standing desk,2,449,898
+42778,2026-07-02,Q3,South,Maria Ortiz,Standing desk,1,449,449
+42779,2026-04-22,Q2,West,Priya Nair,Standing desk,3,449,1347
+42780,2026-11-13,Q4,East,Chloe Brandt,Monitor arm,2,79,158
+42781,2026-03-24,Q1,East,Sam Okafor,Office chair,8,189,1512
+42782,2026-12-02,Q4,West,Leo Tran,Office chair,5,189,945
+42783,2026-05-18,Q2,North,Jonah Pike,Office chair,5,189,945
+42784,2026-11-03,Q4,West,Leo Tran,Office chair,7,189,1323
+42785,2026-07-14,Q3,West,Leo Tran,Standing desk,3,449,1347
+42786,2026-09-08,Q3,West,Leo Tran,Standing desk,3,449,1347
+42787,2026-03-21,Q1,East,Sam Okafor,Office chair,8,189,1512
+42788,2026-04-14,Q2,East,Chloe Brandt,Monitor arm,8,79,632
+42789,2026-12-02,Q4,East,Sam Okafor,Office chair,1,189,189
+42790,2026-12-21,Q4,North,Avery Lund,Monitor arm,2,79,158
+42791,2026-04-24,Q2,South,Dev Sharma,Webcam,4,95,380
+42792,2026-07-28,Q3,West,Leo Tran,Standing desk,2,449,898
+42793,2026-04-21,Q2,West,Priya Nair,Office chair,7,189,1323
+42794,2026-11-17,Q4,West,Priya Nair,Office chair,8,189,1512
+42795,2026-01-03,Q1,West,Leo Tran,Webcam,5,95,475
+42796,2026-08-24,Q3,East,Chloe Brandt,Standing desk,3,449,1347
+42797,2026-12-24,Q4,West,Leo Tran,Office chair,2,189,378
+42798,2026-11-19,Q4,West,Leo Tran,Standing desk,3,449,1347
+42799,2026-04-22,Q2,South,Dev Sharma,Monitor arm,5,79,395
+42800,2026-10-14,Q4,West,Priya Nair,Keyboard,8,59,472
+42801,2026-06-25,Q2,East,Chloe Brandt,Monitor arm,4,79,316
+42802,2026-09-22,Q3,North,Jonah Pike,Office chair,7,189,1323
+42803,2026-03-10,Q1,South,Dev Sharma,Monitor arm,7,79,553
+42804,2026-04-07,Q2,East,Sam Okafor,Keyboard,4,59,236
+42805,2026-10-27,Q4,North,Avery Lund,Keyboard,4,59,236
+42806,2026-08-16,Q3,West,Leo Tran,Webcam,1,95,95
+42807,2026-05-25,Q2,West,Leo Tran,Keyboard,1,59,59
+42808,2026-02-27,Q1,South,Maria Ortiz,Desk lamp,5,39,195
+42809,2026-12-08,Q4,South,Dev Sharma,Keyboard,6,59,354
+42810,2026-02-27,Q1,East,Sam Okafor,Desk lamp,4,39,156
+42811,2026-01-04,Q1,North,Avery Lund,Office chair,7,189,1323
+42812,2026-05-08,Q2,South,Maria Ortiz,Keyboard,4,59,236
+42813,2026-03-11,Q1,North,Jonah Pike,Office chair,5,189,945
+42814,2026-11-21,Q4,East,Sam Okafor,Webcam,2,95,190
+42815,2026-08-05,Q3,West,Leo Tran,Keyboard,3,59,177
+42816,2026-02-23,Q1,East,Sam Okafor,Office chair,6,189,1134
+42817,2026-08-25,Q3,West,Leo Tran,Keyboard,7,59,413
+42818,2026-02-06,Q1,West,Leo Tran,Standing desk,1,449,449
+42819,2026-09-04,Q3,North,Jonah Pike,Office chair,2,189,378
+42820,2026-02-10,Q1,North,Jonah Pike,Webcam,3,95,285
+42821,2026-02-25,Q1,East,Chloe Brandt,Office chair,6,189,1134
+42822,2026-12-12,Q4,East,Sam Okafor,Keyboard,1,59,59
+42823,2026-08-26,Q3,East,Chloe Brandt,Standing desk,3,449,1347
+42824,2026-02-03,Q1,West,Leo Tran,Keyboard,4,59,236
+42825,2026-11-19,Q4,West,Priya Nair,Office chair,2,189,378
+42826,2026-08-18,Q3,West,Priya Nair,Keyboard,7,59,413
+42827,2026-03-26,Q1,South,Maria Ortiz,Desk lamp,2,39,78
+42828,2026-06-01,Q2,East,Chloe Brandt,Standing desk,3,449,1347
+42829,2026-06-27,Q2,East,Sam Okafor,Standing desk,3,449,1347
+42830,2026-12-12,Q4,East,Chloe Brandt,Standing desk,1,449,449
+42831,2026-10-05,Q4,North,Jonah Pike,Keyboard,7,59,413
+42832,2026-12-30,Q4,East,Chloe Brandt,Monitor arm,3,79,237
+42833,2026-06-25,Q2,South,Maria Ortiz,Monitor arm,8,79,632
+42834,2026-09-14,Q3,North,Avery Lund,Desk lamp,4,39,156
+42835,2026-12-21,Q4,North,Jonah Pike,Standing desk,3,449,1347
+42836,2026-10-15,Q4,West,Priya Nair,Keyboard,2,59,118
+42837,2026-05-24,Q2,South,Dev Sharma,Keyboard,3,59,177
+42838,2026-07-07,Q3,West,Priya Nair,Standing desk,3,449,1347
+42839,2026-11-29,Q4,West,Priya Nair,Desk lamp,3,39,117
+42840,2026-11-10,Q4,West,Leo Tran,Keyboard,7,59,413
+42841,2026-10-02,Q4,East,Chloe Brandt,Keyboard,1,59,59
+42842,2026-09-30,Q3,West,Priya Nair,Desk lamp,8,39,312
+42843,2026-09-08,Q3,West,Priya Nair,Standing desk,1,449,449
+42844,2026-02-15,Q1,East,Chloe Brandt,Monitor arm,8,79,632
+42845,2026-12-21,Q4,North,Jonah Pike,Monitor arm,2,79,158
+42846,2026-01-26,Q1,East,Sam Okafor,Monitor arm,6,79,474
+42847,2026-06-25,Q2,South,Dev Sharma,Office chair,2,189,378
+42848,2026-05-15,Q2,West,Priya Nair,Standing desk,3,449,1347
+42849,2026-08-29,Q3,West,Priya Nair,Office chair,8,189,1512
+42850,2026-03-23,Q1,North,Jonah Pike,Office chair,2,189,378
+42851,2026-11-23,Q4,North,Avery Lund,Standing desk,2,449,898
+42852,2026-06-03,Q2,West,Leo Tran,Keyboard,8,59,472
+42853,2026-12-30,Q4,West,Leo Tran,Monitor arm,6,79,474
+42854,2026-11-29,Q4,North,Avery Lund,Keyboard,5,59,295
+42855,2026-03-27,Q1,South,Dev Sharma,Office chair,3,189,567
+42856,2026-04-13,Q2,South,Maria Ortiz,Standing desk,1,449,449
+42857,2026-12-30,Q4,North,Jonah Pike,Monitor arm,7,79,553
+42858,2026-09-22,Q3,South,Maria Ortiz,Webcam,6,95,570
+42859,2026-11-18,Q4,North,Avery Lund,Monitor arm,4,79,316
+42860,2026-11-07,Q4,West,Leo Tran,Webcam,5,95,475
+42861,2026-05-31,Q2,North,Avery Lund,Desk lamp,2,39,78
+42862,2026-08-23,Q3,West,Priya Nair,Office chair,5,189,945
+42863,2026-09-22,Q3,North,Jonah Pike,Monitor arm,3,79,237
+42864,2026-08-26,Q3,North,Avery Lund,Keyboard,7,59,413
+42865,2026-06-17,Q2,East,Sam Okafor,Office chair,7,189,1323
+42866,2026-09-14,Q3,North,Avery Lund,Webcam,4,95,380
+42867,2026-10-24,Q4,South,Dev Sharma,Desk lamp,3,39,117
+42868,2026-04-10,Q2,East,Sam Okafor,Desk lamp,8,39,312
+42869,2026-09-21,Q3,East,Sam Okafor,Webcam,6,95,570
+42870,2026-08-09,Q3,West,Leo Tran,Standing desk,2,449,898
+42871,2026-08-07,Q3,North,Avery Lund,Desk lamp,6,39,234
+42872,2026-06-17,Q2,East,Sam Okafor,Office chair,2,189,378
+42873,2026-10-13,Q4,West,Leo Tran,Standing desk,3,449,1347
+42874,2026-08-13,Q3,West,Leo Tran,Office chair,7,189,1323
+42875,2026-10-10,Q4,South,Dev Sharma,Standing desk,1,449,449
+42876,2026-10-27,Q4,North,Jonah Pike,Desk lamp,6,39,234
+42877,2026-10-11,Q4,West,Leo Tran,Keyboard,8,59,472
+42878,2026-01-21,Q1,West,Priya Nair,Standing desk,2,449,898
+42879,2026-05-18,Q2,East,Sam Okafor,Keyboard,4,59,236
+42880,2026-07-17,Q3,South,Maria Ortiz,Keyboard,4,59,236
+42881,2026-09-27,Q3,West,Priya Nair,Standing desk,3,449,1347
+42882,2026-05-26,Q2,North,Jonah Pike,Desk lamp,6,39,234
+42883,2026-10-25,Q4,South,Dev Sharma,Webcam,5,95,475
+42884,2026-08-03,Q3,East,Sam Okafor,Webcam,2,95,190
+42885,2026-03-12,Q1,East,Sam Okafor,Monitor arm,6,79,474
+42886,2026-07-16,Q3,North,Avery Lund,Monitor arm,6,79,474
+42887,2026-11-15,Q4,South,Dev Sharma,Desk lamp,4,39,156
+42888,2026-07-30,Q3,West,Leo Tran,Keyboard,8,59,472
+42889,2026-07-21,Q3,East,Sam Okafor,Office chair,4,189,756
+42890,2026-06-22,Q2,South,Dev Sharma,Monitor arm,3,79,237
+42891,2026-09-29,Q3,West,Priya Nair,Standing desk,2,449,898
+42892,2026-11-07,Q4,East,Chloe Brandt,Monitor arm,6,79,474
+42893,2026-12-03,Q4,West,Leo Tran,Keyboard,2,59,118
+42894,2026-12-04,Q4,West,Priya Nair,Standing desk,1,449,449
+42895,2026-05-09,Q2,South,Dev Sharma,Monitor arm,3,79,237
+42896,2026-11-12,Q4,East,Sam Okafor,Office chair,5,189,945
+42897,2026-05-06,Q2,West,Leo Tran,Monitor arm,7,79,553
+42898,2026-07-23,Q3,North,Jonah Pike,Office chair,8,189,1512
+42899,2026-11-15,Q4,East,Chloe Brandt,Office chair,1,189,189
+42900,2026-08-27,Q3,East,Sam Okafor,Webcam,7,95,665
+42901,2026-12-20,Q4,West,Leo Tran,Webcam,2,95,190
+42902,2026-04-14,Q2,East,Sam Okafor,Standing desk,2,449,898
+42903,2026-11-24,Q4,West,Priya Nair,Monitor arm,1,79,79
+42904,2026-07-30,Q3,South,Dev Sharma,Desk lamp,7,39,273
+42905,2026-03-18,Q1,South,Dev Sharma,Webcam,2,95,190
+42906,2026-01-20,Q1,South,Dev Sharma,Standing desk,3,449,1347
+42907,2026-03-15,Q1,North,Jonah Pike,Monitor arm,4,79,316
+42908,2026-05-04,Q2,North,Jonah Pike,Monitor arm,7,79,553
+42909,2026-10-23,Q4,West,Priya Nair,Keyboard,8,59,472
+42910,2026-10-19,Q4,North,Avery Lund,Monitor arm,2,79,158
+42911,2026-01-14,Q1,South,Dev Sharma,Monitor arm,4,79,316
+42912,2026-04-16,Q2,West,Leo Tran,Standing desk,2,449,898
+42913,2026-10-26,Q4,West,Leo Tran,Keyboard,2,59,118
+42914,2026-02-06,Q1,West,Leo Tran,Desk lamp,7,39,273
+42915,2026-02-25,Q1,South,Dev Sharma,Standing desk,2,449,898
+42916,2026-02-18,Q1,East,Sam Okafor,Office chair,2,189,378
+42917,2026-04-20,Q2,West,Leo Tran,Desk lamp,6,39,234
+42918,2026-02-09,Q1,South,Maria Ortiz,Webcam,5,95,475
+42919,2026-03-02,Q1,East,Chloe Brandt,Office chair,3,189,567
+42920,2026-09-08,Q3,East,Sam Okafor,Monitor arm,6,79,474
+42921,2026-03-27,Q1,West,Priya Nair,Keyboard,2,59,118
+42922,2026-06-26,Q2,South,Maria Ortiz,Office chair,7,189,1323
+42923,2026-10-16,Q4,South,Maria Ortiz,Office chair,6,189,1134
+42924,2026-06-27,Q2,South,Maria Ortiz,Office chair,4,189,756
+42925,2026-06-07,Q2,West,Leo Tran,Monitor arm,2,79,158
+42926,2026-08-27,Q3,East,Chloe Brandt,Office chair,4,189,756
+42927,2026-08-01,Q3,South,Dev Sharma,Webcam,6,95,570
+42928,2026-09-06,Q3,East,Chloe Brandt,Webcam,1,95,95
+42929,2026-06-14,Q2,West,Priya Nair,Keyboard,1,59,59
+42930,2026-12-04,Q4,West,Leo Tran,Monitor arm,3,79,237
+42931,2026-12-18,Q4,West,Leo Tran,Monitor arm,2,79,158
+42932,2026-07-02,Q3,North,Avery Lund,Keyboard,6,59,354
+42933,2026-04-19,Q2,West,Priya Nair,Standing desk,2,449,898
+42934,2026-09-04,Q3,South,Dev Sharma,Monitor arm,6,79,474
+42935,2026-05-25,Q2,West,Leo Tran,Office chair,1,189,189
+42936,2026-10-17,Q4,South,Maria Ortiz,Keyboard,8,59,472
+42937,2026-10-10,Q4,North,Avery Lund,Monitor arm,6,79,474
+42938,2026-06-09,Q2,West,Priya Nair,Keyboard,8,59,472
+42939,2026-01-09,Q1,North,Avery Lund,Keyboard,3,59,177
+42940,2026-04-27,Q2,South,Maria Ortiz,Monitor arm,5,79,395
+42941,2026-06-08,Q2,South,Maria Ortiz,Office chair,3,189,567
+42942,2026-12-18,Q4,West,Leo Tran,Standing desk,2,449,898
+42943,2026-05-22,Q2,North,Jonah Pike,Office chair,6,189,1134
+42944,2026-06-15,Q2,East,Chloe Brandt,Keyboard,8,59,472
+42945,2026-03-06,Q1,North,Avery Lund,Standing desk,3,449,1347
+42946,2026-07-10,Q3,North,Avery Lund,Standing desk,2,449,898
+42947,2026-06-29,Q2,North,Avery Lund,Monitor arm,6,79,474
+42948,2026-09-22,Q3,West,Priya Nair,Standing desk,3,449,1347
+42949,2026-05-05,Q2,West,Priya Nair,Desk lamp,8,39,312
+42950,2026-09-18,Q3,East,Sam Okafor,Monitor arm,3,79,237
+42951,2026-06-05,Q2,West,Leo Tran,Office chair,6,189,1134
+42952,2026-04-22,Q2,East,Sam Okafor,Office chair,3,189,567
+42953,2026-06-16,Q2,North,Jonah Pike,Standing desk,3,449,1347
+42954,2026-04-08,Q2,South,Maria Ortiz,Keyboard,1,59,59
+42955,2026-10-18,Q4,West,Leo Tran,Standing desk,2,449,898
+42956,2026-07-12,Q3,West,Leo Tran,Webcam,2,95,190
+42957,2026-12-12,Q4,West,Priya Nair,Webcam,2,95,190
+42958,2026-09-18,Q3,West,Priya Nair,Office chair,8,189,1512
+42959,2026-11-30,Q4,South,Maria Ortiz,Webcam,1,95,95
+42960,2026-04-13,Q2,South,Dev Sharma,Standing desk,2,449,898
+42961,2026-01-11,Q1,South,Dev Sharma,Desk lamp,3,39,117
+42962,2026-12-31,Q4,East,Sam Okafor,Keyboard,7,59,413
+42963,2026-09-25,Q3,West,Priya Nair,Office chair,6,189,1134
+42964,2026-08-22,Q3,South,Dev Sharma,Office chair,4,189,756
+42965,2026-01-24,Q1,East,Sam Okafor,Webcam,1,95,95
+42966,2026-09-09,Q3,North,Jonah Pike,Standing desk,1,449,449
+42967,2026-06-27,Q2,East,Sam Okafor,Office chair,3,189,567
+42968,2026-10-23,Q4,West,Priya Nair,Standing desk,1,449,449
+42969,2026-05-29,Q2,West,Leo Tran,Webcam,5,95,475
+42970,2026-10-31,Q4,North,Jonah Pike,Keyboard,6,59,354
+42971,2026-08-15,Q3,East,Sam Okafor,Office chair,7,189,1323
+42972,2026-10-16,Q4,West,Leo Tran,Keyboard,2,59,118
+42973,2026-09-11,Q3,West,Leo Tran,Keyboard,4,59,236
+42974,2026-09-11,Q3,West,Priya Nair,Keyboard,8,59,472
+42975,2026-02-20,Q1,South,Dev Sharma,Standing desk,3,449,1347
+42976,2026-04-17,Q2,West,Leo Tran,Monitor arm,8,79,632
+42977,2026-04-18,Q2,North,Jonah Pike,Desk lamp,8,39,312
+42978,2026-04-07,Q2,North,Avery Lund,Desk lamp,8,39,312
+42979,2026-08-10,Q3,West,Priya Nair,Standing desk,2,449,898
+42980,2026-02-03,Q1,South,Dev Sharma,Office chair,8,189,1512
+42981,2026-06-13,Q2,South,Maria Ortiz,Desk lamp,2,39,78
+42982,2026-11-23,Q4,East,Chloe Brandt,Office chair,6,189,1134
+42983,2026-06-21,Q2,East,Chloe Brandt,Standing desk,2,449,898
+42984,2026-12-22,Q4,East,Chloe Brandt,Keyboard,1,59,59
+42985,2026-04-02,Q2,South,Dev Sharma,Webcam,1,95,95
+42986,2026-11-05,Q4,West,Priya Nair,Standing desk,3,449,1347
+42987,2026-02-03,Q1,North,Jonah Pike,Keyboard,2,59,118
+42988,2026-09-25,Q3,North,Avery Lund,Webcam,6,95,570
+42989,2026-05-15,Q2,East,Sam Okafor,Desk lamp,4,39,156
+42990,2026-02-09,Q1,East,Sam Okafor,Office chair,6,189,1134
+42991,2026-10-13,Q4,East,Chloe Brandt,Webcam,8,95,760
+42992,2026-10-24,Q4,East,Sam Okafor,Office chair,2,189,378
+42993,2026-06-29,Q2,West,Leo Tran,Desk lamp,2,39,78
+42994,2026-10-12,Q4,West,Leo Tran,Monitor arm,1,79,79
+42995,2026-05-06,Q2,South,Maria Ortiz,Office chair,8,189,1512
+42996,2026-12-11,Q4,West,Leo Tran,Monitor arm,8,79,632
+42997,2026-06-17,Q2,West,Priya Nair,Webcam,2,95,190
+42998,2026-12-01,Q4,West,Leo Tran,Monitor arm,1,79,79
+42999,2026-02-07,Q1,South,Dev Sharma,Office chair,7,189,1323
