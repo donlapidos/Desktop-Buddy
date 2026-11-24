@@ -584,6 +584,7 @@
  "Taking notes": "Tomando notas",
  "Taking notes · {n} min": "Tomando notas · {n} min",
  "your microphone": "tu micrófono",
+ "Your headset's microphone is in call mode, so your words may come out rougher. Your PC's own microphone gives a cleaner transcript.": "El micrófono de tus auriculares está en modo llamada, así que tus palabras pueden salir peor. El micrófono del propio PC da una transcripción más limpia.",
  "The screen changed while you were marking. Press {key} to mark again.": "La pantalla cambió mientras marcabas. Pulsa {key} para marcar de nuevo.",
  "the PC's sound": "el sonido del PC",
  "Buddy can't hear {side} any more; still taking notes from {other}.": "Buddy ya no oye {side}; sigue tomando notas de {other}.",

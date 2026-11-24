@@ -614,6 +614,8 @@ const CHECKS = {
         !(r.started?.you && r.started?.others) && `Buddy didn't hear both sides: ${JSON.stringify(r.started)}`,
         !/^notes\|Taking notes\|(?!none)/.test(r.island ?? "") && `the island didn't show notes being taken with a Stop button (${r.island})`,
         !/revised budget/i.test(r.soFar ?? "") && `questions during the meeting couldn't see what was said (${JSON.stringify(r.soFar)})`,
+        r.callQualitySaid !== 1 && `a Bluetooth headset's call-mode microphone was mentioned ${r.callQualitySaid} times, not once`,
+        !/call mode/.test(r.islandNotice ?? "") && `the island didn't say the headset's microphone was in call mode (${r.islandNotice})`,
         !r.reopened && "a crashed meeting page wasn't opened again",
         !r.stillOn && "the meeting didn't stay on, with a fresh page, after its page crashed",
         !/launch moves to June/i.test(r.afterCrash ?? "") && `after the page crashed, Buddy didn't hear the meeting (${JSON.stringify(r.afterCrash?.slice(-200))})`,

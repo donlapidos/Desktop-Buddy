@@ -3,7 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { clock, createMeetingNotes, createMeetingSession, createTranscript, notesDocument, notesRequest, notesTitle, recoverTranscript, sharedWords } from "../src/meeting.js";
+import { callQualityMic, clock, createMeetingNotes, createMeetingSession, createTranscript, notesDocument, notesRequest, notesTitle, recoverTranscript, sharedWords } from "../src/meeting.js";
 
 // Meeting notes (meeting.js): the transcript, the echo the microphone hears from speakers, the notes and the document.
 const tempDir = (t) => {
@@ -224,4 +224,18 @@ test("a reopen that hears nothing leaves the meeting on, for its notes to be wri
   assert.deepEqual(await s.reopen(), { error: "unheard", problems: ["page-gone"] });
   assert.equal(s.state, "on");
   assert.ok((await s.stop()).file);
+});
+
+test("a Bluetooth headset's call-mode microphone is told apart from a usual one", () => {
+  // Windows' name for a headset in its call mode, whatever rate the page reports (it may be its own 48 kHz).
+  assert.equal(callQualityMic({ label: "Headset (WH-1000XM4 Hands-Free AG Audio)", rate: 48000 }), true);
+  assert.equal(callQualityMic({ label: "Headset (Jabra Evolve2 Hands Free)", rate: 0 }), true);
+  assert.equal(callQualityMic({ label: "Headset (AirPods) Handsfree", rate: 0 }), true);
+  // Narrowband, whatever the name.
+  assert.equal(callQualityMic({ label: "Microphone (USB Audio)", rate: 8000 }), true);
+  // Usual microphones, and nothing known.
+  assert.equal(callQualityMic({ label: "Microphone Array (Realtek(R) Audio)", rate: 48000 }), false);
+  assert.equal(callQualityMic({ label: "Headset Microphone (Jabra Evolve2 65)", rate: 16000 }), false);
+  assert.equal(callQualityMic({ label: "", rate: 0 }), false);
+  assert.equal(callQualityMic(undefined), false);
 });

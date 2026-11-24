@@ -3,6 +3,9 @@
 ## Unreleased
 
 * **Fixed:**
+  * Taking meeting notes through a Bluetooth headset's microphone: Windows puts the headset in its call mode, which
+    sends rougher sound, and your words came out worse with nothing to say why. Buddy now says so, once, and that your
+    PC's own microphone gives a cleaner transcript.
   * Plugging in or removing a screen, docking, or changing the scale while marking no longer asks about the wrong
     spot: marking ends and says so, and Mark starts afresh on the screen as it is now.
 
