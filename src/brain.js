@@ -1,14 +1,14 @@
 // The agent loop. Claude decides; agent-desktop observes and acts; the UI points and confirms.
 import Anthropic from "@anthropic-ai/sdk";
 import { askUser, requestApproval } from "./approvals.js";
-import { appKey, decide, isBlocked } from "./policy.js";
+import { SAFE_KINDS, appKey, decide, isBlocked } from "./policy.js";
 import { collectScreenContext } from "./screen-context.js";
 import { annotationRequest, sameBox, validBox } from "./annotations.js";
 import { FOLLOW_UP_GUIDANCE, guidanceFor } from "./guidance.js";
 import { LOOK_ARGS, findControl, nearestNames, observe, perform, renderReading, renderTree, snapshotResilient, waitForProgress } from "./desktop.js";
 import { writeDocx } from "./documents.js";
 import { PROVIDERS, ProviderError, capsOf, chatTurn } from "./providers.js";
-import { PC_TOOL_NAMES, beyondScreen, hideSecrets, pcTools, placesHere, runPcTool } from "./pc-tools.js";
+import { PC_TOOL_NAMES, UNDO, beyondScreen, hideSecrets, pcTools, placesHere, runPcTool } from "./pc-tools.js";
 import { BLENDER_NOTE, BLENDER_OPEN, BLENDER_TOOLS, BLENDER_TOOL_NAMES, runBlenderTool } from "./blender.js";
 import { fingerprint } from "./activity.js";
 import { spotRect } from "./geometry.js";
@@ -663,6 +663,8 @@ export const cardDetail = (/** @type {string} */ s, n = 160) => {
   const t = String(s);
   return /[\r\n\t]/.test(t) || t.length > n ? t.replace(/\t/g, "⇥").replace(/\r\n|\r|\n/g, "⏎\n") : undefined;
 };
+/** An app's name as the user knows it: "EXCEL.EXE" is Excel's. */
+const appName = (/** @type {string | null | undefined} */ app) => String(app ?? "").replace(/\.exe$/i, "").trim() || tr("the app");
 const TOO_LONG = (/** @type {number} */ n) => `Not asked: that's ${n} characters, more than the user can check on an approval card (${CARD_MAX} at most). Do it in smaller parts.`;
 
 const quote = (s, n = 160) => {
@@ -1529,7 +1531,10 @@ export class Brain {
       this.ui.trace?.({ kind: "policy-blocked", app: action.app, action: action.kind });
       return `Not allowed: the user has told Buddy never to act in ${action.app} (Settings › Agents). Tell them; don't try another way.`;
     }
-    const slip = await requestApproval(action, this.asking({ ref, note, detail }));
+    // A change in an app is undone in that app: the card says so, before Allow. Opening an app or moving its window
+    // changes nothing to undo.
+    const undo = action.kind === "launch" || SAFE_KINDS.has(action.kind) ? undefined : tr("Buddy can't undo this. If needed, undo it in {app}.", { app: appName(action.app) });
+    const slip = await requestApproval(action, this.asking({ ref, note: [note && (/[.!?…]$/.test(note.trim()) ? note.trim() : `${note.trim()}.`), undo].filter(Boolean).join(" ") || undefined, detail }));
     if (!slip) return "The user declined.";
     if (verdict === "allow") {
       this.ui.trace?.({ kind: "policy-allowed", app: action.app, action: action.kind });
@@ -1673,7 +1678,7 @@ export class Brain {
       case "create_document": {
         if (!input.title?.trim() || !input.markdown?.trim()) return "create_document needs a title and markdown.";
         if (!this.ui.documentsDir || !this.ui.openFile) return "Documents can't be created from here.";
-        if (!(await askUser(tr("Create \"{title}\" in Documents\\Buddy and open it in Word", { title: input.title }), { ...this.asking(), scope: "files" }))) return "The user declined.";
+        if (!(await askUser(tr("Create \"{title}\" in Documents\\Buddy and open it in Word", { title: input.title }), { ...this.asking({ note: tr(UNDO.created) }), scope: "files" }))) return "The user declined.";
         this.ui.status("Writing the document…");
         const file = await writeDocx({ title: input.title, markdown: input.markdown, dir: this.ui.documentsDir });
         this.ui.record?.({ kind: "document", summary: `Made the document "${input.title}"`, file, after: fingerprint(file), from: this.ui.source ?? "Buddy" });
@@ -1953,7 +1958,7 @@ ${text}` };
     // task" covers that tool only: allowing one called "Read a page" doesn't allow a different one.
     const tool = name.slice(name.indexOf("__") + 2);
     const action = what.action === tool ? tool : `${what.action} (${tool})`;
-    const ok = await askUser(tr("{service}: {action}", { service, action }), { ...this.asking({ detail: given || undefined }), scope: `service:${what.service}:${tool}` });
+    const ok = await askUser(tr("{service}: {action}", { service, action }), { ...this.asking({ note: tr("Buddy can't undo this. If needed, change it back in {service}.", { service }), detail: given || undefined }), scope: `service:${what.service}:${tool}` });
     if (!ok) return "The user declined.";
     this.ui.status(tr("Using {service}…", { service }));
     return this.ui.connectors.call(name, input, this.abort?.signal);

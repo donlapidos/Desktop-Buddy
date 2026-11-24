@@ -6,7 +6,8 @@ import path from "node:path";
 import { test } from "node:test";
 import zlib from "node:zlib";
 import { Brain } from "../src/brain.js";
-import { defaultFolders, grantProblem, judgePath, pageText, pinnedFetch, privateHost, runPcTool } from "../src/pc-tools.js";
+import { createActivity } from "../src/activity.js";
+import { UNDO, defaultFolders, grantProblem, judgePath, pageText, pinnedFetch, privateHost, runPcTool } from "../src/pc-tools.js";
 
 /** A made-up PC: a home with everyday folders, Buddy's working and data folders, another user, Windows. */
 function pc() {
@@ -98,6 +99,28 @@ test("writing asks, says where in plain words, and keeps the old version for und
   assert.ok(!fs.existsSync(path.join(places.workDir, "other.txt")), "nothing written when declined");
   assert.match(await runPcTool("write_file", { path: path.join(places.buddyData, "api-key.bin"), content: "x" }, ctx()), /^Not allowed/);
   assert.equal(asked.length, 3, "a forbidden place isn't even asked about");
+});
+
+test("each card says what undo can do, and Activity keeps that promise", async (t) => {
+  const { home, places, asked, ctx } = pc();
+  const activity = createActivity({ file: path.join(places.buddyData, "activity.json"), undoDir: path.join(places.buddyData, "undo"), trash: async (f) => fs.rmSync(f, { recursive: true, force: true }) });
+  const c = { ...ctx(), record: (/** @type {any} */ change) => activity.add({ from: "Buddy", ...change }) };
+  /** The card's undo line, and whether what it led to can be undone in Activity. */
+  const step = async (/** @type {string} */ tool, /** @type {any} */ input) => {
+    await runPcTool(tool, input, c);
+    return { said: asked.at(-1).n, canUndo: activity.list()[0]?.canUndo };
+  };
+  assert.deepEqual(await step("write_file", { path: "plan.txt", content: "one" }), { said: UNDO.created, canUndo: true });
+  assert.deepEqual(await step("write_file", { path: "plan.txt", content: "two" }), { said: UNDO.replaced, canUndo: true });
+  assert.deepEqual(await step("edit_file", { path: "plan.txt", old_text: "two", new_text: "three" }), { said: UNDO.replaced, canUndo: true });
+  fs.writeFileSync(path.join(home, "Pictures", "cat.jpg"), "cat");
+  assert.deepEqual(await step("copy_files", { from: "~/Pictures/cat.jpg", to: "pets" }), { said: UNDO.copied, canUndo: true });
+  // A command's card says undo can't help, and what it did can't be undone in Activity. (Declined, so nothing runs.)
+  await runPcTool("run_powershell", { command: "Get-Date", description: "Show the date" }, { ...c, ask: async (s, n, _scope, d) => (asked.push({ s, n, d }), false) });
+  assert.equal(asked.at(-1).n, UNDO.command);
+  activity.add({ from: "Buddy", kind: "ran", summary: "Show the date" });
+  assert.equal(activity.list()[0].canUndo, false, "Activity can't undo a command, as its card said");
+  t.after(() => fs.rmSync(places.buddyData, { recursive: true, force: true }));
 });
 
 test("editing needs the exact text once, and keeps the old version", async () => {

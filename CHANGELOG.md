@@ -9,6 +9,9 @@
 * **Lessons say why they stopped:** a step whose control was found but couldn't be shown (the app went behind another
   window) now says so, instead of saying the control isn't on screen. A lesson's last step that only closes a menu is
   now noticed however small the change.
+* **Each approval card says what undo can do, before you allow it:** a file Buddy makes, replaces, edits or copies
+  can be put back from Settings › Activity; a click or typing in an app is undone in that app; a command's effects
+  and a change in a connected service aren't Buddy's to undo. The README said Activity could undo everything.
 
 ## 0.6.1 (2026-11-24)
 

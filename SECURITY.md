@@ -21,7 +21,7 @@ Ordinary bugs go through **Report a problem** in the tray, which shows you the w
 |---|---|
 | Read the window you ask about: its text, and a picture of it when the AI can see images | When you ask a question. Automatic pictures can be turned off (Settings › AI & privacy) and skip the apps on your Never act in list. |
 | Point and draw on your screen | Whenever it guides you. Drawing never clicks or types. |
-| Click, type, press keys, open apps and move windows | Only after you say yes on Buddy's card, unless your Agents rules say otherwise (below). Never in an app on the Never act in list (password managers to start). Never on a spot it only guessed from a picture. |
+| Click, type, press keys, open apps and move windows | Only after you say yes on Buddy's card, unless your Agents rules say otherwise (below). Never in an app on the Never act in list (password managers to start). Never on a spot it only guessed from a picture. Buddy can't undo these; they're undone in the app, as the card says. |
 | Read files and folders | Freely in the folders listed in Settings › Agents (Documents, Desktop, Downloads to start) and its own Documents › Buddy folder; anywhere else asks first. |
 | Make or change files | Always asks first. A file it replaces or edits is kept for a week, and Activity can undo it. |
 | Read web pages | Asks for every page, showing its full address. Addresses on your PC or your local network are never fetched, redirects included, nor a web name that points there (checked as the connection is made). |

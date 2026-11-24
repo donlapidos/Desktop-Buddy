@@ -53,7 +53,8 @@ More models (Claude, Gemini's free tier, a model on your PC) are being checked.
 - **Mark:** press **Ctrl+Alt+M** and draw around anything on your screen, then ask about it ("what does 1 do?").
 - **Explain:** hover over anything and press **Ctrl+Alt+E** for an illustrated one-page explanation.
 - **Do it for me:** say "do it for me" and Buddy works the app itself, asking before each click, keystroke or file
-  change. **Settings › Activity** lists what it changed and can undo it.
+  change. **Settings › Activity** lists what it did and can put back the files it made or changed; a click or typing
+  in an app is undone in that app, and each approval card says which before you allow it.
 - **Meeting notes:** "take notes" in any meeting app (Teams, Zoom, Meet…), transcribed on your PC; when you stop, a
   Word document with the summary, decisions, action items and the whole transcript.
 - **Connections:** on Notion, Linear, HubSpot or Jira, Buddy offers to connect, so it can read and update things there

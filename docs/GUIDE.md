@@ -164,6 +164,9 @@ VS Code and more).
 - **Activity and undo:** Settings › **Activity** (or **Recent changes…** in the tray) lists what Buddy made or changed
   this past week, commands it ran and pages it read. **Undo** sends a file it made to the Recycle Bin or puts a
   changed one back (the old version is kept for a week); a file you changed since is only put back if you say so again.
+  Only files can be put back. What Buddy clicked or typed in an app is undone in that app (often **Ctrl+Z**), what a
+  command did stays done, and a change in a connected service is changed back in that service. Each approval card
+  says which applies, before you choose **Allow**.
 - **Guiding a whole route:** the model can hand Buddy every step at once (`guide_steps`); Buddy points at each in turn,
   follows you when you work ahead, and matches controls by meaning when the app words them differently.
   The default engine keeps everyday guidance instructions small and loads illustrated explanations when needed.

@@ -28,8 +28,19 @@ import os from "node:os";
 import path from "node:path";
 import zlib from "node:zlib";
 import { fingerprint, keepCopy } from "./activity.js";
-import { t as tr } from "./i18n.js";
+import { N, t as tr } from "./i18n.js";
 import { SHIPPED_NATIVE } from "./native.js";
+
+/**
+ * What undo can and can't do, said on each card that changes something, before Allow: Activity (activity.js) puts
+ * back files Buddy made, replaced, edited or copied, and nothing else. What a command did stays done.
+ */
+export const UNDO = Object.freeze({
+  created: N("If you change your mind, Settings › Activity can move it to the Recycle Bin."),
+  replaced: N("The old version is kept for a week: Settings › Activity can put it back."),
+  copied: N("The originals stay as they are. Settings › Activity can remove the copies."),
+  command: N("Buddy can't undo what a command does."),
+});
 
 /** @type {{ name: string, description: string, input_schema: { type: "object", properties: Record<string, object>, required?: string[] } }[]} */
 export const PC_TOOLS = [
@@ -569,7 +580,7 @@ export async function runPcTool(name, input, ctx) {
       const exists = fs.existsSync(j.full);
       if (exists && fs.statSync(j.full).isDirectory()) return "That's a folder, not a file.";
       const before = exists ? fingerprint(j.full) : null;
-      if (!(await ctx.ask(exists ? tr("Replace {place}", { place: placeWords(j.full, p) }) : tr("Create {place}", { place: placeWords(j.full, p) }), exists ? tr("The old version is kept for a week.") : undefined, "files"))) return "The user declined.";
+      if (!(await ctx.ask(exists ? tr("Replace {place}", { place: placeWords(j.full, p) }) : tr("Create {place}", { place: placeWords(j.full, p) }), exists ? tr(UNDO.replaced) : tr(UNDO.created), "files"))) return "The user declined.";
       // The user agreed to what the card said, about the file as it was then: if it appeared or changed while the card
       // was open, that isn't what they agreed to.
       if (fs.existsSync(j.full) !== exists || (exists && fingerprint(j.full) !== before)) return CHANGED_MEANWHILE;
@@ -596,7 +607,7 @@ export async function runPcTool(name, input, ctx) {
       const times = text.split(old).length - 1;
       if (!times) return "old_text isn't in the file. Read the file again and copy the text exactly.";
       if (times > 1 && !input.replace_all) return `old_text is in the file ${times} times. Include more of the text around it, or set replace_all.`;
-      if (!(await ctx.ask(tr("Change {place}", { place: placeWords(j.full, p) }), tr("The old version is kept for a week."), "files"))) return "The user declined.";
+      if (!(await ctx.ask(tr("Change {place}", { place: placeWords(j.full, p) }), tr(UNDO.replaced), "files"))) return "The user declined.";
       // The change is made to the text read before the card: if the file changed while it was open (the user typing
       // in it), writing would undo their edits.
       let now;
@@ -623,7 +634,7 @@ export async function runPcTool(name, input, ctx) {
       if (problem) return `Not allowed: ${problem}`;
       // The card's headline is the model's own description; the command itself is shown in full beneath it.
       if (command.length > 8000) return `Not asked: that command is ${command.length} characters, more than the user can check on an approval card (8000 at most). Split it up.`;
-      if (!(await ctx.ask(said, undefined, "powershell", command))) return "The user declined.";
+      if (!(await ctx.ask(said, tr(UNDO.command), "powershell", command))) return "The user declined.";
       ctx.status(said.endsWith("…") ? said : `${said}…`);
       fs.mkdirSync(p.workDir, { recursive: true });
       const timeoutMs = Math.min(300, Math.max(5, Number(input.timeout_seconds) || 60)) * 1000;
@@ -676,7 +687,7 @@ export async function runPcTool(name, input, ctx) {
       const words = files.length === 1
         ? tr("Copy {file} into {folder}", { file: path.basename(files[0].from), folder: folderWords(dest, p) })
         : tr("Copy {n} files from {from} into {folder}", { n: files.length, from: folderWords(stat.isDirectory() ? j.full : path.dirname(j.full), p), folder: folderWords(dest, p) });
-      if (!(await ctx.ask(words, tr("The originals stay as they are."), "files"))) return "The user declined.";
+      if (!(await ctx.ask(words, tr(UNDO.copied), "files"))) return "The user declined.";
       ctx.status(tr("Copying files…"));
       // Each copy and its fingerprint, so undoing it takes back exactly these files, and only as they were made.
       /** @type {{ file: string, after: string | null }[]} */
