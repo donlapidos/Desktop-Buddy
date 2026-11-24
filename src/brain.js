@@ -1789,7 +1789,7 @@ export class Brain {
    * window it was found in, or `stop`: what to tell the model instead. Used by guide_steps for each step, and for the
    * first one while the model is still writing the rest (startEarly).
    * @param {any} win @param {any} step @param {number} i @param {{ of?: number, doneSoFar: string }} o
-   * @returns {Promise<{ win: any } | { stop: string, why?: "several" | "missing" }>}
+   * @returns {Promise<{ win: any } | { stop: string, why?: "several" | "missing" | "unshown" }>}
    */
   async showStep(win, step, i, { of, doneSoFar }) {
     const signal = this.abort?.signal;
@@ -1841,7 +1841,8 @@ ${text}` };
       if (step.annotation?.to_target && !destination?.node) return { stop: `${doneSoFar} The drawing's destination isn't clear. Read the window again.` };
       const result = await this.drawAnnotations({ caption: step.caption, items: [{ kind: step.annotation?.kind ?? "highlight", ref: match.node.ref_id,
         ...(destination?.node ? { to_ref: destination.node.ref_id } : {}), label: step.caption, number: Math.min(99, i + 1) }] });
-      if (!result.startsWith("Annotated.")) return { stop: `${doneSoFar} ${result}` };
+      // Found, but not shown (the window went behind another, or moved): that's not a missing control.
+      if (!result.startsWith("Annotated.")) return { why: "unshown", stop: `${doneSoFar} ${result}` };
     } else {
       await this.ui.point(match.node.bounds, step.caption);
       this.notePointer();
@@ -1894,7 +1895,7 @@ ${text}` };
       const step = steps[i];
       // The first step may already be on screen: it was started while the model was still writing the route.
       const early = i === 0 ? this.takeEarly("guide_steps", step.target, step.caption) : null;
-      const shown = /** @type {{ win: any } | { stop: string, why?: "several" | "missing" }} */ (await (early ?? this.showStep(win, step, i, { of: steps.length, doneSoFar: doneSoFar(i) })));
+      const shown = /** @type {{ win: any } | { stop: string, why?: "several" | "missing" | "unshown" }} */ (await (early ?? this.showStep(win, step, i, { of: steps.length, doneSoFar: doneSoFar(i) })));
       if ("stop" in shown) return (this.routeOutcome = { kind: "stuck", step: i, why: shown.why ?? null }), shown.stop;
       win = shown.win;
       this.ui.status(`Step ${i + 1} of ${steps.length}: your turn`);
@@ -1909,8 +1910,10 @@ ${text}` };
           }
         }
       }
+      // A step with nothing to watch for is done when its control goes (a menu item closing its menu).
+      const hasDone = [].concat(step.done_when ?? []).some((t) => typeof t === "string" && t.trim());
       const r = await waitForProgress({ win, steps: needles, timeoutMs: seconds * 1000, signal, session: this.session,
-        onReady: () => this.ui.trace?.({ kind: "guide-ready", step: i + 1 }) });
+        gone: hasDone ? null : { target: step.target, role: step.role }, onReady: () => this.ui.trace?.({ kind: "guide-ready", step: i + 1 }) });
       this.ui.clearAnnotations?.();
       if (r.status === "cancelled") return (this.routeOutcome = { kind: "stopped" }), "The user stopped.";
       if (r.status === "timeout") this.routeOutcome = { kind: "waiting", step: i };
@@ -1972,6 +1975,7 @@ ${text}` };
     const at = (i) => `step ${i + 1} ("${steps[i]?.caption}")`;
     const ask = "Ask Buddy to finish from here.";
     if (o.kind === "finished") return { done: true, text: "Done: that's the whole lesson." };
+    if (o.kind === "stuck" && o.why === "unshown") return { done: false, text: `At ${at(o.step)}, Buddy found "${steps[o.step].target}" but couldn't show it: the app went behind another window. Click the app to bring it to the front, then play the lesson again.` };
     if (o.kind === "stuck" && o.why === "several") return { done: false, text: `At ${at(o.step)}, there's more than one "${steps[o.step].target}" on screen, so Buddy couldn't tell which. ${ask}` };
     if (o.kind === "stuck") return { done: false, text: `At ${at(o.step)}, "${steps[o.step].target}" isn't on screen. The app may look different from when the lesson was saved. ${ask}` };
     if (o.kind === "waiting") return { done: false, text: `Still waiting at ${at(o.step)}. Play the lesson again when you're ready.` };

@@ -3,7 +3,7 @@ import {
   app, BrowserWindow, clipboard, ClipboardItem, desktopCapturer, dialog, globalShortcut, ipcMain, Menu, nativeImage, nativeTheme, safeStorage, screen,
   session, shell, Tray, webContents,
 } from "electron";
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -596,14 +596,14 @@ const annotationLayer = createAnnotationLayer({
 
 async function showAnnotations(items, context, owner = "bubble") {
   let originalBounds = null;
-  const reject = (reason) => { trace({ kind: "annotation-hidden", reason }); return false; };
+  const reject = (reason, extra = {}) => { trace({ kind: "annotation-hidden", reason, ...extra }); return false; };
   const validate = async () => {
     if (context.signal?.aborted) return false;
     const windows = await listWindows();
     const target = windows.find((w) => w.id === context.window.id && appKey(w.app_name) === appKey(context.window.app_name) && (!context.window.pid || w.pid === context.window.pid));
     if (!target || target.minimized || !target.bounds) return reject("window-unavailable");
     const foreground = windows.find((w) => w.is_focused);
-    if (foreground && foreground.id !== target.id && !ownPids().includes(Number(foreground.pid))) return reject("focus-changed");
+    if (foreground && foreground.id !== target.id && !ownPids().includes(Number(foreground.pid))) return reject("focus-changed", { front: appKey(foreground.app_name) });
     if (originalBounds && !sameBox(originalBounds, target.bounds)) return reject("window-moved");
     originalBounds ??= target.bounds;
     if (items.some((item) => !insideBox(centerOf(item.bounds), target.bounds) || (item.to && !insideBox(centerOf(item.to), target.bounds)))) return reject("anchor-outside-window");
@@ -1172,19 +1172,37 @@ async function playSteps(lesson, win) {
     enter("idle");
     releaseLater("bubble");
   }
-  trace({ kind: "lesson-played", done: said.done });
+  trace({ kind: "lesson-played", done: said.done, said: said.text.slice(0, 200) });
   return said;
 }
 
 // ---------- The first minute: Buddy guiding, before any AI is chosen ----------
 
-/** Whether the starter lesson can be offered: Calculator names its controls in Windows' language, and it's English. */
-const starterOffered = () => process.platform === "win32" && /^en(-|$)/i.test(app.getPreferredSystemLanguages()[0] ?? app.getLocale());
+/** @type {Promise<boolean> | null} */
+let hasCalculator = null;
+/**
+ * Whether Windows' Calculator app is installed for this user. calc.exe is in System32 even where the app isn't
+ * (Windows Server, LTSC, some company images), so the app's own registration is what's asked; once, without blocking.
+ */
+const calculatorInstalled = () => (hasCalculator ??= new Promise((resolve) => {
+  execFile("reg", ["query", "HKCU\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppModel\\Repository\\Packages"], { windowsHide: true, timeout: 5000, maxBuffer: 8 * 1024 * 1024 }, (err, out) => resolve(!err && /Microsoft[.]WindowsCalculator_/i.test(String(out))));
+}));
 
 /**
- * "See Buddy in action first", from the welcome: Buddy opens Calculator (if it isn't open), points the way to
- * Scientific mode and follows the user's clicks, with no AI and no key. Then the welcome comes back, with what's next.
- * A Calculator Buddy opened is left open: it's the user's now, as if they'd opened it.
+ * Whether the starter lesson can be offered: Calculator is installed, and Windows is in English, since Calculator names
+ * its controls in Windows' language.
+ */
+const starterOffered = async () => !!starterStandIn || (process.platform === "win32" && /^en(-|$)/i.test(app.getPreferredSystemLanguages()[0] ?? app.getLocale()) && (await calculatorInstalled()));
+
+// End-to-end checks play the starter in a stand-in window of their own with Calculator's two controls
+// (scripts/samples/starter-window.ps1): launching and closing the real one over and over proved unreliable.
+const starterStandIn = process.env.BUDDY_E2E ? process.env.BUDDY_STARTER_WINDOW : undefined;
+const STAND_IN_TITLE = "Buddy starter sample";
+
+/**
+ * "See Buddy in action first", from the welcome: Buddy opens a Calculator window, points the way to Scientific mode
+ * and follows the user's clicks, with no AI and no key. Then the welcome comes back, with what's next. The Calculator
+ * Buddy opened is left open: it's the user's now, as if they'd opened it.
  */
 async function tryStarter() {
   if (mode !== "idle") {
@@ -1193,15 +1211,19 @@ async function tryStarter() {
   }
   const started = Date.now();
   const own = ownPids();
-  const calculator = async () => (await listWindows()).find((w) => !own.includes(w.pid) && appKey(w.app_name) === appKey(STARTER.app));
-  let win = await calculator();
-  if (!win) {
-    progress(t("Opening Calculator…"));
-    try {
-      spawn("calc.exe", [], { detached: true, stdio: "ignore", windowsHide: false }).unref();
-    } catch {}
-    for (const end = Date.now() + 10_000; !win && Date.now() < end; await new Promise((r) => setTimeout(r, 250))) win = await calculator();
-  }
+  const calculators = async () => (await listWindows()).filter((w) => !own.includes(w.pid) && (starterStandIn ? w.title === STAND_IN_TITLE : appKey(w.app_name) === appKey(STARTER.app)));
+  // Always opened afresh, even when one is open: Windows brings a window to the front when the app the user just
+  // clicked opens it, and the lesson can only draw over the window in front. One already open behind others would
+  // stop the lesson at its first step. If no new window comes (Calculator brought its own forward instead), that one.
+  const had = new Set((await calculators()).map((w) => w.id));
+  progress(t("Opening Calculator…"));
+  try {
+    if (starterStandIn) spawn("powershell.exe", ["-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-File", starterStandIn, "-Title", STAND_IN_TITLE], { stdio: "ignore", windowsHide: false });
+    else spawn("calc.exe", [], { detached: true, stdio: "ignore", windowsHide: false }).unref();
+  } catch {}
+  let win = null;
+  for (const end = Date.now() + 10_000; !win && Date.now() < end; await new Promise((r) => setTimeout(r, 250))) win = (await calculators()).find((w) => !had.has(w.id)) ?? null;
+  if (!win) win = (await calculators()).find((w) => w.is_focused) ?? (await calculators())[0] ?? null;
   if (!win) {
     notice(t("Calculator didn't open. Pick a way in, then ask Buddy about any app."));
     return { done: false };
@@ -1210,14 +1232,21 @@ async function tryStarter() {
   // drawing for the user's doing. Wait (a few seconds at most) until the first step's control is there.
   const probe = new Brain({ status() {}, point: async () => {}, confirm: async () => "deny", isOwnWindow: (w) => ownPids().includes(Number(w.pid)) });
   probe.target = win;
+  // Readable isn't settled: a window still laying itself out changes from one read to the next, which the lesson would
+  // take for the user's doing. So it starts once two reads in a row show the same controls, the first step's among them.
   const first = STARTER.steps[0].target;
-  for (const end = Date.now() + 8000; Date.now() < end; await new Promise((r) => setTimeout(r, 300))) {
+  let before = "";
+  let settled = false;
+  for (const end = Date.now() + 15_000; !settled && Date.now() < end; await new Promise((r) => setTimeout(r, 400))) {
     try {
+      probe.labels.clear();
       await probe.look({ app: win.app_name, window_id: win.id }, { windowOnly: true });
-      if ([...probe.labels.values()].some((l) => l.startsWith(`"${first}"`))) break;
+      const now = [...probe.labels.values()].sort().join("\n");
+      settled = now === before && now.includes(`"${first}"`);
+      before = now;
     } catch {}
   }
-  trace({ kind: "starter-play", readyMs: Date.now() - started });
+  trace({ kind: "starter-play", readyMs: Date.now() - started, settled });
   const said = await playSteps({ title: t(STARTER.title), steps: STARTER.steps.map((s) => ({ ...s, caption: t(s.caption) })) }, win);
   notice(said.done ? t("That's Buddy: it points, you click. Pick a way in, and you can ask about any app.") : said.text);
   summon();
@@ -1302,7 +1331,7 @@ onFrom(fromBubble, "voice-offer", async (_e, answer) => {
 
 // ---------- First-run setup in the bubble (welcome.js): an AI app, a model on this PC, or a key ----------
 
-handleFrom(fromBubble, "welcome-state", async () => ({ ...(await welcomeState(settings.providerURLs)), trial: starterOffered() }));
+handleFrom(fromBubble, "welcome-state", async () => ({ ...(await welcomeState(settings.providerURLs)), trial: await starterOffered() }));
 // "See Buddy in action first": the starter lesson, before any AI is chosen.
 handleFrom(fromBubble, "try-lesson", () => tryStarter().then((r) => ({ done: !!r?.done })));
 
@@ -2286,6 +2315,8 @@ app.whenReady().then(() => {
   lessons = createLessons({ file: path.join(app.getPath("userData"), "lessons.json") });
   connectors = createConnectors({ dir: path.join(app.getPath("userData"), "connectors"), safeStorage, open: openSignIn, trace, onChange: () => settingsWindow?.refresh() });
   connectors.start().catch(() => {});
+  // Whether Calculator is installed is asked now (a fraction of a second, once), so the welcome doesn't wait on it.
+  calculatorInstalled();
   // A meeting Buddy closed during: its transcript, saved as it grew, becomes a document.
   recoverTranscript(meetingFile(), writeNotes).then((file) => {
     if (!file) return;

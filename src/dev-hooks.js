@@ -1775,56 +1775,69 @@ function meetingTest(kit) {
 }
 
 /**
- * BUDDY_FIRST_MINUTE_TEST: the welcome's "See Buddy in action first", in a copy with no AI set up. Buddy opens
- * Calculator and points at the first step; a helper opens the menu through the accessibility tree (no mouse), and
- * the pointer moves on to the second step. Picking Scientific itself takes a real click (an accessibility select
- * doesn't switch modes), so Stop ends the lesson there, and the welcome comes back. A Calculator that was already
- * open is the owner's: the check leaves it alone and says it was skipped.
+ * BUDDY_FIRST_MINUTE_TEST: the welcome's "See Buddy in action first", in a copy with no AI set up, against a stand-in
+ * for Calculator with its two controls (BUDDY_STARTER_WINDOW: scripts/samples/starter-window.ps1). A helper does the
+ * user's clicks through the accessibility tree (no mouse). Once all the way through: Buddy points at each step in turn,
+ * the lesson finishes, and the welcome comes back saying what's next. Once more, stopped after the first step.
  * @param {DevKit} kit
  */
 function firstMinuteTest(kit) {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const until = async (check, ms = 20_000) => { for (const end = Date.now() + ms; Date.now() < end; await wait(150)) if (await check()) return true; return false; };
-  const readies = () => (fs.readFileSync(kit.timingLog(), "utf8").match(/"kind":"guide-ready"/g) ?? []).length;
+  const count = (/** @type {RegExp} */ re) => (fs.readFileSync(kit.timingLog(), "utf8").match(re) ?? []).length;
+  const readies = () => count(/"kind":"guide-ready"/g);
   setTimeout(async () => {
     const r = {};
-    /** @type {any} */
-    let opened = null;
     try {
-      const calculator = async () => (await listWindows()).find((w) => /^calculatorapp([.]exe)?$/i.test(String(w.app_name)));
-      if (await calculator()) {
-        r.skipped = "Calculator was already open";
-        throw null;
-      }
       kit.summon();
       const bubble = (/** @type {string} */ code) => kit.bubble.webContents.executeJavaScript(code);
-      r.offered = await until(() => bubble(`!!document.querySelector('[data-door="trial"]')`));
+      const island = () => kit.island.webContents.executeJavaScript(`document.getElementById("label").textContent`);
+      const trialDoor = `document.querySelector('[data-door="trial"]')`;
+      r.offered = await until(() => bubble(`!!${trialDoor}`));
+      /** @type {any} */
+      let standIn = null;
+      const findStandIn = async () => (standIn = (await listWindows()).find((w) => w.title === "Buddy starter sample"));
+      // The user's clicks, through the accessibility tree.
+      const click = async (/** @type {string} */ name) => {
+        const helper = new Brain({ status() {}, point: async () => {}, confirm: async () => "allow" });
+        helper.target = standIn;
+        helper.abort = new AbortController();
+        await helper.look({ app: standIn.app_name, window_id: standIn.id }, { windowOnly: true });
+        const ref = [...helper.labels].find(([, l]) => l.startsWith(`"${name}"`))?.[0];
+        return ref ? /"ok":true/.test(String(await helper.act({ action: "click", ref }))) : false;
+      };
+      // All the way through.
       const before = readies();
-      await bubble(`document.querySelector('[data-door="trial"]').click()`);
-      r.calculatorOpened = await until(async () => !!(opened = await calculator()));
+      const played = count(/"kind":"lesson-played"/g);
+      await bubble(`${trialDoor}.click()`);
+      r.opened = await until(findStandIn);
+      // A real click on the welcome makes Buddy the app in front, so the window it opens comes to the front. This
+      // check's click isn't real input, and the terminal running it keeps the foreground; so the check, as the user,
+      // brings the window forward itself.
+      if (r.opened) {
+        const hand = new Brain({ status() {}, point: async () => {}, confirm: async () => "allow" });
+        hand.abort = new AbortController();
+        hand.target = standIn;
+        await hand.runTool("window", { action: "focus", app: standIn.app_name, window_id: standIn.id });
+      }
       r.firstStep = await until(() => readies() > before);
       r.bubbleHidden = !kit.bubble.isVisible();
-      // The user's click on the first step, through the accessibility tree.
-      const helper = new Brain({ status() {}, point: async () => {}, confirm: async () => "allow" });
-      helper.target = opened;
-      helper.abort = new AbortController();
-      await helper.look({ app: opened.app_name, window_id: opened.id }, { windowOnly: true });
-      const nav = [...helper.labels].find(([, l]) => /^"Open Navigation"/.test(l))?.[0];
-      const clickSaid = nav ? String(await helper.act({ action: "click", ref: nav })) : "no Open Navigation in the window";
-      r.clicked = /"ok":true/.test(clickSaid);
-      if (!r.clicked) r.clickSaid = clickSaid.slice(0, 300);
+      r.island = await island();
+      r.clickedFirst = await click("Open Navigation");
       r.secondStep = await until(() => readies() > before + 1);
-      r.modeWhilePlaying = kit.currentMode();
-      r.island = await kit.island.webContents.executeJavaScript(`document.getElementById("label").textContent`);
-      // Stop, from the bubble's own Stop: the lesson ends and the welcome comes back.
+      r.clickedSecond = await click("Scientific Calculator");
+      r.finished = await until(() => count(/"kind":"lesson-played","done":true/g) > 0 && count(/"kind":"lesson-played"/g) > played);
+      r.welcomeBack = await until(async () => kit.bubble.isVisible() && (await bubble(`document.body.classList.contains("welcoming") && !!${trialDoor}`)), 8000);
+      r.said = await island();
+      // Once more, stopped after the first step: the lesson ends and the welcome comes back.
+      const again = readies();
+      await bubble(`${trialDoor}.click()`);
+      r.againFirstStep = await until(() => readies() > again);
       await bubble("window.buddy.cancel()");
       r.stopped = await until(() => kit.currentMode() === "idle");
-      r.welcomeBack = await until(async () => kit.bubble.isVisible() && (await bubble(`document.body.classList.contains("welcoming") && !!document.querySelector('[data-door="trial"]')`)), 8000);
+      r.welcomeAfterStop = await until(async () => kit.bubble.isVisible() && (await bubble(`!!${trialDoor}`)), 8000);
     } catch (err) {
-      if (err) r.error = String(err?.message ?? err);
-    } finally {
-      // The Calculator this check opened goes again.
-      if (opened?.pid) try { process.kill(opened.pid); } catch {}
+      r.error = String(err?.message ?? err);
     }
     console.log("FIRST_MINUTE_TEST", JSON.stringify(r));
     console.log("FIRST_MINUTE_TEST_DONE");

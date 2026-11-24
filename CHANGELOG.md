@@ -4,7 +4,11 @@
 
 * **See Buddy in action before setting anything up:** the welcome's first choice opens Calculator and guides you to
   Scientific mode, pointing at each step while you click: a lesson that comes with Buddy, so it needs no AI, no key
-  and sends nothing. Offered when Windows is in English (Calculator names its buttons in Windows' language).
+  and sends nothing. Offered when Calculator is installed and Windows is in English (Calculator names its buttons in
+  Windows' language).
+* **Lessons say why they stopped:** a step whose control was found but couldn't be shown (the app went behind another
+  window) now says so, instead of saying the control isn't on screen. A lesson's last step that only closes a menu is
+  now noticed however small the change.
 
 ## 0.6.1 (2026-11-24)
 

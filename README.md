@@ -22,8 +22,8 @@ each one unless you tell it otherwise.
 ## Three ways to start
 
 Before choosing anything, you can **see Buddy in action first**: it opens Windows' Calculator and points the way to
-Scientific mode while you click, with no AI and no key (offered when Windows is in English, since Calculator names its
-buttons in Windows' language).
+Scientific mode while you click, with no AI and no key (offered when Calculator is installed and Windows is in English,
+since Calculator names its buttons in Windows' language).
 
 To ask about anything, Buddy needs an AI to think with. The first time it starts, it offers three ways in:
 

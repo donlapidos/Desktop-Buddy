@@ -185,10 +185,11 @@ Buddy keeps itself up to date: it checks the releases now and then, downloads a 
 (checked against its SHA-512), and installs it when you restart Buddy or choose **Restart to update** in the tray or
 in Settings › About & updates, where automatic checks can also be turned off.
 
-Before you set anything up, the welcome offers **See Buddy in action first**: Buddy opens Calculator (or uses the one
-that's open), points at its menu, then at Scientific, and follows your clicks, the way it guides you in any app. It's
+Before you set anything up, the welcome offers **See Buddy in action first**: Buddy opens a Calculator window, points
+at its menu, then at Scientific, and follows your clicks, the way it guides you in any app. It's
 a lesson that comes with Buddy, so it needs no AI and no key and sends nothing anywhere; **Stop** ends it, and the
-welcome comes back. It's offered when Windows is in English, since Calculator names its buttons in Windows' language.
+welcome comes back. It's offered when Calculator is installed and Windows is in English, since Calculator names its buttons in Windows'
+language.
 
 Once Buddy is set up, two tips show you around. The first says to ask how to do something in the app you were
 using; press **Show me** there and Buddy points at one thing in that window and says what it's for. Like any

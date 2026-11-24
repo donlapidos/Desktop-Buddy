@@ -730,23 +730,27 @@ const CHECKS = {
     ].filter(Boolean);
   },
 
-  // The first minute, before any AI is chosen: the welcome's trial opens Calculator and guides the first steps with no
-  // model, Stop ends it, and the welcome comes back. Skipped (passing) when the owner's own Calculator is open.
+  // The first minute, before any AI is chosen: the welcome's trial opens the starter's app (a stand-in with Calculator's
+  // two controls) and guides it with no model to the end, then the welcome comes back; Stop ends it early just as well.
   async firstMinute() {
-    const { markers, timedOut } = await runCopy("first-minute", { BUDDY_FIRST_MINUTE_TEST: "1" }, "FIRST_MINUTE_TEST_DONE", 90_000);
+    const { markers, timedOut } = await runCopy("first-minute", { BUDDY_FIRST_MINUTE_TEST: "1", BUDDY_STARTER_WINDOW: path.join(app, "scripts", "samples", "starter-window.ps1") }, "FIRST_MINUTE_TEST_DONE", 120_000);
     const r = markers.FIRST_MINUTE_TEST?.[0];
     if (!r) return [timedOut ? "timed out" : "nothing printed"];
-    if (r.skipped) return (console.log(`      skipped: ${r.skipped}`), []);
     return [r.error,
       !r.offered && "the welcome didn't offer to see Buddy in action first",
-      !r.calculatorOpened && "Calculator didn't open",
+      !r.opened && "the starter's app didn't open",
       !r.firstStep && "Buddy didn't point at the first step",
       !r.bubbleHidden && "the bubble stayed over the app during the lesson",
-      !r.clicked && "the first step couldn't be clicked",
+      !/Step 1 of 2/.test(r.island ?? "") && `the island didn't say which step (${r.island})`,
+      !r.clickedFirst && "the first step couldn't be clicked",
       !r.secondStep && "after the first click, Buddy didn't move on to the second step",
-      r.modeWhilePlaying !== "working" && `the lesson wasn't running (${r.modeWhilePlaying})`,
+      !r.clickedSecond && "the second step couldn't be clicked",
+      !r.finished && "the lesson didn't finish after the last step",
+      !r.welcomeBack && "the welcome didn't come back after the lesson",
+      !/it points, you click/.test(r.said ?? "") && `after the lesson, Buddy didn't say what's next (${r.said})`,
+      !r.againFirstStep && "played again, Buddy didn't point at the first step",
       !r.stopped && "Stop didn't end the lesson",
-      !r.welcomeBack && "the welcome didn't come back after the lesson"].filter(Boolean);
+      !r.welcomeAfterStop && "the welcome didn't come back after Stop"].filter(Boolean);
   },
 
   // A lesson played in a test-owned window, with no model: it follows the step to its result, says when a control
