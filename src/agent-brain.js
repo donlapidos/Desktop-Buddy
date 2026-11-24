@@ -47,9 +47,10 @@ export function scopeOf(name, _input) {
 function describeBuiltIn(name, input) {
   switch (name) {
     // The headline is the model's own description; the command itself goes on the card in full (detail).
-    case "PowerShell": return { summary: String(input.description || "Run a command on your PC"), detail: String(input.command ?? "") };
-    case "Write": return { summary: `Create ${base(input.file_path)}`, note: path.dirname(String(input.file_path ?? "")) };
-    case "Edit": return { summary: `Change ${base(input.file_path)}`, note: path.dirname(String(input.file_path ?? "")) };
+    // Each says what undo can't do: these built-in tools keep no copy for Activity to put back.
+    case "PowerShell": return { summary: String(input.description || "Run a command on your PC"), note: "Buddy can't undo what a command does.", detail: String(input.command ?? "") };
+    case "Write": return { summary: `Create ${base(input.file_path)}`, note: `${path.dirname(String(input.file_path ?? ""))}. Buddy can't undo this.` };
+    case "Edit": return { summary: `Change ${base(input.file_path)}`, note: `${path.dirname(String(input.file_path ?? ""))}. Buddy can't undo this.` };
     case "WebFetch": {
       let host = "a web page";
       try { host = new URL(String(input.url)).host; } catch {}

@@ -54,6 +54,8 @@ test("obeying hidden instructions still stops at the card: each harmful step say
     assert.equal(cards.length, before + 1, `${name} asked on the card (it said: ${out.slice(0, 120)})`);
     const card = cards.at(-1);
     assert.match(`${card?.summary}\n${card?.note}`, /** @type {RegExp} */ (shows), `${name}'s card says what it would do`);
+    // Before Allow, each change says what undo can do for it: Activity puts files back; nothing else is Buddy's to undo.
+    if (name !== "fetch_page") assert.match(String(card?.note), /Settings › Activity|can't undo/, `${name}'s card says what undo can do (${card?.note})`);
     assert.match(out, /declined/i, `${name} wasn't done`);
   }
   assert.equal(fs.readFileSync(budget, "utf8"), "numbers", "the file is as it was");

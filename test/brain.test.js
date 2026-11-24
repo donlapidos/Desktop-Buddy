@@ -37,7 +37,7 @@ test("a declined action reports so, and the card pointed at the element with Cla
   const { b, cards } = brain();
   const result = await b.act({ action: "type", ref: "@s1:e1", text: "hello", summary: "Click Save" });
   assert.equal(result, "The user declined.");
-  assert.deepEqual(cards.map((c) => c.slice(0, 3)), [['Type "hello" into "Search" (textfield)', { x: 10, y: 20, width: 200, height: 30 }, "Click Save"]]);
+  assert.deepEqual(cards.map((c) => c.slice(0, 3)), [['Type "hello" into "Search" (textfield)', { x: 10, y: 20, width: 200, height: 30 }, "Click Save. Buddy can't undo this. If needed, undo it in the app."]]);
   assert.ok(cards[0][3] === undefined || cards[0][3] instanceof AbortSignal, "the asker's signal goes along, so a stopped answer withdraws its card");
 });
 
@@ -46,6 +46,8 @@ test("moving windows and opening apps ask first", async () => {
   assert.equal(await b.runTool("window", { action: "minimize", app: "WINWORD.EXE" }), "The user declined.");
   assert.equal(await b.runTool("launch_app", { name: "notepad" }), "The user declined.");
   assert.deepEqual(cards.map((c) => c[0]), ["Minimize WINWORD", "Open notepad"]);
+  // Moving a window or opening an app changes nothing to undo, so those cards don't talk about undo.
+  assert.deepEqual(cards.map((c) => c[2]), [undefined, undefined]);
 });
 
 test("each Brain reads and acts in its own agent-desktop session", () => {
@@ -374,7 +376,7 @@ test("the card shows every character Buddy would type, line breaks marked, and r
   assert.equal(await b.act({ action: "type", ref: "@s1:e1", text: "dir\nformat d: /q\n", summary: "List the folder" }), "The user declined.");
   const [summary, , note, , detail] = cards.at(-1);
   assert.match(summary, /dir⏎format d: \/q⏎/, "the one-line summary marks each Enter");
-  assert.equal(note, "List the folder", "the model's words stay a note");
+  assert.equal(note, "List the folder. Buddy can't undo this. If needed, undo it in WindowsTerminal.", "the model's words stay a note, and the card says undo is the app's");
   assert.equal(detail, "dir⏎\nformat d: /q⏎\n", "the detail shows it all, line by line");
   // Long text: the summary is cut, the detail isn't.
   const long = `${"a".repeat(300)} SECRET-TAIL`;
@@ -397,6 +399,7 @@ test("a connected service's card shows everything it will be given, even after a
   b.ui.connectors = { tools: () => [], describe: () => ({ service: "Mail", action: "Send" }), call: async () => "sent" };
   await b.serviceTool("mail__send", { body: "Hi team,\n".repeat(80), to: ["sam@example.com"], bcc: ["someone@elsewhere.example"] }, { service: "Mail", action: "Send" });
   assert.match(cards.at(-1)[4], /someone@elsewhere\.example/, "a recipient after a long body is on the card");
+  assert.equal(cards.at(-1)[2], "Buddy can't undo this. If needed, change it back in Mail.", "the card says undo is the service's, not Buddy's");
 });
 
 test("press and window act on the window the id names: its real app is judged, and an id from another app is refused", async () => {

@@ -1,5 +1,11 @@
 # Desktop Buddy changelog
 
+## Unreleased
+
+* **Each approval card says what undo can do, before you allow it:** a file Buddy makes, replaces, edits or copies
+  can be put back from Settings › Activity; a click or typing in an app is undone in that app; a command's effects
+  and a change in a connected service aren't Buddy's to undo. The README said Activity could undo everything.
+
 ## 0.6.1 (2026-11-24)
 
 * **Fixed:**
