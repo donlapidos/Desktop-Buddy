@@ -584,6 +584,7 @@
  "Taking notes": "Tomando notas",
  "Taking notes · {n} min": "Tomando notas · {n} min",
  "your microphone": "tu micrófono",
+ "The screen changed while you were marking. Press {key} to mark again.": "La pantalla cambió mientras marcabas. Pulsa {key} para marcar de nuevo.",
  "the PC's sound": "el sonido del PC",
  "Buddy can't hear {side} any more; still taking notes from {other}.": "Buddy ya no oye {side}; sigue tomando notas de {other}.",
  "Buddy stopped hearing the meeting, so it's writing up what it heard.": "Buddy dejó de oír la reunión, así que está redactando lo que oyó.",
