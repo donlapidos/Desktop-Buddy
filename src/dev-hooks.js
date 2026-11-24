@@ -33,7 +33,7 @@ import { learnCaps } from "./providers.js";
  *   pressHotkey: (name: any) => void, sendVoiceOffer: () => void, startupVoiceFetch: () => void, useKeyHook: (hook: import("./hold-key.js").KeyHook) => void,
  *   connectors: ReturnType<typeof import("./connectors.js").createConnectors> | null, offerConnection: (win: any) => Promise<void>,
  *   lessons: ReturnType<typeof import("./lessons.js").createLessons> | null, playLesson: (id: string, opts?: { window?: any }) => Promise<any>,
- *   startMeetingNotes: (o?: { testMic?: Uint8Array }) => Promise<any>, stopMeetingNotes: () => Promise<any>, meetingUI: { transcript: () => string },
+ *   startMeetingNotes: (o?: { testMic?: Uint8Array, testMicInfo?: { label: string, rate: number } }) => Promise<any>, stopMeetingNotes: () => Promise<any>, meetingUI: { transcript: () => string },
  *   meetingPage: () => Electron.BrowserWindow | null, meetingState: string,
  * }} DevKit
  */
@@ -1722,11 +1722,17 @@ function meetingTest(kit) {
       others.audio.forEach((v, i) => (mic[i] = v * 0.35));
       mic.set(mine.audio, others.audio.length + gap);
       step("start");
-      r.started = await kit.startMeetingNotes({ testMic: new Uint8Array(wavBytes(mic, rate)) });
+      // The recording stands in for a Bluetooth headset in its call mode, whose rate the page reads as its own 48 kHz:
+      // its name is enough for Buddy to say, once, that a cleaner microphone helps.
+      r.started = await kit.startMeetingNotes({ testMic: new Uint8Array(wavBytes(mic, rate)), testMicInfo: { label: "Headset (WH-1000XM4 Hands-Free AG Audio)", rate: 48000 } });
       spawn("powershell.exe", ["-NoProfile", "-Command", `(New-Object Media.SoundPlayer '${othersFile}').PlaySync()`], { windowsHide: true });
-      await wait(1500);
-      r.island = await kit.island.webContents.executeJavaScript(`document.body.dataset.state + "|" + document.getElementById("label").textContent + "|" + getComputedStyle(document.getElementById("notes-stop")).display`);
-      await wait((mic.length / rate) * 1000 + 2500);
+      const islandNow = () => kit.island.webContents.executeJavaScript(`document.body.dataset.state + "|" + document.getElementById("label").textContent + "|" + getComputedStyle(document.getElementById("notes-stop")).display`);
+      const shown = Date.now();
+      await wait(500);
+      // First the word about the headset, which the island fades after a few seconds; then notes, with Stop, again.
+      r.islandNotice = await islandNow();
+      for (const end = Date.now() + 8000; Date.now() < end && !/^notes\|/.test(r.island ?? ""); await wait(200)) r.island = await islandNow();
+      await wait(Math.max(0, (mic.length / rate) * 1000 + 4000 - (Date.now() - shown)));
       r.soFar = kit.meetingUI.transcript();
       // The meeting page crashes: a fresh one opens and the meeting goes on. Then the PC's sound ends, as an unplugged
       // headset's does: it's opened again. Each time, Buddy must still hear what's played next.
@@ -1755,6 +1761,7 @@ function meetingTest(kit) {
       r.soundBack = await until(() => logged(/"kind":"meeting-sound","who":"others","lost":false,"back":true/));
       await play("Marketing will draft the press release.", "after-unplug.wav");
       r.afterUnplug = kit.meetingUI.transcript();
+      r.callQualitySaid = fs.existsSync(log) ? (fs.readFileSync(log, "utf8").match(/"kind":"meeting-call-quality-mic"/g) ?? []).length : 0;
       step("stop");
       r.stopped = await kit.stopMeetingNotes();
       r.islandAfter = await kit.island.webContents.executeJavaScript(`document.body.dataset.state`);

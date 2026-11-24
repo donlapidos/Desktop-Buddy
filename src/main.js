@@ -48,7 +48,7 @@ import { createConversations } from "./conversations.js";
 import { appName, createLessons } from "./lessons.js";
 import { createConnectors, siteConnector } from "./connectors.js";
 import { writeDocx } from "./documents.js";
-import { createMeetingNotes, createMeetingSession, recoverTranscript } from "./meeting.js";
+import { callQualityMic, createMeetingNotes, createMeetingSession, recoverTranscript } from "./meeting.js";
 import { createMeetingCapture } from "./meeting-capture.js";
 import { LANGUAGES, N, language, pickLanguage, setLanguage, t, table } from "./i18n.js";
 import { appKey } from "./policy.js";
@@ -309,14 +309,32 @@ async function meetingSound(e) {
     if (r.you) hearing.add("you");
     if (r.others) hearing.add("others");
     trace({ kind: "meeting-reopened", you: !!r.you, others: !!r.others });
+    checkMic(r.mic);
     return;
   }
   if (e.back) hearing.add(e.who);
+  if (e.who === "you" && (e.back || e.switched)) checkMic(e.mic);
   if (!e.gone) return;
   hearing.delete(e.who);
   if (!hearing.size) return lostTheMeeting();
   const other = e.who === "you" ? "others" : "you";
   notice(t("Buddy can't hear {side} any more; still taking notes from {other}.", { side: sideName(e.who), other: sideName(other) }));
+}
+
+/** Whether this meeting has said its microphone is call quality (once is enough). */
+let saidCallQuality = false;
+
+/**
+ * A Bluetooth headset's microphone in its call mode sends rougher sound: the user's own words come out worse. Said
+ * once per meeting, with what helps; Buddy doesn't switch microphones itself, as the headset may be the only one
+ * near the user.
+ * @param {import("./meeting-capture.js").MicInfo | undefined} mic
+ */
+function checkMic(mic) {
+  if (saidCallQuality || !callQualityMic(mic)) return;
+  saidCallQuality = true;
+  trace({ kind: "meeting-call-quality-mic", label: mic?.label, rate: mic?.rate });
+  notice(t("Your headset's microphone is in call mode, so your words may come out rougher. Your PC's own microphone gives a cleaner transcript."));
 }
 
 async function lostTheMeeting() {
@@ -365,21 +383,23 @@ function showMeetingLine() {
 /**
  * Starts taking notes of a meeting, in whatever app it's in: the microphone and the PC's sound, transcribed on the PC.
  * Buddy stays quiet meanwhile (its voice would be in the transcript). Resolves what it could hear, or an error in words.
- * @param {{ testMic?: Uint8Array }} [o] testMic: a recording played as the microphone (end-to-end check)
+ * @param {{ testMic?: Uint8Array, testMicInfo?: { label: string, rate: number } }} [o] testMic: a recording played as the microphone, and the device it stands in for (end-to-end check)
  * @returns {Promise<{ you?: boolean, others?: boolean, error?: string }>}
  */
-async function startMeetingNotes({ testMic } = {}) {
+async function startMeetingNotes({ testMic, testMicInfo } = {}) {
   if (!voice) return { error: t("Buddy's listening isn't available, so it can't take notes.") };
   if (meetings.state === "stopping") return { error: t("Buddy is still writing up the last meeting's notes.") };
   if (meetingOn()) return { error: t("Buddy is already taking notes.") };
   hushReply();
-  const r = await meetings.start({ testMic });
+  const r = await meetings.start({ testMic, testMicInfo });
   if (r.error === "busy") return { error: t("Buddy is already taking notes.") };
   if (r.error) return { error: t("Buddy couldn't hear the meeting: neither the microphone nor the PC's sound would open.") };
   hearing.clear();
   if (r.you) hearing.add("you");
   if (r.others) hearing.add("others");
   trace({ kind: "meeting-started", you: !!r.you, others: !!r.others });
+  saidCallQuality = false;
+  checkMic(r.mic);
   return { you: !!r.you, others: !!r.others };
 }
 

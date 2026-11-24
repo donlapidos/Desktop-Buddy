@@ -63,6 +63,18 @@ export function createTranscript() {
   };
 }
 
+/**
+ * Whether a microphone sends call-quality sound: a Bluetooth headset's, once Windows switches it to its hands-free
+ * mode for the microphone, is often 8 kHz, half what the recognizer needs, and the user's words come out rougher.
+ * Windows names that mode's device "… Hands-Free …". Either sign is enough: the rate a page reports can be its own
+ * processing rate rather than the headset's, so a usual rate doesn't clear a hands-free device.
+ * @param {{ label?: string, rate?: number } | null | undefined} mic
+ */
+export function callQualityMic(mic) {
+  const rate = Number(mic?.rate);
+  return (rate > 0 && rate < 16000) || /hands[- ]?free/i.test(String(mic?.label ?? ""));
+}
+
 /** "4:05", or "1:02:09" past an hour, from ms. */
 export function clock(/** @type {number} */ ms) {
   const s = Math.max(0, Math.floor(ms / 1000));
@@ -216,7 +228,7 @@ export async function recoverTranscript(progressFile, write) {
  * While on, the capture can be reopened (its page crashed): the meeting stays on and keeps its transcript, one reopen
  * at a time, and a stop meanwhile waits for it, as it waits for a start.
  * @param {{
- *   capture: { start: (o?: any) => Promise<{ you?: boolean, others?: boolean, problems?: string[] }>, stop: () => Promise<void>, close: () => void },
+ *   capture: { start: (o?: any) => Promise<{ you?: boolean, others?: boolean, problems?: string[], mic?: { label: string, rate: number } }>, stop: () => Promise<void>, close: () => void },
  *   makeNotes: () => ReturnType<typeof createMeetingNotes>,
  *   onState?: (state: SessionState) => void,
  * }} deps
@@ -228,7 +240,7 @@ export function createMeetingSession({ capture, makeNotes, onState }) {
   let notes = null;
   /** @type {Promise<unknown> | null} */
   let starting = null;
-  /** @type {Promise<{ you?: boolean, others?: boolean, problems?: string[] }> | null} */
+  /** @type {Promise<{ you?: boolean, others?: boolean, problems?: string[], mic?: { label: string, rate: number } }> | null} */
   let reopening = null;
   /** What the capture was started with, to start it the same way again, and when: a page opened again counts its
    * times from the meeting's start, not its own, so the transcript stays in order. */
@@ -247,7 +259,7 @@ export function createMeetingSession({ capture, makeNotes, onState }) {
     /**
      * Resolves which sides were heard, or an error: "busy" (not off), "unheard" (nothing would open).
      * @param {any} [o] what the capture page is started with
-     * @returns {Promise<{ you?: boolean, others?: boolean, error?: "busy" | "unheard", problems?: string[] }>}
+     * @returns {Promise<{ you?: boolean, others?: boolean, error?: "busy" | "unheard", problems?: string[], mic?: { label: string, rate: number } }>}
      */
     async start(o) {
       if (state !== "off") return { error: "busy" };
@@ -255,7 +267,7 @@ export function createMeetingSession({ capture, makeNotes, onState }) {
       opened = o;
       openedAt = Date.now();
       notes = makeNotes();
-      /** @type {Promise<{ you?: boolean, others?: boolean, problems?: string[] }>} */
+      /** @type {Promise<{ you?: boolean, others?: boolean, problems?: string[], mic?: { label: string, rate: number } }>} */
       const opening = capture.start(o).catch((err) => ({ problems: [String(err?.message ?? err)] }));
       starting = opening;
       const heard = await opening;
@@ -268,7 +280,7 @@ export function createMeetingSession({ capture, makeNotes, onState }) {
         return { error: "unheard", problems: heard.problems ?? [] };
       }
       become("on");
-      return { you: !!heard.you, others: !!heard.others };
+      return { you: !!heard.you, others: !!heard.others, ...(heard.mic && { mic: heard.mic }) };
     },
     /**
      * Stops and writes up. Resolves the document, or an error: "off" (nothing to stop), or what failed.
@@ -278,7 +290,7 @@ export function createMeetingSession({ capture, makeNotes, onState }) {
      * Opens the capture again while on (its page crashed), keeping the meeting and its transcript. Resolves which
      * sides it hears now, or an error: "off" (not on, or already reopening), "unheard" (nothing would open; the
      * meeting is still on, for the caller to stop and write up what was heard).
-     * @returns {Promise<{ you?: boolean, others?: boolean, error?: "off" | "unheard", problems?: string[] }>}
+     * @returns {Promise<{ you?: boolean, others?: boolean, error?: "off" | "unheard", problems?: string[], mic?: { label: string, rate: number } }>}
      */
     async reopen() {
       if (state !== "on" || reopening) return { error: "off" };
@@ -287,7 +299,7 @@ export function createMeetingSession({ capture, makeNotes, onState }) {
       const heard = await reopening;
       reopening = null;
       if (!heard.you && !heard.others) return { error: "unheard", problems: heard.problems ?? [] };
-      return { you: !!heard.you, others: !!heard.others };
+      return { you: !!heard.you, others: !!heard.others, ...(heard.mic && { mic: heard.mic }) };
     },
     async stop() {
       if (state === "starting") await starting;

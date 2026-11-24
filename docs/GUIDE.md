@@ -106,7 +106,9 @@ VS Code and more).
   cleanest transcript. In some places everyone in a meeting has to agree to it being transcribed: let them know.
   If Buddy closes mid-meeting, the transcript so far is saved as a document the next time it starts. If a headset is
   unplugged or switches, Buddy picks the sound up again (and follows a newly plugged-in microphone); if it can't hear
-  one side any more, it says so, and if it can't hear anything, it writes up what it heard.
+  one side any more, it says so, and if it can't hear anything, it writes up what it heard. A Bluetooth headset's
+  microphone sends call-quality sound once Windows switches the headset to its call mode, so your own words come out
+  rougher; Buddy says so when it happens, and your PC's own microphone gives a cleaner transcript.
 - **Connections** (with the advanced features): Buddy can use Notion, Linear, HubSpot, and Jira and Confluence for
   you, with your own account there. On one of their sites, the bubble offers once: **Connect**, **Not now** or
   **Don't ask again**; or connect from **Settings › Connections**. You sign in in your browser, so Buddy never sees

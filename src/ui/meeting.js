@@ -85,6 +85,13 @@ async function systemSound() {
   return new MediaStream(shared.getAudioTracks());
 }
 
+/** Which microphone a stream comes from, and its rate when the page can tell: a Bluetooth headset in its call mode
+ * sends rougher sound (meeting.js callQualityMic). */
+const micOf = (stream) => {
+  const track = stream.getAudioTracks()[0];
+  return { label: track?.label ?? "", rate: track?.getSettings().sampleRate ?? 0 };
+};
+
 const microphone = () => navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
 
 // A side's sound can end mid-meeting: a headset unplugged, a Bluetooth headset switching modes, the output device
@@ -124,7 +131,7 @@ async function lost(m, who) {
       if (meeting !== m) return stream.getTracks().forEach((t) => t.stop());
       hear(m, stream, who);
       m.reopening.delete(who);
-      return window.buddy.meetingEvent({ who, back: true });
+      return window.buddy.meetingEvent({ who, back: true, mic: who === "you" ? micOf(stream) : undefined });
     } catch {}
   }
   m.reopening.delete(who);
@@ -145,7 +152,7 @@ async function followDefaultMic(m) {
     if (meeting !== m) return stream.getTracks().forEach((t) => t.stop());
     drop(m, "you");
     hear(m, stream, "you");
-    window.buddy.meetingEvent({ who: "you", switched: true });
+    window.buddy.meetingEvent({ who: "you", switched: true, mic: micOf(stream) });
   } catch {
     // The old microphone carries on; if it's gone, its ending says so.
   } finally {
@@ -154,16 +161,18 @@ async function followDefaultMic(m) {
 }
 
 /**
- * @param {{ testMic?: Uint8Array, testQuiet?: boolean, since?: number }} o  testMic: a recording (WAV bytes) played as
- *   the microphone, for the end-to-end check; testQuiet: a silent stand-in microphone (the check's page, opened
- *   again); since: how far into the meeting this page starts (ms), when it replaces one that crashed
+ * @param {{ testMic?: Uint8Array, testQuiet?: boolean, testMicInfo?: { label: string, rate: number }, since?: number }} o
+ *   testMic: a recording (WAV bytes) played as the microphone, for the end-to-end check; testQuiet: a silent stand-in
+ *   microphone (the check's page, opened again); testMicInfo: the device the recording stands in for; since: how far
+ *   into the meeting this page starts (ms), when it replaces one that crashed
  */
-async function start({ testMic, testQuiet, since = 0 } = {}) {
+async function start({ testMic, testQuiet, testMicInfo, since = 0 } = {}) {
   if (meeting) return;
   const ctx = new AudioContext();
   const m = { t0: performance.now() - Math.max(0, Number(since) || 0), sources: [], ctx, reopening: new Set(), onDevices: () => followDefaultMic(m).catch(() => {}) };
   meeting = m;
   await ctx.audioWorklet.addModule("voice-capture.js");
+  /** @type {{ started: boolean, others: boolean, you: boolean, problems: string[], mic?: { label: string, rate: number } }} */
   const state = { started: true, others: false, you: false, problems: [] };
   try {
     hear(m, await systemSound(), "others");
@@ -180,8 +189,12 @@ async function start({ testMic, testQuiet, since = 0 } = {}) {
       play.buffer = buffer;
       m.sources.push(listenTo(ctx, play, "you", m.t0));
       play.start();
+      // The check can say which device the recording stands in for.
+      if (testMicInfo) state.mic = testMicInfo;
     } else {
-      hear(m, await microphone(), "you");
+      const mic = await microphone();
+      state.mic = micOf(mic);
+      hear(m, mic, "you");
       navigator.mediaDevices.addEventListener("devicechange", m.onDevices);
     }
     state.you = true;

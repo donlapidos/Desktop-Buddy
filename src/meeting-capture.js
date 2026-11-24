@@ -9,8 +9,9 @@ const READY_MS = 15_000; // how long the page may take to open the microphone an
 const STOP_MS = 5_000;
 
 /**
- * @typedef {{ started?: boolean, stopped?: boolean, you?: boolean, others?: boolean, problems?: string[] }} CaptureState
- * @typedef {{ who: "you" | "others", lost?: boolean, back?: boolean, gone?: boolean, switched?: boolean } | { page: "gone", reason?: string }} CaptureEvent
+ * @typedef {{ label: string, rate: number }} MicInfo  which microphone, and its rate if the page could tell
+ * @typedef {{ started?: boolean, stopped?: boolean, you?: boolean, others?: boolean, problems?: string[], mic?: MicInfo }} CaptureState
+ * @typedef {{ who: "you" | "others", lost?: boolean, back?: boolean, gone?: boolean, switched?: boolean, mic?: MicInfo } | { page: "gone", reason?: string }} CaptureEvent
  *   A side's sound ended (lost), came back (back), stayed gone after a few tries (gone), or followed a new default
  *   microphone (switched); or the page itself crashed, taking both sides with it.
  * @param {{ here: string, onPiece: (piece: { who: "you" | "others", start: number, end: number, pcm: Float32Array }) => void, onEvent?: (e: CaptureEvent) => void, trace?: (entry: object) => void }} o
@@ -30,6 +31,8 @@ export function createMeetingCapture({ here, onPiece, onEvent = () => {}, trace 
     callback(screen ? { video: screen, audio: "loopback" } : {});
   });
 
+  /** The page's word on its microphone, kept to a name and a number. @returns {MicInfo | undefined} */
+  const micInfo = (/** @type {any} */ m) => (m && typeof m === "object" ? { label: String(m.label ?? "").slice(0, 200), rate: Number(m.rate) || 0 } : undefined);
   const fromPage = (/** @type {Electron.IpcMainEvent} */ e) => !!win && !win.isDestroyed() && e.sender === win.webContents;
   ipcMain.on("meeting-piece", (e, p) => {
     if (!fromPage(e) || !(p?.pcm instanceof Float32Array)) return;
@@ -43,7 +46,7 @@ export function createMeetingCapture({ here, onPiece, onEvent = () => {}, trace 
   });
   ipcMain.on("meeting-event", (e, ev) => {
     if (!fromPage(e) || (ev?.who !== "you" && ev?.who !== "others")) return;
-    const event = { who: ev.who, lost: !!ev.lost, back: !!ev.back, gone: !!ev.gone, switched: !!ev.switched };
+    const event = { who: ev.who, lost: !!ev.lost, back: !!ev.back, gone: !!ev.gone, switched: !!ev.switched, mic: micInfo(ev.mic) };
     trace({ kind: "meeting-sound", ...event });
     onEvent(event);
   });
@@ -64,11 +67,11 @@ export function createMeetingCapture({ here, onPiece, onEvent = () => {}, trace 
     },
     /**
      * Opens the page and starts hearing. Resolves which sources it got (`you`, `others`) and what went wrong.
-     * @param {{ testMic?: Uint8Array, since?: number }} [o] testMic: a recording played as the microphone (end-to-end
+     * @param {{ testMic?: Uint8Array, testMicInfo?: MicInfo, since?: number }} [o] testMic: a recording played as the microphone (end-to-end
      *   check); since: how far into the meeting (ms) a page opened again starts, so its times follow on
      * @returns {Promise<CaptureState>}
      */
-    async start({ testMic, since } = {}) {
+    async start({ testMic, testMicInfo, since } = {}) {
       if (win && !win.isDestroyed()) return { started: true, you: true, others: true };
       win = new BrowserWindow({ show: false, width: 200, height: 100, skipTaskbar: true, webPreferences: { preload: path.join(here, "preload.cjs"), session: ses, backgroundThrottling: false } });
       const page = win;
@@ -90,8 +93,9 @@ export function createMeetingCapture({ here, onPiece, onEvent = () => {}, trace 
       // A test recording plays once: a page opened again after a crash has a silent stand-in microphone instead.
       const replay = !!testMic && played.has(testMic);
       if (testMic) played.add(testMic);
-      win.webContents.send("meeting", { cmd: "start", testMic: replay ? undefined : testMic, testQuiet: replay, since });
+      win.webContents.send("meeting", { cmd: "start", testMic: replay ? undefined : testMic, testQuiet: replay, testMicInfo, since });
       const state = await ready;
+      state.mic = micInfo(state.mic);
       trace({ kind: "meeting-capture", you: !!state.you, others: !!state.others, problems: state.problems ?? [] });
       if (!state.you && !state.others) this.close();
       return state;
