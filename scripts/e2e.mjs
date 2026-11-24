@@ -241,6 +241,8 @@ const CHECKS = {
       !r.overlayGone && "the overlay stayed after Ask", !r.barGone && "the toolbar stayed after Ask",
       !r.cancelled && "Cancel didn't end marking", !r.cancelOverlayGone && "the overlay stayed after Cancel",
       !r.clickLeft && "a quick click didn't explain", !r.clickOverlayGone && "the overlay stayed after a click",
+      !r.unchangedKept && "marking ended when its display hadn't changed",
+      !r.changedEnded && "marking went on after its display's scale changed", !r.changedOverlayGone && "the overlay stayed after its display changed",
       // An installed Buddy runs the overlay built at release and compiles nothing on the PC (src/native.js).
       installed && !/[\\/]resources[\\/]native[\\/]marker-overlay-[0-9a-f]{12}\.exe$/i.test(r.exe ?? "") && `the installed copy didn't run its shipped overlay (${r.exe})`,
       installed && r.compiled?.length && `the installed copy compiled ${r.compiled.join(", ")}`].filter(Boolean));

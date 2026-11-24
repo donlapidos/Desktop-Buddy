@@ -982,6 +982,7 @@ const marker = createMarker({
     return startOverlay(exe, toPhysicalRect(asDipRect(display.bounds)), { scale: display.scaleFactor, color: ACCENTS[settings.accent].hex, onEvent });
   },
   toDipPoint,
+  markKey: () => keyLabel(hotkey("mark")),
 });
 const { start: startMarking, stop: stopMarkMode, clear: clearMarks, cancel: cancelMarking } = marker;
 
@@ -2182,6 +2183,7 @@ const devKit = () => ({
   get about() { return about; },
   set about(a) { about = a; },
   get markDisplay() { return marker.display(); },
+  markDisplaysChanged: (/** @type {Electron.Display[]} */ displays) => marker.displaysChanged(displays),
   get markWin() { return marker.window(); },
   get markLive() { return marker.liveOverlay(); },
   get markBar() { return marker.liveBar(); },
@@ -2243,6 +2245,8 @@ app.whenReady().then(() => {
   watchCpu();
   setInterval(keepIsland, 1500);
   const displaysChanged = () => {
+    // Marking on a display that just went or changed ends first: its strokes can't be placed any more.
+    marker.displaysChanged();
     createOverlays();
     keepIsland();
   };

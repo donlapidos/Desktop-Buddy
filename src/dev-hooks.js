@@ -20,6 +20,7 @@ import { learnCaps } from "./providers.js";
  *   trace: (entry: object) => void,
  *   settings: any, brain: any, about: { window: any, point: any },
  *   markDisplay: Electron.Display | null, markWin: Electron.BrowserWindow | null, pendingMarks: any, displayCaptures: number,
+ *   markDisplaysChanged: (displays: Electron.Display[]) => void,
  *   markLive: import("./marker-live.js").LiveOverlay | null, markBar: Electron.BrowserWindow | null,
  *   bubble: Electron.BrowserWindow, island: Electron.BrowserWindow, tasks: any, voice: any, updates: any, activity: any,
  *   settingsWindow: { open: (page?: string) => void },
@@ -698,6 +699,20 @@ function markLiveTest(kit) {
         kit.markLive?.send({ cmd: "click", x: c.x, y: c.y });
         r.clickLeft = await until(() => currentMode() !== "marking");
         r.clickOverlayGone = await until(() => !alive(pid3), 5000);
+        // The displays change while marking. If the one being marked is as it was (another display changed), marking
+        // goes on; if its scale changed (or it went), marking ends: its strokes can't be placed any more.
+        await until(() => currentMode() === "idle", 10000);
+        startMarking();
+        await until(() => !!kit.markLive, 15000);
+        const pid4 = kit.markLive?.pid;
+        const marked = /** @type {Electron.Display} */ (kit.markDisplay);
+        screen.emit("display-metrics-changed", {}, marked, ["workArea"]);
+        await wait(300);
+        r.unchangedKept = currentMode() === "marking" && !!kit.markLive;
+        // Windows can't be made to change a display's scale here, so the displays as they'd be afterwards are handed in.
+        kit.markDisplaysChanged(screen.getAllDisplays().map((x) => (x.id === marked.id ? { ...x, scaleFactor: x.scaleFactor + 0.25 } : x)));
+        r.changedEnded = await until(() => currentMode() === "idle" && !kit.markLive && !kit.markBar, 3000);
+        r.changedOverlayGone = await until(() => !alive(pid4), 5000);
       }
     } catch (err) {
       r.error = err.message;

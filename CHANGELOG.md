@@ -1,5 +1,11 @@
 # Desktop Buddy changelog
 
+## Unreleased
+
+* **Fixed:**
+  * Plugging in or removing a screen, docking, or changing the scale while marking no longer asks about the wrong
+    spot: marking ends and says so, and Mark starts afresh on the screen as it is now.
+
 ## 0.6.0 (2026-11-24)
 
 * **Meeting notes, in any meeting app:** say "take notes" (or use the tray menu) in Teams, Zoom, Meet or anything

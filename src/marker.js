@@ -7,6 +7,7 @@ import { BrowserWindow, globalShortcut, ipcMain, screen } from "electron";
 import path from "node:path";
 import { elementsAt, windowsAt } from "./desktop.js";
 import { asDipPoint, asDipRect, asPhysicalPoint } from "./geometry.js";
+import { t } from "./i18n.js";
 import { prepareMarker } from "./marker-startup.js";
 
 /** @typedef {import("./geometry.js").DipPoint} DipPoint */
@@ -81,6 +82,7 @@ const markLabel = (m) => {
  *   trace: (entry: object) => void,
  *   live?: (display: Electron.Display, onEvent: (e: import("./marker-live.js").LiveEvent) => void) => Promise<import("./marker-live.js").LiveOverlay>, // marker-live.js
  *   toDipPoint?: (p: PhysicalPoint) => DipPoint,
+ *   markKey?: () => string,                                 // the Mark shortcut, as the user sees it
  * }} deps
  */
 export function createMarker(deps) {
@@ -400,8 +402,26 @@ export function createMarker(deps) {
     setTimeout(() => deps.explain(dip), 120);
   });
 
+  /**
+   * The displays changed (one added or removed, a resolution or scale changed). Marking works in the coordinates of the
+   * display it started on: the overlay and toolbar are sized to it, and the strokes, the picture and what's under each
+   * mark are all read against it. If that display went or changed, nothing drawn on it can be placed any more, so
+   * marking ends and says so, rather than ask about the wrong spot. Another display changing leaves it be.
+   * @param {Electron.Display[]} [displays] the displays now (checks pass their own)
+   */
+  function displaysChanged(displays = screen.getAllDisplays()) {
+    if (mode() !== "marking" || !markDisplay) return;
+    const was = markDisplay;
+    const now = displays.find((d) => d.id === was.id);
+    const same = now && now.scaleFactor === was.scaleFactor && ["x", "y", "width", "height"].every((k) => now.bounds[k] === was.bounds[k]);
+    if (same) return;
+    trace({ kind: "mark-display-changed", gone: !now });
+    cancel();
+    notice(t("The screen changed while you were marking. Press {key} to mark again.", { key: deps.markKey?.() ?? "Mark" }));
+  }
+
   return {
-    start, stop, clear, cancel,
+    start, stop, clear, cancel, displaysChanged,
     /** What the user marked, still waiting for their question. */
     pending: () => pendingMarks,
     /** What the user marked, handed to the question that uses it. */
