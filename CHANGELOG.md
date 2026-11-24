@@ -1,7 +1,15 @@
 # Desktop Buddy changelog
 
-## Unreleased
+## 0.6.0 (2026-11-24)
 
+* **Meeting notes, in any meeting app:** say "take notes" (or use the tray menu) in Teams, Zoom, Meet or anything
+  else. Buddy transcribes your microphone and your PC's sound on your PC, lets you ask about the meeting as it goes,
+  and when you stop, saves a Word document with notes written by your AI (summary, decisions, action items) and the
+  whole transcript. Only text is kept; the island shows when notes are on.
+* **Connect HubSpot:** Buddy can look up and update your HubSpot contacts, companies, deals, tickets and notes, and
+  read marketing reports, asking on its card before each action. HubSpot only lets in apps a company sets up for
+  itself, so someone sets up a connector in HubSpot once and pastes its two codes into Settings › Connections; then
+  everyone signs in as themselves.
 * **Approval cards show everything:** every character Buddy would type, with each line break marked ⏎ (in a console
   a line break presses Enter), the whole PowerShell command, and everything a connected service would be sent, in a
   box beneath the card's summary. Before, the card squashed line breaks and cut long text and service data short.
@@ -38,14 +46,6 @@
   * Undoing copied files moves exactly those copies to the Recycle Bin (it said it had, but left them), and leaves the
     folder's other files alone.
   * The chat, task windows and Settings no longer get stuck busy when something fails on Buddy's side.
-* **Meeting notes, in any meeting app:** say "take notes" (or use the tray menu) in Teams, Zoom, Meet or anything
-  else. Buddy transcribes your microphone and your PC's sound on your PC, lets you ask about the meeting as it goes,
-  and when you stop, saves a Word document with notes written by your AI (summary, decisions, action items) and the
-  whole transcript. Only text is kept; the island shows when notes are on.
-* **Connect HubSpot:** Buddy can look up and update your HubSpot contacts, companies, deals, tickets and notes, and
-  read marketing reports, asking on its card before each action. HubSpot only lets in apps a company sets up for
-  itself, so someone sets up a connector in HubSpot once and pastes its two codes into Settings › Connections; then
-  everyone signs in as themselves.
 
 ## 0.5.1 (2026-11-20)
 
