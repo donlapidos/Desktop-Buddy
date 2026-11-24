@@ -537,6 +537,7 @@ const CHECKS = {
       hold && !hold.hookGoneAfterTap && "the hook stayed after a tap",
       hold && hold.timedOut !== "listen,hold,finish" && `a release that never came did ${hold.timedOut}, not listen, hold, finish`,
       hold && !hold.idleAfterTimeout && "after the release timed out, the hook stayed or Buddy kept listening",
+      hold && hold.afterBusyHold !== "listen" && `after a hold while Buddy was busy, the next Talk did ${hold.afterBusyHold}, not just listen`,
     ].filter(Boolean);
   },
 

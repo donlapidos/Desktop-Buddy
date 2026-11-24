@@ -349,6 +349,23 @@ async function holdToTalkCheck(kit) {
   await wait(Number(process.env.BUDDY_HOLD_TIMEOUT_MS ?? 2000) + 800);
   r.timedOut = calls.join(",");
   r.idleAfterTimeout = !hook.installed && (await idle());
+  // Held while Buddy is busy (marking): it can't listen, and letting go must leave nothing behind, so the next Talk
+  // that isn't held (here, with hold to talk off) listens as usual instead of ending at once.
+  calls = [];
+  kit.enter("marking");
+  kit.pressHotkey("talk");
+  await wait(600);
+  hook.onKeyUp?.(T);
+  await wait(200);
+  kit.enter("idle");
+  const holdWas = kit.settings.holdToTalk;
+  kit.changeSettings({ holdToTalk: false });
+  kit.pressHotkey("talk");
+  await wait(600);
+  r.afterBusyHold = calls.join(",");
+  voice.cancelListening();
+  await idle();
+  kit.changeSettings({ holdToTalk: holdWas });
   return r;
 }
 

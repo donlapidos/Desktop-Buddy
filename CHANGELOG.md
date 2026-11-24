@@ -9,6 +9,8 @@
   however its name is spelled ("KeePassXC", a full path); "Allow for this task" for a service covers that one tool;
   and a click meant for a card that has just been replaced doesn't answer the new one.
 * **Fixed:**
+  * Holding the Talk key while Buddy was busy could make the next Talk stop listening the moment it started. Each
+    press now only holds or ends the listening it started.
   * Meeting notes keep going when the sound does something unexpected: an unplugged or switching headset is picked up
     again, a newly plugged-in microphone is followed, and Buddy's hidden listening page is reopened if it crashes.
     Before, notes stayed "on" while hearing nothing. A side that stays silent is now said, and when Buddy can't hear
