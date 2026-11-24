@@ -1,6 +1,6 @@
 # Desktop Buddy changelog
 
-## Unreleased
+## 0.6.1 (2026-11-24)
 
 * **Fixed:**
   * Taking meeting notes through a Bluetooth headset's microphone: Windows puts the headset in its call mode, which
