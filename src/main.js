@@ -1373,8 +1373,9 @@ const HEARD_ERRORS = {
 const heardError = (error) => (HEARD_ERRORS[error] ? t(HEARD_ERRORS[error]) : t("Couldn't hear you: {why}", { why: error }));
 
 // The talk hotkey: start listening; pressed again while listening, stop and use what was said. It also cuts
-// Buddy off mid-sentence.
-async function talk() {
+// Buddy off mid-sentence. `press`: the held key this listening follows (hold to talk), or none (a click, a tap of a
+// key that can't be watched): only that press's hold and release can keep it open or end it.
+async function talk(/** @type {Press | null} */ press = null) {
   if (!voice) return;
   if (mode === "listening") return voice.finishListening();
   if (mode === "working") {
@@ -1394,15 +1395,14 @@ async function talk() {
     brain.glance?.(about.window, { keep: true });
   } else await summon();
   bubble.webContents.send("listening", true);
-  progress(talkHold ? t("Listening… let go when you're done") : t("Listening…"));
+  progress(press?.hold ? t("Listening… let go when you're done") : t("Listening…"));
   const listening = voice.listen();
-  // The Talk key may have been held, or already let go, while the bubble was opening.
-  if (talkHold === "held") voice.holdListening();
-  else if (talkHold === "released") {
-    talkHold = null;
-    voice.finishListening();
-  }
+  if (press) press.listening = true;
+  // The key may have been held, or already let go, while the bubble was opening.
+  if (press?.hold === "held") voice.holdListening();
+  else if (press?.hold === "released") voice.finishListening();
   const { text, error, lang, heardMs, endedAt } = await listening;
+  if (press) press.listening = false;
   heardLang = lang ?? "en";
   heardTiming = text && endedAt ? { at: endedAt, heardMs } : null;
   bubble.webContents.send("listening", false);
@@ -1418,12 +1418,15 @@ async function talk() {
 
 // Holding the Ask or Talk shortcut talks to Buddy until it's let go; a tap keeps what each did before (Ask opens or
 // closes the bubble, Talk listens until a pause). The keyboard hook that sees the release exists only between the press
-// and the release (hold-key.js). `talkHold` is that press's state for talk(): null, "held" or "released".
-/** @type {null | "held" | "released"} */
-let talkHold = null;
+// and the release (hold-key.js). Each press carries its own state, handed to the talk() it starts: a press can only
+// hold or end the listening it began, never a click's or an earlier press's, and nothing is left behind for the next.
+/**
+ * @typedef {{ name: string, bubbleWasOpen: boolean, hold: null | "held" | "released", listening: boolean }} Press
+ *   hold: held past a tap, then let go; listening: the talk() it started is listening now.
+ */
 /** @type {import("./hold-key.js").KeyHook} */
 let keyHook = uiohookHook();
-/** @type {{ name: string, bubbleWasOpen: boolean } | null} */
+/** The press being watched for its release. @type {Press | null} */
 let pressedKey = null;
 const holdKey = createHoldKey({
   hook: { start: (onKeyUp) => keyHook.start(onKeyUp), stop: () => keyHook.stop() },
@@ -1433,46 +1436,46 @@ const holdKey = createHoldKey({
   onTap: () => {
     const p = pressedKey;
     pressedKey = null;
-    talkHold = null;
     if (p?.name === "ask" && p.bubbleWasOpen) toggle();
   },
   onHoldStart: () => {
-    talkHold = "held";
-    if (pressedKey?.name === "ask") talk();
+    const p = pressedKey;
+    if (!p) return;
+    p.hold = "held";
+    if (p.name === "ask") talk(p);
     // Already listening: keep going through pauses. Still opening the bubble: talk() applies it once listening starts.
-    else if (mode === "listening" && voice?.listening) voice.holdListening();
+    else if (p.listening) voice?.holdListening();
   },
   onHoldEnd: ({ timedOut }) => {
+    const p = pressedKey;
     pressedKey = null;
+    if (!p) return;
     if (timedOut) trace({ kind: "hold-released-late" });
-    // Let go while listening: that's the end of the question. Let go before listening began (the bubble was still
-    // opening): talk() ends it as soon as it starts.
-    if (mode === "listening" && voice?.listening) {
-      talkHold = null;
-      voice.finishListening();
-    } else talkHold = "released";
+    p.hold = "released";
+    // Let go while its listening goes on: that's the end of the question. Let go before listening began (the bubble
+    // was still opening): talk() ends it as soon as it starts. A press whose talk() never listened (Buddy was busy)
+    // ends nothing.
+    if (p.listening) voice?.finishListening();
   },
 });
 
 // Talk from a click (the bubble's mic, the island, the tray): no key is held.
-const talkByClick = () => {
-  talkHold = null;
-  return talk();
-};
+const talkByClick = () => talk();
 
 /** A global shortcut fired. @param {import("./settings.js").HotkeyName} name */
 function pressHotkey(name) {
   if (!settings.holdToTalk || !voice || (name !== "ask" && name !== "talk")) return HOTKEY_ACTIONS[name]();
   if (holdKey.watching) return; // the key repeating while held
   const bubbleWasOpen = !!bubble?.isVisible();
-  pressedKey = { name, bubbleWasOpen };
-  talkHold = null;
+  /** @type {Press} */
+  const press = { name, bubbleWasOpen, hold: null, listening: false };
+  pressedKey = press;
   if (!holdKey.pressed(hotkey(name))) {
     pressedKey = null;
     return HOTKEY_ACTIONS[name]();
   }
   // Ask opens the bubble at once (a tap on an open one closes it, on release); Talk starts listening at once.
-  if (name === "talk") talk();
+  if (name === "talk") talk(press);
   else if (!bubbleWasOpen) toggle();
 }
 
