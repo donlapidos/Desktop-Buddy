@@ -253,7 +253,7 @@ both the `files` entry and the top-level `sha512`) and the `.blockmap`, and uplo
 That needs a small script that isn't written yet. A service that signs from CI, such as Azure Artifact Signing
 (electron-builder's `win.azureSignOptions`), avoids that, if the owner is eligible for it.
 
-## Owner handover: shipping 0.6.0
+## Owner handover: shipping 0.6.1
 
 Everything the agent couldn't do. Run the commands from the repository folder.
 
@@ -291,7 +291,7 @@ $b64 | gh secret set WIN_CSC_LINK --repo donlapidos/desktop-buddy
 gh secret set WIN_CSC_KEY_PASSWORD --repo donlapidos/desktop-buddy   # paste the password when asked
 ```
 
-Releases ship unsigned until then, as 0.3.0 to 0.6.0 have; the website and release notes say how to get past
+Releases ship unsigned until then, as 0.3.0 to 0.6.1 have; the website and release notes say how to get past
 Windows' "protected your PC" warning.
 
 ### 3. Tag and publish
@@ -301,19 +301,19 @@ After this branch is merged to `main` and `main` is pulled:
 ```powershell
 git checkout main
 git pull
-git tag v0.6.0
-git push origin v0.6.0
+git tag v0.6.1
+git push origin v0.6.1
 ```
 
-The Release workflow builds the installer into a **draft** release v0.6.0 whose notes only say its name. Watch it with
-`gh run watch`, then publish it with the 0.6.0 notes from `CHANGELOG.md` (saved to a file, with the line on getting past
+The Release workflow builds the installer into a **draft** release v0.6.1 whose notes only say its name. Watch it with
+`gh run watch`, then publish it with the 0.6.1 notes from `CHANGELOG.md` (saved to a file, with the line on getting past
 Windows' warning at the end), in one go:
 
 ```powershell
-gh release edit v0.6.0 --notes-file <notes file> --draft=false --latest
+gh release edit v0.6.1 --notes-file <notes file> --draft=false --latest
 ```
 
-Check that `https://github.com/donlapidos/desktop-buddy/releases/latest/download/latest.yml` says `version: 0.6.0`:
+Check that `https://github.com/donlapidos/desktop-buddy/releases/latest/download/latest.yml` says `version: 0.6.1`:
 installed copies offer the update from then on.
 
 ### 4. Turn on the website

@@ -1,6 +1,6 @@
 {
   "name": "desktop-buddy",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Shows you where to click, in any Windows app, with the AI you choose. Built on agent-desktop.",
   "main": "src/main.js",
   "type": "module",
