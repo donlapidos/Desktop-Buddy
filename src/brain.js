@@ -110,7 +110,7 @@ export function failureFor(/** @type {string} */ kind, /** @type {import("./prov
 const PREVIEW_FRESH_MS = 30_000;
 const PREVIEW_WAIT_MS = 4_000;
 // guide_steps reads windows as deep as wait_for_user does, and gives a just-opened menu this long to draw.
-const GUIDE_SNAPSHOT = ["-i", "--compact", "--include-bounds", "--max-depth", "25", "--timeout-ms", "3000"];
+export const GUIDE_SNAPSHOT = ["-i", "--compact", "--include-bounds", "--max-depth", "25", "--timeout-ms", "3000"];
 const MENU_SETTLE_MS = 400;
 // guide_steps' first step uses the model's last read of the window when it's this recent.
 const GUIDE_REUSE_MS = 15_000;
@@ -1970,6 +1970,11 @@ ${text}` };
    * @param {import("./lessons.js").Step[]} steps @param {any} target the window to play it in
    * @returns {Promise<{ done: boolean, text: string }>}
    */
+  /**
+   * Plays a lesson's steps in `target`. `fixable`: the step whose control couldn't be told (gone, or several of
+   * them), which a repair can aim at another control.
+   * @returns {Promise<{ done: boolean, text: string, fixable?: number }>}
+   */
   async playLesson(steps, target) {
     this.ui.clearAnnotations?.();
     this.abort = new AbortController();
@@ -1981,8 +1986,8 @@ ${text}` };
     const ask = "Ask Buddy to finish from here.";
     if (o.kind === "finished") return { done: true, text: "Done: that's the whole lesson." };
     if (o.kind === "stuck" && o.why === "unshown") return { done: false, text: `At ${at(o.step)}, Buddy found "${steps[o.step].target}" but couldn't show it: the app went behind another window. Click the app to bring it to the front, then play the lesson again.` };
-    if (o.kind === "stuck" && o.why === "several") return { done: false, text: `At ${at(o.step)}, there's more than one "${steps[o.step].target}" on screen, so Buddy couldn't tell which. ${ask}` };
-    if (o.kind === "stuck") return { done: false, text: `At ${at(o.step)}, "${steps[o.step].target}" isn't on screen. The app may look different from when the lesson was saved. ${ask}` };
+    if (o.kind === "stuck" && o.why === "several") return { done: false, text: `At ${at(o.step)}, there's more than one "${steps[o.step].target}" on screen, so Buddy couldn't tell which. ${ask}`, fixable: o.step };
+    if (o.kind === "stuck") return { done: false, text: `At ${at(o.step)}, "${steps[o.step].target}" isn't on screen. The app may look different from when the lesson was saved. ${ask}`, fixable: o.step };
     if (o.kind === "waiting") return { done: false, text: `Still waiting at ${at(o.step)}. Play the lesson again when you're ready.` };
     if (o.kind === "changed") return { done: false, text: `Your screen changed at ${at(o.step)} in a way the lesson doesn't expect. ${ask}` };
     if (o.kind === "no-window") return { done: false, text: "Open the app this lesson is for, then play it again." };

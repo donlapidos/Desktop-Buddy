@@ -101,8 +101,24 @@ function showShelf(shelf) {
   box.hidden = false;
 }
 
+// A lesson stopped at a step whose control is called something else now: offer to fix it (with an AI), or not.
+window.buddy.onRepairOffer((/** @type {{ text: string, canFix: boolean }} */ { text, canFix }) => {
+  $("repair-text").textContent = canFix ? text : `${text} ${t("Fixing a step needs an AI: pick a way in first.")}`;
+  $("repair-fix").hidden = !canFix;
+  $("repair-offer").hidden = false;
+});
+$("repair-fix").addEventListener("click", () => {
+  $("repair-offer").hidden = true;
+  window.buddy.repairLesson();
+});
+$("repair-no").addEventListener("click", () => {
+  $("repair-offer").hidden = true;
+  window.buddy.repairDismiss();
+});
+
 window.buddy.onSummon(({ target, needsKey: nk, tip: nextTip, voiceOffer, advanced = true, shelf = null }) => {
   document.body.classList.toggle("basic", !advanced);
+  $("repair-offer").hidden = true; // an offer is for the lesson that just stopped, sent after this
   // Even before an AI is chosen: a lesson plays without one (one a colleague shared, say).
   showShelf(shelf);
   needsKey = nk;
@@ -323,6 +339,7 @@ $form().addEventListener("submit", async (e) => {
   if (!text) return;
   $input().value = "";
   showShelf(null); // they've asked something of their own
+  $("repair-offer").hidden = true;
   if (needsKey) {
     const { ok, error } = await window.buddy.setKey(text);
     console.log("WELCOME_KEY " + JSON.stringify({ ok, error }));

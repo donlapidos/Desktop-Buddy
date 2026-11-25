@@ -8,7 +8,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { APPS, APP_IDS, appStatus } from "./ai-apps.js";
-import { Brain, SESSION_PREFIX, setAgentPolicy, setBrainDefaults, takeTurn } from "./brain.js";
+import { Brain, GUIDE_SNAPSHOT, SESSION_PREFIX, setAgentPolicy, setBrainDefaults, takeTurn } from "./brain.js";
 import { PROVIDERS, testedOf, verdict } from "./providers.js";
 import { CASES } from "./evals.js";
 import { createActivity, pruneUndo } from "./activity.js";
@@ -20,7 +20,7 @@ import { createHoldKey, uiohookHook } from "./hold-key.js";
 import { createApprovalQueue } from "./approval-queue.js";
 import { islandView } from "./island-state.js";
 import { dictationPaste, returnFocus } from "./approvals.js";
-import { elementAt, foregroundWindow, listWindows, perform, resolveBinary, windowAt } from "./desktop.js";
+import { elementAt, findControl, foregroundWindow, listWindows, perform, resolveBinary, snapshotResilient, windowAt } from "./desktop.js";
 import { createTasks } from "./tasks.js";
 import { asDipPoint, asDipRect, asPhysicalPoint, asPhysicalRect, modelPictureSize } from "./geometry.js";
 import { BUSY, canMove } from "./modes.js";
@@ -46,7 +46,7 @@ import { createMarker } from "./marker.js";
 import { createAiAppSetup } from "./ai-app-setup.js";
 import { createAppBridge } from "./app-bridge.js";
 import { createConversations } from "./conversations.js";
-import { STARTER, appName, createLessons, lessonsFor } from "./lessons.js";
+import { REPAIR_SYSTEM, STARTER, appName, createLessons, lessonsFor, namedControls, parsePick, repairQuestion, repairedStep } from "./lessons.js";
 import { createConnectors, siteConnector } from "./connectors.js";
 import { writeDocx } from "./documents.js";
 import { callQualityMic, createMeetingNotes, createMeetingSession, recoverTranscript } from "./meeting.js";
@@ -1139,15 +1139,82 @@ async function playLesson(/** @type {string} */ id, { window = null } = {}) {
   const open = (await listWindows()).filter((w) => !own.includes(w.pid) && String(w.app_name).toLowerCase() === lesson.app.toLowerCase());
   const win = (window && open.find((w) => w.id === window.id)) ?? open.find((w) => w.is_focused) ?? open[0];
   if (!win) return notice(t("Open {app} first, then play the lesson again.", { app: appName(lesson.app) }));
-  const said = await playSteps(lesson, win);
-  notice(said.text);
+  return playFrom(lesson, 0, win);
+}
+
+/**
+ * The saved lesson that stopped at a step whose control couldn't be told, for "Fix this step": which lesson, which
+ * step, and the window it was playing in. Cleared when anything else is played or the fix is made.
+ * @type {{ id: string, index: number, window: any } | null}
+ */
+let lessonStuck = null;
+
+/** Plays a saved lesson from step `index` and says how it went; one that stopped at a step it couldn't find offers a fix. */
+async function playFrom(/** @type {import("./lessons.js").Lesson} */ lesson, /** @type {number} */ index, /** @type {any} */ win) {
+  lessonStuck = null;
+  const said = await playSteps({ title: lesson.title, steps: lesson.steps.slice(index) }, win);
+  if (said.fixable == null) {
+    notice(said.text);
+    return said;
+  }
+  lessonStuck = { id: lesson.id, index: index + said.fixable, window: win };
+  trace({ kind: "lesson-stuck", step: lessonStuck.index + 1 });
+  await summon();
+  bubble.webContents.send("repair-offer", { text: said.text.replace(/ Ask Buddy to finish from here[.]$/, ""), canFix: !!brain });
   return said;
+}
+
+/**
+ * "Fix this step": the step's control is called something else now. Buddy reads the window's controls, asks the AI
+ * which one the step means (it can only answer with one of them), checks that one is there and unmistakable, keeps
+ * the step aimed at it, and plays on from there. Like any question, it sends the window's control names to the AI.
+ */
+async function repairLesson() {
+  const stuck = lessonStuck;
+  lessonStuck = null;
+  const lesson = stuck && lessons?.get(stuck.id);
+  if (!stuck || !lesson) return notice(t("That lesson is gone."));
+  if (!brain) return notice(t("Fixing a step needs an AI: pick a way in first."));
+  if (mode !== "idle") return progress(t(BUSY[mode]));
+  const step = lesson.steps[stuck.index];
+  hideBubble({ now: true });
+  enter("working");
+  progress(t("Finding step {n} in {app}…", { n: stuck.index + 1, app: appName(lesson.app) }));
+  /** @type {string} */
+  let problem = "";
+  let fixed = null;
+  try {
+    const res = await snapshotResilient(["--window-id", stuck.window.id], GUIDE_SNAPSHOT, { timeoutMs: 20_000 });
+    if (!res.ok) throw new Error(t("Buddy couldn't read the window."));
+    const controls = namedControls(res.data.tree);
+    const pick = parsePick(await brain.complete(REPAIR_SYSTEM, repairQuestion(step, controls, lesson.app), { maxTokens: 300 }), controls.length);
+    const control = pick == null ? null : controls[pick];
+    const found = control && findControl(res.data.tree, control.name, control.role);
+    const next = control && found?.node ? repairedStep(step, control) : null;
+    if (!control) problem = t("Your AI didn't find a control in the window that fits that step.");
+    else if (!found?.node) problem = t("There's more than one \"{name}\" in the window, so the step can't point at one.", { name: control.name });
+    else if (!next) problem = t("That isn't a step Buddy can play.");
+    else {
+      const kept = lessons.updateStep(lesson.id, stuck.index, next);
+      if ("error" in kept) problem = kept.error;
+      else fixed = { lesson: kept.lesson, name: control.name };
+    }
+  } catch (err) {
+    problem = String(err?.message ?? err);
+  } finally {
+    enter("idle");
+  }
+  trace({ kind: "lesson-repair", step: stuck.index + 1, fixed: !!fixed });
+  if (!fixed) return notice(t("Couldn't fix step {n}: {why}", { n: stuck.index + 1, why: problem }));
+  settingsWindow?.refresh();
+  progress(t("Step {n} now points at \"{name}\". Playing on from there.", { n: stuck.index + 1, name: fixed.name }));
+  return playFrom(fixed.lesson, stuck.index, stuck.window);
 }
 
 /**
  * Plays a lesson's steps in `win`: Buddy points at each and follows the user, with no model call and no key.
  * @param {{ title: string, steps: readonly import("./lessons.js").Step[] }} lesson @param {any} win
- * @returns {Promise<{ done: boolean, text: string }>}
+ * @returns {Promise<{ done: boolean, text: string, fixable?: number }>}
  */
 async function playSteps(lesson, win) {
   enter("working");
@@ -2268,6 +2335,9 @@ function startUpdates() {
   updates.start();
 }
 onFrom(fromBubble, "open-settings", (_e, page) => settingsWindow.open(page === "claude" || page === "lessons" ? page : undefined));
+// "Fix this step" under a lesson that stopped, or "Not now".
+onFrom(fromBubble, "repair-lesson", () => repairLesson());
+onFrom(fromBubble, "repair-dismiss", () => { lessonStuck = null; });
 // A lesson from the shelf, played in the window they called Buddy from. Only a lesson for that window's app: the
 // shelf offers no others, and a lesson only points, so a wrong id has nothing to play.
 onFrom(fromBubble, "play-lesson", (_e, id) => {
