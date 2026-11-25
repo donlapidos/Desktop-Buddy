@@ -1,23 +1,23 @@
 # Desktop Buddy changelog
 
-## Unreleased
+## 0.7.0 (2026-11-25)
 
-* **Fix a lesson when the app changes:** when a step's button was renamed or moved and the lesson stops there,
-  **Fix this step** has your AI find it in the window as it is now (it can only pick a control that's there), keeps
-  the fix in the lesson, and plays on from that step. Share the lesson again and the fix goes with it.
-* **Lessons where you need them:** open the bubble in an app you have lessons for and they're offered right there
-  (**Lessons for Excel**), one click each, even before an AI is set up. Settings › Lessons can search them by name or
-  app.
 * **See Buddy in action before setting anything up:** the welcome's first choice opens Calculator and guides you to
   Scientific mode, pointing at each step while you click: a lesson that comes with Buddy, so it needs no AI, no key
   and sends nothing. Offered when Calculator is installed and Windows is in English (Calculator names its buttons in
   Windows' language).
-* **Lessons say why they stopped:** a step whose control was found but couldn't be shown (the app went behind another
-  window) now says so, instead of saying the control isn't on screen. A lesson's last step that only closes a menu is
-  now noticed however small the change.
+* **Lessons where you need them:** open the bubble in an app you have lessons for and they're offered right there
+  (**Lessons for Excel**), one click each, even before an AI is set up. Settings › Lessons can search them by name or
+  app.
+* **Fix a lesson when the app changes:** when a step's button was renamed or moved and the lesson stops there,
+  **Fix this step** has your AI find it in the window as it is now (it can only pick a control that's there), keeps
+  the fix in the lesson, and plays on from that step. Share the lesson again and the fix goes with it.
 * **Each approval card says what undo can do, before you allow it:** a file Buddy makes, replaces, edits or copies
   can be put back from Settings › Activity; a click or typing in an app is undone in that app; a command's effects
   and a change in a connected service aren't Buddy's to undo. The README said Activity could undo everything.
+* **Lessons say why they stopped:** a step whose control was found but couldn't be shown (the app went behind another
+  window) now says so, instead of saying the control isn't on screen. A lesson's last step that only closes a menu is
+  now noticed however small the change.
 
 ## 0.6.1 (2026-11-24)
 
