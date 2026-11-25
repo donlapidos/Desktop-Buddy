@@ -21,7 +21,11 @@ each one unless you tell it otherwise.
 
 ## Three ways to start
 
-Buddy needs an AI to think with. The first time it starts, it offers three ways in:
+Before choosing anything, you can **see Buddy in action first**: it opens Windows' Calculator and points the way to
+Scientific mode while you click, with no AI and no key (offered when Calculator is installed and Windows is in English,
+since Calculator names its buttons in Windows' language).
+
+To ask about anything, Buddy needs an AI to think with. The first time it starts, it offers three ways in:
 
 1. **With the AI app you already use.** Claude Code, the Claude app, Codex, Gemini CLI, Cursor, VS Code (Copilot),
    Windsurf or LM Studio. Buddy adds itself in one click; no key needed.

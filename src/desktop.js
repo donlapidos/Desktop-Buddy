@@ -529,7 +529,12 @@ export function nearestNames(tree, target, max = 5) {
 // changed: "window" (a new or retitled one), "controls", or "values" (a selection or text they typed).
 const windowTarget = (w) => w.id ? ["--window-id", w.id] : ["--app", w.app_name];
 const WAIT_SNAPSHOT = ["-i", "--compact", "--include-bounds", "--max-depth", "25", "--timeout-ms", "3000"];
-export async function waitForProgress({ win, steps, timeoutMs = 45_000, signal, session, onReady = null }) {
+/**
+ * `gone`: a control to watch for leaving the window ({ target, role }), for a step whose only sign of being done is
+ * that its control goes (a menu item that closes its menu). Two reads in a row without it say so, however small the
+ * rest of the change: hiding one button may not move the window's shape far enough to count as a change.
+ */
+export async function waitForProgress({ win, steps, timeoutMs = 45_000, signal, session, onReady = null, gone = null }) {
   const needles = steps.map((s) => String(s).toLowerCase().trim()).filter(Boolean);
   const read = (w) => snapshotResilient(windowTarget(w), WAIT_SNAPSHOT, { timeoutMs: 8_000, signal, session });
   const ofApp = async () => (await listWindows()).filter((w) => w.pid === win.pid);
@@ -539,6 +544,21 @@ export async function waitForProgress({ win, steps, timeoutMs = 45_000, signal, 
   const baseline = first.ok ? controlShape(first.data.tree) : null;
   const held = first.ok ? controlValues(first.data.tree) : null;
   const seen = new Set((await ofApp()).map((w) => `${w.id}|${w.title}`));
+  // By name only: findControl's near matches by meaning would find "Scientific" (the heading that shows once the menu
+  // item is chosen) and call "Scientific Calculator" still there.
+  const named = (/** @type {any} */ tree) => {
+    const want = plainName(gone?.target ?? "");
+    let hit = false;
+    const walk = (/** @type {any} */ n) => {
+      if (hit || !n) return;
+      if (n.name && n.bounds && !(n.states ?? []).includes("offscreen") && plainName(n.name).includes(want)) hit = true;
+      for (const c of n.children ?? []) walk(c);
+    };
+    walk(tree);
+    return hit;
+  };
+  const watching = !!gone && !!plainName(gone.target) && first.ok && named(first.data.tree);
+  let missingReads = 0;
   onReady?.();
   let changedReads = 0;
   while (Date.now() < until) {
@@ -553,6 +573,10 @@ export async function waitForProgress({ win, steps, timeoutMs = 45_000, signal, 
     if (res.ok) {
       const step = furthestStep(needles, already, res.data.tree);
       if (step >= 0) return { status: "appeared", step, window: win, snapshot: res.data };
+      if (watching) {
+        missingReads = named(res.data.tree) ? 0 : missingReads + 1;
+        if (missingReads >= 2) return { status: "changed", why: "gone", step: -1, window: win, snapshot: res.data };
+      }
       const why = baseline && shapeDistance(baseline, controlShape(res.data.tree)) >= SHAPE_CHANGE ? "controls"
         : held && valuesChanged(held, controlValues(res.data.tree)) ? "values" : null;
       changedReads = why ? changedReads + 1 : 0;

@@ -402,7 +402,8 @@ const CHECKS = {
       const r = markers.WELCOME_TEST?.[0];
       if (!r) return [timedOut ? "timed out before the check finished" : "the check printed nothing"];
       return [
-        JSON.stringify(r.doors) !== '["apps","local","key"]' && `the doors were ${JSON.stringify(r.doors)}`,
+        // The three ways in, after the trial when Windows is in English (the starter lesson's Calculator names).
+        !['["apps","local","key"]', '["trial","apps","local","key"]'].includes(JSON.stringify(r.doors)) && `the doors were ${JSON.stringify(r.doors)}`,
         r.keyFieldAtStart && "a fresh Buddy showed the key field before a way in was chosen",
         JSON.stringify(r.apps) !== '["Gemini CLI"]' && `the AI apps found were ${JSON.stringify(r.apps)}`,
         !/^Buddy is in Gemini CLI\./.test(r.appText ?? "") && `after adding: ${JSON.stringify(r.appText)}`,
@@ -722,10 +723,34 @@ const CHECKS = {
     const want = { spanish: { ask: "Preguntar", allow: "Permitir", placeholder: "¿Cómo hago…?  o  Hazlo por mí", lang: "es", talk: "Hablar" }, english: { ask: "Ask", allow: "Allow", placeholder: "How do I…?  or  Do it for me", lang: "en", talk: "Talk" } };
     return [
       ...["spanish", "english"].flatMap((which) => Object.entries(want[which]).filter(([k, v]) => r[which]?.[k] !== v).map(([k, v]) => `${which} ${k} was ${JSON.stringify(r[which]?.[k])}, not ${JSON.stringify(v)}`)),
-      r.setupSpanish !== "Buddy necesita una IA para pensar. Elige una forma de empezar:" && `setup in Spanish said ${JSON.stringify(r.setupSpanish)}`,
-      r.setupEnglish !== "Buddy needs an AI to think with. Pick one way in:" && `setup switched to English said ${JSON.stringify(r.setupEnglish)}`,
+      // The opening line, with or without the trial before it (offered when Windows is in English).
+      !["Buddy necesita una IA para pensar. Elige una forma de empezar:", "Después, para preguntar lo que sea, Buddy necesita una IA. Elige una forma de empezar:"].includes(r.setupSpanish) && `setup in Spanish said ${JSON.stringify(r.setupSpanish)}`,
+      !["Buddy needs an AI to think with. Pick one way in:", "Then, to ask about anything, Buddy needs an AI. Pick one way in:"].includes(r.setupEnglish) && `setup switched to English said ${JSON.stringify(r.setupEnglish)}`,
       ...(r.leftEnglish ?? ["Settings wasn't read"]).map((s) => `English left in Spanish Settings: ${s}`),
     ].filter(Boolean);
+  },
+
+  // The first minute, before any AI is chosen: the welcome's trial opens the starter's app (a stand-in with Calculator's
+  // two controls) and guides it with no model to the end, then the welcome comes back; Stop ends it early just as well.
+  async firstMinute() {
+    const { markers, timedOut } = await runCopy("first-minute", { BUDDY_FIRST_MINUTE_TEST: "1", BUDDY_STARTER_WINDOW: path.join(app, "scripts", "samples", "starter-window.ps1") }, "FIRST_MINUTE_TEST_DONE", 120_000);
+    const r = markers.FIRST_MINUTE_TEST?.[0];
+    if (!r) return [timedOut ? "timed out" : "nothing printed"];
+    return [r.error,
+      !r.offered && "the welcome didn't offer to see Buddy in action first",
+      !r.opened && "the starter's app didn't open",
+      !r.firstStep && "Buddy didn't point at the first step",
+      !r.bubbleHidden && "the bubble stayed over the app during the lesson",
+      !/Step 1 of 2/.test(r.island ?? "") && `the island didn't say which step (${r.island})`,
+      !r.clickedFirst && "the first step couldn't be clicked",
+      !r.secondStep && "after the first click, Buddy didn't move on to the second step",
+      !r.clickedSecond && "the second step couldn't be clicked",
+      !r.finished && "the lesson didn't finish after the last step",
+      !r.welcomeBack && "the welcome didn't come back after the lesson",
+      !/it points, you click/.test(r.said ?? "") && `after the lesson, Buddy didn't say what's next (${r.said})`,
+      !r.againFirstStep && "played again, Buddy didn't point at the first step",
+      !r.stopped && "Stop didn't end the lesson",
+      !r.welcomeAfterStop && "the welcome didn't come back after Stop"].filter(Boolean);
   },
 
   // A lesson played in a test-owned window, with no model: it follows the step to its result, says when a control

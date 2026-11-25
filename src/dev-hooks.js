@@ -1116,7 +1116,7 @@ function welcomeTest(kit) {
 
     changeSettings({ provider: "anthropic" });
     await openDoors();
-    r.doorsAgain = !kit.brain && (await js(`document.querySelectorAll("[data-door]").length`)) === 3;
+    r.doorsAgain = !kit.brain && (await js(`document.querySelectorAll("[data-door]:not([data-door=trial])").length`)) === 3;
     await click("[data-door]", "API key");
     await js(`document.getElementById("input").value = "sk-ant-api03-${"e2e".repeat(30)}"; document.getElementById("form").requestSubmit()`);
     await until(`document.getElementById("welcome").hidden`);
@@ -1774,6 +1774,76 @@ function meetingTest(kit) {
   }, 2500);
 }
 
+/**
+ * BUDDY_FIRST_MINUTE_TEST: the welcome's "See Buddy in action first", in a copy with no AI set up, against a stand-in
+ * for Calculator with its two controls (BUDDY_STARTER_WINDOW: scripts/samples/starter-window.ps1). A helper does the
+ * user's clicks through the accessibility tree (no mouse). Once all the way through: Buddy points at each step in turn,
+ * the lesson finishes, and the welcome comes back saying what's next. Once more, stopped after the first step.
+ * @param {DevKit} kit
+ */
+function firstMinuteTest(kit) {
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const until = async (check, ms = 20_000) => { for (const end = Date.now() + ms; Date.now() < end; await wait(150)) if (await check()) return true; return false; };
+  const count = (/** @type {RegExp} */ re) => (fs.readFileSync(kit.timingLog(), "utf8").match(re) ?? []).length;
+  const readies = () => count(/"kind":"guide-ready"/g);
+  setTimeout(async () => {
+    const r = {};
+    try {
+      kit.summon();
+      const bubble = (/** @type {string} */ code) => kit.bubble.webContents.executeJavaScript(code);
+      const island = () => kit.island.webContents.executeJavaScript(`document.getElementById("label").textContent`);
+      const trialDoor = `document.querySelector('[data-door="trial"]')`;
+      r.offered = await until(() => bubble(`!!${trialDoor}`));
+      /** @type {any} */
+      let standIn = null;
+      const findStandIn = async () => (standIn = (await listWindows()).find((w) => w.title === "Buddy starter sample"));
+      // The user's clicks, through the accessibility tree.
+      const click = async (/** @type {string} */ name) => {
+        const helper = new Brain({ status() {}, point: async () => {}, confirm: async () => "allow" });
+        helper.target = standIn;
+        helper.abort = new AbortController();
+        await helper.look({ app: standIn.app_name, window_id: standIn.id }, { windowOnly: true });
+        const ref = [...helper.labels].find(([, l]) => l.startsWith(`"${name}"`))?.[0];
+        return ref ? /"ok":true/.test(String(await helper.act({ action: "click", ref }))) : false;
+      };
+      // All the way through.
+      const before = readies();
+      const played = count(/"kind":"lesson-played"/g);
+      await bubble(`${trialDoor}.click()`);
+      r.opened = await until(findStandIn);
+      // A real click on the welcome makes Buddy the app in front, so the window it opens comes to the front. This
+      // check's click isn't real input, and the terminal running it keeps the foreground; so the check, as the user,
+      // brings the window forward itself.
+      if (r.opened) {
+        const hand = new Brain({ status() {}, point: async () => {}, confirm: async () => "allow" });
+        hand.abort = new AbortController();
+        hand.target = standIn;
+        await hand.runTool("window", { action: "focus", app: standIn.app_name, window_id: standIn.id });
+      }
+      r.firstStep = await until(() => readies() > before);
+      r.bubbleHidden = !kit.bubble.isVisible();
+      r.island = await island();
+      r.clickedFirst = await click("Open Navigation");
+      r.secondStep = await until(() => readies() > before + 1);
+      r.clickedSecond = await click("Scientific Calculator");
+      r.finished = await until(() => count(/"kind":"lesson-played","done":true/g) > 0 && count(/"kind":"lesson-played"/g) > played);
+      r.welcomeBack = await until(async () => kit.bubble.isVisible() && (await bubble(`document.body.classList.contains("welcoming") && !!${trialDoor}`)), 8000);
+      r.said = await island();
+      // Once more, stopped after the first step: the lesson ends and the welcome comes back.
+      const again = readies();
+      await bubble(`${trialDoor}.click()`);
+      r.againFirstStep = await until(() => readies() > again);
+      await bubble("window.buddy.cancel()");
+      r.stopped = await until(() => kit.currentMode() === "idle");
+      r.welcomeAfterStop = await until(async () => kit.bubble.isVisible() && (await bubble(`!!${trialDoor}`)), 8000);
+    } catch (err) {
+      r.error = String(err?.message ?? err);
+    }
+    console.log("FIRST_MINUTE_TEST", JSON.stringify(r));
+    console.log("FIRST_MINUTE_TEST_DONE");
+  }, 2500);
+}
+
 /** BUDDY_FAILURES_TEST @param {DevKit} kit */
 function failuresTest(kit) {
   // When Buddy's side fails, each window comes back usable and says so: the bubble's question, a task's, and Settings'
@@ -1834,6 +1904,7 @@ const HOOKS = {
   BUDDY_CONNECTIONS_TEST: connectionsTest,
   BUDDY_LANGUAGE_TEST: languageTest,
   BUDDY_LESSONS_TEST: lessonsTest,
+  BUDDY_FIRST_MINUTE_TEST: firstMinuteTest,
   BUDDY_RESTORE_TEST: restoreTest,
   BUDDY_BRIDGE_TEST: bridgeTest,
   BUDDY_ISLAND_TEST: islandTest,
