@@ -6,6 +6,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import { N } from "./i18n.js";
+import { appKey } from "./policy.js";
 
 export const MAX_LESSONS = 100;
 const MAX_STEPS = 30;
@@ -73,6 +74,29 @@ export const appName = (/** @type {string} */ app) => {
   const base = app.replace(/\.exe$/i, "");
   return base === base.toUpperCase() ? base.charAt(0) + base.slice(1).toLowerCase() : base;
 };
+
+/**
+ * The lessons for the app someone is in, newest first: the first `max`, and how many more there are. For the shelf in
+ * the bubble, so a lesson is one click away in the app it's for.
+ * @param {Lesson[]} list @param {string | null | undefined} app @returns {{ items: { id: string, title: string }[], more: number }}
+ */
+export function lessonsFor(list, app, max = 4) {
+  const key = appKey(app);
+  const mine = key ? list.filter((l) => appKey(l.app) === key).sort((a, b) => b.savedAt - a.savedAt) : [];
+  return { items: mine.slice(0, max).map(({ id, title }) => ({ id, title })), more: Math.max(0, mine.length - max) };
+}
+
+/**
+ * The lessons whose title or app has every word of `query` in it, any case, in their order. An empty query is all.
+ * @template {{ title: string, app: string }} L @param {L[]} list @param {string} query @returns {L[]}
+ */
+export function searchLessons(list, query) {
+  const words = String(query ?? "").toLowerCase().split(/[ ]+/).filter(Boolean);
+  return list.filter((l) => {
+    const text = `${l.title} ${appName(l.app)} ${l.app}`.toLowerCase();
+    return words.every((w) => text.includes(w));
+  });
+}
 
 /** @param {{ file: string, now?: () => number }} opts */
 export function createLessons({ file, now = Date.now }) {

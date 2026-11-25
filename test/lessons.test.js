@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { Brain } from "../src/brain.js";
-import { MAX_LESSONS, appName, cleanLesson, createLessons } from "../src/lessons.js";
+import { MAX_LESSONS, appName, cleanLesson, createLessons, lessonsFor, searchLessons } from "../src/lessons.js";
 
 const temp = (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "buddy-lessons-"));
@@ -88,4 +88,28 @@ test("playing a lesson follows it with no model call and says how it went in pla
     assert.match(r.text, said, JSON.stringify(outcome));
     assert.equal(r.done, outcome.kind === "finished");
   }
+});
+
+test("the shelf shows the lessons for the app someone is in, newest first, and how many more", () => {
+  const step = { caption: "Click Insert", target: "Insert", done_when: ["Table"] };
+  const at = (title, app, savedAt) => ({ id: title.toLowerCase().replace(/ /g, "-"), title, app, steps: [step], savedAt });
+  const list = [at("Make a table", "EXCEL.EXE", 1), at("Sort by amount", "excel.exe", 5), at("Add a chart", "Excel", 3), at("Bold a heading", "WINWORD.EXE", 9), at("Freeze the top row", "EXCEL.EXE", 4), at("Filter", "C:/Program Files/Office/EXCEL.EXE", 2)];
+  const excel = lessonsFor(list, "EXCEL.EXE");
+  assert.deepEqual(excel.items.map((l) => l.title), ["Sort by amount", "Freeze the top row", "Add a chart", "Filter"], "however the app is written, newest first");
+  assert.equal(excel.more, 1);
+  assert.deepEqual(Object.keys(excel.items[0]).sort(), ["id", "title"], "only what the shelf needs");
+  assert.deepEqual(lessonsFor(list, "winword.exe").items.map((l) => l.title), ["Bold a heading"]);
+  assert.deepEqual(lessonsFor(list, "notepad.exe"), { items: [], more: 0 });
+  assert.deepEqual(lessonsFor(list, null), { items: [], more: 0 }, "no window, no shelf");
+  assert.deepEqual(lessonsFor(list, "EXCEL.EXE", 10).more, 0);
+});
+
+test("lessons can be found by any words of their title or app", () => {
+  const step = { caption: "Click Insert", target: "Insert", done_when: ["Table"] };
+  const list = [{ id: "a", title: "Make a table", app: "EXCEL.EXE", steps: [step], savedAt: 1 }, { id: "b", title: "Bold a heading", app: "WINWORD.EXE", steps: [step], savedAt: 2 }];
+  assert.deepEqual(searchLessons(list, "table").map((l) => l.id), ["a"]);
+  assert.deepEqual(searchLessons(list, "  EXCEL   make ").map((l) => l.id), ["a"], "any case, any spacing, every word");
+  assert.deepEqual(searchLessons(list, "winword").map((l) => l.id), ["b"]);
+  assert.deepEqual(searchLessons(list, "excel bold"), [], "every word must match");
+  assert.deepEqual(searchLessons(list, "").map((l) => l.id), ["a", "b"], "nothing typed is everything");
 });

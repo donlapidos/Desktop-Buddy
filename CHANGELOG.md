@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* **Lessons where you need them:** open the bubble in an app you have lessons for and they're offered right there
+  (**Lessons for Excel**), one click each, even before an AI is set up. Settings › Lessons can search them by name or
+  app.
 * **See Buddy in action before setting anything up:** the welcome's first choice opens Calculator and guides you to
   Scientific mode, pointing at each step while you click: a lesson that comes with Buddy, so it needs no AI, no key
   and sends nothing. Offered when Calculator is installed and Windows is in English (Calculator names its buttons in
