@@ -19,6 +19,13 @@ export function fingerprint(/** @type {string} */ file) {
   }
 }
 
+/** Hash large copies in chunks, leaving the main process responsive. */
+export async function copyFingerprint(/** @type {string} */ file, /** @type {AbortSignal} */ signal = undefined) {
+  const hash = crypto.createHash("sha256");
+  for await (const chunk of fs.createReadStream(file, { signal })) hash.update(chunk);
+  return hash.digest("hex");
+}
+
 /** Removes undo copies older than a week. */
 export function pruneUndo(/** @type {string} */ undoDir, now = Date.now()) {
   try {
@@ -34,7 +41,7 @@ export function keepCopy(/** @type {string} */ file, /** @type {string} */ undoD
   pruneUndo(undoDir);
   const dir = path.join(undoDir, `${Date.now()}-${crypto.randomBytes(3).toString("hex")}`);
   fs.mkdirSync(dir, { recursive: true });
-  const copy = path.join(dir, path.basename(file));
+  const copy = path.join(dir, "contents");
   fs.copyFileSync(file, copy);
   fs.writeFileSync(path.join(dir, "from.txt"), file);
   return copy;
@@ -44,7 +51,7 @@ export function keepCopy(/** @type {string} */ file, /** @type {string} */ undoD
  * One change. `file` is what changed; `copy` its earlier version (replaced, edited); `after` the fingerprint Buddy
  * left it with, so undo can tell whether the user changed it since. `from` is who did it: "Buddy", a task, a routine.
  * `made`: the files a copy made (copy_files), each with its fingerprint; `file` is then the folder they went into.
- * @typedef {{ id: string, at: string, from: string, kind: "created" | "replaced" | "edited" | "document" | "ran" | "read" | "acted", summary: string, file?: string, copy?: string, after?: string | null, made?: { file: string, after: string | null }[], undone?: string }} Change
+ * @typedef {{ id: string, at: string, from: string, kind: "created" | "replaced" | "edited" | "document" | "ran" | "read" | "acted", summary: string, file?: string, copy?: string, after?: string | null, made?: { file: string, after: string | null }[], batchId?: string, copying?: boolean, undone?: string }} Change
  */
 
 /** What can be undone, by kind. */
@@ -59,26 +66,36 @@ export function createActivity({ file, undoDir, trash, onChange }) {
   try {
     const saved = JSON.parse(fs.readFileSync(file, "utf8"));
     if (Array.isArray(saved)) entries = saved.filter((e) => e && typeof e.id === "string" && typeof e.summary === "string");
+    for (const entry of entries) {
+      delete entry.copying; // An interrupted batch can be undone immediately after restart.
+      // Older versions overwrote this particular backup with the source path.
+      if (typeof entry.copy === "string" && path.basename(entry.copy).toLowerCase() === "from.txt") delete entry.copy;
+    }
   } catch {}
 
-  const save = () => {
+  const save = (refresh = true) => {
     const now = Date.now();
     entries = entries.filter((e) => now - Date.parse(e.at) < KEEP_MS).slice(-MAX_ENTRIES);
+    let saved = false;
     try {
       fs.mkdirSync(path.dirname(file), { recursive: true });
       const tmp = `${file}.tmp`;
       fs.writeFileSync(tmp, JSON.stringify(entries, null, 1));
       fs.renameSync(tmp, file);
+      saved = true;
     } catch {}
-    onChange?.();
+    if (refresh) onChange?.();
+    return saved;
   };
 
   return {
     /** Records a change. @param {Omit<Change, "id" | "at">} change @returns {Change} */
     add(change) {
-      const entry = { ...change, id: crypto.randomBytes(6).toString("hex"), at: new Date().toISOString() };
-      entries.push(entry);
-      save();
+      const batch = change.batchId && entries.find(e => e.batchId === change.batchId);
+      const entry = batch || { ...change, id: crypto.randomBytes(6).toString("hex"), at: new Date().toISOString() };
+      if (batch) Object.assign(entry, change);
+      else entries.push(entry);
+      if (!save(!batch || !entry.copying) && entry.batchId) throw new Error("Couldn't save the undo history for these copies.");
       return entry;
     },
 
@@ -87,7 +104,7 @@ export function createActivity({ file, undoDir, trash, onChange }) {
       return entries
         .slice()
         .reverse()
-        .map((e) => ({ ...e, canUndo: !e.undone && UNDOABLE.has(e.kind) && (e.kind === "created" || e.kind === "document" || (!!e.copy && fs.existsSync(e.copy))) }));
+        .map((e) => ({ ...e, canUndo: !e.copying && !e.undone && UNDOABLE.has(e.kind) && (e.kind === "created" || e.kind === "document" || (!!e.copy && fs.existsSync(e.copy))) }));
     },
 
     /**
@@ -98,6 +115,7 @@ export function createActivity({ file, undoDir, trash, onChange }) {
     async undo(id, { force = false } = {}) {
       const e = entries.find((x) => x.id === id);
       if (!e) return { ok: false, message: "That change is no longer kept." };
+      if (e.copying) return { ok: false, message: "Wait for Buddy to finish copying these files." };
       if (e.undone) return { ok: false, message: "That's already undone." };
       if (!UNDOABLE.has(e.kind) || !e.file) return { ok: false, message: "Buddy can't undo this one by itself." };
       const name = path.basename(e.file);
@@ -105,7 +123,14 @@ export function createActivity({ file, undoDir, trash, onChange }) {
       // folder itself stays: it may hold the user's own files.
       if (e.made) {
         const left = e.made.filter((m) => fs.existsSync(m.file));
-        const changed = left.filter((m) => fingerprint(m.file) !== m.after);
+        const changed = [];
+        for (const m of left) {
+          try {
+            if (!m.after || await copyFingerprint(m.file) !== m.after) changed.push(m);
+          } catch {
+            return { ok: false, message: `Couldn't check ${path.basename(m.file)}. Try again when the file is available.` };
+          }
+        }
         if (changed.length && !force) return { ok: false, changed: true, message: changed.length === 1 ? `${path.basename(changed[0].file)} has changed since Buddy copied it. Undoing would lose those changes.` : `${changed.length} of the copies have changed since Buddy made them. Undoing would lose those changes.` };
         try {
           for (const m of left) await trash(m.file);

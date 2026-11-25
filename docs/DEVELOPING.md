@@ -5,6 +5,12 @@ How to run Buddy from source, test it, configure it and release it. What Buddy d
 
 ## Run from source
 
+`npm run measure:latency` reads the local timing log. For each provider/model and typed or spoken input,
+it reports how many guidance attempts showed a pointer, reasons for misses, and median/p90 time for shown
+pointers. Explicit guidance questions, the Show Me tour, saved lessons and turns that call a pointing tool
+count as attempts. Ordinary text answers are excluded unless the request was recognized as guidance.
+Older success-only logs contribute timings only. A shown pointer measures display, not target accuracy.
+
 ```bash
 npm install
 npm run setup   # fetches the pinned agent-desktop CLI into bin/

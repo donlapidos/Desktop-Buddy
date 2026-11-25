@@ -7,6 +7,7 @@ import { app, BrowserWindow, ipcMain, screen } from "electron";
 import path from "node:path";
 import { t as tr } from "./i18n.js";
 import { canMoveTask, taskBusy } from "./modes.js";
+import { questionTiming } from "./latency.js";
 
 const TASK = { width: 420, height: 560 };
 const MAX_TASKS = 6;
@@ -258,14 +259,16 @@ export function createTasks({ here, icon, makeBrain, currentTarget, point, relea
       t.win.setTitle(`Buddy · ${t.title}`);
     }
     setState(t, "working", tr("Thinking…"));
+    const timing = trace ? questionTiming({ write: trace, provider: t.brain.provider, model: t.brain.model }) : null;
     try {
-      const reply = await t.brain.ask(text, t.target);
+      const reply = await t.brain.ask(text, t.target, { timing });
       if (tasks.has(t.id)) setState(t, alive(t) && t.win.isFocused() ? "idle" : "done");
       return { reply, title: t.title };
     } catch (err) {
       if (tasks.has(t.id)) setState(t, "error", err.message);
       return { reply: tr("Something broke: {why}", { why: err.message }), title: t.title };
     } finally {
+      timing?.finish();
       release(t.id);
       if (tasks.has(t.id)) save(t);
     }

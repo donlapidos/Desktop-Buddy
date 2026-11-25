@@ -30,7 +30,9 @@ VS Code and more).
   something for you.
 - **Visual context:** when you ask, a model known to support images receives a fresh screenshot of the requested
   window alongside its control names and refs. This helps with charts, canvases and layouts. The two sources are
-  prepared together with a four-second deadline; if either fails, Buddy uses the other. Automatic context skips
+  prepared together with a four-second deadline. If you ask where a named control is and the window text
+  identifies it unambiguously, Buddy gives the picture another 200 milliseconds, then can answer from the text.
+  For visual questions it keeps the full deadline. If either source fails, Buddy uses the other. Automatic context skips
   minimized windows, Buddy's own windows and apps on **Never act in**, and never falls back to capturing a whole
   display. Settings › AI & privacy › **Window screenshots** turns window screenshots off immediately; Mark and
   Explain still send the area you explicitly choose. Text-only and unverified models start from text.

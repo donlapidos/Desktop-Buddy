@@ -833,7 +833,12 @@ function renderLessons() {
     if (deletingLesson === l.id) {
       const yes = el("button", { className: "btn danger", textContent: t("Delete") });
       const no = el("button", { className: "btn", textContent: t("Keep") });
-      yes.addEventListener("click", async () => { deletingLesson = null; render((await window.buddy.settingsLesson("delete", l.id)).state); });
+      yes.addEventListener("click", async () => {
+        const r = await window.buddy.settingsLesson("delete", l.id);
+        $("lesson-problem").textContent = r.error ?? "";
+        if (!r.error) deletingLesson = null;
+        render(r.state);
+      });
       no.addEventListener("click", () => { deletingLesson = null; renderLessons(); });
       actions.append(yes, no);
     } else {

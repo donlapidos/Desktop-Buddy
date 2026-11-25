@@ -30,6 +30,73 @@ function pc() {
   return { places, bin, log, activity, make, ctx };
 }
 
+test("undo restores the exact bytes of a file named from.txt", async () => {
+  const { places, activity, ctx } = pc();
+  const file = path.join(places.workDir, "from.txt");
+  const original = Buffer.from([0, 255, 10, 13]);
+  fs.writeFileSync(file, original);
+  await runPcTool("write_file", { path: "from.txt", content: "replacement" }, ctx);
+  assert.equal((await activity.undo(activity.list()[0].id)).ok, true);
+  assert.deepEqual(fs.readFileSync(file), original);
+});
+
+test("a batch interrupted after its first copy can be undone after a restart", { timeout: 5000 }, async () => {
+  const { places, activity, make, ctx } = pc();
+  const source = path.join(places.home, "Pictures");
+  fs.mkdirSync(source);
+  for (const name of ["a.txt", "b.txt"]) fs.writeFileSync(path.join(source, name), name);
+  const [first, second] = fs.readdirSync(source);
+  let checkpoint = false;
+  const record = ctx.record;
+  ctx.record = change => {
+    record(change);
+    if (change.copying) {
+      assert.equal(activity.list()[0].canUndo, false, "wait until a running copy stops");
+      assert.deepEqual(make().list()[0].made.map(m => path.basename(m.file)), [first]);
+      assert.equal(make().list()[0].canUndo, true);
+      checkpoint = true;
+    }
+  };
+  const dest = path.join(places.workDir, "copies");
+  fs.mkdirSync(dest);
+  fs.writeFileSync(path.join(dest, "mine.txt"), "mine");
+  ctx.ask = async () => { fs.unlinkSync(path.join(source, second)); return true; };
+  const result = await runPcTool("copy_files", { from: source, to: "copies" }, ctx);
+  assert.match(result, /1 of 2/);
+  assert.ok(checkpoint, "the first file was journaled before starting the second");
+  const reopened = make();
+  const [entry] = reopened.list();
+  assert.deepEqual(entry.made.map(m => path.basename(m.file)), [first]);
+  assert.equal((await reopened.undo(entry.id)).ok, true);
+  assert.deepEqual(fs.readdirSync(dest), ["mine.txt"]);
+});
+
+test("a legacy from.txt backup containing its path cannot replace the user's current file", async () => {
+  const { places, log, make } = pc();
+  const file = path.join(places.workDir, "from.txt");
+  const copy = path.join(places.buddyData, "undo", "old", "From.TXT");
+  fs.mkdirSync(path.dirname(copy), { recursive: true });
+  fs.writeFileSync(copy, file);
+  fs.writeFileSync(file, "current contents");
+  fs.writeFileSync(log, JSON.stringify([{ id: "old", at: new Date().toISOString(), from: "Buddy", kind: "replaced", summary: "Replaced from.txt", file, copy, after: fingerprint(file) }]));
+  const reopened = make();
+  assert.equal(reopened.list()[0].canUndo, false);
+  assert.equal((await reopened.undo("old")).ok, false);
+  assert.equal(fs.readFileSync(file, "utf8"), "current contents");
+});
+
+test("copying stops and reports when the undo journal cannot be saved", { timeout: 5000 }, async () => {
+  const { places, log, activity, ctx } = pc();
+  fs.mkdirSync(log + ".tmp");
+  const source = path.join(places.home, "Pictures");
+  fs.mkdirSync(source);
+  for (const name of ["a.txt", "b.txt"]) fs.writeFileSync(path.join(source, name), name);
+  const result = await runPcTool("copy_files", { from: source, to: "copies" }, ctx);
+  assert.match(result, /1 of 2/);
+  assert.match(result, /undo.*restart/i);
+  assert.equal(activity.list()[0].canUndo, true, "undo is still available in this session");
+});
+
 test("what Buddy does is listed in plain words, newest first, with what can be undone", async () => {
   const { activity, ctx } = pc();
   await runPcTool("write_file", { path: "list.txt", content: "eggs" }, ctx);

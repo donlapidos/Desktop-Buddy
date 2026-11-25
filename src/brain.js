@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { askUser, requestApproval } from "./approvals.js";
 import { SAFE_KINDS, appKey, decide, isBlocked } from "./policy.js";
 import { collectScreenContext } from "./screen-context.js";
+import { asksForGuidance } from "./latency.js";
 import { annotationRequest, sameBox, validBox } from "./annotations.js";
 import { FOLLOW_UP_GUIDANCE, guidanceFor } from "./guidance.js";
 import { LOOK_ARGS, findControl, nearestNames, observe, perform, renderReading, renderTree, snapshotResilient, waitForProgress } from "./desktop.js";
@@ -950,7 +951,7 @@ export class Brain {
     return { image, shot: target ? shotFacts(target, facts, prepared ? { width: prepared.width, height: prepared.height } : undefined) : null };
   }
 
-  async initialContext(target, signal) {
+  async initialContext(target, signal, question = "") {
     const started = Date.now();
     if (!this.canObserveTarget(target)) {
       this.preview?.abort?.abort();
@@ -965,6 +966,7 @@ export class Brain {
     try {
       const context = await collectScreenContext({
         signal,
+        question,
         includeImage,
         read: async (signal) => {
           const text = await this.glanced(glance?.text ?? null, signal);
@@ -1009,12 +1011,13 @@ export class Brain {
   // `timing` is the question's ask-to-pointer clock (latency.js), when the caller keeps one. `showOff`: the tour's
   // "Show me" (SHOW_OFF).
   async ask(text, target, { spoken = false, lang = "en", timing = null, showOff = false } = {}) {
+    if (showOff || asksForGuidance(text)) timing?.attempt();
     this.log.push({ role: "user", text });
     const note = `${showOff ? SHOW_OFF : ""}${spoken ? spokenNote(lang) : ""}`;
     this.clearContextImages({ readings: true });
-    return this.run(target, "", async (signal) => {
+    return this.run(target, text + note, async (signal) => {
       const contextStart = Date.now();
-      const { reading, image } = await this.initialContext(target, signal);
+      const { reading, image } = await this.initialContext(target, signal, text);
       this.timing?.add("contextMs", Date.now() - contextStart);
       const window = reading ? `\n\nTheir window when they asked (already looked; its refs work, so skip your first look):\n${reading}` : "";
       const size = image && this.shot ? ` ${pictureSize(this.shot.seen)}` : "";
@@ -1028,6 +1031,7 @@ export class Brain {
 
   // The user highlighted things on screen with the marker and asked about them.
   askWithMarks(text, { image, marks, target }, { spoken = false, lang = "en", timing = null } = {}) {
+    if (asksForGuidance(text)) timing?.attempt();
     this.clearContextImages({ readings: true });
     this.log.push({ role: "user", text: `${text} (about ${marks.length === 1 ? "1 mark" : `${marks.length} marks`})` });
     this.marks = new Map(marks.map((m) => [m.n, m.bounds]));
@@ -1098,6 +1102,7 @@ export class Brain {
       if (made.length && !this.abort.signal.aborted) await this.ui.reveal?.(made);
       return reply;
     } catch (err) {
+      this.timing?.outcome(/timeout|timedout/i.test(String(err.name) + String(err.code)) || err.status === 408 || err.status === 504 ? "timeout" : "error");
       if (this.abort.signal.aborted) return "Okay, stopped.";
       if (err instanceof ProviderError) return failureFor(err.kind, this.provider) ?? `The model call failed (${err.status}): ${err.message.slice(0, 160)}`;
       if (err instanceof Anthropic.AuthenticationError) return failureFor("authentication_failed");
@@ -1106,6 +1111,7 @@ export class Brain {
       if (err instanceof Anthropic.APIError) return `The model call failed (${err.status}).`;
       throw err;
     } finally {
+      if (this.abort.signal.aborted) this.timing?.outcome("cancelled");
       this.ui.clearAnnotations?.(this.abort.signal.aborted ? 0 : 6000);
       this.closeDanglingToolUse();
     }
@@ -1145,7 +1151,7 @@ export class Brain {
       this.fitHistory();
       // The user's monthly spending limit (costs.js) is checked before every call, so a long answer stops at it too.
       const stop = this.ui.mayCall?.();
-      if (stop) return stop;
+      if (stop) { this.timing?.outcome("error"); return stop; }
       const callStart = Date.now();
       const offeredExplainer = this.explainerReady;
       let response;
@@ -1310,7 +1316,7 @@ export class Brain {
       signal: this.abort?.signal,
       commands: this.commands,
       record: (change) => {
-        if (change.kind === "created" && change.file) this.made.push(change.file);
+        if (change.kind === "created" && change.file && !change.copying) this.made.push(change.file);
         this.ui.record?.({ ...change, from: this.ui.source ?? "Buddy" });
       },
     });
@@ -1613,6 +1619,7 @@ export class Brain {
         return shot ? [image, { type: "text", text: pictureSize(shot.seen) }] : [image];
       }
       case "point_at": {
+        this.timing?.attempt();
         if (input.spot != null && input.ref == null && input.mark == null) {
           const rect = this.spotBounds(input.spot);
           if (typeof rect === "string") return rect;
@@ -1624,6 +1631,7 @@ export class Brain {
         }
         const bounds = input.mark != null ? this.marks?.get(input.mark) : this.bounds.get(input.ref);
         if (!bounds) {
+          this.timing?.outcome("target-missing");
           return input.mark != null
             ? `There is no mark ${input.mark}.`
             : `No position known for ${input.ref}. Look again and point at a fresh ref.`;
@@ -1705,7 +1713,10 @@ export class Brain {
         this.ui.status("Your turn: go ahead…");
         const result = await waitForProgress({ win: this.target, steps, timeoutMs: seconds * 1000, signal: this.abort.signal, session: this.session });
         if (result.status === "cancelled") return "The user stopped.";
-        if (result.status === "timeout") return `After ${seconds}s nothing you listed is showing and their window hasn't changed; they may be stuck.`;
+        if (result.status === "timeout") {
+          this.timing?.outcome("timeout");
+          return `After ${seconds}s nothing you listed is showing and their window hasn't changed; they may be stuck.`;
+        }
         const done = result.status === "changed"
           ? result.why === "values"
             ? "They selected something or typed: a selection or a field's text changed. Work out from the window below which step that was."
@@ -1728,6 +1739,7 @@ export class Brain {
   }
 
   async drawAnnotations(input) {
+    this.timing?.attempt();
     if (!this.ui.annotate) return "Screen drawings aren't available in this window.";
     this.ui.clearAnnotations?.();
     const signal = this.abort?.signal;
@@ -1743,7 +1755,10 @@ export class Brain {
       spotted.set(item, rect);
     }
     const windows = [...refs.map((ref) => this.refWindows.get(ref)), ...(spotted.size ? [this.shot?.window] : [])];
-    if (refs.some((ref) => !this.bounds.has(ref) || this.offscreenRefs.has(ref)) || windows.some((w) => !w?.id)) return "A drawing needs visible control refs from a fresh look. Read the window again.";
+    if (refs.some((ref) => !this.bounds.has(ref) || this.offscreenRefs.has(ref)) || windows.some((w) => !w?.id)) {
+      this.timing?.outcome("target-missing");
+      return "A drawing needs visible control refs from a fresh look. Read the window again.";
+    }
     const window = windows[0];
     if (windows.some((w) => w.id !== window.id || appKey(w.app_name) !== appKey(window.app_name))) return "Keep one drawing batch in one window. Read that window and use its refs.";
     if (!this.canObserveTarget(window)) return "That window isn't available for drawing.";
@@ -1810,7 +1825,10 @@ export class Brain {
       res = await read(win);
     }
     if (signal?.aborted) return { stop: "The user stopped." };
-    if (!res.ok) return { stop: `${doneSoFar} Couldn't read their window at step ${i + 1}: ${trimEnvelope(res)}` };
+    if (!res.ok) {
+      this.timing?.outcome("error" in res && /timeout/i.test(res.error.code) ? "timeout" : "error");
+      return { stop: `${doneSoFar} Couldn't read their window at step ${i + 1}: ${trimEnvelope(res)}` };
+    }
     let match = findControl(res.data.tree, step.target, step.role);
     // A menu the last step opened may still be drawing: one more look a moment later before asking Claude. A step
     // that isn't in the earlier read is looked for in a fresh one straight away.
@@ -1834,6 +1852,7 @@ export class Brain {
       ...(!match ? { nearest: nearestNames(res.data.tree, step.target) } : {}),
     });
     if (!match?.node) {
+      this.timing?.outcome("target-missing");
       const why = match
         ? `several controls are called "${step.target}" (${match.candidates.map((c) => c.ref_id).join(", ")})`
         : `nothing called "${step.target}" is on screen`;
@@ -1861,6 +1880,7 @@ ${text}` };
    * @param {string} name @param {any} input
    */
   startEarly(name, input) {
+    if (name === "point_at" || name === "guide_steps") this.timing?.attempt();
     const at = Date.now();
     input = withoutBlanks(input);
     if (name === "point_at") {
@@ -1886,6 +1906,7 @@ ${text}` };
 
   // guide_steps: points at each step's control and follows the user, locally, until they finish or Buddy needs Claude.
   async guideSteps(input) {
+    this.timing?.attempt();
     const steps = (Array.isArray(input.steps) ? input.steps : []).filter((s) => typeof s?.target === "string" && s.target.trim());
     if (!steps.length) return "guide_steps needs steps, each with a target.";
     if (!this.target) return (this.routeOutcome = { kind: "no-window" }), "I don't know which window they're working in; look first.";

@@ -90,6 +90,25 @@ test("playing a lesson follows it with no model call and says how it went in pla
   }
 });
 
+test("failed lesson writes preserve the saved shelf and can be retried", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "buddy-lesson-write-"));
+  const file = path.join(dir, "lessons.json");
+  const store = createLessons({ file });
+  const { lesson } = store.add(SORT);
+  const exported = store.exportText(lesson.id);
+  fs.mkdirSync(file + ".tmp"); // Windows cannot replace this directory with the temporary file.
+  assert.ok(store.add(SORT).error);
+  assert.ok(store.importText(exported).error);
+  const step = { ...lesson.steps[0], target: "Changed" };
+  assert.ok(store.updateStep(lesson.id, 0, step).error);
+  assert.ok(store.remove(lesson.id).error);
+  assert.deepEqual(store.list(), [lesson]);
+  assert.deepEqual(createLessons({ file }).list(), [lesson]);
+  fs.rmdirSync(file + ".tmp");
+  assert.ok(store.updateStep(lesson.id, 0, step).lesson);
+  assert.equal(createLessons({ file }).get(lesson.id).steps[0].target, "Changed");
+});
+
 test("the shelf shows the lessons for the app someone is in, newest first, and how many more", () => {
   const step = { caption: "Click Insert", target: "Insert", done_when: ["Table"] };
   const at = (title, app, savedAt) => ({ id: title.toLowerCase().replace(/ /g, "-"), title, app, steps: [step], savedAt });

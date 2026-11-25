@@ -479,6 +479,7 @@ const CHECKS = {
 
   async settings() {
     const { markers, timedOut } = await runCopy("settings", { BUDDY_SETTINGS_TEST: out }, "SETTINGS_TEST_DONE", 180_000);
+    if (markers.SETTINGS_TEST_ERROR?.[0]) return [markers.SETTINGS_TEST_ERROR[0].message];
     const applied = markers.SETTINGS_APPLIED?.[0];
     if (!applied) return [timedOut ? "timed out" : "no settings result printed"];
     const coral = "#f2545b";
