@@ -55,10 +55,27 @@ test("one entry per question, written when the answer ends, with its parts and n
   assert.equal(written.length, 0, "nothing is written before the answer ends");
   timing.finish();
   timing.finish();
-  assert.deepEqual(written, [{ kind: "first-pointer", ms: 2500, contextMs: 400, modelMs: 1200, pointMs: 900, voice: false, provider: "ollama", model: "scripted" }]);
+  assert.deepEqual(written, [{ kind: "first-pointer", outcome: "shown", ms: 2500, contextMs: 400, modelMs: 1200, pointMs: 900, voice: false, provider: "ollama", model: "scripted" }]);
 });
 
-test("an answer that never pointed leaves no entry", () => {
+test("unshown guidance attempts count once without changing pointer percentiles", () => {
+  const lines = [entry({ ms: 250, outcome: "shown" })];
+  for (const reason of ["target-missing", "timeout", "cancelled", "error", "no-pointer"]) {
+    const { timing, written } = clock();
+    timing.attempt();
+    timing.outcome(reason);
+    timing.finish();
+    timing.finish();
+    assert.equal(written.length, 1);
+    assert.equal(written[0].outcome, reason);
+    lines.push(entry({ ...written[0], provider: "anthropic", model: "claude-opus-5-5" }));
+  }
+  const [group] = summarizeLatency(lines);
+  assert.equal(group.attempts, 6);
+  assert.deepEqual(group.fields.ms, { count: 1, median: 250, p90: 250 });
+});
+
+test("an answer that never attempted guidance leaves no entry", () => {
   const { timing, written } = clock();
   timing.add("modelMs", 2000);
   timing.finish();
@@ -73,7 +90,7 @@ test("a spoken question starts at the end of speech and records hearing and firs
   assert.equal(written.length, 0, "waits for the first sound");
   advance(400);
   timing.audio();
-  assert.deepEqual(written, [{ kind: "first-pointer", ms: 2100, contextMs: 0, modelMs: 0, pointMs: 900, voice: true, provider: "ollama", model: "scripted", heardMs: 300, firstAudioMs: 2500 }]);
+  assert.deepEqual(written, [{ kind: "first-pointer", outcome: "shown", ms: 2100, contextMs: 0, modelMs: 0, pointMs: 900, voice: true, provider: "ollama", model: "scripted", heardMs: 300, firstAudioMs: 2500 }]);
 });
 
 test("a spoken answer that never makes a sound is still written, without firstAudioMs", async (t) => {

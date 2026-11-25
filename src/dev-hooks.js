@@ -436,10 +436,18 @@ function settingsTest(kit) {
   // refused.
   const out = process.env.BUDDY_SETTINGS_TEST;
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-  setTimeout(async () => {
+  const run = async () => {
     settingsWindow.open();
-    await wait(1500);
-    const win = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("settings.html"));
+    let win = null;
+    for (const end = Date.now() + 15_000; Date.now() < end; await wait(100)) {
+      const candidate = BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith("settings.html"));
+      if (candidate && !candidate.webContents.isLoadingMainFrame() &&
+          await candidate.webContents.executeJavaScript("typeof S !== 'undefined' && !!S").catch(() => false)) {
+        win = candidate;
+        break;
+      }
+    }
+    if (!win) throw new Error("The Settings window did not finish loading.");
     const shoot = async (page, name) => {
       await win.webContents.executeJavaScript(`show(${JSON.stringify(page)})`);
       await wait(400);
@@ -568,7 +576,11 @@ function settingsTest(kit) {
     await shoot("look", "settings-look-coral");
     await shoot("keys", "settings-keys-changed");
     console.log("SETTINGS_TEST_DONE");
-  }, 2500);
+  };
+  setTimeout(() => run().catch(error => {
+    console.log("SETTINGS_TEST_ERROR", JSON.stringify({ message: error.message }));
+    console.log("SETTINGS_TEST_DONE");
+  }), 2500);
 }
 
 /** BUDDY_EXPLAINER_TEST @param {DevKit} kit */
@@ -1856,8 +1868,12 @@ function firstMinuteTest(kit) {
       r.said = await island();
       // Once more, stopped after the first step: the lesson ends and the welcome comes back.
       const again = readies();
+      const starts = count(/"kind":"starter-play"/g);
       await bubble(`${trialDoor}.click()`);
-      r.againFirstStep = await until(() => readies() > again);
+      // Opening a new window and waiting for its controls to settle happens before the
+      // guide starts. Give the first step its own deadline, as on the first play above.
+      r.againFirstStep = await until(() => count(/"kind":"starter-play"/g) > starts, 35_000)
+        && await until(() => readies() > again);
       await bubble("window.buddy.cancel()");
       r.stopped = await until(() => kit.currentMode() === "idle");
       r.welcomeAfterStop = await until(async () => kit.bubble.isVisible() && (await bubble(`!!${trialDoor}`)), 8000);

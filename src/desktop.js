@@ -87,7 +87,7 @@ function run(args, { timeoutMs = 30_000, headed = false, signal, session } = {})
           resolve({
             ok: false,
             error: {
-              code: "BRIDGE_ERROR",
+              code: err?.killed && !signal?.aborted ? "BRIDGE_TIMEOUT" : "BRIDGE_ERROR",
               message: (stderr || err?.message || "no output").toString().slice(0, 500),
             },
           });

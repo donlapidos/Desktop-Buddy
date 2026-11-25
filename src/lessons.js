@@ -5,7 +5,7 @@
 // on the way in, whether saved here or imported from someone else's file.
 import crypto from "node:crypto";
 import fs from "node:fs";
-import { N } from "./i18n.js";
+import { N, t } from "./i18n.js";
 import { appKey } from "./policy.js";
 
 export const MAX_LESSONS = 100;
@@ -110,12 +110,16 @@ export function createLessons({ file, now = Date.now }) {
     }
   } catch {}
 
-  function write() {
+  function write(/** @type {Lesson[]} */ next) {
     try {
       // Through a temporary file, so a crash mid-write can't leave half a file.
-      fs.writeFileSync(`${file}.tmp`, JSON.stringify(lessons));
+      fs.writeFileSync(`${file}.tmp`, JSON.stringify(next));
       fs.renameSync(`${file}.tmp`, file);
-    } catch {}
+      lessons = next;
+      return null;
+    } catch {
+      return { error: t("Buddy couldn't save your lesson changes. Check the available disk space and try again.") };
+    }
   }
 
   /** Keeps a lesson; resolves it as kept, or an error in words. @returns {{ lesson: Lesson } | { error: string }} */
@@ -123,9 +127,7 @@ export function createLessons({ file, now = Date.now }) {
     if (lessons.length >= MAX_LESSONS) return { error: `You have ${MAX_LESSONS} lessons. Delete one first.` };
     const lesson = cleanLesson({ ...raw, id: undefined, savedAt: undefined }, { now: now() });
     if (!lesson) return { error: "That isn't a lesson Buddy can play." };
-    lessons.push(lesson);
-    write();
-    return { lesson };
+    return write([...lessons, lesson]) ?? { lesson };
   }
 
   return {
@@ -133,9 +135,8 @@ export function createLessons({ file, now = Date.now }) {
     list: () => lessons.slice(),
     get: (/** @type {string} */ id) => lessons.find((l) => l.id === id) ?? null,
     remove(/** @type {string} */ id) {
-      const before = lessons.length;
-      lessons = lessons.filter((l) => l.id !== id);
-      if (lessons.length !== before) write();
+      const next = lessons.filter((l) => l.id !== id);
+      return next.length === lessons.length ? null : write(next);
     },
     /** A lesson as a file to share: what it is, and its words. */
     exportText(/** @type {string} */ id) {
@@ -166,9 +167,7 @@ export function createLessons({ file, now = Date.now }) {
       if (!Number.isInteger(index) || index < 0 || index >= old.steps.length) return { error: "That step isn't in the lesson." };
       const lesson = cleanLesson({ ...old, steps: old.steps.map((s, i) => (i === index ? step : s)) }, { id: old.id, now: old.savedAt });
       if (!lesson) return { error: "That isn't a step Buddy can play." };
-      lessons[at] = lesson;
-      write();
-      return { lesson };
+      return write(lessons.map((saved, i) => i === at ? lesson : saved)) ?? { lesson };
     },
   };
 }

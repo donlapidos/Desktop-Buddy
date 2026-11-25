@@ -16,12 +16,15 @@ if (!lines.length) {
 }
 const groups = summarizeLatency(lines);
 if (!groups.length) {
-  console.log("No first-pointer entries yet: ask Buddy something it answers by pointing, then run this again.");
+  console.log("No guidance attempts recorded yet.");
   process.exit(0);
 }
 const s = (/** @type {number | null} */ ms) => (ms == null ? "-" : `${(ms / 1000).toFixed(2)} s`);
 for (const g of groups) {
-  console.log(`\n${g.model} · ${g.voice ? "spoken" : "typed"} · ${g.count} question${g.count === 1 ? "" : "s"}`);
+  console.log(`\n${g.model} · ${g.voice ? "spoken" : "typed"}`);
+  if (g.attempts) console.log(`  Pointer shown on ${g.shown}/${g.attempts} guidance attempts (${Math.round(100 * g.shown / g.attempts)}%).`);
+  for (const [why, count] of Object.entries(g.misses)) if (count) console.log(`  ${why}: ${count}`);
+  if (g.count > g.shown) console.log(`  ${g.count - g.shown} older pointer timings contribute to latency only.`);
   console.log(`  ${"part".padEnd(13)}${"n".padStart(5)}${"median".padStart(10)}${"p90".padStart(10)}`);
   for (const f of LATENCY_FIELDS) {
     const v = g.fields[f];

@@ -94,7 +94,7 @@ test("writing asks, says where in plain words, and keeps the old version for und
   assert.match(await runPcTool("write_file", { path: "budget.csv", content: "new" }, ctx()), /Replaced/);
   assert.match(asked[1].s, /^Replace budget\.csv/);
   const undo = fs.readdirSync(path.join(places.buddyData, "undo"));
-  assert.equal(fs.readFileSync(path.join(places.buddyData, "undo", undo[0], "budget.csv"), "utf8"), "a,b\n1,2\n");
+  assert.equal(fs.readFileSync(path.join(places.buddyData, "undo", undo[0], "contents"), "utf8"), "a,b\n1,2\n");
   assert.equal(await runPcTool("write_file", { path: "other.txt", content: "x" }, ctx(false)), "The user declined.");
   assert.ok(!fs.existsSync(path.join(places.workDir, "other.txt")), "nothing written when declined");
   assert.match(await runPcTool("write_file", { path: path.join(places.buddyData, "api-key.bin"), content: "x" }, ctx()), /^Not allowed/);

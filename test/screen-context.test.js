@@ -3,10 +3,11 @@ import { test } from "node:test";
 import { collectScreenContext } from "../src/screen-context.js";
 import { Brain, setAgentPolicy } from "../src/brain.js";
 import { learnCaps } from "../src/providers.js";
+import { questionTiming } from "../src/latency.js";
 
 const target = { id: "w-chart", app_name: "EXCEL.EXE", title: "Sample chart", pid: 123 };
 const image = { type: "image", source: { type: "base64", media_type: "image/png", data: "iVBORw0KGgo=" } };
-const reading = "window: Sample chart · 1 refs\n@s1:e1 button Sort";
+const reading = "window: Sample chart · 1 refs\n@s1:e1 button \"Sort\"";
 const tick = () => new Promise((r) => setImmediate(r));
 const deferred = () => { let resolve; const promise = new Promise((r) => { resolve = r; }); return { promise, resolve }; };
 
@@ -32,11 +33,45 @@ test("window text and image are collected in parallel", { timeout: 2000 }, async
   assert.deepEqual(await result, { reading, image });
 });
 
+test("a named control can answer before a stalled screenshot, while visual questions keep the image", { timeout: 2500 }, async () => {
+  const b = fixture();
+  let stopped;
+  b.b.screenImage = async (_target, signal) => { stopped = signal; return new Promise(() => {}); };
+  await b.b.ask("Where is the Sort button?", target);
+  assert.equal(stopped.aborted, true);
+  assert.match(b.seen[0], /button "Sort"/);
+  const visual = fixture();
+  visual.b.screenImage = async () => { await new Promise(r => setTimeout(r, 450)); return image; };
+  await visual.b.ask("Where is the Sort button in this picture?", target);
+  assert.equal(visual.seen[0][0].type, "image");
+});
+
 test("either source can fail without losing the other", { timeout: 2000 }, async () => {
   const common = { signal: new AbortController().signal, includeImage: true };
   const broken = async () => { throw new Error("unavailable"); };
   assert.deepEqual(await collectScreenContext({ ...common, read: broken, capture: async () => image }), { reading: null, image });
   assert.deepEqual(await collectScreenContext({ ...common, read: async () => reading, capture: broken }), { reading, image: null });
+});
+
+test("missing and ambiguous controls keep a slow screenshot for guidance", { timeout: 2000 }, async () => {
+  for (const tree of ["window: Empty", reading + '\n@other button "Sort"', 'window: X\n@a button "Sort" [disabled]']) {
+    const r = await collectScreenContext({ question: "Where is the Sort button?", includeImage: true,
+      signal: new AbortController().signal, read: async () => tree,
+      capture: async () => { await new Promise(r => setTimeout(r, 350)); return image; } });
+    assert.equal(r.image, image);
+  }
+});
+
+test("a missing target reached through the normal ask path contributes a guidance miss", { timeout: 2000 }, async () => {
+  const entries = [];
+  const timing = questionTiming({ write: entry => entries.push(entry) });
+  const { b } = fixture();
+  b.loop = () => b.runTool("point_at", { ref: "@missing", caption: "Sensitive sample" });
+  await b.ask("Please help", target, { timing });
+  timing.finish();
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].outcome, "target-missing");
+  assert.doesNotMatch(JSON.stringify(entries), /Sensitive|@missing|Sort|Please help/);
 });
 
 test("the deadline preserves ready text and cancels a stalled capture", { timeout: 2000 }, async () => {
@@ -53,7 +88,7 @@ test("a question reaches its first model turn with both sources and exact target
   const { b, seen, reads, captures } = fixture();
   await b.ask("Which bar is higher?", target);
   assert.deepEqual(seen[0][0], image);
-  assert.match(seen[0][1].text, /@s1:e1 button Sort/);
+  assert.match(seen[0][1].text, /@s1:e1 button "Sort"/);
   assert.match(seen[0][1].text, /Which bar is higher/);
   assert.deepEqual(reads[0].input, { app: "EXCEL.EXE", window_id: "w-chart" });
   assert.deepEqual(captures[0].window, target);
@@ -218,7 +253,7 @@ test("disabling images does not strip the current tree before the model sees it"
   const { b } = fixture({ screenContext: () => false });
   b.loop = async () => {
     b.clearContextImages(); // turn() does this whenever screenshots are disabled
-    assert.match(b.messages.at(-1).content, /@s1:e1 button Sort/);
+    assert.match(b.messages.at(-1).content, /@s1:e1 button "Sort"/);
     return "Here.";
   };
   await b.ask("Point to Sort", target);

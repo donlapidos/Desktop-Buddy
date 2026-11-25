@@ -392,12 +392,14 @@ $("new").addEventListener("click", () => { window.buddy.reset(); show(""); $("sp
 function offerLesson(on) {
   $("lesson").hidden = !on;
   $("lesson-save").hidden = false;
+  $("lesson-save").textContent = t("Save as a lesson");
   $("lesson-said").textContent = "";
 }
 $("lesson-save").addEventListener("click", async () => {
   const r = await window.buddy.saveLesson();
   $("lesson-said").textContent = r?.title ? t("Saved. Play it again from the tray, or share it from Settings › Lessons.") : r?.error ?? t("Couldn't save that.");
   if (r?.title) $("lesson-save").hidden = true;
+  else $("lesson-save").textContent = t("Try again");
 });
 // A new language: what the script wrote at rest is written again (marked words change by themselves).
 whenStrings(() => {

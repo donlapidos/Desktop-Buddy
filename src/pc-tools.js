@@ -18,6 +18,7 @@
 // - Web pages: only public http(s) addresses, never this PC or the local network (redirects included); their text is
 //   marked as information, not instructions.
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { lookup as dnsLookup } from "node:dns";
 import dns from "node:dns/promises";
@@ -27,7 +28,7 @@ import https from "node:https";
 import os from "node:os";
 import path from "node:path";
 import zlib from "node:zlib";
-import { fingerprint, keepCopy } from "./activity.js";
+import { copyFingerprint, fingerprint, keepCopy } from "./activity.js";
 import { N, t as tr } from "./i18n.js";
 import { SHIPPED_NATIVE } from "./native.js";
 
@@ -662,23 +663,24 @@ export async function runPcTool(name, input, ctx) {
       /** @type {{ from: string, rel: string }[]} */
       const files = [];
       let bytes = 0;
-      const add = (/** @type {string} */ from, /** @type {string} */ rel) => {
+      const add = async (/** @type {string} */ from, /** @type {string} */ rel) => {
         // Each file is judged on its own: a folder can't carry a private place in with it.
         if (judgePath(from, p).read === "never") return;
         files.push({ from, rel });
-        bytes += fs.statSync(from).size;
+        bytes += (await fs.promises.stat(from)).size;
       };
-      const walk = (/** @type {string} */ dir, /** @type {string} */ rel) => {
-        for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-          if (files.length > MAX_COPY_FILES) return;
+      const walk = async (/** @type {string} */ dir, /** @type {string} */ rel) => {
+        for (const e of await fs.promises.readdir(dir, { withFileTypes: true })) {
+          if (files.length > MAX_COPY_FILES || bytes > MAX_COPY_BYTES || ctx.signal?.aborted) return;
           const from = path.join(dir, e.name);
           if (inside(from, p.workDir)) continue; // the working folder isn't copied into itself
-          if (e.isDirectory() && !match) walk(from, path.join(rel, e.name));
-          else if (e.isFile() && (!match || match.test(e.name))) add(from, path.join(rel, e.name));
+          if (e.isDirectory() && !match) await walk(from, path.join(rel, e.name));
+          else if (e.isFile() && (!match || match.test(e.name))) await add(from, path.join(rel, e.name));
         }
       };
-      if (stat.isDirectory()) walk(j.full, "");
-      else add(j.full, path.basename(j.full));
+      if (stat.isDirectory()) await walk(j.full, "");
+      else await add(j.full, path.basename(j.full));
+      if (ctx.signal?.aborted) return "Stopped copying.";
       if (!files.length) return "No files matched, so nothing was copied.";
       if (files.length > MAX_COPY_FILES || bytes > MAX_COPY_BYTES) return `That's more than Buddy copies at once (${MAX_COPY_FILES} files or 2 GB). Pick fewer, or a smaller folder.`;
       const name = String(input.to ?? "").replace(/[\\/:*?"<>|]/g, " ").trim() || (stat.isDirectory() ? path.basename(j.full) : "copies");
@@ -692,15 +694,38 @@ export async function runPcTool(name, input, ctx) {
       // Each copy and its fingerprint, so undoing it takes back exactly these files, and only as they were made.
       /** @type {{ file: string, after: string | null }[]} */
       const made = [];
-      for (const f of files) {
-        let to = path.join(dest, f.rel);
-        fs.mkdirSync(path.dirname(to), { recursive: true });
-        // Never over a file already there: "name (2).jpg".
-        for (let k = 2; fs.existsSync(to); k++) to = path.join(path.dirname(to), `${path.parse(f.rel).name} (${k})${path.extname(f.rel)}`);
-        fs.copyFileSync(f.from, to);
-        made.push({ file: to, after: fingerprint(to) });
+      const batchId = randomUUID();
+      const record = (copying) => ctx.record?.({ kind: "created", batchId, copying, file: dest, made: [...made],
+        summary: made.length === 1 ? tr("Copied {file} into {folder}", { file: path.basename(made[0].file), folder: folderWords(dest, p) }) : tr("Copied {n} files into {folder}", { n: made.length, folder: folderWords(dest, p) }) });
+      try {
+        for (const f of files) {
+          ctx.signal?.throwIfAborted();
+          let to = path.join(dest, f.rel);
+          // Hash the source first. On a successful copy the journal can be saved immediately,
+          // and a later edit to the destination can't be mistaken for our original contents.
+          const after = await copyFingerprint(f.from, ctx.signal);
+          await fs.promises.mkdir(path.dirname(to), { recursive: true });
+          for (let k = 2; ; k++) {
+            ctx.signal?.throwIfAborted();
+            try {
+              await fs.promises.copyFile(f.from, to, fs.constants.COPYFILE_EXCL);
+              break;
+            } catch (err) {
+              if (err.code !== "EEXIST") throw err;
+              to = path.join(path.dirname(to), `${path.parse(f.rel).name} (${k})${path.extname(f.rel)}`);
+            }
+          }
+          made.push({ file: to, after });
+          record(made.length < files.length);
+        }
+      } catch (err) {
+        if (made.length) {
+          try { record(false); } catch {
+            return `Copied ${made.length} of ${files.length} files. Buddy couldn't save the undo history. You can undo these copies in Activity before you restart Buddy.`;
+          }
+        }
+        return `Copied ${made.length} of ${files.length} files. ${ctx.signal?.aborted ? "Stopped at your request." : `Couldn't finish copying: ${err.message}`}`;
       }
-      ctx.record?.({ kind: "created", summary: files.length === 1 ? tr("Copied {file} into {folder}", { file: path.basename(files[0].from), folder: folderWords(dest, p) }) : tr("Copied {n} files into {folder}", { n: files.length, folder: folderWords(dest, p) }), file: dest, made });
       return `Copied ${files.length} file${files.length === 1 ? "" : "s"} into ${dest}. In a command that's (Join-Path $Work '${name}').`;
     }
 

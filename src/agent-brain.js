@@ -158,7 +158,8 @@ export class AgentBrain extends Brain {
     this.live?.query.interrupt().catch(() => {});
   }
 
-  async run(target, content) {
+  async run(target, content, _prepare = null, { timing = null } = {}) {
+    this.timing = timing;
     this.standing = new Set();
     this.target = target;
     this.abort = new AbortController();
@@ -168,11 +169,12 @@ export class AgentBrain extends Brain {
     this.lastEvent = start;
     /** @type {string | undefined} */
     let failed;
-    live.push({ type: "user", message: { role: "user", content }, parent_tool_use_id: null });
     try {
+      // The SDK requests window context through its tools. Automatic preparation is for the default engine.
+      live.push({ type: "user", message: { role: "user", content }, parent_tool_use_id: null });
       for (;;) {
         const { value: m, done } = await live.messages.next();
-        if (done) return "My session ended. Ask again and I'll start a fresh one.";
+        if (done) { timing?.outcome("error"); return "My session ended. Ask again and I'll start a fresh one."; }
         if (m.type === "system" && m.subtype === "init" && m.apiKeySource !== "ANTHROPIC_API_KEY") {
           live.close();
           this.live = null;
@@ -200,15 +202,19 @@ export class AgentBrain extends Brain {
           const reply = failed
             ? FAILURES[failed] ?? "The model call failed. Try again?"
             : m.subtype === "success" ? m.result.trim() || "Done." : "Something went wrong on my side. Try again?";
+          if (failed || m.subtype !== "success") timing?.outcome("error");
           if (failed) this.ui.trace?.({ kind: "agent-failed", error: failed });
           this.log.push({ role: "buddy", text: reply });
           return reply;
         }
       }
     } catch (err) {
+      timing?.outcome("error");
       if (this.abort.signal.aborted) return "Okay, stopped.";
       this.live = null;
       throw err;
+    } finally {
+      if (this.abort.signal.aborted) timing?.outcome("cancelled");
     }
   }
 }

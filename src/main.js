@@ -1196,7 +1196,10 @@ async function repairLesson() {
     else if (!next) problem = t("That isn't a step Buddy can play.");
     else {
       const kept = lessons.updateStep(lesson.id, stuck.index, next);
-      if ("error" in kept) problem = kept.error;
+      if ("error" in kept) {
+        problem = kept.error;
+        lessonStuck = stuck;
+      }
       else fixed = { lesson: kept.lesson, name: control.name };
     }
   } catch (err) {
@@ -1205,7 +1208,14 @@ async function repairLesson() {
     enter("idle");
   }
   trace({ kind: "lesson-repair", step: stuck.index + 1, fixed: !!fixed });
-  if (!fixed) return notice(t("Couldn't fix step {n}: {why}", { n: stuck.index + 1, why: problem }));
+  if (!fixed) {
+    const text = t("Couldn't fix step {n}: {why}", { n: stuck.index + 1, why: problem });
+    if (lessonStuck === stuck) {
+      await summon();
+      bubble.webContents.send("repair-offer", { text, canFix: true });
+    }
+    return notice(text);
+  }
   settingsWindow?.refresh();
   progress(t("Step {n} now points at \"{name}\". Playing on from there.", { n: stuck.index + 1, name: fixed.name }));
   return playFrom(fixed.lesson, stuck.index, stuck.window);
@@ -1232,10 +1242,18 @@ async function playSteps(lesson, win) {
     isOwnWindow: (w) => ownPids().includes(Number(w.pid)),
   });
   answeringBrain = lessonBrain;
+  const clock = questionTiming({ write: trace, provider: "local", model: "saved-lesson" });
+  clock.attempt();
+  lessonBrain.timing = clock;
   let said;
   try {
     said = await lessonBrain.playLesson([...lesson.steps], win);
+  } catch (error) {
+    clock.outcome("error");
+    throw error;
   } finally {
+    if (lessonBrain.abort?.signal.aborted) clock.outcome("cancelled");
+    clock.finish();
     answeringBrain = null;
     lessonBrain = null;
     enter("idle");
@@ -2269,7 +2287,8 @@ const settingsWindow = createSettingsWindow({
   },
   lesson: async (action, id, win) => {
     if (action === "delete") {
-      lessons?.remove(id);
+      const failed = lessons?.remove(id);
+      if (failed) return failed;
       buildTrayMenu();
       return {};
     }
