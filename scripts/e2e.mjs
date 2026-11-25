@@ -99,6 +99,30 @@ function notesModel() {
   return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, requests, close: () => server.close() })));
 }
 
+/**
+ * Answers a lesson repair (lessons.js repairQuestion) by picking the numbered control called `name`: {"pick": n}, or
+ * {"pick": null} when it isn't in the list. Keeps every request, to check what was sent.
+ */
+function repairModel(/** @type {string} */ name) {
+  /** @type {any[]} */
+  const requests = [];
+  const server = http.createServer(async (req, res) => {
+    let body = "";
+    for await (const c of req) body += c;
+    if (req.url?.endsWith("/models")) return res.end(JSON.stringify({ data: [{ id: "scripted", object: "model" }] }));
+    const asked = JSON.parse(body || "{}");
+    requests.push(asked);
+    const last = (asked.messages ?? []).filter((m) => m.role === "user").at(-1);
+    const text = typeof last?.content === "string" ? last.content : (last?.content ?? []).map((p) => p.text ?? "").join("\n");
+    const line = text.split("\n").find((l) => l.endsWith(`"${name}"`) || l.includes(`"${name}" (`));
+    const pick = line ? Number(line.split(".")[0]) : null;
+    const said = { choices: [{ delta: { content: JSON.stringify({ pick }) }, finish_reason: "stop" }] };
+    res.setHeader("content-type", "text/event-stream");
+    res.end(`data: ${JSON.stringify(said)}\n\ndata: [DONE]\n\n`);
+  });
+  return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve({ url: `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/v1`, requests, close: () => server.close() })));
+}
+
 /** The words in a Word document (its document.xml, tags dropped). */
 function docxText(/** @type {string} */ file) {
   const ps = `Add-Type -AssemblyName System.IO.Compression.FileSystem; $z = [IO.Compression.ZipFile]::OpenRead('${file.replace(/'/g, "''")}'); $r = New-Object IO.StreamReader($z.GetEntry('word/document.xml').Open()); $x = $r.ReadToEnd(); $r.Close(); $z.Dispose(); [Console]::OutputEncoding = [Text.Encoding]::UTF8; $x -replace '</w:p>', [Environment]::NewLine -replace '<[^>]+>', ''`;
@@ -751,6 +775,36 @@ const CHECKS = {
       !r.againFirstStep && "played again, Buddy didn't point at the first step",
       !r.stopped && "Stop didn't end the lesson",
       !r.welcomeAfterStop && "the welcome didn't come back after Stop"].filter(Boolean);
+  },
+
+  // A lesson whose control was renamed: it stops at that step and offers a fix; the fix asks a stand-in model, which
+  // can only pick a control in the window; the lesson keeps it and plays on to the end.
+  async lessonRepair() {
+    const model = await repairModel("Quarterly sales details");
+    try {
+      const seed = { "settings.json": JSON.stringify({ provider: "custom", providerURLs: { custom: model.url }, providerModels: { custom: "scripted" }, launchSetupDone: true, voiceSetup: "no", talkBack: "never" }) };
+      const { markers, timedOut } = await runCopy("lesson-repair", { BUDDY_LESSON_REPAIR_TEST: path.join(app, "scripts", "samples", "context-window.ps1") }, "LESSON_REPAIR_TEST_DONE", 120_000, seed);
+      const r = markers.LESSON_REPAIR_TEST?.[0];
+      if (!r) return [timedOut ? "timed out" : "nothing printed"];
+      const asked = model.requests[0];
+      const sent = JSON.stringify(asked?.messages ?? []);
+      return [r.error,
+        !/"Show breakdown" isn't on screen/.test(r.stoppedSaying ?? "") && `the lesson didn't stop at the renamed control (${JSON.stringify(r.stoppedSaying)})`,
+        !(r.offer?.shown && r.offer.fix) && `the bubble didn't offer to fix the step (${JSON.stringify(r.offer)})`,
+        /Ask Buddy to finish/.test(r.offer?.text ?? "") && "the offer still said to ask Buddy to finish",
+        model.requests.length !== 1 && `the model was asked ${model.requests.length} times, not once`,
+        asked && "tools" in asked && "the repair offered the model tools",
+        asked && !/Show breakdown/.test(sent) && "the repair didn't tell the model the step's old control",
+        asked && !/Quarterly sales details/.test(sent) && "the repair didn't list the window's controls",
+        r.kept?.target !== "Quarterly sales details" && `the lesson didn't keep the repaired step (${JSON.stringify(r.kept)})`,
+        r.kept?.caption !== "Open the report" && "the repair changed the step's caption",
+        !r.playingOn && "the lesson didn't play on from the repaired step",
+        !r.clicked && "the check couldn't click the sample's control",
+        !r.finished && "the lesson didn't finish after the repair",
+        !(r.repairs ?? []).some((x) => /"fixed":true/.test(x)) && `no repair was recorded (${JSON.stringify(r.repairs)})`].filter(Boolean);
+    } finally {
+      model.close();
+    }
   },
 
   // A lesson played in a test-owned window, with no model: it follows the step to its result, says when a control

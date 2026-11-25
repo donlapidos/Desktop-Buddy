@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { Brain } from "../src/brain.js";
-import { MAX_LESSONS, appName, cleanLesson, createLessons, lessonsFor, searchLessons } from "../src/lessons.js";
+import { MAX_LESSONS, appName, cleanLesson, createLessons, lessonsFor, namedControls, parsePick, repairQuestion, repairedStep, searchLessons } from "../src/lessons.js";
 
 const temp = (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "buddy-lessons-"));
@@ -112,4 +112,46 @@ test("lessons can be found by any words of their title or app", () => {
   assert.deepEqual(searchLessons(list, "winword").map((l) => l.id), ["b"]);
   assert.deepEqual(searchLessons(list, "excel bold"), [], "every word must match");
   assert.deepEqual(searchLessons(list, "").map((l) => l.id), ["a", "b"], "nothing typed is everything");
+});
+
+test("repairing a step: the AI picks from the controls on screen, and only one of them can come back", (t) => {
+  const box = { x: 0, y: 0, width: 10, height: 10 };
+  const tree = { role: "window", name: "Book1 - Excel", ref_id: "w", bounds: box, children: [
+    { role: "tab", name: "Insert", ref_id: "a", bounds: box },
+    { role: "tab", name: "Insert", ref_id: "b", bounds: box },
+    { role: "button", name: "Tables", ref_id: "c", bounds: box, children: [{ role: "button", name: "Table", ref_id: "d", bounds: box }] },
+    { role: "button", name: "Hidden", ref_id: "e", bounds: box, states: ["offscreen"] },
+    { role: "text", name: "", ref_id: "f", bounds: box },
+    { role: "button", name: "No place", ref_id: "g" },
+  ] };
+  const controls = namedControls(tree);
+  assert.deepEqual(controls.map((c) => c.name), ["Book1 - Excel", "Insert", "Tables", "Table"], "named, on screen, each once");
+  assert.equal(namedControls(tree, 2).length, 2);
+  // The answer: a number from the list, and nothing else.
+  assert.equal(parsePick('{"pick": 3}', controls.length), 2);
+  assert.equal(parsePick('Sure! {"pick": 4} is it.', controls.length), 3, "JSON inside words");
+  for (const bad of ['{"pick": null}', '{"pick": 0}', '{"pick": 5}', '{"pick": "Insert"}', '{"pick": 2.5}', "Insert", "", '{"pick": 2'])
+    assert.equal(parsePick(bad, controls.length), null, bad);
+  // The step keeps its caption and what shows it's done; only its control changes.
+  const step = { caption: "Open the table menu", target: "Table menu", role: "button", done_when: ["Create Table"] };
+  assert.deepEqual(repairedStep(step, controls[2]), { caption: "Open the table menu", target: "Tables", role: "button", done_when: ["Create Table"] });
+  assert.equal(repairedStep(step, { name: "", role: "" }), null, "no name, no step");
+  // The question carries the step and the numbered list.
+  const q = repairQuestion(step, controls, "EXCEL.EXE");
+  assert.match(q, /App: Excel/);
+  assert.match(q, /Its control was called: "Table menu" [(]button[)]/);
+  assert.match(q, /3[.] "Tables" [(]button[)]/);
+  // Kept: the repaired lesson replaces the step, keeps its id and when it was saved, and stays checked.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "buddy-repair-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const store = createLessons({ file: path.join(dir, "lessons.json"), now: () => 5 });
+  const { lesson } = /** @type {any} */ (store.add({ title: "Make a table", app: "EXCEL.EXE", steps: [step, { caption: "Click OK", target: "OK", done_when: ["Table1"] }] }));
+  const fixed = /** @type {any} */ (store.updateStep(lesson.id, 0, /** @type {any} */ (repairedStep(step, controls[2]))));
+  assert.equal(fixed.lesson.id, lesson.id);
+  assert.equal(fixed.lesson.steps[0].target, "Tables");
+  assert.equal(fixed.lesson.steps[1].target, "OK", "the other steps stay");
+  assert.equal(createLessons({ file: path.join(dir, "lessons.json") }).get(lesson.id)?.steps[0].target, "Tables", "saved");
+  assert.match(String(/** @type {any} */ (store.updateStep(lesson.id, 2, step)).error), /isn't in the lesson/);
+  assert.match(String(/** @type {any} */ (store.updateStep("nope", 0, step)).error), /gone/);
+  assert.match(String(/** @type {any} */ (store.updateStep(lesson.id, 0, /** @type {any} */ ({ caption: "x", target: "", done_when: [] }))).error), /isn't a step Buddy can play/);
 });

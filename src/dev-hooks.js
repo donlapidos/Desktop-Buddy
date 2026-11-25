@@ -1869,6 +1869,62 @@ function firstMinuteTest(kit) {
   }, 2500);
 }
 
+/**
+ * BUDDY_LESSON_REPAIR_TEST: a lesson whose step names a control the app has since renamed outright ("Show breakdown",
+ * now "Quarterly sales details": no words in common, so no near match finds it) stops there and offers "Fix this step". The fix asks a stand-in model
+ * (scripts/e2e.mjs), which picks from the numbered controls; the lesson keeps the new name and plays on to the end. A
+ * helper does the user's click through the accessibility tree.
+ * @param {DevKit} kit
+ */
+function lessonRepairTest(kit) {
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const until = async (check, ms = 20_000) => { for (const end = Date.now() + ms; Date.now() < end; await wait(150)) if (await check()) return true; return false; };
+  const count = (/** @type {RegExp} */ re) => (fs.readFileSync(kit.timingLog(), "utf8").match(re) ?? []).length;
+  setTimeout(async () => {
+    const r = {};
+    let sample;
+    try {
+      const title = "Buddy repair sample";
+      sample = spawn("powershell.exe", ["-NoProfile", "-STA", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", String(process.env.BUDDY_LESSON_REPAIR_TEST), "-Focus", "-Title", title], { windowsHide: false });
+      sample.stdout?.resume();
+      sample.stderr?.resume();
+      /** @type {any} */
+      let target;
+      if (!(await until(async () => (target = (await listWindows()).find((w) => w.title === title && w.pid === sample.pid))))) throw new Error("The sample window didn't open.");
+      const helper = new Brain({ status() {}, point: async () => {}, confirm: async () => "allow" });
+      helper.target = target;
+      helper.abort = new AbortController();
+      const findRef = async () => {
+        await helper.look({ app: target.app_name, window_id: target.id }, { windowOnly: true });
+        return [...helper.labels].reverse().find(([, label]) => label.includes("Quarterly sales details"))?.[0];
+      };
+      if (!(await until(findRef))) throw new Error("The sample's control couldn't be read.");
+      const added = /** @type {any} */ (kit.lessons.add({ title: "Open the report", app: target.app_name, steps: [{ caption: "Open the report", target: "Show breakdown", done_when: ["Details opened"] }] }));
+      // Played: the step's control isn't there by that name, so it stops and offers the fix.
+      const said = await kit.playLesson(added.lesson.id, { window: target });
+      r.stoppedSaying = said?.text;
+      const offer = () => kit.bubble.webContents.executeJavaScript(`({ shown: !document.getElementById("repair-offer").hidden, fix: !document.getElementById("repair-fix").hidden, text: document.getElementById("repair-text").textContent })`);
+      await until(async () => (await offer()).shown, 8000);
+      r.offer = await offer();
+      // Fix this step: the model picks, the lesson keeps it, and it plays on from there.
+      const ready = count(/"kind":"guide-ready"/g);
+      await kit.bubble.webContents.executeJavaScript(`document.getElementById("repair-fix").click()`);
+      r.playingOn = await until(() => count(/"kind":"guide-ready"/g) > ready, 30_000);
+      r.kept = kit.lessons.get(added.lesson.id)?.steps[0];
+      const ref = await findRef();
+      r.clicked = ref ? /"ok":true/.test(String(await helper.act({ action: "click", ref }))) : false;
+      r.finished = await until(() => count(/"kind":"lesson-played","done":true/g) > 0);
+      r.repairs = (fs.readFileSync(kit.timingLog(), "utf8").match(/"kind":"lesson-repair"[^}]*/g) ?? []);
+    } catch (err) {
+      r.error = String(err?.message ?? err);
+    } finally {
+      sample?.kill();
+    }
+    console.log("LESSON_REPAIR_TEST", JSON.stringify(r));
+    console.log("LESSON_REPAIR_TEST_DONE");
+  }, 2500);
+}
+
 /** BUDDY_FAILURES_TEST @param {DevKit} kit */
 function failuresTest(kit) {
   // When Buddy's side fails, each window comes back usable and says so: the bubble's question, a task's, and Settings'
@@ -1930,6 +1986,7 @@ const HOOKS = {
   BUDDY_LANGUAGE_TEST: languageTest,
   BUDDY_LESSONS_TEST: lessonsTest,
   BUDDY_FIRST_MINUTE_TEST: firstMinuteTest,
+  BUDDY_LESSON_REPAIR_TEST: lessonRepairTest,
   BUDDY_RESTORE_TEST: restoreTest,
   BUDDY_BRIDGE_TEST: bridgeTest,
   BUDDY_ISLAND_TEST: islandTest,

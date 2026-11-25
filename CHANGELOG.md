@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* **Fix a lesson when the app changes:** when a step's button was renamed or moved and the lesson stops there,
+  **Fix this step** has your AI find it in the window as it is now (it can only pick a control that's there), keeps
+  the fix in the lesson, and plays on from that step. Share the lesson again and the fix goes with it.
 * **Lessons where you need them:** open the bubble in an app you have lessons for and they're offered right there
   (**Lessons for Excel**), one click each, even before an AI is set up. Settings › Lessons can search them by name or
   app.

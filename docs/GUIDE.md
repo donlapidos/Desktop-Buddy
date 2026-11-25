@@ -138,7 +138,10 @@ VS Code and more).
   them by name or app, in the app it's for: Buddy points at
   each step and follows you, as it did the first time, without asking the AI, so it costs nothing and needs no key.
   A lesson only points; it never clicks or types. If the app looks different and a step's control isn't there, the
-  lesson says which step and stops, and you can ask Buddy to finish from there. **Share…** saves a lesson as a file;
+  lesson says which step and stops, and offers **Fix this step**: your AI looks at the controls in the window now and
+  picks the one the step means (it can only pick one that's there), the lesson keeps it, and it plays on from that
+  step. Like a question, that sends the window's control names to your AI. A fixed lesson shares with the fix.
+  **Share…** saves a lesson as a file;
   **Import a lesson…** takes one someone shared, checked to be only steps and words.
 - **Routines:** tasks on a schedule ("weekdays at 9:00, summarise my unread email"), each in its own task window tucked
   into the island, under the Agents rules. A run missed by less than six hours (the PC was asleep) still happens once.
