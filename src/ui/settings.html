@@ -21,6 +21,9 @@
   body { display: grid; grid-template-rows: 44px 1fr; box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; }
   ::selection { background: color-mix(in srgb, var(--buddy) 45%, transparent); color: #fff; }
   button, input { font: inherit; color: inherit; }
+  #lesson-search { display: block; width: 100%; box-sizing: border-box; height: 34px; margin-bottom: 10px; padding: 0 11px; border: 1px solid transparent; border-radius: 9px; background: var(--field); color-scheme: dark; outline: none; }
+  #lesson-search:focus-visible { border-color: var(--buddy); }
+  #lesson-search[hidden] { display: none; }
   button { cursor: pointer; }
   :focus-visible { outline: 2px solid color-mix(in srgb, var(--buddy) 80%, transparent); outline-offset: 2px; }
   svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
@@ -359,6 +362,7 @@
       <h2 data-t>Lessons</h2>
       <p class="lede" data-t>When Buddy walks you through something all the way, it offers to keep the steps as a lesson. Play one to be shown again, in the app it's for: Buddy points at each step and follows you, without asking the AI, so it costs nothing. A lesson only points: it never clicks or types. Share one as a file, and import lessons people share with you.</p>
       <div class="group">
+        <input id="lesson-search" type="search" hidden autocomplete="off" spellcheck="false" data-t-attrs="placeholder,aria-label" placeholder="Find a lesson by its name or app" aria-label="Find a lesson by its name or app">
         <div id="lessons"></div>
         <p class="problem" id="lesson-problem" role="status"></p>
         <div class="row" style="margin-top:12px"><button class="btn" id="lesson-import" data-t>Import a lesson…</button></div>

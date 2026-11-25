@@ -46,7 +46,7 @@ import { createMarker } from "./marker.js";
 import { createAiAppSetup } from "./ai-app-setup.js";
 import { createAppBridge } from "./app-bridge.js";
 import { createConversations } from "./conversations.js";
-import { STARTER, appName, createLessons } from "./lessons.js";
+import { STARTER, appName, createLessons, lessonsFor } from "./lessons.js";
 import { createConnectors, siteConnector } from "./connectors.js";
 import { writeDocx } from "./documents.js";
 import { callQualityMic, createMeetingNotes, createMeetingSession, recoverTranscript } from "./meeting.js";
@@ -882,6 +882,8 @@ async function summon() {
     tip: tourTipNow(),
     voiceOffer: voiceOfferNow(),
     advanced: settings.advanced,
+    // The lessons for the app they're in, one click away (lessons.js).
+    shelf: win && lessons ? { app: appName(win.app_name), ...lessonsFor(lessons.list(), win.app_name) } : null,
   });
   showBubble();
   offerConnection(win);
@@ -2265,7 +2267,14 @@ function startUpdates() {
   });
   updates.start();
 }
-onFrom(fromBubble, "open-settings", (_e, page) => settingsWindow.open(page === "claude" ? "claude" : undefined));
+onFrom(fromBubble, "open-settings", (_e, page) => settingsWindow.open(page === "claude" || page === "lessons" ? page : undefined));
+// A lesson from the shelf, played in the window they called Buddy from. Only a lesson for that window's app: the
+// shelf offers no others, and a lesson only points, so a wrong id has nothing to play.
+onFrom(fromBubble, "play-lesson", (_e, id) => {
+  const lesson = lessons?.get(String(id));
+  if (!lesson || !about.window || appKey(lesson.app) !== appKey(about.window.app_name)) return;
+  playLesson(lesson.id, { window: about.window });
+});
 
 // Whether this run is a dev or end-to-end check: a BUDDY_*_TEST variable is set (dev-hooks.js runs it).
 const devHook = Object.entries(process.env).some(([name, value]) => value && /^BUDDY_[A-Z_]+_TEST$/.test(name));

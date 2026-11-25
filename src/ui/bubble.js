@@ -78,8 +78,33 @@ window.buddy.onVoiceOffer((o) => showVoiceOffer(o));
 
 // Without the advanced features there are no task windows to move a conversation into.
 window.buddy.onAdvanced((on) => document.body.classList.toggle("basic", !on));
-window.buddy.onSummon(({ target, needsKey: nk, tip: nextTip, voiceOffer, advanced = true }) => {
+/**
+ * The lessons for the app they're in: one click plays one there, no AI needed. The rest are in Settings › Lessons.
+ * @param {{ app: string, items: { id: string, title: string }[], more: number } | null | undefined} shelf
+ */
+function showShelf(shelf) {
+  const box = $("shelf");
+  if (!shelf?.items?.length) {
+    box.hidden = true;
+    box.replaceChildren();
+    return;
+  }
+  const play = shelf.items.map(({ id, title }) => {
+    const b = el("button", { type: "button", textContent: title, title: t("Play this lesson: Buddy points at each step") });
+    b.setAttribute("aria-label", t("Play {title}", { title }));
+    b.dataset.lesson = id;
+    b.addEventListener("click", () => window.buddy.playLesson(id));
+    return b;
+  });
+  const more = shelf.more ? [button("quiet", t("{n} more…", { n: shelf.more }), () => window.buddy.openSettings("lessons"))] : [];
+  box.replaceChildren(el("span", { textContent: t("Lessons for {app}:", { app: shelf.app }) }), ...play, ...more);
+  box.hidden = false;
+}
+
+window.buddy.onSummon(({ target, needsKey: nk, tip: nextTip, voiceOffer, advanced = true, shelf = null }) => {
   document.body.classList.toggle("basic", !advanced);
+  // Even before an AI is chosen: a lesson plays without one (one a colleague shared, say).
+  showShelf(shelf);
   needsKey = nk;
   showTip(nextTip);
   showVoiceOffer(voiceOffer);
@@ -297,6 +322,7 @@ $form().addEventListener("submit", async (e) => {
   spoken = false;
   if (!text) return;
   $input().value = "";
+  showShelf(null); // they've asked something of their own
   if (needsKey) {
     const { ok, error } = await window.buddy.setKey(text);
     console.log("WELCOME_KEY " + JSON.stringify({ ok, error }));

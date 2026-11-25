@@ -133,7 +133,9 @@ VS Code and more).
   **Ctrl+Z** in Blender, and deleting anything asks every time. Buddy never sends Blender code the AI wrote: the AI
   picks from Buddy's own building steps and gives only names, sizes, positions and colours.
 - **Lessons:** when Buddy has walked you all the way through something, **Save as a lesson** under its answer keeps
-  the steps. Play one from the tray (**Play a lesson**) or **Settings › Lessons**, in the app it's for: Buddy points at
+  the steps. When you open the bubble in an app you have lessons for, they're right there under **Lessons for Excel**
+  (say): one click plays one. Or play one from the tray (**Play a lesson**) or **Settings › Lessons**, which can search
+  them by name or app, in the app it's for: Buddy points at
   each step and follows you, as it did the first time, without asking the AI, so it costs nothing and needs no key.
   A lesson only points; it never clicks or types. If the app looks different and a step's control isn't there, the
   lesson says which step and stops, and you can ask Buddy to finish from there. **Share…** saves a lesson as a file;

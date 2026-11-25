@@ -756,7 +756,7 @@ const CHECKS = {
   // A lesson played in a test-owned window, with no model: it follows the step to its result, says when a control
   // isn't there, and comes back the same from a shared file.
   async lessons() {
-    const { markers, timedOut } = await runCopy("lessons", { BUDDY_LESSONS_TEST: path.join(app, "scripts", "samples", "context-window.ps1") }, "LESSONS_TEST_DONE", 120_000);
+    const { markers, timedOut } = await runCopy("lessons", { BUDDY_LESSONS_TEST: path.join(app, "scripts", "samples", "context-window.ps1"), BUDDY_LESSONS_SHOT: path.join(out, "lessons-shelf.png") }, "LESSONS_TEST_DONE", 120_000);
     const r = markers.LESSONS_TEST?.[0];
     if (!r) return [timedOut ? "timed out" : "nothing printed"];
     if (r.error) return [r.error];
@@ -768,6 +768,10 @@ const CHECKS = {
       r.missing?.done && "a lesson with a missing control said it was done",
       !r.roundTrip && "a shared lesson didn't come back the same",
       !(r.listed ?? []).includes("Open the quarterly details") && `Settings listed ${JSON.stringify(r.listed)}`,
+      !(r.shelf ?? []).includes("Open the quarterly details") && `the bubble's shelf didn't offer the app's lesson (${JSON.stringify(r.shelf)}, looking at ${JSON.stringify(r.shelfFor)})`,
+      !r.shelfPlayed && "a lesson from the shelf didn't play",
+      JSON.stringify(r.searchQuarterly) !== '["Open the quarterly details"]' && `searching "QUARTERLY details" found ${JSON.stringify(r.searchQuarterly)}`,
+      !(r.searchNone ?? []).some((s) => String(s).startsWith("empty:")) && `a search with no match didn't say so (${JSON.stringify(r.searchNone)})`,
     ].filter(Boolean);
   },
 

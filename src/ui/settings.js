@@ -814,9 +814,17 @@ function setupRow(/** @type {any} */ c) {
 // ---------- Lessons ----------
 let deletingLesson = null;
 function renderLessons() {
-  const list = S.lessons ?? [];
-  if (!list.length) {
+  const all = S.lessons ?? [];
+  $("lesson-search").hidden = !all.length;
+  if (!all.length) {
     $("lessons").replaceChildren(el("p", { className: "empty", textContent: t("None yet. Ask Buddy how to do something; when it has walked you all the way through, choose Save as a lesson under its answer.") }));
+    return;
+  }
+  // Every word typed, in the lesson's name or app, any case (lessons.js searchLessons).
+  const words = /** @type {HTMLInputElement} */ ($("lesson-search")).value.toLowerCase().split(/[ ]+/).filter(Boolean);
+  const list = all.filter((l) => words.every((w) => `${l.title} ${l.app}`.toLowerCase().includes(w)));
+  if (!list.length) {
+    $("lessons").replaceChildren(el("p", { className: "empty", textContent: t("No lesson matches that.") }));
     return;
   }
   $("lessons").replaceChildren(...list.map((l) => {
@@ -849,6 +857,7 @@ function renderLessons() {
     return el("div", { className: "routine" }, info, actions);
   }));
 }
+$("lesson-search").addEventListener("input", () => renderLessons());
 $("lesson-import").addEventListener("click", async () => {
   const r = await window.buddy.settingsLessonImport();
   $("lesson-problem").textContent = r.error ?? (r.title ? t("Imported \"{title}\".", { title: r.title }) : "");

@@ -1306,6 +1306,31 @@ function lessonsTest(kit) {
       stage(`clicked ${r.clicked}`);
       r.played = await playing;
       stage("played");
+      // The shelf: called in the sample, the bubble offers the sample's lesson, and one click plays it there. The sample
+      // is brought to the front first, as the user would by being in it.
+      await helper.runTool("window", { action: "focus", app: target.app_name, window_id: target.id });
+      await wait(400);
+      await kit.summon();
+      r.shelfFor = await kit.bubble.webContents.executeJavaScript(`document.getElementById("where").textContent`);
+      const shelfTitles = () => kit.bubble.webContents.executeJavaScript(`[...document.querySelectorAll("#shelf [data-lesson]")].map((b) => b.textContent)`);
+      r.shelf = await until(async () => (await shelfTitles()).includes("Open the quarterly details"), 8000) ? await shelfTitles() : await shelfTitles();
+      if (process.env.BUDDY_LESSONS_SHOT) await wait(900); // the bubble's opening animation
+      if (process.env.BUDDY_LESSONS_SHOT) fs.writeFileSync(process.env.BUDDY_LESSONS_SHOT, (await kit.bubble.webContents.capturePage()).toPNG());
+      const shelfReady = (fs.readFileSync(kit.timingLog(), "utf8").match(/"kind":"guide-ready"/g) ?? []).length;
+      await kit.bubble.webContents.executeJavaScript(`document.querySelector('#shelf [data-lesson="${added.lesson.id}"]')?.click()`);
+      r.shelfPlayed = await until(() => (fs.readFileSync(kit.timingLog(), "utf8").match(/"kind":"guide-ready"/g) ?? []).length > shelfReady);
+      // It's playing; the sample already shows the step's result from before, so it's stopped here.
+      await kit.bubble.webContents.executeJavaScript("window.buddy.cancel()");
+      await until(() => kit.currentMode() === "idle");
+      stage("shelf played");
+      // Settings › Lessons: the search narrows the list, and says when nothing matches.
+      kit.settingsWindow.open("lessons");
+      let settings;
+      await until(() => !!(settings = BrowserWindow.getAllWindows().find((w) => w.webContents.getURL().endsWith("settings.html") && !w.webContents.isLoading())));
+      const search = async (/** @type {string} */ q) => settings?.webContents.executeJavaScript(`(() => { const s = document.getElementById("lesson-search"); s.value = ${JSON.stringify(q)}; s.dispatchEvent(new Event("input")); return [...document.querySelectorAll("#lessons b")].map((b) => b.textContent).concat([...document.querySelectorAll("#lessons .empty")].map((p) => "empty: " + p.textContent)); })()`);
+      await until(async () => (await search(""))?.length > 0);
+      r.searchQuarterly = await search("QUARTERLY details");
+      r.searchNone = await search("nothing like this");
       // A control that isn't there: the lesson says so and stops.
       const missing = /** @type {any} */ (lessons.add({ title: "Export the report", app: target.app_name, steps: [{ caption: "Export it", target: "Export to PDF", done_when: ["Exported"] }] }));
       r.missing = await playLesson(missing.lesson.id, { window: target });
